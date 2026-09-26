@@ -10,6 +10,7 @@ import type {
   CourseAccommodation,
   CourseEnrollmentLink,
   CourseMembership,
+  CourseRole,
   CourseStaffTier,
 } from "../domain/courses";
 import type { LtiGradeFailureReason, LtiResourceLink } from "../domain/lti";
@@ -41,7 +42,7 @@ import {
   Time,
   TimestampInput,
 } from "./components";
-import { AccessibilityIcon, CrownIcon, SettingsIcon } from "./icons";
+import { AccessibilityIcon, CrownIcon, ShieldUserIcon } from "./icons";
 import {
   COURSE_ROLE_ORDER,
   courseRoleLabel,
@@ -493,7 +494,7 @@ const MemberManageDialog: FC<{
         <label>
           {i18n.t("Role")}
           <br />
-          <select name="role" required>
+          <select data-choice-notes="role" name="role" required>
             {COURSE_ROLE_ORDER.map((role) => (
               <option selected={role === membership.role} value={role}>
                 {courseRoleLabel(i18n, role)}
@@ -501,6 +502,14 @@ const MemberManageDialog: FC<{
             ))}
           </select>
         </label>
+        <ChoiceNotes
+          group="role"
+          notes={COURSE_ROLE_ORDER.map((role) => ({
+            note: courseRoleHint(i18n, role),
+            value: role,
+          }))}
+          selected={membership.role}
+        />
         <label>
           {i18n.t("Status")}
           <br />
@@ -546,7 +555,7 @@ const MemberManageControl: FC<{
         title={label}
         type="button"
       >
-        <SettingsIcon />
+        <ShieldUserIcon />
       </button>
       <MemberManageDialog
         context={context}
@@ -655,10 +664,15 @@ const STAFF_ROLE_ORDER: readonly [StaffRole, ...StaffRole[]] = [
 ];
 
 /**
- * What each staff role may do, said under the select as the option changes.
+ * What each role may do, said under a role select as the option changes: the
+ * add-staff bar's, and the membership dialog's.
  */
-function staffRoleHint(i18n: Translator, role: StaffRole): string {
+function courseRoleHint(i18n: Translator, role: CourseRole): string {
   switch (role) {
+    case "student":
+      return i18n.t(
+        "Students complete the course's assignments and see only their own work and grades.",
+      );
     case "instructor":
       return i18n.t(
         "Instructors have full access to course controls, including assignments, members, grades and settings.",
@@ -710,7 +724,7 @@ const AddStaffBar: FC<{
       <ChoiceNotes
         group="role"
         notes={STAFF_ROLE_ORDER.map((role) => ({
-          note: staffRoleHint(i18n, role),
+          note: courseRoleHint(i18n, role),
           value: role,
         }))}
         selected={STAFF_ROLE_ORDER[0]}

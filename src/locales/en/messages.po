@@ -3449,6 +3449,10 @@ msgstr "Student"
 msgid "Student ID"
 msgstr "Student ID"
 
+#: src/worker/web/courses.tsx
+msgid "Students complete the course's assignments and see only their own work and grades."
+msgstr "Students complete the course's assignments and see only their own work and grades."
+
 #: src/worker/web/admin.tsx
 msgid "Subject"
 msgstr "Subject"

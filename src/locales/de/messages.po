@@ -2055,7 +2055,7 @@ msgstr "Lehrpersonen können ihre eigene Mitgliedschaft als Lehrperson nicht dea
 
 #: src/worker/web/courses.tsx
 msgid "Instructors have full access to course controls, including assignments, members, grades and settings."
-msgstr ""
+msgstr "Lehrende haben vollen Zugriff auf die Kursverwaltung, einschließlich Aufgaben, Mitgliedern, Noten und Einstellungen."
 
 #: src/worker/web/labels.ts
 msgid "Invited"
@@ -3449,6 +3449,10 @@ msgstr "Studierende"
 msgid "Student ID"
 msgstr "Matrikelnummer"
 
+#: src/worker/web/courses.tsx
+msgid "Students complete the course's assignments and see only their own work and grades."
+msgstr "Studierende bearbeiten die Aufgaben des Kurses und sehen nur ihre eigenen Abgaben und Noten."
+
 #: src/worker/web/admin.tsx
 msgid "Subject"
 msgstr "Subjekt"
@@ -3535,7 +3539,7 @@ msgstr "Tutorin oder Tutor"
 
 #: src/worker/web/courses.tsx
 msgid "Teaching assistants can grade submissions and author content, but not change the course or its assignments."
-msgstr ""
+msgstr "Tutorinnen und Tutoren können Abgaben bewerten und Inhalte erstellen, aber weder den Kurs noch seine Aufgaben ändern."
 
 #: src/worker/web/content.tsx
 msgid "Terms"
