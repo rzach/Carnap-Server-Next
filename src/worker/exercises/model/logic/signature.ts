@@ -19,7 +19,7 @@
 
 import type { SurfaceLanguage } from "@aufbau/syntax";
 import type { Formula, Term } from "../../../exercise-kit/formula";
-import { termToString } from "../../../exercise-kit/formula";
+import { symbolKey, termToString } from "../../../exercise-kit/formula";
 
 export type ModelFieldKind =
   | "domain"
@@ -86,9 +86,7 @@ export function blankedLabel(
 }
 
 /** A symbol's key in a model, distinguishing arities of the same letter. */
-export function symbolKey(symbol: string, arity: number): string {
-  return `${symbol}/${arity}`;
-}
+export { symbolKey };
 
 /**
  * A free variable's key. Kept apart from {@link symbolKey}'s space so that no

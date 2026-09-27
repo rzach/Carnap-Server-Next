@@ -14,8 +14,8 @@ This reference follows the compiler in
 - [Multiple choice](#multiple-choice-directive),
   [free response](#free-response-directive), and
   [short answer](#short-answer-directive)
-- [Truth tables](#truth-table-directive), [models](#model-directive), and
-  [translation](#translation-directive)
+- [Truth tables](#truth-table-directive), [models](#model-directive),
+  [translation](#translation-directive), and [worlds](#world-directive)
 - [Linear proofs](#aufbau-proof-directive),
   [languages and theories](#languages-and-theories),
   [proof trees](#aufbau-proof-tree-directive),
@@ -247,7 +247,7 @@ Likewise, do not use repeated `#` shorthand to combine IDs.
 Every directive validates its accepted attributes. An unknown attribute
 produces `unknown_attribute` with the accepted names; it is not ignored.
 
-There are ten exercise directives:
+There are eleven exercise directives:
 
 - `multiple-choice`
 - `free-response`
@@ -255,6 +255,7 @@ There are ten exercise directives:
 - `truth-table`
 - `model`
 - `translation`
+- `world`
 - `aufbau-proof`
 - `aufbau-proof-tree`
 - `aufbau-proof-fitch`
@@ -697,6 +698,111 @@ when necessary. Exact matching avoids the equivalence-search requirement.
 
 See [the translation reference](../src/worker/exercises/translation/README.md)
 for the proof-search design, restrictions, and answer format.
+
+## World directive
+
+A world exercise is set in a picture of a structure: a board of blocks, in
+the tradition of Tarski's World. Its sentences are true or false because of
+what the blocks are and where they stand, so students work on the picture
+rather than on tables. Sentences show their truth values as the world
+changes, and pointing at part of a sentence marks what that part is true of.
+
+```md
+::::world{#lefty system="blocks-lpl" budget="2" points="3"}
+Change at most two blocks so that every sentence comes out as marked.
+No two blocks may share a row.
+
+- ∀x(Cube(x) → ∃y LeftOf(y,x))
+- false: ∃x Large(x)
+
+| law : ∀x∀y(SameRow(x,y) → x = y)
+| pinned block : small tet at 1,1 named a
+| block : large cube at 4,3 named b
+| block : medium dodec at 6,7
+::::
+```
+
+`system` is required: no built-in language has the blocks vocabulary, so it
+names a theory block of the author's (see [the blocks language](#the-blocks-language)).
+
+### Variants
+
+- `build` (the default): edit the world until every sentence has its target
+  value. A list item is a sentence to make true; `false:` before it asks for
+  false instead.
+- `evaluate`: the world is fixed and the student marks each sentence true or
+  false. Scored per sentence. No live truth values are shown, since they
+  would be the answer.
+- `counterexample`: one argument line, `premises :|-: conclusions`, as in a
+  model exercise. The student builds a world where the premises are true and
+  the conclusions false.
+- `distinguish`: two worlds, written `| A block : …` and `| B block : …`. The
+  student writes one sentence true in A and false in B. `without="= ∀"`
+  forbids symbols; `symbols="∃ ¬ ∧ LeftOf"` lists the only ones allowed
+  (names are always allowed). Give one or the other. Any spelling the
+  language accepts names its symbol, and a spelling with several meanings
+  names them all: in forallx Calgary, `E` is both the predicate letter and
+  an ASCII ∃.
+
+Build, counterexample, and distinguish are all or nothing.
+
+### The world
+
+Each object is a data line. For blocks, `| block : large cube at 3,5 named a, b`:
+a size (`small`, `medium`, `large`) and a shape (`tet`, `cube`, `dodec`) in
+either order, a square `at column,row`, and optional names. Columns run 1–8
+left to right and rows 1–8 back to front, so row 8 is nearest the viewer. A
+world holds at most 16 blocks, one per square, and a name names one block.
+
+In the author preview the start world is editable; **Copy as source** puts
+the edited world's object lines on the clipboard.
+
+### Constraints
+
+These apply to `build` and `counterexample`:
+
+- `| law : sentence` must be true in the submitted world. Laws are shown
+  apart from the sentences, and are checked at the end, not after every
+  edit. A law false in the start world is a compile error.
+- `| pinned block : …` may not be moved, reshaped, renamed, or removed.
+- `budget="N"` limits how many blocks may differ from the start world —
+  added, removed, or changed, each counted once.
+
+A world that breaks the rules — two blocks on a square, a pin moved, the
+budget spent — is a valid answer scored zero with the reason, not a
+rejected submission. A build exercise already solved at the start is a
+warning.
+
+### The blocks language
+
+A symbol means something in the world because the language gives it a
+`blocks.*` role, not because of how it is spelled. A German course can write
+`LinksVon(a,b)`. Multi-place predicates take an argument list, and a role
+interprets one arity: `LeftOf(a,b,c)` is a different symbol with no meaning,
+and a compile error.
+
+| Role | Arity | True when |
+| --- | --- | --- |
+| `blocks.tet`, `.cube`, `.dodec` | 1 | the block has that shape |
+| `blocks.small`, `.medium`, `.large` | 1 | the block has that size |
+| `blocks.smaller`, `.larger` | 2 | first is strictly smaller / larger |
+| `blocks.same-size`, `.same-shape` | 2 | equal size / shape |
+| `blocks.left-of`, `.right-of` | 2 | first's column is less / greater |
+| `blocks.back-of`, `.front-of` | 2 | first's row is less / greater |
+| `blocks.same-row`, `.same-col` | 2 | equal row / column |
+| `blocks.adjoins` | 2 | orthogonally adjacent squares |
+| `blocks.between` | 3 | on one row, column, or diagonal, first strictly between |
+
+Identity is the core `identity` role. A complete example language, with the
+delimiters that keep stored sentences readable (`∃yLeftOf(y,x)` needs `y`
+and `LeftOf` to be separate chunks), is in
+[`tests/helpers/blocks-language.ts`](../tests/helpers/blocks-language.ts).
+The same language works in model and translation exercises, where the
+predicates are ordinary ones: other types read a dotted role as no role at
+all.
+
+See [the world reference](../src/worker/exercises/world/README.md) for the
+world-kind contract and the answer format.
 
 ## Aufbau-proof directive
 

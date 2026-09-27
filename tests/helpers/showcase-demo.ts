@@ -11,6 +11,8 @@
  * `scripts/showcase-verify.ts`; the two Fitch exercises before the playgrounds
  * are deliberately unfinished.
  */
+import { BLOCKS_SPEC_SOURCE } from "./blocks-language";
+
 export const SHOWCASE_DEMO_SOURCE = `# A tour of the exercise types
 
 This lesson is a demonstration. It walks through **every kind of exercise**
@@ -662,6 +664,46 @@ The names in a playground's statement (\`a\` above, from the system's \`@vars\`
 pools) are bound automatically; nothing else can be, so a playground always
 proves a concrete sentence or sequent in the system's own vocabulary, never a
 schema over metavariables like the \`P\` of the exercises before this one.
+
+## 20. A world
+
+A **world** is a picture of a structure: a board of blocks, each a tet, a cube
+or a dodecahedron, small, medium or large. Its sentences are true or false
+because of where the blocks stand and what they are, so the student works on
+the picture rather than on tables. Every sentence shows its truth value live,
+and resting the pointer on any part of a sentence rings the blocks that part is
+true of.
+
+The language is the author's: a theory block gives each predicate a
+\`blocks.*\` role, which is what ties \`LeftOf\` to columns (the full example
+language is in the authoring reference).
+
+\`\`\`md
+:::world{id="wd_left" title="Everything has something to its left" system="blocks" budget="2" points="3"}
+Change at most two blocks so that every sentence comes out as marked.
+
+- ∀x(Cube(x) → ∃y LeftOf(y,x))
+- false: ∃x Large(x)
+
+| pinned block : small tet at 1,1 named a
+| block : large cube at 4,3 named b
+| block : medium dodec at 6,7
+:::
+\`\`\`
+
+:::aufbau-mm0{name="blocks"}
+${BLOCKS_SPEC_SOURCE}:::
+
+:::world{id="wd_left" title="Everything has something to its left" system="blocks" budget="2" points="3"}
+Change at most two blocks so that every sentence comes out as marked.
+
+- ∀x(Cube(x) → ∃y LeftOf(y,x))
+- false: ∃x Large(x)
+
+| pinned block : small tet at 1,1 named a
+| block : large cube at 4,3 named b
+| block : medium dodec at 6,7
+:::
 
 ## What else the format does
 

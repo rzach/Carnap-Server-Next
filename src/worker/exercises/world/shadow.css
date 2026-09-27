@@ -1,0 +1,326 @@
+/*
+ * Shadow-DOM styles for the world element, server-rendered into its
+ * Declarative Shadow Root and shared by the review. Colours come from the
+ * exercise tokens (`exercise-kit/tokens.css`) and nothing else; the block
+ * fills are tints of them, so dark mode and an author's own accent both carry
+ * through.
+ */
+
+:host {
+  --_world-square-light: color-mix(in srgb, currentColor 4%, var(--_surface));
+  --_world-square-dark: color-mix(in srgb, currentColor 10%, var(--_surface));
+  --_world-block-edge: color-mix(in srgb, var(--_text) 78%, transparent);
+  --_world-fold: color-mix(in srgb, var(--_text-muted) 40%, var(--_surface));
+  --_world-tet: color-mix(in srgb, var(--_accent) 34%, var(--_surface));
+  --_world-cube: color-mix(in srgb, var(--_warning) 38%, var(--_surface));
+  --_world-dodec: color-mix(
+    in srgb,
+    var(--_accent) 18%,
+    color-mix(in srgb, var(--_correct) 30%, var(--_surface))
+  );
+}
+
+.world-body {
+  margin-top: 0.5rem;
+}
+
+/* Board on the left, sentences on the right; stacked, board first, when the
+   exercise is narrow. A container query rather than a media query, because
+   an exercise can sit in a sidenote column as readily as the full page. */
+.world-layout {
+  align-items: start;
+  container-type: inline-size;
+  display: grid;
+  gap: 1rem 1.5rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@container (min-width: 40rem) {
+  .world-layout > * {
+    min-width: 0;
+  }
+}
+
+@media (min-width: 46rem) {
+  .world-layout {
+    grid-template-columns: minmax(16rem, 26rem) minmax(0, 1fr);
+  }
+
+  .world-layout-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.world-figure {
+  margin: 0;
+}
+
+.world-figure-label {
+  color: var(--_text-muted);
+  font-size: 0.8rem;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+.world-pair {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+/* The board: an axis row and column around an 8 × 8 of squares. */
+.world-board {
+  aspect-ratio: 1;
+  display: grid;
+  grid-template-columns: 1.1rem repeat(8, minmax(0, 1fr));
+  grid-template-rows: 1.1rem repeat(8, minmax(0, 1fr));
+  max-width: 26rem;
+  user-select: none;
+  width: 100%;
+}
+
+.world-axis {
+  color: var(--_text-faint);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.world-board .world-axis {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.world-cell {
+  background: var(--_world-square-light);
+  position: relative;
+}
+
+.world-board .world-cell {
+  aspect-ratio: 1;
+  display: block;
+}
+
+.world-cell[data-shade="dark"] {
+  background: var(--_world-square-dark);
+}
+
+.world-glyph {
+  display: block;
+  height: 100%;
+  overflow: visible;
+  width: 100%;
+}
+
+.block-body {
+  stroke: var(--_world-block-edge);
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+}
+
+.block-tet {
+  fill: var(--_world-tet);
+}
+
+.block-cube {
+  fill: var(--_world-cube);
+}
+
+.block-dodec {
+  fill: var(--_world-dodec);
+}
+
+.block-name {
+  dominant-baseline: middle;
+  fill: var(--_text);
+  font-family: var(--_mono-font);
+  font-size: 30px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--_surface);
+  stroke-linejoin: round;
+  stroke-opacity: 0.85;
+  stroke-width: 7px;
+  text-anchor: middle;
+}
+
+.block-name-small {
+  font-size: 24px;
+}
+
+/* A pinned block cannot be changed; its square has a dog-eared corner, a
+   shape, so it is not said by colour alone, and one no highlight ring
+   draws. */
+.world-pin {
+  aspect-ratio: 1;
+  background: linear-gradient(
+    to bottom left,
+    var(--_surface) 50%,
+    var(--_world-fold) 50%
+  );
+  border-bottom-left-radius: 3px;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 26%;
+  z-index: 1;
+}
+
+.world-objects-caption {
+  position: absolute;
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.world-object-list {
+  color: var(--_text-muted);
+  font-size: 0.85rem;
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+
+.world-empty {
+  color: var(--_text-muted);
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}
+
+.world-budget {
+  color: var(--_text-muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  margin: 0.4rem 0 0;
+}
+
+.world-panel-heading {
+  color: var(--_text-muted);
+  font-size: 0.8rem;
+  font-variant-caps: all-small-caps;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.35rem;
+}
+
+.world-panel-heading:not(:first-child) {
+  margin-top: 1rem;
+}
+
+.world-sentences,
+.world-laws {
+  display: grid;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* A row is its formula and then a truth mark or the student's marks, after a
+   label when the sentence has a target. */
+.world-sentence {
+  align-items: center;
+  border-radius: 4px;
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 0.3rem 0.4rem;
+}
+
+.world-sentence[data-target] {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.world-target {
+  color: var(--_text-muted);
+  font-size: 0.72rem;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.04em;
+  min-width: 5.5em;
+}
+
+.world-formula {
+  font-family: var(--_mono-font);
+  overflow-wrap: anywhere;
+}
+
+.world-truth {
+  align-items: center;
+  border: 1.5px solid var(--_border);
+  border-radius: 999px;
+  display: inline-flex;
+  font-family: var(--_mono-font);
+  font-size: 0.8rem;
+  font-weight: 700;
+  height: 1.5rem;
+  justify-content: center;
+  width: 1.5rem;
+}
+
+.world-truth:empty {
+  border-style: dashed;
+}
+
+.world-truth[data-value="true"] {
+  color: var(--_accent-text);
+}
+
+.world-truth[data-value="false"] {
+  color: var(--_text-muted);
+}
+
+.world-marks {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.world-mark {
+  background: var(--_field-bg);
+  border: 1px solid var(--_border);
+  border-radius: 3px;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  min-width: 3.5rem;
+  padding: 0.1rem 0.4rem;
+}
+
+.world-mark[aria-pressed="true"] {
+  background: var(--_accent);
+  border-color: var(--_accent);
+  color: var(--_on-accent);
+}
+
+.world-mark:disabled {
+  opacity: 0.75;
+}
+
+.world-answer-label {
+  display: block;
+  font-weight: 560;
+  margin-bottom: 0.3rem;
+}
+
+.world-answer {
+  background: var(--_field-bg);
+  border: 1px solid var(--_border);
+  border-radius: 3px;
+  box-sizing: border-box;
+  color: inherit;
+  font: inherit;
+  font-family: var(--_mono-font);
+  padding: 0.3rem 0.45rem;
+  width: 100%;
+}
+
+.world-restriction {
+  color: var(--_text-muted);
+  font-size: 0.85rem;
+  margin: 0.4rem 0 0;
+}

@@ -293,6 +293,144 @@ export function buildDiagnosticStrings(i18n: Translator) {
       "This exercise has no field called “{field}”.",
       placeholders("field"),
     ),
+    // The world exercise (`exercises/world/authoring.ts`).
+    "The variant attribute must be evaluate, build, counterexample, or distinguish.":
+      i18n.t(
+        "The variant attribute must be evaluate, build, counterexample, or distinguish.",
+      ),
+    "Only a build or counterexample exercise has a budget.": i18n.t(
+      "Only a build or counterexample exercise has a budget.",
+    ),
+    "The budget attribute must be a whole number of objects, 0 or more.":
+      i18n.t(
+        "The budget attribute must be a whole number of objects, 0 or more.",
+      ),
+    "Only a distinguish exercise takes symbols or without.": i18n.t(
+      "Only a distinguish exercise takes symbols or without.",
+    ),
+    "Give symbols or without, not both.": i18n.t(
+      "Give symbols or without, not both.",
+    ),
+    "The language has no symbol “{symbol}”.": i18n.t(
+      "The language has no symbol “{symbol}”.",
+      placeholders("symbol"),
+    ),
+    "A world data line is written “| key : value”.": i18n.t(
+      "A world data line is written “| key : value”.",
+    ),
+    "Only sentence list items and | lines may follow the first sentence.":
+      i18n.t(
+        "Only sentence list items and | lines may follow the first sentence.",
+      ),
+    "“{formula}” has free variables, and a world exercise's sentences must have none.":
+      i18n.t(
+        "“{formula}” has free variables, and a world exercise's sentences must have none.",
+        placeholders("formula"),
+      ),
+    "“{symbol}” with {arity} arguments has no meaning in a {world} world. Give it one of the world's roles in the language, or leave it out.":
+      i18n.t(
+        "“{symbol}” with {arity} arguments has no meaning in a {world} world. Give it one of the world's roles in the language, or leave it out.",
+        placeholders("arity", "symbol", "world"),
+      ),
+    "The language uses the role “{role}”, which a {world} world does not have.":
+      i18n.t(
+        "The language uses the role “{role}”, which a {world} world does not have.",
+        placeholders("role", "world"),
+      ),
+    "“{symbol}” has the role “{role}” but does not take individuals as its arguments.":
+      i18n.t(
+        "“{symbol}” has the role “{role}” but does not take individuals as its arguments.",
+        placeholders("role", "symbol"),
+      ),
+    "The role “{role}” needs {arity} arguments, but “{symbol}” takes {declared}.":
+      i18n.t(
+        "The role “{role}” needs {arity} arguments, but “{symbol}” takes {declared}.",
+        placeholders("arity", "declared", "role", "symbol"),
+      ),
+    "“{word}” is not a shape or size this world knows.": i18n.t(
+      "“{word}” is not a shape or size this world knows.",
+      placeholders("word"),
+    ),
+    "Column {col}, row {row} is not on the board.": i18n.t(
+      "Column {col}, row {row} is not on the board.",
+      placeholders("col", "row"),
+    ),
+    "“{object}” does not read as an object. Write it like “large cube at 3,5 named a, b”.":
+      i18n.t(
+        "“{object}” does not read as an object. Write it like “large cube at 3,5 named a, b”.",
+        placeholders("object"),
+      ),
+    "Two objects stand on column {col}, row {row}.": i18n.t(
+      "Two objects stand on column {col}, row {row}.",
+      placeholders("col", "row"),
+    ),
+    "“{name}” names two objects.": i18n.t(
+      "“{name}” names two objects.",
+      placeholders("name"),
+    ),
+    "A world may hold at most {max} objects.": i18n.t(
+      "A world may hold at most {max} objects.",
+      placeholders("max"),
+    ),
+    "This world breaks the rules of its kind.": i18n.t(
+      "This world breaks the rules of its kind.",
+    ),
+    "“{name}” is not a name in this language.": i18n.t(
+      "“{name}” is not a name in this language.",
+      placeholders("name"),
+    ),
+    "A distinguish exercise's objects belong to world A or world B: write “| A {key} : …” or “| B {key} : …”.":
+      i18n.t(
+        "A distinguish exercise's objects belong to world A or world B: write “| A {key} : …” or “| B {key} : …”.",
+        placeholders("key"),
+      ),
+    "Only a distinguish exercise has worlds A and B.": i18n.t(
+      "Only a distinguish exercise has worlds A and B.",
+    ),
+    "Only a build or counterexample exercise has pinned objects.": i18n.t(
+      "Only a build or counterexample exercise has pinned objects.",
+    ),
+    "Only a build or counterexample exercise has laws.": i18n.t(
+      "Only a build or counterexample exercise has laws.",
+    ),
+    "“{key}” is not a line a world exercise reads. It reads {keys}.": i18n.t(
+      "“{key}” is not a line a world exercise reads. It reads {keys}.",
+      placeholders("key", "keys"),
+    ),
+    "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Cube(a) :|-: Large(a)'.":
+      i18n.t(
+        "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Cube(a) :|-: Large(a)'.",
+      ),
+    "Only a counterexample exercise is written as an argument with ':|-:'.":
+      i18n.t(
+        "Only a counterexample exercise is written as an argument with ':|-:'.",
+      ),
+    "A distinguish exercise lists no sentences: the student writes one.":
+      i18n.t(
+        "A distinguish exercise lists no sentences: the student writes one.",
+      ),
+    "An evaluate exercise's sentences take no true: or false: prefix; the world decides their values.":
+      i18n.t(
+        "An evaluate exercise's sentences take no true: or false: prefix; the world decides their values.",
+      ),
+    "A world exercise needs at least one sentence.": i18n.t(
+      "A world exercise needs at least one sentence.",
+    ),
+    "Nothing in the world is named “{name}”, which “{formula}” uses.": i18n.t(
+      "Nothing in the world is named “{name}”, which “{formula}” uses.",
+      placeholders("formula", "name"),
+    ),
+    "The law “{formula}” is false in the starting world.": i18n.t(
+      "The law “{formula}” is false in the starting world.",
+      placeholders("formula"),
+    ),
+    "The starting world already does everything this exercise asks.": i18n.t(
+      "The starting world already does everything this exercise asks.",
+    ),
+    "There is no world kind called “{world}”. Known kinds: {known}.": i18n.t(
+      "There is no world kind called “{world}”. Known kinds: {known}.",
+      placeholders("known", "world"),
+    ),
     "Unknown model option “{option}”.": i18n.t(
       "Unknown model option “{option}”.",
       placeholders("option"),

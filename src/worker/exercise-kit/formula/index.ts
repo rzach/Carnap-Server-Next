@@ -14,16 +14,28 @@ import { languageById, languageFromSource } from "../../logic/specs";
 export type {
   BinaryConnective,
   Formula,
+  FormulaNode,
   ParseError,
   ParseResult,
   Term,
 } from "./formula";
 export {
   formulaToString,
+  hasFirstOrderSignature,
   parseFormula,
+  parseFormulaTree,
+  parseTerm,
   splitFormulaList,
   termToString,
 } from "./formula";
+export type { Structure } from "./semantics";
+export {
+  evaluateTerm,
+  freeVariables,
+  satisfiers,
+  satisfies,
+  symbolKey,
+} from "./semantics";
 
 export const DEFAULT_LANGUAGE_ID = "forallx-calgary-2019";
 

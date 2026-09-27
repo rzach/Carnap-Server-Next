@@ -1,21 +1,21 @@
 /**
- * Finite models and satisfaction — the port of
- * `Carnap/src/Carnap/Languages/PureFirstOrder/Semantics.hs`.
+ * Finite models: a model exercise's structure, as plain data.
  *
  * Carnap builds a model out of *functions* (`relation :: Arity -> Int -> ret`)
  * and updates it by wrapping each one in a closure that shadows a single
  * symbol. Here it is plain data, keyed by symbol and arity, which is the same
- * model with the currying taken out.
- *
- * Domain elements are naturals, as in the original, and identity is numeric
- * equality on them (`satisfies m TermEq = \t1 t2 -> Form (t1 == t2)`). Nothing
- * here is language-specific: a formula is a formula once parsed.
+ * model with the currying taken out. What the formulas *mean* in one is the
+ * kit's satisfaction relation (`exercise-kit/formula/semantics.ts`), which a
+ * model reaches through {@link modelStructure}: the model is one kind of
+ * structure, and a world exercise's picture is another.
  */
 
-import type { Formula, Term } from "../../../exercise-kit/formula";
-import { applyBinaryConnective } from "../../../logic/specs/connectives";
+import type { Formula, Structure, Term } from "../../../exercise-kit/formula";
+import {
+  evaluateTerm as evaluateInStructure,
+  satisfies as satisfiesInStructure,
+} from "../../../exercise-kit/formula";
 import { tupleKey } from "./fields";
-import { symbolKey } from "./signature";
 
 export interface FiniteModel {
   /** Non-empty, without repeats. Quantifiers range over exactly this. */
@@ -30,53 +30,42 @@ export interface FiniteModel {
   readonly relations: ReadonlyMap<string, ReadonlySet<string>>;
 }
 
+const structures = new WeakMap<FiniteModel, Structure>();
+
 /**
- * The value of a term under an assignment to the variables.
- *
- * An unbound variable throws. A variable free in an exercise's formulas is a
- * field of its own, read into the assignment evaluation starts from, so
- * reaching this means a caller evaluated without it. Carnap answers the same
- * way — "it doesn't make sense to ask for the semantic value of an unbound
- * variable" — and both are internal-error paths, not anything a student can
- * provoke.
- *
- * A constant or function value the model does not carry falls back to the first
- * domain element. A complete model has all of them, and every caller validates
- * before evaluating; the fallback keeps evaluation total for a model still being
- * filled in, and keeps the value inside the domain, which Carnap's `Term 0`
- * default does not.
+ * The model as a {@link Structure}: every question a lookup in its tables.
+ * An absent entry is `false` for a relation or sentence letter and no value
+ * for a constant or function, which the evaluator reads as its first-element
+ * fallback — the behaviour the model has always had.
  */
+export function modelStructure(model: FiniteModel): Structure {
+  const cached = structures.get(model);
+
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const structure: Structure = {
+    apply: (symbol, args) => model.functions.get(symbol)?.get(tupleKey(args)),
+    constant: (name) => model.constants.get(name),
+    domain: model.domain,
+    holds: (symbol, args) =>
+      model.relations.get(symbol)?.has(tupleKey(args)) ?? false,
+    proposition: (name) => model.propositions.get(name) ?? false,
+  };
+
+  structures.set(model, structure);
+
+  return structure;
+}
+
+/** The value of a term in a model under an assignment to the variables. */
 export function evaluateTerm(
   term: Term,
   model: FiniteModel,
   assignment: ReadonlyMap<string, number>,
 ): number {
-  const fallback = model.domain[0] ?? 0;
-
-  switch (term.type) {
-    case "variable": {
-      const value = assignment.get(term.name);
-
-      if (value === undefined) {
-        throw new Error(`No assignment for variable '${term.name}'.`);
-      }
-
-      return value;
-    }
-    case "constant":
-      return model.constants.get(term.name) ?? fallback;
-    default: {
-      const args = term.args.map((argument) =>
-        evaluateTerm(argument, model, assignment),
-      );
-
-      return (
-        model.functions
-          .get(symbolKey(term.name, term.args.length))
-          ?.get(tupleKey(args)) ?? fallback
-      );
-    }
-  }
+  return evaluateInStructure(term, modelStructure(model), assignment);
 }
 
 /** Whether the model satisfies the formula under an assignment. */
@@ -85,53 +74,5 @@ export function satisfies(
   model: FiniteModel,
   assignment: ReadonlyMap<string, number> = new Map(),
 ): boolean {
-  switch (formula.type) {
-    case "predicate": {
-      const key = symbolKey(formula.name, formula.args.length);
-
-      if (formula.args.length === 0) {
-        return model.propositions.get(formula.name) ?? false;
-      }
-
-      const tuple = formula.args.map((argument) =>
-        evaluateTerm(argument, model, assignment),
-      );
-
-      return model.relations.get(key)?.has(tupleKey(tuple)) ?? false;
-    }
-    case "identity":
-      return (
-        evaluateTerm(formula.left, model, assignment) ===
-        evaluateTerm(formula.right, model, assignment)
-      );
-    case "falsum":
-      return false;
-    case "verum":
-      return true;
-    case "not":
-      return !satisfies(formula.operand, model, assignment);
-    case "forall":
-    case "exists": {
-      const extended = new Map(assignment);
-      const holds = (element: number): boolean => {
-        extended.set(formula.variable, element);
-        return satisfies(formula.body, model, extended);
-      };
-
-      return formula.type === "forall"
-        ? model.domain.every(holds)
-        : model.domain.some(holds);
-    }
-    // Every binary connective is its truth function applied to the two
-    // operands' values, which is the whole of what a model has to say about
-    // one — including the twelve past the four a textbook usually takes as
-    // primitive. Both operands are evaluated either way: the short-circuit the
-    // four used to get was never observable, since evaluation is total.
-    default:
-      return applyBinaryConnective(
-        formula.type,
-        satisfies(formula.left, model, assignment),
-        satisfies(formula.right, model, assignment),
-      );
-  }
+  return satisfiesInStructure(formula, modelStructure(model), assignment);
 }

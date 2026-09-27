@@ -5,6 +5,7 @@ import { createDefaultExerciseRegistry } from "../../src/worker/application/cont
 import type { AppStores } from "../../src/worker/application/stores";
 import type { Env } from "../../src/worker/env";
 import { appRequest, createTestApp } from "../helpers/app";
+import { BLOCKS_SPEC_SOURCE } from "../helpers/blocks-language";
 import {
   authHeaders,
   jsonRequest,
@@ -63,6 +64,9 @@ export interface Fixture {
  * the first two by default, the Fitch one by name — rather than the local
  * `prop` block, which declares no quantifiers for them to read.
  */
+// The world exercises write their object lines shape first ("tet small"):
+// "small tet" is also a message id, and this source is shown on the revision
+// pages the pseudolocale test reads.
 const LESSON_SOURCE = `# Accessibility fixture lesson
 
 A short prose paragraph so the page has flowing content too.
@@ -143,6 +147,35 @@ Build a model in which this is true.
 Symbolize *it rains and it pours* with \`P\` for rain and \`Q\` for pour.
 
 - P /\\ Q
+::::
+
+:::aufbau-mm0{name="blocks"}
+${BLOCKS_SPEC_SOURCE}:::
+
+::::world{#wd system="blocks" budget="1" points="1"}
+Make the sentence true.
+
+- ∃x(Cube(x) ∧ LeftOf(x, a))
+- false: ∃x Large(x)
+
+| law : ∀x∀y(SameRow(x,y) → x = y)
+| pinned block : tet small at 3,1 named a
+| block : dodec medium at 5,4
+::::
+
+::::world{#wv system="blocks" variant="evaluate" points="1"}
+Say whether the sentence holds.
+
+- Tet(a)
+
+| block : tet small at 3,1 named a
+::::
+
+::::world{#wx system="blocks" variant="distinguish" points="1"}
+Tell the worlds apart.
+
+| A block : cube small at 2,2
+| B block : cube large at 2,2
 ::::`;
 
 /**

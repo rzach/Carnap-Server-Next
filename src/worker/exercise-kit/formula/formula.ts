@@ -177,7 +177,20 @@ function uninterpretable(
  * a declaration that said nothing.
  */
 function firstOrderSignature(node: AppTerm, lang: SurfaceLanguage): boolean {
-  const info = lang.spec.terms.get(node.term);
+  return hasFirstOrderSignature(node.term, lang);
+}
+
+/**
+ * Whether a constructor, by name, has the ordinary first-order reading
+ * {@link firstOrderSignature} describes. Exported for the consumers that check
+ * a spec's declarations before any formula is written in it — a world type
+ * refusing a `blocks.*` role on a constructor it could never read, say.
+ */
+export function hasFirstOrderSignature(
+  term: string,
+  lang: SurfaceLanguage,
+): boolean {
+  const info = lang.spec.terms.get(term);
 
   if (info === undefined) {
     return false;
@@ -430,6 +443,42 @@ export function splitFormulaList(source: string): string[] {
   return pieces;
 }
 
+/**
+ * Parse one term at the spec's individual sort — a name an author gives an
+ * object, say — collecting every syntax error it has.
+ */
+export function parseTerm(
+  source: string,
+  lang: SurfaceLanguage,
+):
+  | { readonly ok: true; readonly term: Term }
+  | { readonly ok: false; readonly errors: readonly ParseError[] } {
+  const sort = individualSorts(lang)[0];
+
+  if (sort === undefined) {
+    return {
+      errors: [{ message: "This formula could not be read.", position: 0 }],
+      ok: false,
+    };
+  }
+
+  const result = lang.parse(source, { sort });
+
+  if (!result.ok) {
+    return { errors: formulaParseErrors(result.diagnostics), ok: false };
+  }
+
+  try {
+    return { ok: true, term: readTerm(result.term, lang) };
+  } catch (error) {
+    if (error instanceof Unreadable) {
+      return { errors: [error.detail], ok: false };
+    }
+
+    throw error;
+  }
+}
+
 /** Parse one first-order formula, collecting every syntax error it has. */
 export function parseFormula(
   source: string,
@@ -451,6 +500,75 @@ export function parseFormula(
 
     throw error;
   }
+}
+
+/**
+ * A formula with the span of source text it was read from, and its immediate
+ * subformulas the same way — what lets a reader point at part of a written
+ * sentence and ask what that part says.
+ */
+export interface FormulaNode {
+  readonly children: readonly FormulaNode[];
+  readonly end: number;
+  readonly formula: Formula;
+  readonly start: number;
+}
+
+/**
+ * Parse a formula and keep the tree of its subformulas with their spans.
+ *
+ * Every sentence-sorted node of the parse is one subformula, read with the
+ * same reader {@link parseFormula} uses; terms inside it are not nodes of
+ * their own. The parse runs without the spec's lints, because the parts of a
+ * closed sentence are open formulas (`LeftOf(y,x)` inside `∀x∃yLeftOf(y,x)`),
+ * and a part is exactly what this is for. `null` when the whole does not read.
+ */
+export function parseFormulaTree(
+  source: string,
+  lang: SurfaceLanguage,
+): FormulaNode | null {
+  const sort = sentenceSort(lang);
+  const result = lang.parse(
+    source,
+    sort === undefined ? { lints: false } : { lints: false, sort },
+  );
+
+  if (!result.ok) {
+    return null;
+  }
+
+  const sentence = sort ?? lang.provableSort;
+
+  const collect = (node: SurfaceTerm): FormulaNode[] => {
+    const inner = bare(node, lang);
+
+    if (inner.kind === "variable") {
+      return [];
+    }
+
+    if (inner.sort === sentence) {
+      try {
+        return [
+          {
+            children: inner.args.flatMap(collect),
+            end: inner.span.end,
+            formula: readFormula(inner, lang),
+            start: inner.span.start,
+          },
+        ];
+      } catch (error) {
+        if (error instanceof Unreadable) {
+          return [];
+        }
+
+        throw error;
+      }
+    }
+
+    return inner.args.flatMap(collect);
+  };
+
+  return collect(result.term)[0] ?? null;
 }
 
 /**

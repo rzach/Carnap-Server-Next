@@ -9,6 +9,7 @@ import { MULTIPLE_CHOICE_EXERCISE } from "./multiple-choice";
 import { SHORT_ANSWER_EXERCISE } from "./short-answer";
 import { TRANSLATION_EXERCISE } from "./translation";
 import { TRUTH_TABLE_EXERCISE } from "./truth-table";
+import { WORLD_EXERCISE } from "./world";
 
 /**
  * Every exercise type, once, in the order they are registered.
@@ -33,4 +34,5 @@ export const EXERCISE_TYPES: readonly ExerciseType[] = [
   AUFBAU_PROOF_FITCH_EXERCISE,
   AUFBAU_PROOF_PRAWITZ_EXERCISE,
   TRANSLATION_EXERCISE,
+  WORLD_EXERCISE,
 ];

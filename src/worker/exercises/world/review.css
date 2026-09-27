@@ -1,0 +1,9 @@
+/*
+ * Shadow-DOM styles for the world `review` widget: the verdict above the
+ * submitted world, marks, or sentence. The body reuses the widget's own
+ * stylesheet, so the review looks like the exercise the student worked in.
+ */
+
+.world-review-verdict {
+  margin: 0 0 0.5rem;
+}

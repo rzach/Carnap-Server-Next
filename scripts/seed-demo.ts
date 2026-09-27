@@ -15,6 +15,8 @@
  *   gentzen          Gentzen's classical sequent calculus (LK), as trees
  *   gentzen-starter  LK with pre-populated trees, published into an existing
  *                    course (default the "Truth Tables demo"; see --course)
+ *   world            worlds of blocks: build, evaluate, counterexample,
+ *                    distinguish
  *
  * Flags: --base=URL (default http://localhost:8787), --email=ADDR,
  * --course=SUBSTRING (publish into the existing course whose title contains
@@ -27,6 +29,7 @@ import { GENTZEN_DEMO_SOURCE } from "../tests/helpers/gentzen-demo";
 import { GENTZEN_STARTER_DEMO_SOURCE } from "../tests/helpers/gentzen-starter-demo";
 import { PRAWITZ_DEMO_SOURCE } from "../tests/helpers/prawitz-demo";
 import { SHOWCASE_DEMO_SOURCE } from "../tests/helpers/showcase-demo";
+import { WORLD_DEMO_SOURCE } from "../tests/helpers/world-demo";
 import {
   flag,
   type LessonSeed,
@@ -74,6 +77,14 @@ const DEMOS: Readonly<Record<string, LessonSeed>> = {
       "Every exercise type, each shown next to the source that produced it.",
     itemTitle: "A tour of the exercise types",
     sourceText: SHOWCASE_DEMO_SOURCE,
+  },
+  world: {
+    assignmentTitle: "Worlds of blocks",
+    courseTitle: "Logic demo — worlds",
+    description:
+      "Sentences about a board of blocks: build, evaluate, find a counterexample, tell two worlds apart.",
+    itemTitle: "Worlds of blocks",
+    sourceText: WORLD_DEMO_SOURCE,
   },
 };
 

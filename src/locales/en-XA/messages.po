@@ -28,6 +28,10 @@ msgid "“{construct}” is not something this exercise type can interpret."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
+msgid "“{formula}” has free variables, and a world exercise's sentences must have none."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
 msgid "“{formula}” is not propositional; a prop translation uses sentence letters and connectives only."
 msgstr ""
 
@@ -42,8 +46,24 @@ msgid "“{inner}” needs parentheses inside “{outer}”."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
+msgid "“{key}” is not a line a world exercise reads. It reads {keys}."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
 #: src/worker/logic/specs/strings.ts
 msgid "“{name}” is a free variable; every formula must be a sentence."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "“{name}” is not a name in this language."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "“{name}” names two objects."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "“{object}” does not read as an object. Write it like “large cube at 3,5 named a, b”."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -53,6 +73,14 @@ msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "“{path}” is not a path this site serves. A theory kept somewhere else is not supported yet."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "“{symbol}” has the role “{role}” but does not take individuals as its arguments."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "“{symbol}” with {arity} arguments has no meaning in a {world} world. Give it one of the world's roles in the language, or leave it out."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -66,6 +94,34 @@ msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "“{value}” is not something “{field}” can contain."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "“{word}” is not a shape or size this world knows."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{block} at column {col}, row {row}"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{block} at column {col}, row {row}, named {names}"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{block} has no names now."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{block} is now a {kind}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{block} is now named {names}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{block} is pinned and cannot be changed."
 msgstr ""
 
 #: src/worker/web/content.tsx
@@ -117,6 +173,30 @@ msgstr ""
 msgid "{field}: which element it names"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "{formula}: counterexamples {objects}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula}: false."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula}: satisfied by {objects}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula}: satisfied by nothing."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula}: true."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula}: witnesses {objects}."
+msgstr ""
+
 #: src/worker/web/ui-strings.ts
 msgid "{id} — {status}"
 msgstr ""
@@ -141,9 +221,21 @@ msgstr ""
 msgid "{minutes} min limit"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "{name} already names {block}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{name} names both {block} and {other}."
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/ui-strings.ts
 msgid "{score}/{maxScore} · {evaluator}"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{sentence}: your mark"
 msgstr ""
 
 #: src/worker/web/lti.tsx
@@ -199,8 +291,20 @@ msgstr ""
 msgid "A constraint exercise needs at least one constraint before the ':'."
 msgstr ""
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Cube(a) :|-: Large(a)'."
+msgstr ""
+
 #: src/worker/application/courses.ts
 msgid "A course must keep at least one active instructor."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A distinguish exercise lists no sentences: the student writes one."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A distinguish exercise's objects belong to world A or world B: write “| A {key} : …” or “| B {key} : …”."
 msgstr ""
 
 #: src/worker/exercises/model/strings.ts
@@ -346,6 +450,22 @@ msgstr ""
 msgid "A validity sequent needs at least one premise before the ':|-:' turnstile."
 msgstr ""
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A world data line is written “| key : value”."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A world exercise needs at least one sentence."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "A world may hold at most {max} blocks."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A world may hold at most {max} objects."
+msgstr ""
+
 #: src/worker/application/lti-admin.ts
 #: src/worker/web/admin-lti.tsx
 msgid "Access token URL"
@@ -423,6 +543,10 @@ msgstr ""
 msgid "Actor"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Add a block here"
+msgstr ""
+
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Add a hypothesis above the line"
 msgstr ""
@@ -441,6 +565,10 @@ msgstr ""
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "Add assumption above (h)"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Add block"
 msgstr ""
 
 #: src/worker/web/admin-lti.tsx
@@ -491,6 +619,10 @@ msgstr ""
 msgid "Added"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Added a {block} at column {col}, row {row}."
+msgstr ""
+
 #: src/worker/web/content.tsx
 msgid "Address to name in an aufbau-mm0 src"
 msgstr ""
@@ -524,6 +656,10 @@ msgstr ""
 msgid "All of your courses are archived."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Allowed symbols: {symbols}"
+msgstr ""
+
 #: src/worker/web/content.tsx
 msgid "Also a language: formulas are read at the sort {sort}, so exercises can be set in it too."
 msgstr ""
@@ -542,6 +678,10 @@ msgstr ""
 
 #: src/worker/application/courses.ts
 msgid "An email address is required."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "An evaluate exercise's sentences take no true: or false: prefix; the world decides their values."
 msgstr ""
 
 #: src/worker/web/donate.tsx
@@ -842,6 +982,10 @@ msgstr ""
 msgid "blank"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Board"
+msgstr ""
+
 #: src/worker/routes/admin.ts
 msgid "Bootstrap failed"
 msgstr ""
@@ -869,6 +1013,10 @@ msgstr ""
 
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Cancel counterexample"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Cannot be evaluated in this world"
 msgstr ""
 
 #: src/worker/web/admin.tsx
@@ -931,8 +1079,13 @@ msgstr ""
 msgid "Change saved."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Changes: {used} of {limit}"
+msgstr ""
+
 #: src/worker/exercises/model/strings.ts
 #: src/worker/exercises/truth-table/strings.ts
+#: src/worker/exercises/world/strings.ts
 msgid "Check"
 msgstr ""
 
@@ -992,6 +1145,26 @@ msgstr ""
 msgid "Closes {when}"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Column"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Column {col}, row {row}"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Column {col}, row {row} already holds {block}."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Column {col}, row {row} is not on the board."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Column {col}, row {row}: {block}"
+msgstr ""
+
 #: src/worker/web/content.tsx
 msgid "Compiled content"
 msgstr ""
@@ -1002,6 +1175,10 @@ msgstr ""
 
 #: src/worker/web/profile-prompt.tsx
 msgid "Complete your profile"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Conclusion"
 msgstr ""
 
 #: src/worker/web/lti.tsx
@@ -1098,8 +1275,16 @@ msgstr ""
 msgid "Copied"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Copied."
+msgstr ""
+
 #: src/worker/web/components.tsx
 msgid "Copy"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Copy as source"
 msgstr ""
 
 #: src/worker/web/ui-strings.ts
@@ -1131,6 +1316,14 @@ msgstr ""
 #: src/worker/exercises/truth-table/assessment.ts
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Correct cells: {count} of {total}"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Correct: {correct} of {total}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Correct: {correct} of {total}. Take another look at: {formulas}."
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -1369,6 +1562,10 @@ msgstr ""
 msgid "CSV of the whole course's grades"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Cube"
+msgstr ""
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Delete (Del)"
@@ -1482,6 +1679,10 @@ msgstr ""
 msgid "Document"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Dodec"
+msgstr ""
+
 #: src/worker/exercises/model/strings.ts
 msgid "Domain"
 msgstr ""
@@ -1516,6 +1717,10 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Draft settings"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Drag a block to move it, or drag a shape from the palette onto a square to add one. On a touch screen, tap a block and then tap a square."
 msgstr ""
 
 #: src/worker/web/labels.ts
@@ -1685,6 +1890,10 @@ msgstr ""
 msgid "Every recorded submission has been reviewed."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Every sentence is marked correctly."
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Excuse exercise"
 msgstr ""
@@ -1788,7 +1997,12 @@ msgid "false"
 msgstr ""
 
 #: src/worker/exercises/model/strings.ts
+#: src/worker/exercises/world/strings.ts
 msgid "False"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "False in this world"
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -1866,6 +2080,10 @@ msgstr ""
 
 #: src/worker/exercises/free-response/types.ts
 msgid "Free-response question"
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Give symbols or without, not both."
 msgstr ""
 
 #: src/worker/application/assignments.ts
@@ -2090,6 +2308,22 @@ msgstr ""
 msgid "Language"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Large"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "large cube"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "large dodec"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "large tet"
+msgstr ""
+
 #: src/worker/web/courses.tsx
 msgid "Last attempt"
 msgstr ""
@@ -2116,6 +2350,10 @@ msgstr ""
 
 #: src/worker/web/lti.tsx
 msgid "Launch failed"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Laws"
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -2238,6 +2476,22 @@ msgstr ""
 msgid "Main navigation"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Make false"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Make it a tet, cube, or dodec"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Make it small, medium, or large"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Make true"
+msgstr ""
+
 #: src/worker/web/courses.tsx
 msgid "Manage accommodations for {name}"
 msgstr ""
@@ -2277,6 +2531,22 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Max percent penalty"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Medium"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "medium cube"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "medium dodec"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "medium tet"
 msgstr ""
 
 #: src/worker/web/profile.tsx
@@ -2332,6 +2602,14 @@ msgstr ""
 msgid "Move between lines, leaving the ticks alone"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Move between squares"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Moved {block} to column {col}, row {row}."
+msgstr ""
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Multiple-choice mode must be single or multiple."
 msgstr ""
@@ -2351,12 +2629,24 @@ msgstr ""
 msgid "Name"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Name it"
+msgstr ""
+
 #: src/worker/application/auth.ts
 msgid "Name must be 200 characters or less."
 msgstr ""
 
 #: src/worker/web/admin-lti.tsx
 msgid "Name, optional"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Names"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Names for {block}"
 msgstr ""
 
 #: src/worker/web/labels.ts
@@ -2433,6 +2723,10 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "No attempts have been opened."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "No blocks yet."
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -2561,6 +2855,10 @@ msgstr ""
 msgid "Not allowed"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Not allowed: {symbols}"
+msgstr ""
+
 #: src/worker/exercise-kit/actions.ts
 msgid "Not correct yet"
 msgstr ""
@@ -2571,6 +2869,18 @@ msgstr ""
 
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Not correct yet."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Not every law holds. Take another look at: {formulas}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Not every name in the sentence names something in both worlds: {names}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Not every sentence comes out as marked. Take another look at: {formulas}."
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -2598,6 +2908,14 @@ msgstr ""
 msgid "Not yet graded"
 msgstr ""
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Nothing in the world is named “{name}”, which “{formula}” uses."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Nothing in this world is named {names}."
+msgstr ""
+
 #: src/worker/web/content.tsx
 msgid "Nothing to preview yet"
 msgstr ""
@@ -2605,6 +2923,30 @@ msgstr ""
 #: src/worker/web/components.tsx
 #: src/worker/web/ui-strings.ts
 msgid "now worth {points}"
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Only a build or counterexample exercise has a budget."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Only a build or counterexample exercise has laws."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Only a build or counterexample exercise has pinned objects."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Only a counterexample exercise is written as an argument with ':|-:'."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Only a distinguish exercise has worlds A and B."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Only a distinguish exercise takes symbols or without."
 msgstr ""
 
 #: src/worker/application/grade-passback.ts
@@ -2669,6 +3011,10 @@ msgstr ""
 
 #: src/worker/application/assignments.ts
 msgid "Only published assignments can release grades."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Only sentence list items and | lines may follow the first sentence."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -2779,6 +3125,14 @@ msgstr ""
 msgid "person@example.edu"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Pick up or drop a block"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Picked up {block}. Arrow keys carry it, Enter drops it, Escape puts it back."
+msgstr ""
+
 #: src/worker/web/admin.tsx
 msgid "Platform administration"
 msgstr ""
@@ -2827,6 +3181,10 @@ msgstr ""
 msgid "Please log in"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Point at part of a sentence to see what it is true of."
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Policy and grading controls"
 msgstr ""
@@ -2858,6 +3216,10 @@ msgstr ""
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "Prawitz proof workspace"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Premise"
 msgstr ""
 
 #. Chip under a selected proof tree; {order} is its 1-based position in the premise order.
@@ -2975,6 +3337,14 @@ msgstr ""
 msgid "Published settings"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Put {block} back."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Put a carried block back"
+msgstr ""
+
 #: src/worker/web/content.tsx
 msgid "Quote this address in an aufbau-mm0 block's src to build proofs on this theory. It names this revision, so later revisions leave existing lessons alone."
 msgstr ""
@@ -3017,6 +3387,7 @@ msgstr ""
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
+#: src/worker/exercises/world/strings.ts
 msgid "Redo"
 msgstr ""
 
@@ -3062,6 +3433,18 @@ msgstr ""
 msgid "Remove"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Remove block"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Remove it"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Removed {block}."
+msgstr ""
+
 #: src/worker/web/courses.tsx
 msgid "Removed user"
 msgstr ""
@@ -3088,6 +3471,7 @@ msgstr ""
 
 #: src/worker/exercises/model/assessment.ts
 #: src/worker/exercises/truth-table/assessment.ts
+#: src/worker/exercises/world/assessment.ts
 msgid "Result"
 msgstr ""
 
@@ -3178,6 +3562,10 @@ msgstr ""
 
 #: src/worker/web/admin.tsx
 msgid "Role & status"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Row"
 msgstr ""
 
 #: src/worker/web/components.tsx
@@ -3304,6 +3692,10 @@ msgstr ""
 msgid "Sending your selection back to the LMS…"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Sentences"
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Set an override for {name}"
 msgstr ""
@@ -3318,6 +3710,10 @@ msgstr ""
 
 #: src/worker/routes/assignments.ts
 msgid "Settings not updated"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Shape"
 msgstr ""
 
 #: src/worker/web/content.tsx
@@ -3362,6 +3758,26 @@ msgstr ""
 
 #: src/worker/application/admin.ts
 msgid "Site administrators cannot suspend their own account."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Size"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Small"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "small cube"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "small dodec"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "small tet"
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -3529,6 +3945,10 @@ msgstr ""
 msgid "System “{system}” declares no “@syntax role {role}”, which a Fitch or Prawitz proof needs to write its lines. Put the annotation on the declaration that plays that part."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Table"
+msgstr ""
+
 #: src/worker/web/admin.tsx
 msgid "Targets"
 msgstr ""
@@ -3543,6 +3963,14 @@ msgstr ""
 
 #: src/worker/web/content.tsx
 msgid "Terms"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Tet"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "That block is not in this world."
 msgstr ""
 
 #: src/worker/application/assignments.ts
@@ -3571,6 +3999,10 @@ msgstr ""
 
 #: src/worker/application/content.ts
 msgid "That source is identical to an existing revision of this item."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "That square is off the board."
 msgstr ""
 
 #: src/worker/exercises/truth-table/strings.ts
@@ -3619,6 +4051,14 @@ msgstr ""
 
 #: src/worker/application/errors.ts
 msgid "The attempt was not found."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "the block at column {col}, row {row}"
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The budget attribute must be a whole number of objects, 0 or more."
 msgstr ""
 
 #: src/worker/application/lti.ts
@@ -3753,6 +4193,14 @@ msgstr ""
 msgid "The label “{label}” is defined more than once."
 msgstr ""
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The language has no symbol “{symbol}”."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The language uses the role “{role}”, which a {world} world does not have."
+msgstr ""
+
 #: src/worker/application/lti.ts
 msgid "The launch did not identify a course."
 msgstr ""
@@ -3767,6 +4215,10 @@ msgstr ""
 
 #: src/worker/routes/lti.ts
 msgid "The launch from the LMS was incomplete."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The law “{formula}” is false in the starting world."
 msgstr ""
 
 #: src/worker/web/courses.tsx
@@ -3873,8 +4325,36 @@ msgstr ""
 msgid "The reference segment needs {expected} tokens (one per atom); found {found}."
 msgstr ""
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The role “{role}” needs {arity} arguments, but “{symbol}” takes {declared}."
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 msgid "The saved form of this revision does not match what the compiler produces, so the content cannot be shown or answered."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "The sentence does not tell the two worlds apart."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "The sentence has free variables: {variables}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "The sentence is false in world A and true in world B."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "The sentence is false in world A."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "The sentence is true in world A and false in world B."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "The sentence is true in world B."
 msgstr ""
 
 #: src/worker/web/content.tsx
@@ -3883,6 +4363,10 @@ msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The starter proof has no lines."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The starting world already does everything this exercise asks."
 msgstr ""
 
 #: src/worker/web/courses.tsx
@@ -3909,10 +4393,18 @@ msgstr ""
 msgid "The system “{name}” does not read as a language, so an exercise cannot be set in it. The reason is reported on the aufbau-mm0 block that declares it."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "The table lists every block and can do everything the board does."
+msgstr ""
+
 #: src/worker/application/admin.ts
 #: src/worker/application/auth.ts
 #: src/worker/application/courses.ts
 msgid "The user was not found."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The variant attribute must be evaluate, build, counterexample, or distinguish."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -3935,6 +4427,10 @@ msgstr ""
 msgid "The verification service could not be reached. Please try again shortly."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "The world"
+msgstr ""
+
 #: src/worker/application/content/theory-panel.ts
 #: src/worker/web/content.tsx
 msgid "Theory"
@@ -3952,8 +4448,16 @@ msgstr ""
 msgid "There is no autograded score to approve on this submission."
 msgstr ""
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "There is no world kind called “{world}”. Known kinds: {known}."
+msgstr ""
+
 #: src/worker/exercises/truth-table/strings.ts
 msgid "There's an error somewhere."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "These are pinned and have been changed: {objects}."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -3970,6 +4474,10 @@ msgstr ""
 
 #: src/worker/exercises/translation/strings.ts
 msgid "This answer does not parse, so it cannot be submitted on an exam."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "This answer holds no world."
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -4027,6 +4535,10 @@ msgstr ""
 
 #: src/worker/web/ui-strings.ts
 msgid "This exercise couldn't load. Please reload the page."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "This exercise does not allow {symbols}."
 msgstr ""
 
 #: src/worker/web/ui-strings.ts
@@ -4193,6 +4705,26 @@ msgstr ""
 msgid "This value cannot be read."
 msgstr ""
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "This world breaks the rules of its kind."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "This world changes {used} objects; the most allowed is {limit}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "This world does everything the exercise asks."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "This world does not yet do everything the exercise asks."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "This world gives no meaning to {symbols}."
+msgstr ""
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "Tick or untick the line"
 msgstr ""
@@ -4267,7 +4799,12 @@ msgid "true"
 msgstr ""
 
 #: src/worker/exercises/model/strings.ts
+#: src/worker/exercises/world/strings.ts
 msgid "True"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "True in this world"
 msgstr ""
 
 #: src/worker/exercises/truth-table/assessment.ts
@@ -4277,6 +4814,14 @@ msgstr ""
 
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Turnstile"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Two blocks share column {col}, row {row}: {block} and {other}."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Two objects stand on column {col}, row {row}."
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -4300,14 +4845,23 @@ msgstr ""
 msgid "Unarchive course"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Undid the last change."
+msgstr ""
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
+#: src/worker/exercises/world/strings.ts
 msgid "Undo"
 msgstr ""
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Undo (Ctrl-Z)"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Undo the last change"
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -4436,6 +4990,10 @@ msgstr ""
 msgid "Using the proof tree editor"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Using the world editor"
+msgstr ""
+
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Valid counterexample."
 msgstr ""
@@ -4487,8 +5045,24 @@ msgstr ""
 msgid "Whoever names this from a lesson freezes its text into that lesson, and their students read it there. Sharing a theory to be named is sharing what it says."
 msgstr ""
 
+#: src/worker/exercises/world/types.ts
+msgid "World"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "World A"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "World B"
+msgstr ""
+
 #: src/worker/web/content.tsx
 msgid "Write"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Write a sentence first."
 msgstr ""
 
 #: src/worker/web/courses.tsx
@@ -4605,6 +5179,10 @@ msgstr ""
 
 #: src/worker/web/courses.tsx
 msgid "Your role"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Your sentence"
 msgstr ""
 
 #: src/worker/routes/lti.ts

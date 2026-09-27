@@ -31,10 +31,13 @@ import toolbarStyles from "./toolbar-icons.css" with { type: "text" };
 export type ToolbarIconName =
   | "add-above"
   | "add-assumption-above"
+  | "add-block"
   | "apply-below"
   | "delete"
+  | "name"
   | "new-assumption"
   | "redo"
+  | "remove-block"
   | "undo";
 
 export const TOOLBAR_ICON_VIEWBOX = "0 0 20 20";
@@ -64,6 +67,14 @@ export const TOOLBAR_ICON_PATHS: Readonly<
   // `[+]` on its own: a leaf with no inference under it.
   "new-assumption": ["M10 6.5v7M6.5 10h7", "M5.5 4h-2v12h2M14.5 4h2v12h-2"],
   redo: ["M13 4.5L16.5 8 13 11.5", "M16.5 8H8a4 4 0 0 0 0 8h4"],
+  // The world editor's: a block with a `+` beside it, the same block with an
+  // `×`, and a lowercase `a`, the first of the names a block can carry.
+  "add-block": ["M2.5 8.5h8v8h-8z", "M15 3v6M12 6h6"],
+  "remove-block": ["M2.5 8.5h8v8h-8z", "M12.5 3.5l5 5M17.5 3.5l-5 5"],
+  name: [
+    "M13.5 11.5a3.75 3.75 0 1 1-7.5 0a3.75 3.75 0 1 1 7.5 0",
+    "M13.5 7.25v8.5",
+  ],
   undo: ["M7 4.5L3.5 8l3.5 3.5", "M3.5 8h8.5a4 4 0 0 1 0 8H8"],
 };
 

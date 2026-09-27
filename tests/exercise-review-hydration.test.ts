@@ -62,12 +62,14 @@ const ANSWERS: Readonly<Record<string, JsonValue>> = {
   "model@1": { domain: "1", fields: {} },
   "translation@1": { text: "F(a)" },
   "truth-table@1": { cells: [], reference: [] },
+  "world@1": { world: { kind: "blocks@1", objects: [] } },
 };
 
 /** The reviews that carry no payload because nothing in them runs. */
 const SERVER_DRAWN: ReadonlySet<string> = new Set([
   "model@1",
   "translation@1",
+  "world@1",
 ]);
 
 /** The one payload the review markup embeds for its element. */

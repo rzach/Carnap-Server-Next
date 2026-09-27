@@ -51,7 +51,7 @@ export {
   tuplesOver,
 } from "./fields";
 export type { FiniteModel } from "./model";
-export { evaluateTerm, satisfies } from "./model";
+export { evaluateTerm, modelStructure, satisfies } from "./model";
 export type { ModelField, ModelFieldKind } from "./signature";
 export {
   blankedLabel,

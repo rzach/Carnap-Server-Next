@@ -29,13 +29,22 @@ import type { NotationInfo, SurfaceLanguage } from "@aufbau/syntax";
 
 export interface RoleIndex {
   /**
-   * The role a constructor plays, or `null` for one with no role at all —
-   * every lexicon letter, and the coercions between sorts.
+   * The core role a constructor plays, or `null` for one with no core role —
+   * every lexicon letter, the coercions between sorts, and a constructor
+   * whose only roles are namespaced ({@link isNamespacedRole}).
    *
-   * A term may carry more than one `@syntax role`; the first wins, since a
-   * consumer asking "what is this node" wants one answer.
+   * A term may carry more than one `@syntax role`; the first core one wins,
+   * since a consumer asking "what is this node" wants one answer.
    */
   roleOf(term: string): string | null;
+  /**
+   * Every role in a namespace, mapped to the constructor playing it:
+   * `rolesIn("blocks")` might give `blocks.cube → Cube`. The consumer that
+   * owns the namespace reads these; to everyone else the constructors are
+   * role-less. The first constructor declared with a role wins, as for
+   * {@link termFor}.
+   */
+  rolesIn(namespace: string): ReadonlyMap<string, string>;
   /**
    * The canonical spelling of the role's constructor.
    *
@@ -127,6 +136,20 @@ export function argumentListSort(lang: SurfaceLanguage): string | undefined {
   return sortsWithRole(lang, "argument-list")[0];
 }
 
+/**
+ * Whether a role belongs to one consumer's namespace rather than the core
+ * vocabulary: `blocks.left-of` does, `conjunction` does not.
+ *
+ * A dotted role is the convention by which a spec says what a symbol means to
+ * one exercise type without saying anything to the others. The world exercise
+ * reads `blocks.cube` as "the block is a cube"; the model and the translation
+ * read the same constructor as an ordinary predicate, because to them it has
+ * no role at all. So one blocks language serves all three.
+ */
+export function isNamespacedRole(role: string): boolean {
+  return role.includes(".");
+}
+
 /** Built once per language, like the language's own tables. */
 const indexes = new WeakMap<SurfaceLanguage, RoleIndex>();
 
@@ -172,24 +195,36 @@ export function roleIndex(lang: SurfaceLanguage): RoleIndex {
   }
 
   for (const [name, info] of lang.spec.terms) {
-    const role = info.roles[0];
+    const core = info.roles.find((role) => !isNamespacedRole(role));
 
-    if (role === undefined) {
-      continue;
+    if (core !== undefined) {
+      roleOfTerm.set(name, core);
     }
-
-    roleOfTerm.set(name, role);
 
     // A role declared twice is a spec bug rather than something to arbitrate,
     // and `tests/language-specs.test.ts` is where it would surface; the first
     // declaration wins so the reading is at least stable.
-    if (!termOfRole.has(role)) {
-      termOfRole.set(role, name);
+    for (const role of info.roles) {
+      if (!termOfRole.has(role)) {
+        termOfRole.set(role, name);
+      }
     }
   }
 
   const index: RoleIndex = {
     roleOf: (term) => roleOfTerm.get(term) ?? null,
+    rolesIn: (namespace) => {
+      const prefix = `${namespace}.`;
+      const roles = new Map<string, string>();
+
+      for (const [role, term] of termOfRole) {
+        if (role.startsWith(prefix)) {
+          roles.set(role, term);
+        }
+      }
+
+      return roles;
+    },
     spellingFor: (role) => {
       const term = termOfRole.get(role);
 
