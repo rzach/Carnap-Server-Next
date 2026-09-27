@@ -17,7 +17,7 @@ import {
   firstOrderLanguageFor,
   formatFunctionTable,
   modelSignature,
-  parseFormula,
+  parseEngineFormula,
   parseFunctionTable,
   tupleKey,
 } from "./logic";
@@ -106,7 +106,7 @@ export function resolveModel(
     const formulas: Formula[] = [];
 
     for (const source of sources) {
-      const parsed = parseFormula(source, language);
+      const parsed = parseEngineFormula(source, language);
 
       if (!parsed.ok) {
         return null;

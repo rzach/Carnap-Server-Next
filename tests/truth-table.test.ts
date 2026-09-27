@@ -21,6 +21,8 @@ import {
   type CellSegment,
   type Formula,
   formulaLayout,
+  formulaToString,
+  parseEngineFormula,
   parseFormula,
   truthTableLanguage,
 } from "../src/worker/exercises/truth-table/logic";
@@ -41,6 +43,7 @@ import {
   passthroughTranslator,
   type Translator,
 } from "../src/worker/i18n/translator";
+import { languageById } from "../src/worker/logic/specs";
 
 /** Review text is resolved for a viewer, so a review needs a translator. */
 const REVIEW_CONTEXT = {
@@ -88,6 +91,25 @@ async function compileCodes(source: string): Promise<string[]> {
 
 function publicDataOf(item: ExerciseManifestItem): TruthTablePublicData {
   return item.publicData as unknown as TruthTablePublicData;
+}
+
+/** Stored engine text as a reader is shown it, in a built-in language. */
+function shownIn(language: string, engines: readonly string[]): string[] {
+  const lang = languageById(language);
+
+  if (lang === null) {
+    throw new Error(`no built-in language ${language}`);
+  }
+
+  return engines.map((engine) => {
+    const read = parseEngineFormula(engine, lang);
+
+    if (!read.ok) {
+      throw new Error(`'${engine}' does not read back`);
+    }
+
+    return formulaToString(read.formula, lang);
+  });
 }
 
 /** Just the fillable cells of a formula, in left-to-right display order. */
@@ -274,7 +296,11 @@ describe("truth-table compile", () => {
     );
     const data = publicDataOf(artifact.manifest[0] as ExerciseManifestItem);
 
-    expect(data.formulas).toEqual(["(R(a,b) ∨ F(a))", "⊥", "R(a,b)"]);
+    expect(shownIn("forallx-calgary-2019", data.formulas)).toEqual([
+      "(R(a,b) ∨ F(a))",
+      "⊥",
+      "R(a,b)",
+    ]);
     expect(data.premiseCount).toBe(2);
   });
 
@@ -289,7 +315,10 @@ describe("truth-table compile", () => {
     );
     const data = publicDataOf(artifact.manifest[0] as ExerciseManifestItem);
 
-    expect(data.formulas).toEqual(["F(a)", "(F(a) ∨ F(b))"]);
+    expect(shownIn("forallx-calgary-2019", data.formulas)).toEqual([
+      "F(a)",
+      "(F(a) ∨ F(b))",
+    ]);
     expect(data.givens).toHaveLength(1);
   });
 

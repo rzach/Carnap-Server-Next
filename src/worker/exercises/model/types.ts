@@ -91,8 +91,8 @@ export interface ModelPublicData {
   readonly promptHtml: string;
   /**
    * Formulas that must come out true whatever else happens — a validity
-   * exercise's premises, a constraint exercise's constraints — in canonical
-   * source. Empty for a simple exercise.
+   * exercise's premises, a constraint exercise's constraints — as engine
+   * text. Empty for a simple exercise.
    */
   readonly required: readonly string[];
   /**
@@ -105,7 +105,7 @@ export interface ModelPublicData {
   readonly source?: string;
   readonly system?: string;
   readonly target: ModelTarget;
-  /** The formulas {@link target} applies to, in canonical source. Never empty. */
+  /** The formulas {@link target} applies to, as engine text. Never empty. */
   readonly targeted: readonly string[];
   readonly variant: ModelVariant;
 }

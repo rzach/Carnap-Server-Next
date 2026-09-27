@@ -48,7 +48,7 @@ import type {
   SurfaceLanguage,
   Term as SurfaceTerm,
 } from "@aufbau/syntax";
-import { printTerm } from "@aufbau/syntax";
+import { adjoin, printTerm } from "@aufbau/syntax";
 import { languageById, languageFromSource } from "../../../logic/specs";
 import type { BinaryConnective } from "../../../logic/specs/connectives";
 import {
@@ -77,7 +77,12 @@ export type Formula =
 export type ParseError = FormulaParseError;
 
 export type ParseResult =
-  | { readonly ok: true; readonly formula: Formula }
+  | {
+      readonly ok: true;
+      readonly formula: Formula;
+      /** The formula as engine text, which is what an exercise stores. */
+      readonly engine: string;
+    }
   | { readonly ok: false; readonly errors: readonly ParseError[] };
 
 /**
@@ -246,14 +251,38 @@ export function parseFormula(
   source: string,
   lang: SurfaceLanguage = prop(),
 ): ParseResult {
-  const result = lang.parse(source);
+  return readParse(lang.parse(source), lang);
+}
 
+/**
+ * Read back a formula an exercise stored: the engine text
+ * {@link parseFormula} gave it, without the lints, which were applied when
+ * the author's text was read.
+ */
+export function parseEngineFormula(
+  engine: string,
+  lang: SurfaceLanguage = prop(),
+): ParseResult {
+  return readParse(
+    lang.parse(engine, { lints: false, mode: "engine" }),
+    lang,
+  );
+}
+
+function readParse(
+  result: ReturnType<SurfaceLanguage["parse"]>,
+  lang: SurfaceLanguage,
+): ParseResult {
   if (!result.ok) {
     return { errors: formulaParseErrors(result.diagnostics), ok: false };
   }
 
   try {
-    return { formula: readFormula(result.term, lang), ok: true };
+    return {
+      engine: printTerm(lang, result.term, "engine"),
+      formula: readFormula(result.term, lang),
+      ok: true,
+    };
   } catch (error) {
     if (error instanceof Unreadable) {
       return { errors: [error.detail], ok: false };
@@ -304,13 +333,12 @@ export function connectiveSpellings(lang: SurfaceLanguage): Spellings {
 }
 
 /**
- * Render a formula back to canonical `prop` source (fully parenthesized).
+ * Render a formula for a reader (fully parenthesized).
  *
  * The symbols are the spec's canonical spelling of each role — its
  * last-declared notation. `carnap-prop` declares nothing but ASCII, so this
- * is the ASCII a student types, and a compiled table stores exactly what it
- * always did. A spec that added `∧` as a later notation would change both
- * together, which is the point of reading them from one place.
+ * is the ASCII a student types. Display only: a table stores engine text
+ * ({@link ParseResult}).
  */
 export function formulaToString(
   formula: Formula,
@@ -327,7 +355,9 @@ export function formulaToString(
       case "falsum":
         return spelling.falsum;
       case "not":
-        return `${spelling.not}${write(part.operand)}`;
+        // Tight where the delimiters cut, spaced where a spelled-out `not`
+        // would otherwise run into its operand.
+        return adjoin(spelling.not, write(part.operand), lang.scanner.rules);
       default:
         return `(${write(part.left)} ${spelling.binary[part.type]} ${write(part.right)})`;
     }

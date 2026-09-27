@@ -135,6 +135,7 @@ function markToggle(
 
 function sentencesHtml(
   publicData: WorldPublicData,
+  resolved: ResolvedWorld,
   words: WorldWords,
   marks: SentenceMarks,
 ): string {
@@ -142,7 +143,7 @@ function sentencesHtml(
     return "";
   }
 
-  const items = publicData.sentences
+  const items = resolved.sentences
     .map((sentence, index) => {
       const target = targetLabel(publicData, sentence.target, words);
       const control =
@@ -164,12 +165,12 @@ function sentencesHtml(
     })
     .join("");
   const laws =
-    publicData.laws.length === 0
+    resolved.laws.length === 0
       ? ""
-      : `<h3 class="world-panel-heading">${escapeHtml(words("Laws"))}</h3><ul class="world-laws">${publicData.laws
+      : `<h3 class="world-panel-heading">${escapeHtml(words("Laws"))}</h3><ul class="world-laws">${resolved.laws
           .map(
             (law, index) =>
-              `<li class="world-sentence world-law" data-index="${index}"><span class="world-formula">${escapeHtml(law)}</span>${truthMark(marks.values?.laws[index], words)}</li>`,
+              `<li class="world-sentence world-law" data-index="${index}"><span class="world-formula">${escapeHtml(law.text)}</span>${truthMark(marks.values?.laws[index], words)}</li>`,
           )
           .join("")}</ul>`;
 
@@ -250,6 +251,7 @@ function exerciseBodyHtml(
     resolved.pinned,
   )}${budget}</div><div class="world-panel">${sentencesHtml(
     publicData,
+    resolved,
     words,
     {
       disabled: options.disabled,

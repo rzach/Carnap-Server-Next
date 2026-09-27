@@ -11,6 +11,7 @@ import {
   proofFormulaReader,
   proofTheoryText,
   readNodeFormulas,
+  statementDisplayText,
 } from "../src/worker/exercise-kit/proof/formulas";
 import { withSystemText } from "../src/worker/exercise-kit/systems/join";
 import { prawitzToAuf } from "../src/worker/exercises/aufbau-proof-prawitz/translate";
@@ -626,6 +627,23 @@ describe("the translators, reading", () => {
     );
     expect(read.formulaProblems).toEqual([]);
     expect(read.diagnostics).toEqual([]);
+  });
+});
+
+describe("statementDisplayText", () => {
+  test("a statement is shown in the language's spellings", () => {
+    expect(
+      statementDisplayText(FORALLX_THEORY_SOURCE, "emp ⊢ F (a , b)", []),
+    ).toBe("⊢ F(a,b)");
+  });
+
+  test("an elided term display text cannot write is shown as typed", () => {
+    // Engine text spells `snil` anywhere; display text only ever leaves it
+    // out, as a name's whole argument list. The printer refuses the rest,
+    // and the caller falls back to the statement as written.
+    expect(
+      statementDisplayText(FORALLX_THEORY_SOURCE, "emp ⊢ F (snil , b)", []),
+    ).toBeNull();
   });
 });
 

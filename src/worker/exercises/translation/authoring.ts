@@ -18,7 +18,6 @@ import {
 } from "../../exercise-kit/authoring";
 import {
   DEFAULT_LANGUAGE_ID,
-  formulaToString,
   parseFormula,
   splitFormulaList,
 } from "../../exercise-kit/formula";
@@ -226,7 +225,7 @@ function parseBody(
         continue;
       }
 
-      solutions.push(formulaToString(parsed.formula, language));
+      solutions.push(parsed.engine);
     }
   }
 

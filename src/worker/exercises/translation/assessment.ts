@@ -15,6 +15,7 @@ import type { Formula } from "../../exercise-kit/formula";
 import {
   firstOrderLanguageFor,
   formulaToString,
+  parseEngineFormula,
   parseFormula,
 } from "../../exercise-kit/formula";
 import { readCertificate } from "../../exercise-kit/proof/certificate";
@@ -233,7 +234,7 @@ export const TRANSLATION_ASSESSMENT = {
       return incorrect("no-certificate");
     }
 
-    const solution = parseFormula(solutionSource, language);
+    const solution = parseEngineFormula(solutionSource, language);
 
     if (!solution.ok) {
       return { ...base, awardedScore: 0, status: "error" };

@@ -48,14 +48,14 @@ export const WORLD_VARIANTS: readonly WorldVariant[] = [
 ];
 
 /**
- * One sentence of the exercise, in canonical source. `target` is the truth
- * value the student must bring it to: `true` for a build sentence unless the
- * author wrote `false:`, `true` for a premise and `false` for a conclusion.
- * An `evaluate` sentence has no target; the world decides its value.
+ * One sentence of the exercise, as engine text. `target` is the truth value
+ * the student must bring it to: `true` for a build sentence unless the author
+ * wrote `false:`, `true` for a premise and `false` for a conclusion. An
+ * `evaluate` sentence has no target; the world decides its value.
  */
 export interface WorldSentence {
+  readonly engine: string;
   readonly target?: boolean;
-  readonly text: string;
 }
 
 /**
@@ -78,7 +78,10 @@ export interface WorldPublicData {
   /** The system's text, which the join fills in on every read. */
   readonly source?: string;
   readonly sentences: readonly WorldSentence[];
-  /** Sentences that must be true in the submitted world, shown apart. */
+  /**
+   * Sentences that must be true in the submitted world, shown apart; engine
+   * text, like the sentences.
+   */
   readonly laws: readonly string[];
   /** The world the student starts from (every variant but distinguish). */
   readonly start?: unknown;

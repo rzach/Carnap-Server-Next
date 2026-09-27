@@ -48,6 +48,7 @@ import type {
   SurfaceLanguage,
   Term as SurfaceTerm,
 } from "@aufbau/syntax";
+import { adjoin, printTerm } from "@aufbau/syntax";
 import type { BinaryConnective } from "../../logic/specs/connectives";
 import {
   BINARY_CONNECTIVES,
@@ -112,7 +113,17 @@ export type Formula =
 export type ParseError = FormulaParseError;
 
 export type ParseResult =
-  | { readonly ok: true; readonly formula: Formula }
+  | {
+      readonly ok: true;
+      readonly formula: Formula;
+      /**
+       * The formula as engine text — MM0's own spelling, which is what an
+       * exercise stores. It depends on the language's declarations and on
+       * nothing in its `@syntax` display conventions, and the library
+       * guarantees it reads back as the same tree ({@link parseEngineFormula}).
+       */
+      readonly engine: string;
+    }
   | { readonly ok: false; readonly errors: readonly ParseError[] };
 
 /**
@@ -479,20 +490,21 @@ export function parseTerm(
   }
 }
 
-/** Parse one first-order formula, collecting every syntax error it has. */
-export function parseFormula(
-  source: string,
+/** A parse turned into a formula and its engine text, or the complaints. */
+function readParse(
+  result: ReturnType<SurfaceLanguage["parse"]>,
   lang: SurfaceLanguage,
 ): ParseResult {
-  const sort = sentenceSort(lang);
-  const result = lang.parse(source, sort === undefined ? {} : { sort });
-
   if (!result.ok) {
     return { errors: formulaParseErrors(result.diagnostics), ok: false };
   }
 
   try {
-    return { formula: readFormula(result.term, lang), ok: true };
+    return {
+      engine: printTerm(lang, result.term, "engine"),
+      formula: readFormula(result.term, lang),
+      ok: true,
+    };
   } catch (error) {
     if (error instanceof Unreadable) {
       return { errors: [error.detail], ok: false };
@@ -500,6 +512,43 @@ export function parseFormula(
 
     throw error;
   }
+}
+
+/** Parse one first-order formula, collecting every syntax error it has. */
+export function parseFormula(
+  source: string,
+  lang: SurfaceLanguage,
+): ParseResult {
+  const sort = sentenceSort(lang);
+
+  return readParse(
+    lang.parse(source, sort === undefined ? {} : { sort }),
+    lang,
+  );
+}
+
+/**
+ * Read back a formula an exercise stored: the engine text
+ * {@link parseFormula} gave it.
+ *
+ * Without the spec's lints, which are conventions about what a person may
+ * type and were applied when the author's text was first read — and a model
+ * exercise's formulas may be open on purpose.
+ */
+export function parseEngineFormula(
+  engine: string,
+  lang: SurfaceLanguage,
+): ParseResult {
+  const sort = sentenceSort(lang);
+
+  return readParse(
+    lang.parse(engine, {
+      lints: false,
+      mode: "engine",
+      ...(sort === undefined ? {} : { sort }),
+    }),
+    lang,
+  );
 }
 
 /**
@@ -578,9 +627,8 @@ export function parseFormulaTree(
  * them.
  *
  * Carrying the rung is what lets an operand be bracketed exactly where the
- * spec's ladder needs it. It matters more than looks: the stored form of a
- * formula is text this printer wrote, and text the parser cannot read back is
- * an exercise no grader can resolve.
+ * spec's ladder needs it: what a student is shown should be text they could
+ * type back.
  */
 interface Written {
   readonly prec: number;
@@ -595,6 +643,17 @@ const atom = (text: string): Written => ({ prec: MAX_PRECEDENCE, text });
 
 function precedenceOf(prec: number | "max"): number {
   return prec === "max" ? MAX_PRECEDENCE : prec;
+}
+
+/**
+ * Pieces set as tight as the language's delimiters allow, by the library's
+ * own seam rule: `∀xCube(x)` under letter delimiters, but `∀x Cube(x)` where
+ * `xCube` would be one chunk to the reader and the text would not read back.
+ */
+function tight(lang: SurfaceLanguage, ...pieces: readonly string[]): string {
+  return pieces.reduce((left, right) =>
+    adjoin(left, right, lang.scanner.rules),
+  );
 }
 
 /** An operand, bracketed where its head binds looser than the slot allows. */
@@ -656,11 +715,12 @@ function writeSymbol(
 
   if (notation.form === "general") {
     return atom(
-      notation.literals
-        .flatMap((literal) =>
+      tight(
+        lang,
+        ...notation.literals.flatMap((literal) =>
           literal.kind === "constant" ? [literal.token] : [],
-        )
-        .join(""),
+        ),
+      ),
     );
   }
 
@@ -680,8 +740,13 @@ function writeSymbol(
     prec,
     text:
       notation.fixity === "prefix"
-        ? `${notation.token}${parts.join("")}`
-        : parts.join(notation.token),
+        ? tight(lang, notation.token, ...parts)
+        : tight(
+            lang,
+            ...parts.flatMap((part, at) =>
+              at === 0 ? [part] : [notation.token, part],
+            ),
+          ),
   };
 }
 
@@ -753,7 +818,8 @@ function symbols(lang: SurfaceLanguage) {
 /**
  * Carnap's `schematize`: **every** binary compound parenthesized with spaces
  * around the connective, a quantifier or a negation written straight onto what
- * follows it, and identity closed up (`a=b`). A symbol with a notation is
+ * follows it, and identity closed up (`a=b`) — as tight, that is, as the
+ * delimiters let the text read back ({@link tight}). A symbol with a notation is
  * written through it on the same terms — `x<x+a`, tight, like identity — and
  * one without through its constructor's name, `F(a,b)`.
  */
@@ -776,9 +842,12 @@ function schematize(
       return term !== null && notationFor(term, 2, lang) !== null
         ? writeSymbol(term, [formula.left, formula.right], lang)
         : atom(
-            `${writeTerm(formula.left, lang).text}${spelling.identity}${
-              writeTerm(formula.right, lang).text
-            }`,
+            tight(
+              lang,
+              writeTerm(formula.left, lang).text,
+              spelling.identity,
+              writeTerm(formula.right, lang).text,
+            ),
           );
     }
     case "falsum":
@@ -788,7 +857,11 @@ function schematize(
     case "not":
       return {
         prec: spelling.notPrec,
-        text: `${spelling.not}${bracketed(inner(formula.operand), spelling.notPrec)}`,
+        text: tight(
+          lang,
+          spelling.not,
+          bracketed(inner(formula.operand), spelling.notPrec),
+        ),
       };
     case "forall":
     case "exists": {
@@ -797,9 +870,12 @@ function schematize(
 
       return {
         prec,
-        text: `${
-          formula.type === "forall" ? spelling.forall : spelling.exists
-        }${formula.variable}${bracketed(inner(formula.body), prec)}`,
+        text: tight(
+          lang,
+          formula.type === "forall" ? spelling.forall : spelling.exists,
+          formula.variable,
+          bracketed(inner(formula.body), prec),
+        ),
       };
     }
     default:
@@ -843,15 +919,13 @@ function dropOuterParens(text: string): string {
 }
 
 /**
- * A formula written back out: the spec's canonical spelling of every symbol,
- * bracketed by the spec's display convention.
+ * A formula as a reader is shown it: the spec's canonical spelling of every
+ * symbol, bracketed by the spec's display convention, and text the language
+ * reads back.
  *
- * This is both what a reader is shown and the form a formula is *stored* as,
- * which used to be two functions over two spelling tables — a hardcoded
- * `DISPLAY_SYMBOLS` for the reader and the dialect record's first-listed
- * spellings for storage. There was never a reason for them to differ, and
- * every reason for them not to: the stored form has to be text the parser
- * accepts back, which is exactly what a canonical spelling is.
+ * Display only. What an exercise stores is engine text
+ * ({@link ParseResult}'s `engine`), which leaves this printer free to follow
+ * the textbook's conventions without anything depending on its output.
  */
 export function formulaToString(
   formula: Formula,

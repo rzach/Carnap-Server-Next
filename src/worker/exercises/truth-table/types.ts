@@ -158,7 +158,7 @@ export interface TruthTablePublicData {
   readonly variant: TruthTableVariant;
   readonly promptHtml: string;
   /**
-   * Canonical `prop` source for each formula, in author order. For the
+   * Each formula as engine text, in author order. For the
    * `validity` variant this is the premises followed by the conclusions, and
    * {@link premiseCount} marks the boundary.
    */

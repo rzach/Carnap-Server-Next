@@ -346,7 +346,11 @@ function readSentence(
   source: string,
   line: number,
   context: SentenceContext,
-): { readonly formula: Formula; readonly text: string } | null {
+): {
+  readonly engine: string;
+  readonly formula: Formula;
+  readonly text: string;
+} | null {
   const trimmed = source.trim();
   const parsed = parseFormula(trimmed, context.language);
 
@@ -403,7 +407,7 @@ function readSentence(
     ok = false;
   }
 
-  return ok ? { formula: parsed.formula, text } : null;
+  return ok ? { engine: parsed.engine, formula: parsed.formula, text } : null;
 }
 
 /** The vocabulary's own problems, reported once against the directive. */
@@ -856,7 +860,7 @@ export async function compileWorld(
           );
 
           if (read !== null) {
-            sentences.push({ target, text: read.text });
+            sentences.push({ engine: read.engine, target });
             formulas.push({ ...read, line: body.sequent?.line ?? 0 });
           }
         }
@@ -915,8 +919,8 @@ export async function compileWorld(
       if (read !== null) {
         sentences.push(
           variant === "evaluate"
-            ? { text: read.text }
-            : { target: item.target ?? true, text: read.text },
+            ? { engine: read.engine }
+            : { engine: read.engine, target: item.target ?? true },
         );
         formulas.push({ ...read, line: item.line });
       }
@@ -940,7 +944,7 @@ export async function compileWorld(
     const read = readSentence(law.text, law.line, sentenceContext);
 
     if (read !== null) {
-      laws.push(read.text);
+      laws.push(read.engine);
       lawFormulas.push({ ...read, line: law.line });
     }
   }

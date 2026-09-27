@@ -549,7 +549,7 @@ Everything is fine.
 - AxF(x)
 ::::`);
 
-    // The stored solution is canonical source; the certificate must target it.
+    // The certificate targets the stored solution, read back from engine text.
     const mmb = findCertificate(parse("~Ex~F(x)"), parse("AxF(x)"));
     expect(mmb).not.toBeNull();
     expect(await grade(item, "~Ex~F(x)", mmb)).toBe("correct");

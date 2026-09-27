@@ -13,7 +13,8 @@ import type { SurfaceLanguage } from "@aufbau/syntax";
 import type { Formula } from "../../exercise-kit/formula";
 import {
   firstOrderLanguageFor,
-  parseFormula,
+  formulaToString,
+  parseEngineFormula,
 } from "../../exercise-kit/formula";
 import { worldKindById } from "./kinds";
 import type { WorldKind } from "./kinds/contract";
@@ -27,6 +28,7 @@ import type {
 } from "./types";
 import { WORLD_VARIANTS } from "./types";
 
+/** A stored sentence read back, with the text a reader is shown. */
 export interface ResolvedSentence {
   readonly formula: Formula;
   readonly target?: boolean;
@@ -60,7 +62,7 @@ function isSentence(value: unknown): value is WorldSentence {
   const sentence = value as Partial<WorldSentence>;
 
   return (
-    typeof sentence.text === "string" &&
+    typeof sentence.engine === "string" &&
     (sentence.target === undefined || typeof sentence.target === "boolean")
   );
 }
@@ -126,14 +128,18 @@ export function resolveWorld(
   ): ResolvedSentence[] | null => {
     const parsed: ResolvedSentence[] = [];
 
-    for (const sentence of sources) {
-      const result = parseFormula(sentence.text, language);
+    for (const { engine, ...sentence } of sources) {
+      const result = parseEngineFormula(engine, language);
 
       if (!result.ok) {
         return null;
       }
 
-      parsed.push({ ...sentence, formula: result.formula });
+      parsed.push({
+        ...sentence,
+        formula: result.formula,
+        text: formulaToString(result.formula, language),
+      });
     }
 
     return parsed;
@@ -141,7 +147,7 @@ export function resolveWorld(
 
   const sentences = parseAll(publicData.sentences);
   const laws = parseAll(
-    publicData.laws.map((text) => ({ target: true, text })),
+    publicData.laws.map((engine) => ({ engine, target: true })),
   );
 
   if (sentences === null || laws === null) {

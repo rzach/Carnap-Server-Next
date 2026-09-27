@@ -22,6 +22,7 @@ export type {
 export {
   formulaToString,
   hasFirstOrderSignature,
+  parseEngineFormula,
   parseFormula,
   parseFormulaTree,
   parseTerm,

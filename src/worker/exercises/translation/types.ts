@@ -56,7 +56,7 @@ export interface TranslationPublicData {
   readonly dialect?: string;
   readonly promptHtml: string;
   /**
-   * The admissible solutions, in canonical source. Public of necessity: the
+   * The admissible solutions, as engine text. Public of necessity: the
    * client proves equivalence *to a solution*, so it must hold them — the
    * same exposure the original Carnap accepted. `feedback`/`exam` remain
    * display and recording controls, not a wall around the key.

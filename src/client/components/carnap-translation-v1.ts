@@ -36,6 +36,7 @@ import type { Formula } from "../../worker/exercise-kit/formula";
 import {
   firstOrderLanguageFor,
   formulaToString,
+  parseEngineFormula,
   parseFormula,
 } from "../../worker/exercise-kit/formula";
 import { buildEquivalenceCheck } from "../../worker/exercises/translation/logic/mm0";
@@ -357,7 +358,7 @@ class CarnapTranslation extends CarnapExerciseElement<TranslationStringId> {
 
     try {
       for (const [index, source] of data.solutions.entries()) {
-        const solution = parseFormula(source, language);
+        const solution = parseEngineFormula(source, language);
         if (!solution.ok) {
           continue;
         }

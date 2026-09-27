@@ -61,6 +61,7 @@ import {
   printTerm,
   stripSyntaxAnnotations,
   surfaceVocabulary,
+  UnprintableTermError,
   walkTerm,
 } from "@aufbau/syntax";
 import type { SpecFormulaError } from "../../logic/specs/diagnostics";
@@ -409,10 +410,24 @@ export function statementDisplayText(
     return null;
   }
 
+  // Engine text can spell an elided term where display text has no way
+  // to write it (`F (snil , a)`); such a statement is shown as typed.
+  try {
+    return displayStatement(language, result.term);
+  } catch (error) {
+    if (error instanceof UnprintableTermError) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+/** A statement's tree in display text, split at its turnstile and join. */
+function displayStatement(language: SurfaceLanguage, term: Term): string {
   const index = roleIndex(language);
   const turnstile = index.termFor("turnstile");
   const join = index.termFor("context-join");
-  const term = result.term;
 
   if (
     turnstile === null ||

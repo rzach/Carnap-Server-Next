@@ -724,6 +724,21 @@ describe("symbols of fixed arity, and every notation", () => {
     }
   });
 
+  test("a seam gets a space only where the delimiters would not cut it", () => {
+    // No letter delimiters here, so `xRed` would be one chunk: the variable
+    // and the name it quantifies into keep their space, where forallx's
+    // letter delimiters set `∀xF(x)` tight. `¬` and `(` cut on their own.
+    expect(show("∀x Red(x)", FIXED)).toBe("∀x Red(x)");
+    expect(show("∀x ∃y ¬ Red(succ(y))", FIXED)).toBe("∀x∃y¬Red(succ(y))");
+    expect(show("∀x (Red(x) ∧ Blue(x))", FIXED)).toBe("∀x(Red(x) ∧ Blue(x))");
+
+    for (const source of ["∀x Red(x)", "∀x∃y ¬Red(succ(y))", "∃x ¬x = a"]) {
+      const once = show(source, FIXED);
+
+      expect(parse(once, FIXED)).toEqual(parse(source, FIXED));
+    }
+  });
+
   test("the two shapes mix in one atom, under a quantifier", () => {
     expect(parse("∀x R(x + a, succ(b))", FIXED)).toEqual({
       body: {

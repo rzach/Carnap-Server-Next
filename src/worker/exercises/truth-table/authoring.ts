@@ -28,7 +28,6 @@ import {
   resolveTable,
 } from "./grading";
 import {
-  formulaToString,
   MAX_TABLE_ATOMS,
   PROP_LANGUAGE_ID,
   parseFormula,
@@ -420,7 +419,7 @@ function parseListBody(
 
 /**
  * Parse one side of a sequent — a comma-separated list of formulas — into
- * canonical sources in the exercise's language, collecting a diagnostic per
+ * engine text in the exercise's language, collecting a diagnostic per
  * unparseable formula. The split respects brackets, because a first-order
  * language's `R(a,b)` has a comma of its own.
  */
@@ -450,7 +449,7 @@ function parseFormulaList(
     const parsed = parseFormula(trimmed, lang);
 
     if (parsed.ok) {
-      formulas.push(formulaToString(parsed.formula, lang));
+      formulas.push(parsed.engine);
     } else {
       diagnostics.push(
         diagnostic(

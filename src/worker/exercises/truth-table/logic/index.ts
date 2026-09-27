@@ -12,6 +12,7 @@ export type {
 export {
   formulaToString,
   PROP_LANGUAGE_ID,
+  parseEngineFormula,
   parseFormula,
   truthTableLanguage,
 } from "./formula";

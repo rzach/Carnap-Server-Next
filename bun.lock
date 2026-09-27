@@ -7,7 +7,7 @@
       "dependencies": {
         "@aufbau/compiler": "0.0.12",
         "@aufbau/lsp": "0.0.12",
-        "@aufbau/syntax": "0.0.5-canary.20260908T015426Z.16.gf0358d0874b8",
+        "@aufbau/syntax": "0.0.5-canary.20260927T142818Z.17.g6a8d90937a0b",
         "@aufbau/verifier": "0.0.12",
         "@codemirror/commands": "^6.10.4",
         "@codemirror/language": "^6.12.4",
@@ -71,7 +71,7 @@
 
     "@aufbau/lsp": ["@aufbau/lsp@0.0.12", "", {}, "sha512-EkCKxLhIAcAaualJOHlWCS2JZyrtdxKUAeKNgDdpuYXzNNPZFmYKBeAV4Uf3Ve67I4ssayk4ZQ5J8K3E83DAvA=="],
 
-    "@aufbau/syntax": ["@aufbau/syntax@0.0.5-canary.20260908T015426Z.16.gf0358d0874b8", "", {}, "sha512-VlGj0cBKLVRb5iW7NXvfs3wIJ60bbLCAad2rFen7MwRrn25v7bOunuy74vCnVQqD/a1HhkofFb9RryUOvBSOnw=="],
+    "@aufbau/syntax": ["@aufbau/syntax@0.0.5-canary.20260927T142818Z.17.g6a8d90937a0b", "", {}, "sha512-ZXb73fCMvHUDQGmzS9pwd0OaxgIivE7bOF5E7YlYubw2g4JHTem3o6r6ZMge0wAtRfbsA/PPJQ9PBQQnZUyA7Q=="],
 
     "@aufbau/verifier": ["@aufbau/verifier@0.0.12", "", {}, "sha512-ftc0IJtNG2CcSDG5/lUtrTKVqWpmKD2sHgPumiQF+FMb04b25/+ATxx0g8mUwhugvKC+nGFr5c29hlYIAPaoVQ=="],
 

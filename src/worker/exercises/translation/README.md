@@ -12,9 +12,10 @@ core and `@aufbau/syntax`, not a per-exercise notation table.
 
 ## Checking and verification
 
-The browser parses the submitted formula and compares its canonical form to
-the solutions. Both sides are reparsed through `logic/solutions.ts`, so a
-change to canonical spelling does not by itself break an old solution.
+The browser parses the submitted formula and compares it to the solutions,
+which are stored as engine text and read back as formulas; both sides are
+written out by the display printer in `logic/solutions.ts`, so `a≠b` matches
+a stored `¬a=b`.
 
 If no solution matches, the browser asks Aufbau's `auto?` proof search for
 an equivalence proof. `src/client/proof-search.ts` runs `@aufbau/lsp` in a

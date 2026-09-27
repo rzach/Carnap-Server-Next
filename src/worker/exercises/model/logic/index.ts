@@ -19,6 +19,7 @@ export {
   DEFAULT_LANGUAGE_ID,
   firstOrderLanguageFor,
   formulaToString,
+  parseEngineFormula,
   parseFormula,
   splitFormulaList,
   termToString,

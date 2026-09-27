@@ -6,19 +6,19 @@
  * matches" by the widget and marked wrong by the server would have no way to
  * make sense of it — so they share this rather than each comparing strings.
  *
- * The comparison canonicalizes *both* sides. The stored solutions were
- * canonical when the revision was compiled, so re-parsing them is a no-op
- * whenever the canonical form has not moved; when it has — and it moved once
- * already, when the spelling table became the spec's rather than a hardcoded
- * one — a stored artifact keeps grading correctly instead of silently failing
- * to match every submission until someone re-saves it. A solution that no
- * longer parses at all is skipped, which is the same "cannot be correct" it
- * would be if it were compared and missed.
+ * The solutions are stored as engine text, and both sides are compared as
+ * formulas, written out by the display printer: `a≠b` typed for a stored
+ * `¬a=b` is the same formula spelled another way, and matches. A solution
+ * that does not read back is skipped, which is the same "cannot be correct"
+ * it would be if it were compared and missed.
  */
 
 import type { SurfaceLanguage } from "@aufbau/syntax";
 import type { Formula } from "../../../exercise-kit/formula";
-import { formulaToString, parseFormula } from "../../../exercise-kit/formula";
+import {
+  formulaToString,
+  parseEngineFormula,
+} from "../../../exercise-kit/formula";
 
 /**
  * The index of the first stored solution the formula matches verbatim, or
@@ -32,7 +32,7 @@ export function verbatimSolutionIndex(
   const canonical = formulaToString(formula, lang);
 
   return solutions.findIndex((solution) => {
-    const parsed = parseFormula(solution, lang);
+    const parsed = parseEngineFormula(solution, lang);
 
     return parsed.ok && formulaToString(parsed.formula, lang) === canonical;
   });

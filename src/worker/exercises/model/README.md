@@ -160,9 +160,9 @@ language's connectives. Unsupported semantic constructs are rejected.
 
 ### Display and precedence
 
-Stored and displayed formulas use canonical notation:
+Formulas are stored as engine text and displayed in canonical notation:
 
-| Typed | Stored and displayed |
+| Typed | Displayed |
 | --- | --- |
 | `AxAyf(x,y) = f(y,x)` | `∀x∀yf(x,y)=f(y,x)` |
 | `P /\ Q \/ R` | `(P ∧ Q) ∨ R` |

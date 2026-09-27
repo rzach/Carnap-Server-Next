@@ -86,9 +86,9 @@ describe("authoring", () => {
       throw new Error("bad publicData");
     }
     expect(item.publicData.variant).toBe("prop");
-    // Canonical means the spec's canonical spelling; carnap-prop would keep
-    // the ASCII, forallx keeps the glyph.
-    expect(item.publicData.solutions).toEqual(["P ∧ Q"]);
+    // Stored as engine text: forallx's MM0 spelling, with the empty
+    // argument lists written out that display text leaves implicit.
+    expect(item.publicData.solutions).toEqual(["((P (snil)) ∧ (Q (snil)))"]);
     expect(item.publicData.checksyntax).toBe(false);
     expect(item.publicData.tests).toEqual([]);
   });

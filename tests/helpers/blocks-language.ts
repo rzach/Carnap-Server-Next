@@ -15,12 +15,14 @@ import { languageFromSource } from "../../src/worker/logic/specs";
  *     application one bracket per binder: the second would read `LeftOf(a)(b)`
  *     and not `LeftOf(a,b)`. A role then interprets one arity of the symbol,
  *     and `LeftOf(a,b,c)` is a symbol the world has no meaning for.
- *   - **Every letter and every predicate name is a delimiter.** The printer
- *     writes a quantifier straight onto what follows it, `∃yLeftOf(y,x)`, and
- *     the stored form of a sentence is that text; without the letters as
- *     delimiters `yLeftOf` would be one chunk and the stored sentence would
- *     not read back. Declaring the names too keeps each one whole, and the
- *     longest match keeps `Smaller` from reading as `Small` and `er`.
+ *   - **Every letter and every predicate name is a delimiter.** The letters
+ *     let a student write `∃yLeftOf(y,x)` tight, the way forallx writes
+ *     `∃yF(y)`; without them `yLeftOf` is one chunk and needs its space. Once
+ *     letters cut, every name spelled with one must be declared whole, or
+ *     `Cube` would read as `Cub` and `e`; the longest match then keeps
+ *     `Smaller` from reading as `Small` and `er`. The printer needs none of
+ *     this — it leaves a space wherever the delimiters would not cut — so a
+ *     language without letter delimiters is just as good, with `∃y LeftOf(y,x)`.
  */
 export const BLOCKS_SPEC_SOURCE = `--| @syntax delimiter $ ( ) , = ¬ ∧ ∨ → ↔ ∀ ∃ $
 --| @syntax delimiter $ a b c d e f u v w x y z $

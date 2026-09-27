@@ -793,10 +793,11 @@ and a compile error.
 | `blocks.adjoins` | 2 | orthogonally adjacent squares |
 | `blocks.between` | 3 | on one row, column, or diagonal, first strictly between |
 
-Identity is the core `identity` role. A complete example language, with the
-delimiters that keep stored sentences readable (`∃yLeftOf(y,x)` needs `y`
-and `LeftOf` to be separate chunks), is in
+Identity is the core `identity` role. A complete example language is in
 [`tests/helpers/blocks-language.ts`](../tests/helpers/blocks-language.ts).
+Its letter delimiters let students write `∃yLeftOf(y,x)` tight, and so
+every predicate name is declared whole as well; a language without letter
+delimiters reads `∃y LeftOf(y,x)` instead.
 The same language works in model and translation exercises, where the
 predicates are ordinary ones: other types read a dotted role as no role at
 all.
@@ -1133,10 +1134,13 @@ Names and variables have different sorts. In Calgary proofs, this also lets
 MM0 dependency typing enforce eigenvariable restrictions. Their roles cannot
 be interchanged merely because both use lowercase letters.
 
-Stored formulas use the language's canonical spelling and are reparsed when
-compared with saved translation solutions. There is no independent table of
-source spellings. `carnap-prop` has 52 sentence letters and canonical ASCII
-connectives; the forallx editions use their own canonical symbols.
+A compiled exercise stores its formulas as engine text, the MM0 spelling of
+the parse, which depends on the language's declarations and not on its
+`@syntax` display conventions. What a reader is shown is worked out from it
+when the page renders, in the language's canonical spelling. There is no
+independent table of source spellings. `carnap-prop` has 52 sentence letters
+and canonical ASCII connectives; the forallx editions use their own
+canonical symbols.
 
 ### Basic and derived rules
 

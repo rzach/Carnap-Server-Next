@@ -22,9 +22,9 @@ import type { ExerciseCompileContext } from "../../exercise-kit/type";
 import type { ModelField, ModelTarget } from "./logic";
 import {
   DEFAULT_LANGUAGE_ID,
-  formulaToString,
   modelSignature,
   parseDomain,
+  parseEngineFormula,
   parseFormula,
   parseFunctionTable,
   parseNatural,
@@ -264,7 +264,7 @@ function parseFormulaList(
     const parsed = parseFormula(trimmed, language);
 
     if (parsed.ok) {
-      formulas.push(formulaToString(parsed.formula, language));
+      formulas.push(parsed.engine);
     } else {
       diagnostics.push(
         diagnostic(
@@ -740,8 +740,8 @@ export async function compileModel(
 
   // The givens are checked against the fields the formulas ask for, so the
   // signature has to be derived here even though it is not stored.
-  const parsed = [...body.required, ...body.targeted].flatMap((source) => {
-    const result = parseFormula(source, language);
+  const parsed = [...body.required, ...body.targeted].flatMap((engine) => {
+    const result = parseEngineFormula(engine, language);
     return result.ok ? [result.formula] : [];
   });
   const givens = parseGivens(

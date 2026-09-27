@@ -319,16 +319,31 @@ describe("compiling a world directive", () => {
     ].join("\n"),
   );
 
-  test("stores canonical sentences, targets, laws, pins, and the start", async () => {
+  test("stores sentences as engine text, with targets, laws, pins, and the start", async () => {
     const data = publicDataOf(await declaration(BUILD));
 
     expect(data.variant).toBe("build");
     expect(data.world).toBe("blocks");
     expect(data.sentences).toEqual([
-      { target: true, text: "∀x(Cube(x) → ∃yLeftOf(y,x))" },
-      { target: false, text: "∃xLarge(x)" },
+      {
+        engine: "( ∀ x ( ( Cube ( x ) ) → ( ∃ y ( LeftOf ( y , x ) ) ) ) )",
+        target: true,
+      },
+      { engine: "( ∃ x ( Large ( x ) ) )", target: false },
     ]);
-    expect(data.laws).toEqual(["∀x∀y(SameRow(x,y) → x=y)"]);
+    expect(data.laws).toEqual([
+      "( ∀ x ( ∀ y ( ( SameRow ( x , y ) ) → ( x = y ) ) ) )",
+    ]);
+
+    // A reader is shown the language's own spelling, worked out on reading.
+    const resolved = resolveWorld(data);
+    expect(resolved?.sentences.map((sentence) => sentence.text)).toEqual([
+      "∀x(Cube(x) → ∃yLeftOf(y,x))",
+      "∃xLarge(x)",
+    ]);
+    expect(resolved?.laws.map((law) => law.text)).toEqual([
+      "∀x∀y(SameRow(x,y) → x=y)",
+    ]);
     expect(data.pinned).toEqual(["o1"]);
     expect(data.budget).toBe(2);
     expect(BLOCKS_KIND.parseState(data.start)?.objects).toHaveLength(3);

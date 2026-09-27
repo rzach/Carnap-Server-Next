@@ -15,7 +15,7 @@ import {
   enumerateValuations,
   evaluate,
   formulaLayout,
-  parseFormula,
+  parseEngineFormula,
   truthTableLanguage,
 } from "./logic";
 import type {
@@ -28,7 +28,6 @@ import type {
 } from "./types";
 
 export interface ResolvedFormula {
-  readonly source: string;
   readonly formula: Formula;
   /** Parens and cells, in display order (for the header and body layout). */
   readonly segments: readonly FormulaSegment[];
@@ -70,11 +69,10 @@ export function resolveTable(input: TruthTableSource): ResolvedTable | null {
     return null;
   }
 
-  const sources = input.formulas;
   const parsed: Formula[] = [];
 
-  for (const source of sources) {
-    const result = parseFormula(source, lang);
+  for (const engine of input.formulas) {
+    const result = parseEngineFormula(engine, lang);
 
     if (!result.ok) {
       return null;
@@ -85,7 +83,7 @@ export function resolveTable(input: TruthTableSource): ResolvedTable | null {
 
   const atoms = collectAtoms(parsed);
   const valuations = enumerateValuations(atoms);
-  const formulas = parsed.map((formula, index) => {
+  const formulas = parsed.map((formula) => {
     const segments = formulaLayout(formula, lang);
     return {
       cells: segments.filter(
@@ -93,7 +91,6 @@ export function resolveTable(input: TruthTableSource): ResolvedTable | null {
       ),
       formula,
       segments,
-      source: sources[index] ?? "",
     };
   });
 

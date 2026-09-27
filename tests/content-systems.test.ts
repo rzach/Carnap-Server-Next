@@ -329,7 +329,7 @@ Fill it in.
 
     // Two columns, not one. A letter carries its arguments into the atom it
     // keys, so the antecedent and consequent are independent.
-    expect(data.formulas).toEqual(["(F(a) → F(b))"]);
+    expect(data.formulas).toEqual(["((F (a)) → (F (b)))"]);
   });
 
   test("a binder is refused by the formula that uses it, not by the language", async () => {
@@ -374,10 +374,12 @@ Fill it in.
     };
 
     expect(artifact.systems?.ours).toContain("@syntax role conjunction");
-    // Stored in the block's canonical spelling, which is the point: nothing but
-    // the block's own language reads it.
+    // Stored as engine text in the block's own notation, which is the point:
+    // nothing but the block's own language reads it.
     expect(data.formulas).toEqual(["(P ∧ Q)"]);
-    expect(truthTableLanguage(data)?.parse("(P ∧ Q)").ok).toBe(true);
+    expect(
+      truthTableLanguage(data)?.parse("(P ∧ Q)", { mode: "engine" }).ok,
+    ).toBe(true);
   });
 
   test("a system that does not read says so, rather than what it lacks", async () => {
@@ -462,7 +464,7 @@ Everything is a cube.
       readonly solutions?: readonly string[];
     };
 
-    expect(data.solutions).toEqual(["∀xCube(x)"]);
+    expect(data.solutions).toEqual(["(∀ x (Cube (x)))"]);
   });
 
   test("a block may be declared below the exercises that name it", async () => {

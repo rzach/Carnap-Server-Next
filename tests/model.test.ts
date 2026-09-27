@@ -5,6 +5,10 @@ import type {
   CompiledContentArtifact,
   ExerciseManifestItem,
 } from "../src/worker/domain/content";
+import {
+  formulaToString,
+  parseEngineFormula,
+} from "../src/worker/exercise-kit/formula";
 import { MODEL_EXERCISE } from "../src/worker/exercises/model";
 import {
   effectiveAnswer,
@@ -26,6 +30,7 @@ import {
 } from "../src/worker/exercises/model/types";
 import { i18nFor } from "../src/worker/i18n";
 import { passthroughTranslator } from "../src/worker/i18n/translator";
+import { languageById } from "../src/worker/logic/specs";
 import { FIXED_ARITY_SPEC_SOURCE } from "./helpers/fixed-arity-language";
 
 const REVIEW_CONTEXT = {
@@ -63,6 +68,25 @@ async function declaration(source: string): Promise<ExerciseManifestItem> {
 
 function publicDataOf(item: ExerciseManifestItem): ModelPublicData {
   return item.publicData as unknown as ModelPublicData;
+}
+
+/** Stored engine text as a reader is shown it, in the default language. */
+function shown(engines: readonly string[]): string[] {
+  const language = languageById("forallx-calgary-2019");
+
+  if (language === null) {
+    throw new Error("forallx-calgary-2019 is not built in");
+  }
+
+  return engines.map((engine) => {
+    const read = parseEngineFormula(engine, language);
+
+    if (!read.ok) {
+      throw new Error(`'${engine}' does not read back`);
+    }
+
+    return formulaToString(read.formula, language);
+  });
 }
 
 function envelope(data: ModelAnswerData) {
@@ -109,9 +133,10 @@ describe("compiling a model directive", () => {
     expect(data.variant).toBe("simple");
     expect(data.system).toBe("forallx-calgary-2019");
     expect(data.required).toEqual([]);
-    // Stored in the spec's canonical spelling, which is the one a reader
-    // sees: what an author types is ASCII, what is kept is the glyph.
-    expect(data.targeted).toEqual(["∀xF(x)", "∃xG(x)"]);
+    // Stored as engine text, and shown in the spec's canonical spelling:
+    // what an author types is ASCII, what a reader sees is the glyph.
+    expect(data.targeted).toEqual(["(∀ x (F (x)))", "(∃ x (G (x)))"]);
+    expect(shown(data.targeted)).toEqual(["∀xF(x)", "∃xG(x)"]);
     // A simple exercise asks for a model that makes its formulas true, which is
     // Carnap's `truthful` default.
     expect(data.target).toBe("all-true");
@@ -125,7 +150,7 @@ describe("compiling a model directive", () => {
       await declaration(directive("#ex2", "- R(a,b), F(c)")),
     );
 
-    expect(data.targeted).toEqual(["R(a,b)", "F(c)"]);
+    expect(shown(data.targeted)).toEqual(["R(a,b)", "F(c)"]);
   });
 
   test("a validity exercise splits the sequent and flips the target", async () => {
@@ -138,8 +163,8 @@ describe("compiling a model directive", () => {
       ),
     );
 
-    expect(data.required).toEqual(["∀x∃yR(x,y)"]);
-    expect(data.targeted).toEqual(["∃x∀yR(y,x)"]);
+    expect(shown(data.required)).toEqual(["∀x∃yR(x,y)"]);
+    expect(shown(data.targeted)).toEqual(["∃x∀yR(y,x)"]);
     // A counterexample to validity: premises true, conclusions false.
     expect(data.target).toBe("all-false");
   });
@@ -154,8 +179,8 @@ describe("compiling a model directive", () => {
       ),
     );
 
-    expect(data.required).toEqual(["∃x∃y¬x=y"]);
-    expect(data.targeted).toEqual(["∀x∀yF(x,y)"]);
+    expect(shown(data.required)).toEqual(["∃x∃y¬x=y"]);
+    expect(shown(data.targeted)).toEqual(["∀x∀yF(x,y)"]);
     expect(data.target).toBe("all-true");
     // The prose colon is prose: only a list item is read as the separator.
     expect(data.promptHtml).toContain("note this");
@@ -282,7 +307,7 @@ describe("compiling a model directive", () => {
       ),
     );
 
-    expect(data.required).toEqual(["∃x∃y¬x=y"]);
+    expect(shown(data.required)).toEqual(["∃x∃y¬x=y"]);
   });
 
   test("a directive in the prompt is still reported", async () => {
