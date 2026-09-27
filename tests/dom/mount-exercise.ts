@@ -139,6 +139,11 @@ export interface MountOptions {
   readonly mode?: ExerciseHydration["mode"];
   readonly options?: ExerciseHydrationOptions;
   readonly priorAnswer?: JsonValue | null;
+  /**
+   * Mount as the revision editor's live preview does: in a `srcdoc` frame,
+   * with no submission form around it.
+   */
+  readonly preview?: boolean;
 }
 
 /** The widget's public data as the payload will carry it. */
@@ -160,7 +165,12 @@ export function publicDataOf<T>(fixture: ExerciseFixture): T {
  */
 export function mountExercise(
   fixture: ExerciseFixture,
-  { mode = "answer", options = {}, priorAnswer = null }: MountOptions = {},
+  {
+    mode = "answer",
+    options = {},
+    preview = false,
+    priorAnswer = null,
+  }: MountOptions = {},
 ): MountedExercise {
   const i18n = i18nFor("en");
   const { node } = fixture;
@@ -185,17 +195,30 @@ export function mountExercise(
   // constructor stands in for exactly that long.
   const globals = globalThis as Record<string, unknown>;
   const saved = globals.AbortController;
+  const savedLocation = globals.location;
   globals.AbortController = (
     dom.window as unknown as Record<string, unknown>
   ).AbortController;
+  if (preview) {
+    Object.defineProperty(globalThis, "location", {
+      configurable: true,
+      value: { href: "about:srcdoc" },
+    });
+  }
   const form = domDocument.createElement("form");
   try {
-    form.className = "exercise-submission";
+    form.className = preview ? "" : "exercise-submission";
     form.innerHTML = `<input name="answerData" type="hidden">${html}`;
     adoptShadowRoots(form);
     domDocument.body.append(form);
   } finally {
     globals.AbortController = saved;
+    if (preview) {
+      Object.defineProperty(globalThis, "location", {
+        configurable: true,
+        value: savedLocation,
+      });
+    }
   }
 
   const element = form.querySelector(node.render.component) as HTMLElement;

@@ -756,7 +756,11 @@ world holds at most 16 blocks, one per square, and a name names one block.
 
 In the author preview the start world is editable; **Copy as source**, in
 the exercise's action bar, puts the edited world's object lines on the
-clipboard.
+clipboard. A distinguish exercise's worlds A and B are both editable there:
+one palette edits whichever board was last clicked or tabbed into, a
+palette button copies that world over the other, Check judges the sentence
+against the worlds as edited, and **Copy as source** writes the `A` lines
+and then the `B` lines.
 
 ### Constraints
 

@@ -174,12 +174,20 @@ msgid "{field}: which element it names"
 msgstr "{field}: welches Element es bezeichnet"
 
 #: src/worker/exercises/world/strings.ts
+msgid "{formula}: counterexamples {objects}, and others: {count} in all."
+msgstr "{formula}: Gegenbeispiele {objects} und weitere, insgesamt {count}."
+
+#: src/worker/exercises/world/strings.ts
 msgid "{formula}: counterexamples {objects}."
 msgstr "{formula}: Gegenbeispiele {objects}."
 
 #: src/worker/exercises/world/strings.ts
 msgid "{formula}: false."
 msgstr "{formula}: falsch."
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula}: satisfied by {objects}, and others: {count} in all."
+msgstr "{formula}: erfüllt von {objects} und weiteren, insgesamt {count}."
 
 #: src/worker/exercises/world/strings.ts
 msgid "{formula}: satisfied by {objects}."
@@ -192,6 +200,10 @@ msgstr "{formula}: von nichts erfüllt."
 #: src/worker/exercises/world/strings.ts
 msgid "{formula}: true."
 msgstr "{formula}: wahr."
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula}: witnesses {objects}, and others: {count} in all."
+msgstr "{formula}: Zeugen {objects} und weitere, insgesamt {count}."
 
 #: src/worker/exercises/world/strings.ts
 msgid "{formula}: witnesses {objects}."
@@ -1113,6 +1125,10 @@ msgstr "Markieren Sie die Zeile, die Sie als Gegenbeispiel angeben."
 msgid "Cited hypothesis"
 msgstr "Zitierte Hypothese"
 
+#: src/worker/exercises/world/strings.ts
+msgid "Click a board, or move into it with Tab, to make it the one the palette edits."
+msgstr "Klicken Sie auf ein Brett oder wechseln Sie mit Tab hinein, damit die Palette es bearbeitet."
+
 #: src/worker/application/lti-admin.ts
 #: src/worker/web/admin-lti.tsx
 msgid "Client ID"
@@ -1294,6 +1310,14 @@ msgstr "Kopieren fehlgeschlagen"
 #: src/worker/web/admin-lti.tsx
 msgid "Copy these values from the LMS after it issues a client ID for the tool. Launches also require registering the LMS deployment ID on the platform."
 msgstr "Übernehmen Sie diese Werte aus dem LMS, nachdem es eine Client-ID für das Werkzeug ausgegeben hat. Für Starts muss außerdem die Deployment-ID des LMS bei der Plattform eingetragen sein."
+
+#: src/worker/exercises/world/strings.ts
+msgid "Copy world A into world B"
+msgstr "Welt A in Welt B kopieren"
+
+#: src/worker/exercises/world/strings.ts
+msgid "Copy world B into world A"
+msgstr "Welt B in Welt A kopieren"
 
 #: src/worker/exercise-kit/actions.ts
 #: src/worker/exercises/multiple-choice/assessment.ts
@@ -1789,6 +1813,10 @@ msgstr "Bearbeitet die Regel der Zeile"
 #: src/worker/web/assignment-detail.tsx
 msgid "Edit the override for {name}"
 msgstr "Abweichung für {name} bearbeiten"
+
+#: src/worker/exercises/world/strings.ts
+msgid "Editing"
+msgstr "In Bearbeitung"
 
 #: src/worker/web/content.tsx
 msgid "Editor view"
@@ -3671,6 +3699,10 @@ msgstr "Punktzahlen, Status und Exportfunktionen dieser Aufgabe."
 msgid "Search"
 msgstr "Suchen"
 
+#: src/worker/exercises/world/strings.ts
+msgid "See the note under your sentence."
+msgstr "Beachten Sie den Hinweis unter Ihrem Satz."
+
 #: src/worker/web/lti.tsx
 msgid "Select"
 msgstr "Auswählen"
@@ -5054,8 +5086,16 @@ msgid "World A"
 msgstr "Welt A"
 
 #: src/worker/exercises/world/strings.ts
+msgid "World A is now a copy of world B."
+msgstr "Welt A ist jetzt eine Kopie von Welt B."
+
+#: src/worker/exercises/world/strings.ts
 msgid "World B"
 msgstr "Welt B"
+
+#: src/worker/exercises/world/strings.ts
+msgid "World B is now a copy of world A."
+msgstr "Welt B ist jetzt eine Kopie von Welt A."
 
 #: src/worker/web/content.tsx
 msgid "Write"

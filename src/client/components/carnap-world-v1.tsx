@@ -42,7 +42,10 @@ import type {
   WorldKind,
   WorldWords,
 } from "../../worker/exercises/world/kinds/contract";
-import type { TruthValue } from "../../worker/exercises/world/logic/check";
+import type {
+  TruthValue,
+  WorldVerdict,
+} from "../../worker/exercises/world/logic/check";
 import {
   judgeDistinguish,
   judgeWorld,
@@ -585,6 +588,14 @@ const SIZE_LABEL: Readonly<Record<BlockSize, WorldStringId>> = {
 interface PaletteProps {
   readonly canRedo: boolean;
   readonly canUndo: boolean;
+  /**
+   * Distinguish's author preview: copy the world being edited over the
+   * other, since the two usually start alike and differ in one detail.
+   */
+  readonly copyAcross?: {
+    readonly label: string;
+    readonly onClick: () => void;
+  };
   /** The block the palette edits, or the attributes a new block gets. */
   readonly current: { readonly shape: BlockShape; readonly size: BlockSize };
   readonly hasBlock: boolean;
@@ -704,6 +715,18 @@ function Palette(props: PaletteProps) {
         "redo",
         props.onRedo,
         !props.canRedo,
+      )}
+      {props.copyAcross === undefined ? null : (
+        <>
+          <span aria-hidden="true" class="proof-toolbar-sep" />
+          <button
+            class="world-copy-across"
+            onClick={props.copyAcross.onClick}
+            type="button"
+          >
+            {props.copyAcross.label}
+          </button>
+        </>
       )}
     </div>
   );
@@ -1030,6 +1053,25 @@ const INTRO: readonly WorldStringId[] = [
   "Point at part of a sentence to see what it is true of.",
 ];
 
+/**
+ * The help's opening lines for distinguish's author preview, where there is
+ * no table and nothing to highlight, but two boards.
+ */
+const PAIR_INTRO: readonly WorldStringId[] = [
+  "Drag a block to move it, or drag a shape from the palette onto a square to add one. On a touch screen, tap a block and then tap a square.",
+  "Click a board, or move into it with Tab, to make it the one the palette edits.",
+];
+
+type Side = "a" | "b";
+
+/** The editing state of the distinguish world the palette is not editing. */
+interface Parked {
+  readonly world: BlocksState;
+  readonly past: BlocksState[];
+  readonly future: BlocksState[];
+  readonly cursor: Cursor;
+}
+
 let nextBlock = 0;
 
 /** A fresh id for a block the editor adds, unlike any authored `o1…on`. */
@@ -1068,6 +1110,13 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
   private highlight: Highlight | null = null;
   /** The author preview: the start world is editable and copyable as source. */
   private preview = false;
+  /**
+   * Distinguish's author preview edits both worlds. The one the palette is
+   * editing is `world`, with its history and cursor, exactly as in build;
+   * the other waits here, and `activate` swaps them.
+   */
+  private parked: Parked | null = null;
+  private active: Side = "a";
 
   private readonly words: Words = (id, values) => this.t(id, values);
 
@@ -1107,7 +1156,9 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
 
     this.helpDialog = createHelpDialog({
       close: this.t("Close help"),
-      intro: INTRO.map((id) => this.t(id)),
+      intro: (this.parked === null ? INTRO : PAIR_INTRO).map((id) =>
+        this.t(id),
+      ),
       keyboard: this.t("Keyboard"),
       shortcuts: SHORTCUTS.map((shortcut) => ({
         action: this.t(shortcut.action),
@@ -1118,7 +1169,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     });
     root.appendChild(this.helpDialog);
 
-    if (data.variant !== "distinguish" && data.variant !== "evaluate") {
+    if (this.editable) {
       mountHelpTrigger(
         this,
         this.t("Usage and keyboard shortcuts"),
@@ -1162,6 +1213,20 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
             ? null
             : kind.parseState(prior.world)) ??
           (resolved.start as BlocksState));
+
+    if (
+      data.variant === "distinguish" &&
+      this.preview &&
+      resolved.worlds !== null
+    ) {
+      this.world = resolved.worlds.a as BlocksState;
+      this.parked = {
+        cursor: { col: 1, row: 1 },
+        future: [],
+        past: [],
+        world: resolved.worlds.b as BlocksState,
+      };
+    }
     this.marks = data.sentences.map((_, index) => {
       const mark = prior.values?.[index];
       return typeof mark === "boolean" ? mark : null;
@@ -1174,7 +1239,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     return (
       variant === "build" ||
       variant === "counterexample" ||
-      (this.preview && variant === "evaluate")
+      (this.preview && (variant === "evaluate" || variant === "distinguish"))
     );
   }
 
@@ -1216,13 +1281,41 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
       return;
     }
 
-    const verdict = judgeWorld(data, resolved, this.currentAnswer());
+    const verdict = judgeWorld(
+      data,
+      this.judged(resolved),
+      this.currentAnswer(),
+    );
 
+    // A sentence that cannot be judged already says why under the input, as
+    // it is typed; the status line points there rather than repeat it.
     this.setCheckStatus(
-      describeWorldVerdict(verdict, resolved, this.words, this.showsDetail),
+      this.notedInline(verdict)
+        ? this.t("See the note under your sentence.")
+        : describeWorldVerdict(
+            verdict,
+            resolved,
+            this.words,
+            this.showsDetail,
+          ),
       verdict.ok,
     );
     this.setMark(verdict.ok ? "ok" : "idle");
+  }
+
+  /**
+   * Whether distinguish's live note under the input is showing this verdict:
+   * with full feedback, a sentence that says nothing about either world yet
+   * (unreadable, open, or outside the vocabulary or the restriction).
+   */
+  private notedInline(verdict: WorldVerdict): boolean {
+    return (
+      this.feedback === "full" &&
+      verdict.type === "distinguish" &&
+      !verdict.ok &&
+      !verdict.empty &&
+      verdict.inA === null
+    );
   }
 
   private edited(): void {
@@ -1237,6 +1330,76 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     // change, so an identical announcement is nudged with a trailing space.
     this.announcement = text === this.announcement.trim() ? `${text} ` : text;
   }
+
+  // --- The two worlds of distinguish's author preview -------------------
+
+  /** Make `side` the world the palette edits. */
+  private readonly activate = (side: Side): void => {
+    const parked = this.parked;
+    const world = this.world;
+
+    if (side === this.active || parked === null || world === null) {
+      return;
+    }
+
+    this.parked = {
+      cursor: this.cursor,
+      future: this.future,
+      past: this.past,
+      world,
+    };
+    this.world = parked.world;
+    this.past = parked.past;
+    this.future = parked.future;
+    this.cursor = parked.cursor;
+    this.active = side;
+    this.carry = null;
+    this.namesOpen = false;
+    this.rerender();
+  };
+
+  /** Distinguish's two worlds as the preview has them, or null elsewhere. */
+  private editedWorlds(): { a: BlocksState; b: BlocksState } | null {
+    const parked = this.parked;
+    const world = this.world;
+
+    if (parked === null || world === null) {
+      return null;
+    }
+
+    return this.active === "a"
+      ? { a: world, b: parked.world }
+      : { a: parked.world, b: world };
+  }
+
+  /** The exercise as it is judged: over the edited worlds, in the preview. */
+  private judged(resolved: ResolvedWorld): ResolvedWorld {
+    const worlds = this.editedWorlds();
+    return worlds === null ? resolved : { ...resolved, worlds };
+  }
+
+  /** Copy the world being edited over the other one, undoably there. */
+  private readonly copyAcross = (): void => {
+    const parked = this.parked;
+    const world = this.world;
+
+    if (parked === null || world === null) {
+      return;
+    }
+
+    this.parked = {
+      ...parked,
+      future: [],
+      past: [...parked.past.slice(-(HISTORY_LIMIT - 1)), parked.world],
+      world,
+    };
+    this.announce(
+      this.active === "a"
+        ? this.t("World B is now a copy of world A.")
+        : this.t("World A is now a copy of world B."),
+    );
+    this.edited();
+  };
 
   // --- Editing ------------------------------------------------------------
 
@@ -1365,6 +1528,17 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     }
 
     this.apply({ id: block.id, size, type: "size" });
+  };
+
+  private readonly dragMove = (id: string, to: Cursor): void => {
+    this.carry = null;
+    this.cursor = to;
+    this.apply({ col: to.col, id, row: to.row, type: "move" });
+  };
+
+  private readonly paletteDrop = (shape: BlockShape, to: Cursor): void => {
+    this.cursor = to;
+    this.addAt(to, shape, this.newSize);
   };
 
   private readonly removeHere = (): void => {
@@ -1622,6 +1796,18 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
       return null;
     }
 
+    const worlds = this.editedWorlds();
+
+    if (worlds !== null) {
+      const side = (key: string, state: BlocksState) =>
+        state.objects.map(
+          (block) =>
+            `| ${key} ${kind.objectKey} : ${kind.formatObject(state, block.id)}`,
+        );
+
+      return [...side("A", worlds.a), ...side("B", worlds.b)].join("\n");
+    }
+
     const lines = world.objects.map((block) => {
       const key = resolved.pinned.has(block.id)
         ? `pinned ${kind.objectKey}`
@@ -1754,16 +1940,9 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
                 kind={kind}
                 label={words("The world")}
                 onCellPointer={this.onCellPointer}
-                onDragMove={(id, to) => {
-                  this.carry = null;
-                  this.cursor = to;
-                  this.apply({ col: to.col, id, row: to.row, type: "move" });
-                }}
+                onDragMove={this.dragMove}
                 onKeyDown={this.onKeyDown}
-                onPaletteDrop={(shape, to) => {
-                  this.cursor = to;
-                  this.addAt(to, shape, this.newSize);
-                }}
+                onPaletteDrop={this.paletteDrop}
                 pinned={pinned}
                 state={world}
                 words={words}
@@ -1782,6 +1961,18 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
                   state={world}
                   words={words}
                 />
+              ) : null}
+              {/* Why the palette is dimmed. The line is kept whenever the
+                  world has a pinned block, so the board does not jump as
+                  the cursor passes over one. */}
+              {editable && pinned.size > 0 ? (
+                <p class="world-cursor-note">
+                  {pinnedHere && block !== undefined
+                    ? words("{block} is pinned and cannot be changed.", {
+                        block: kind.nameObject(world, block.id, words),
+                      })
+                    : null}
+                </p>
               ) : null}
             </div>
           ) : (
@@ -1940,68 +2131,144 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     kind: Blocks,
   ) {
     const words = this.words;
-    const worlds = resolved.worlds;
+    const judged = this.judged(resolved);
+    const worlds = judged.worlds;
+    const parked = this.parked;
+    const block = this.blockAtCursor();
     const verdict =
       this.feedback === "full" && this.sentence.trim() !== ""
-        ? judgeDistinguish(data, resolved, this.sentence)
+        ? judgeDistinguish(data, judged, this.sentence)
         : null;
+    const ignore = () => undefined;
     const figure = (
+      side: Side,
       state: BlocksState,
       label: string,
       value: TruthValue | undefined,
-    ) => (
-      <figure class="world-figure">
-        <figcaption class="world-figure-label">
-          <span>{label}</span>
-          {value === undefined ? null : (
-            <TruthMark value={value} words={words} />
-          )}
-        </figcaption>
-        <Board
-          carry={null}
-          cursor={{ col: 0, row: 0 }}
-          editable={false}
-          focusCursor={false}
-          highlight={null}
-          kind={kind}
-          label={label}
-          onCellPointer={() => undefined}
-          onDragMove={() => undefined}
-          onKeyDown={() => undefined}
-          onPaletteDrop={() => undefined}
-          pinned={new Set()}
-          state={state}
-          words={words}
-        />
-        <ul class="world-object-list">
-          {state.objects.map((block) => (
-            <li class="world-object" key={block.id}>
-              {kind.describeObject(state, block.id, words)}
-            </li>
-          ))}
-        </ul>
-      </figure>
-    );
+    ) => {
+      // Only the author preview edits here. A board the palette is not
+      // editing takes it over at the first click, drag, key, or focus.
+      const editing = parked !== null;
+      const active = editing && side === this.active;
+      const via =
+        <A extends unknown[]>(handler: (...args: A) => void) =>
+        (...args: A): void => {
+          this.activate(side);
+          handler(...args);
+        };
+
+      return (
+        <figure
+          class="world-figure"
+          data-active={active ? "" : undefined}
+          key={side}
+          onFocusCapture={editing ? () => this.activate(side) : undefined}
+        >
+          <figcaption class="world-figure-label">
+            <span>{label}</span>
+            {active ? (
+              <span class="world-figure-editing">{words("Editing")}</span>
+            ) : null}
+            {value === undefined ? null : (
+              <TruthMark value={value} words={words} />
+            )}
+          </figcaption>
+          <Board
+            carry={active ? this.carry : null}
+            cursor={
+              active ? this.cursor : (parked?.cursor ?? { col: 0, row: 0 })
+            }
+            editable={editing}
+            focusCursor={active && this.focusCursor}
+            highlight={null}
+            kind={kind}
+            label={label}
+            onCellPointer={editing ? via(this.onCellPointer) : ignore}
+            onDragMove={editing ? via(this.dragMove) : ignore}
+            onKeyDown={editing ? via(this.onKeyDown) : ignore}
+            onPaletteDrop={editing ? via(this.paletteDrop) : ignore}
+            pinned={new Set()}
+            state={state}
+            words={words}
+          />
+          {active && this.namesOpen && block !== undefined ? (
+            <NamesMenu
+              available={languageNames(resolved.language)}
+              block={block}
+              kind={kind}
+              onClose={() => {
+                this.namesOpen = false;
+                this.focusCursor = true;
+                this.rerender();
+              }}
+              onToggle={this.toggleName}
+              state={state}
+              words={words}
+            />
+          ) : null}
+          <ul class="world-object-list">
+            {state.objects.map((object) => (
+              <li class="world-object" key={object.id}>
+                {kind.describeObject(state, object.id, words)}
+              </li>
+            ))}
+          </ul>
+        </figure>
+      );
+    };
     const shown = (value: TruthValue): TruthValue | undefined =>
       verdict === null || verdict.errors.length > 0 ? undefined : value;
     const restriction = data.restriction;
     const errorText =
-      verdict !== null && !verdict.ok && verdict.inA === null
-        ? describeWorldVerdict(verdict, resolved, words)
+      verdict !== null && this.notedInline(verdict)
+        ? describeWorldVerdict(verdict, judged, words)
         : "";
 
     return (
       <div class="world-layout world-layout-pair">
+        {parked === null ? null : (
+          <Palette
+            canRedo={this.future.length > 0}
+            canUndo={this.past.length > 0}
+            copyAcross={{
+              label:
+                this.active === "a"
+                  ? words("Copy world A into world B")
+                  : words("Copy world B into world A"),
+              onClick: this.copyAcross,
+            }}
+            current={
+              block === undefined
+                ? { shape: this.newShape, size: this.newSize }
+                : { shape: block.shape, size: block.size }
+            }
+            hasBlock={block !== undefined}
+            locked={false}
+            onAdd={this.addHere}
+            onNames={() => {
+              this.namesOpen = true;
+              this.rerender();
+            }}
+            onRedo={this.redo}
+            onRemove={this.removeHere}
+            onShape={this.setShape}
+            onSize={this.setSize}
+            onUndo={this.undo}
+            words={words}
+          />
+        )}
         <div class="world-pair">
           {worlds === null
             ? null
             : [
                 figure(
+                  "a",
                   worlds.a as BlocksState,
                   words("World A"),
                   shown(verdict?.inA ?? null),
                 ),
                 figure(
+                  "b",
                   worlds.b as BlocksState,
                   words("World B"),
                   shown(verdict?.inB ?? null),
@@ -2043,6 +2310,11 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
             </p>
           ) : null}
         </div>
+        {parked === null ? null : (
+          <p aria-live="polite" class="visually-hidden">
+            {this.announcement}
+          </p>
+        )}
       </div>
     );
   }

@@ -35,6 +35,21 @@ export function buildWorldStrings(i18n: Translator) {
     Sentences: i18n.t("Sentences"),
     Laws: i18n.t("Laws"),
     "World A": i18n.t("World A"),
+    /** Beside World A or World B in distinguish's author preview: the board
+     *  the palette edits. */
+    Editing: i18n.t("Editing"),
+    "Copy world A into world B": i18n.t("Copy world A into world B"),
+    "Copy world B into world A": i18n.t("Copy world B into world A"),
+    "World B is now a copy of world A.": i18n.t(
+      "World B is now a copy of world A.",
+    ),
+    "World A is now a copy of world B.": i18n.t(
+      "World A is now a copy of world B.",
+    ),
+    "Click a board, or move into it with Tab, to make it the one the palette edits.":
+      i18n.t(
+        "Click a board, or move into it with Tab, to make it the one the palette edits.",
+      ),
     "World B": i18n.t("World B"),
     "Your sentence": i18n.t("Your sentence"),
     "Allowed symbols: {symbols}": i18n.t(
@@ -146,6 +161,19 @@ export function buildWorldStrings(i18n: Translator) {
       "{formula}: counterexamples {objects}.",
       placeholders("formula", "objects"),
     ),
+    "{formula}: satisfied by {objects}, and others: {count} in all.": i18n.t(
+      "{formula}: satisfied by {objects}, and others: {count} in all.",
+      placeholders("formula", "objects", "count"),
+    ),
+    "{formula}: witnesses {objects}, and others: {count} in all.": i18n.t(
+      "{formula}: witnesses {objects}, and others: {count} in all.",
+      placeholders("formula", "objects", "count"),
+    ),
+    "{formula}: counterexamples {objects}, and others: {count} in all.":
+      i18n.t(
+        "{formula}: counterexamples {objects}, and others: {count} in all.",
+        placeholders("formula", "objects", "count"),
+      ),
 
     // ——— Verdicts.
     "This world does everything the exercise asks.": i18n.t(
@@ -189,6 +217,9 @@ export function buildWorldStrings(i18n: Translator) {
         placeholders("correct", "formulas", "total"),
       ),
     "Write a sentence first.": i18n.t("Write a sentence first."),
+    "See the note under your sentence.": i18n.t(
+      "See the note under your sentence.",
+    ),
     "The sentence has free variables: {variables}.": i18n.t(
       "The sentence has free variables: {variables}.",
       placeholders("variables"),

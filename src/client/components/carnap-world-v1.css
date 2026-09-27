@@ -366,3 +366,31 @@ fieldset.world-marks {
   display: block;
   position: relative;
 }
+
+/* Distinguish's author preview: the board the palette edits is outlined, and
+   the other shows no cursor until it is clicked or tabbed into. */
+.world-figure[data-active] .world-board-frame {
+  border-radius: 3px;
+  outline: 2px solid var(--_accent);
+  outline-offset: 4px;
+}
+
+.world-figure:not([data-active]) .world-cell[data-cursor]::before {
+  display: none;
+}
+
+.world-figure-editing {
+  color: var(--_accent);
+  font-variant-caps: normal;
+  letter-spacing: 0;
+}
+
+/* Above both boards, the palette spans them. */
+.world-layout-pair .world-palette {
+  max-width: none;
+}
+
+.proof-toolbar .world-copy-across {
+  font-size: 0.82rem;
+  white-space: nowrap;
+}

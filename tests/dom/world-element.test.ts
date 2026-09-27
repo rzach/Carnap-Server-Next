@@ -174,6 +174,19 @@ describe("editing", () => {
     expect(announced(mounted)).toContain("is pinned and cannot be changed.");
   });
 
+  test("the reason the palette is dimmed is shown under the board", async () => {
+    const mounted = mountExercise(await worldExercise("", BUILD));
+    const note = () =>
+      mounted.root.querySelector(".world-cursor-note")?.textContent ?? null;
+
+    // The cursor starts on a, which is pinned.
+    expect(note()).toBe("a is pinned and cannot be changed.");
+
+    // Off it, the line stays, empty, so the board does not move.
+    press(mounted, "ArrowRight");
+    expect(note()).toBe("");
+  });
+
   test("a click selects a block, and a tap picks it up", async () => {
     const mounted = mountExercise(await worldExercise("", BUILD));
     const b = () =>
@@ -303,5 +316,195 @@ describe("the other variants", () => {
     expect(mounted.root.querySelectorAll("table[role='grid']")).toHaveLength(
       2,
     );
+  });
+
+  test("an unreadable sentence is explained once, under the input", async () => {
+    const mounted = mountExercise(
+      await worldExercise(
+        'variant="distinguish"',
+        "| A block : small cube at 2,2\n| B block : small tet at 2,2",
+      ),
+    );
+    const input =
+      mounted.root.querySelector<HTMLInputElement>(".world-answer");
+
+    if (input === null) {
+      throw new Error("no sentence input");
+    }
+
+    input.value = "∃x Cube(y)";
+    input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+    mounted.form.querySelector<HTMLButtonElement>(".world-check")?.click();
+
+    expect(
+      mounted.root.querySelector(".world-answer-note")?.textContent,
+    ).toContain("free variable");
+    expect(statusText(mounted)).toBe("See the note under your sentence.");
+  });
+});
+
+describe("distinguish's author preview", () => {
+  const PAIR = "| A block : small cube at 2,2\n| B block : small tet at 2,2";
+
+  async function preview() {
+    return mountExercise(await worldExercise('variant="distinguish"', PAIR), {
+      preview: true,
+    });
+  }
+
+  function board(mounted: Mounted, index: number): HTMLElement {
+    const figure =
+      mounted.root.querySelectorAll<HTMLElement>(".world-figure")[index];
+
+    if (figure === undefined) {
+      throw new Error(`no board ${index}`);
+    }
+
+    return figure;
+  }
+
+  /** Press a key on one board, where its cursor is. */
+  function pressOn(mounted: Mounted, index: number, key: string): void {
+    board(mounted, index)
+      .querySelector("td[data-cursor]")
+      ?.dispatchEvent(
+        new dom.window.KeyboardEvent("keydown", { bubbles: true, key }),
+      );
+  }
+
+  function descriptions(mounted: Mounted, index: number): string[] {
+    return [...board(mounted, index).querySelectorAll(".world-object")].map(
+      (item) => item.textContent ?? "",
+    );
+  }
+
+  function check(mounted: Mounted, sentence: string): string {
+    const input =
+      mounted.root.querySelector<HTMLInputElement>(".world-answer");
+
+    if (input === null) {
+      throw new Error("no sentence input");
+    }
+
+    input.value = sentence;
+    input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+    mounted.form.querySelector<HTMLButtonElement>(".world-check")?.click();
+    return statusText(mounted);
+  }
+
+  test("both worlds are editable, one at a time, through one palette", async () => {
+    const mounted = await preview();
+
+    expect(mounted.root.querySelectorAll(".world-palette")).toHaveLength(1);
+    expect(board(mounted, 0).hasAttribute("data-active")).toBe(true);
+
+    // The cursor starts on A's 1,1; carry on to its cube and make it large.
+    pressOn(mounted, 0, "ArrowRight");
+    pressOn(mounted, 0, "ArrowDown");
+    pressOn(mounted, 0, "l");
+    expect(descriptions(mounted, 0)).toEqual([
+      "large cube at column 2, row 2",
+    ]);
+
+    // A key on B's board makes B the one being edited, first.
+    pressOn(mounted, 1, "ArrowRight");
+    pressOn(mounted, 1, "ArrowDown");
+    pressOn(mounted, 1, "d");
+    expect(board(mounted, 1).hasAttribute("data-active")).toBe(true);
+    expect(descriptions(mounted, 1)).toEqual([
+      "small dodec at column 2, row 2",
+    ]);
+    expect(descriptions(mounted, 0)).toEqual([
+      "large cube at column 2, row 2",
+    ]);
+
+    // Each world keeps its own history.
+    board(mounted, 1)
+      .querySelector("td[data-cursor]")
+      ?.dispatchEvent(
+        new dom.window.KeyboardEvent("keydown", {
+          bubbles: true,
+          ctrlKey: true,
+          key: "z",
+        }),
+      );
+    expect(descriptions(mounted, 1)).toEqual([
+      "small tet at column 2, row 2",
+    ]);
+    expect(descriptions(mounted, 0)).toEqual([
+      "large cube at column 2, row 2",
+    ]);
+  });
+
+  test("Check judges the worlds as edited", async () => {
+    const mounted = await preview();
+
+    expect(check(mounted, "∃x Cube(x)")).toBe(
+      "The sentence is true in world A and false in world B.",
+    );
+
+    // Copy A over B: the sentence no longer tells them apart.
+    mounted.root
+      .querySelector<HTMLButtonElement>(".world-copy-across")
+      ?.click();
+    expect(descriptions(mounted, 1)).toEqual([
+      "small cube at column 2, row 2",
+    ]);
+    expect(announced(mounted)).toBe("World B is now a copy of world A.");
+    expect(check(mounted, "∃x Cube(x)")).toBe(
+      "The sentence is true in world B.",
+    );
+  });
+
+  test("Copy as source writes both worlds", async () => {
+    const copied: string[] = [];
+    const globals = globalThis as Record<string, unknown>;
+    const saved = {
+      location: globals.location,
+      navigator: globals.navigator,
+    };
+    const mounted = await preview();
+
+    Object.defineProperty(globalThis, "navigator", {
+      configurable: true,
+      value: {
+        clipboard: {
+          writeText: async (text: string) => {
+            copied.push(text);
+          },
+        },
+      },
+    });
+    Object.defineProperty(globalThis, "location", {
+      configurable: true,
+      value: { href: "about:srcdoc" },
+    });
+
+    try {
+      mounted.form
+        .querySelector<HTMLButtonElement>(".copy-source")
+        ?.dispatchEvent(new dom.window.Event("click"));
+      await Promise.resolve();
+
+      expect(copied).toEqual([
+        "| A block : small cube at 2,2\n| B block : small tet at 2,2",
+      ]);
+    } finally {
+      for (const [name, value] of Object.entries(saved)) {
+        Object.defineProperty(globalThis, name, {
+          configurable: true,
+          value,
+        });
+      }
+    }
+  });
+
+  test("a student's distinguish is not editable", async () => {
+    const mounted = mountExercise(
+      await worldExercise('variant="distinguish"', PAIR),
+    );
+
+    expect(mounted.root.querySelector(".world-palette")).toBeNull();
+    expect(mounted.form.querySelector(".copy-source")).toBeNull();
   });
 });

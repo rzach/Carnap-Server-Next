@@ -174,11 +174,19 @@ msgid "{field}: which element it names"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
+msgid "{formula}: counterexamples {objects}, and others: {count} in all."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
 msgid "{formula}: counterexamples {objects}."
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
 msgid "{formula}: false."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula}: satisfied by {objects}, and others: {count} in all."
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
@@ -191,6 +199,10 @@ msgstr ""
 
 #: src/worker/exercises/world/strings.ts
 msgid "{formula}: true."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula}: witnesses {objects}, and others: {count} in all."
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
@@ -1113,6 +1125,10 @@ msgstr ""
 msgid "Cited hypothesis"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Click a board, or move into it with Tab, to make it the one the palette edits."
+msgstr ""
+
 #: src/worker/application/lti-admin.ts
 #: src/worker/web/admin-lti.tsx
 msgid "Client ID"
@@ -1293,6 +1309,14 @@ msgstr ""
 
 #: src/worker/web/admin-lti.tsx
 msgid "Copy these values from the LMS after it issues a client ID for the tool. Launches also require registering the LMS deployment ID on the platform."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Copy world A into world B"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Copy world B into world A"
 msgstr ""
 
 #: src/worker/exercise-kit/actions.ts
@@ -1788,6 +1812,10 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Edit the override for {name}"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Editing"
 msgstr ""
 
 #: src/worker/web/content.tsx
@@ -3671,6 +3699,10 @@ msgstr ""
 msgid "Search"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "See the note under your sentence."
+msgstr ""
+
 #: src/worker/web/lti.tsx
 msgid "Select"
 msgstr ""
@@ -5054,7 +5086,15 @@ msgid "World A"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
+msgid "World A is now a copy of world B."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
 msgid "World B"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "World B is now a copy of world A."
 msgstr ""
 
 #: src/worker/web/content.tsx

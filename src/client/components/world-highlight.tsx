@@ -169,37 +169,60 @@ export function computeHighlight(
   return { ...empty, described, mode: "tuples", text };
 }
 
+/**
+ * How many objects or tuples an announcement lists by name before it gives
+ * the total instead: past a handful, a list of unnamed blocks read aloud
+ * ("the block at column 6, row 7") is longer than anyone can follow.
+ */
+const ANNOUNCED = 5;
+
 /** The highlight in words, for the live region. */
 export function highlightAnnouncement(
   highlight: Highlight,
   words: WorldWords,
 ): string {
-  const objects = highlight.described.join("; ");
+  const formula = highlight.text;
+  const count = String(highlight.described.length);
+  const capped = highlight.described.length > ANNOUNCED;
+  const objects = highlight.described.slice(0, ANNOUNCED).join("; ");
 
   switch (highlight.mode) {
     case "truth":
       return highlight.value
-        ? words("{formula}: true.", { formula: highlight.text })
-        : words("{formula}: false.", { formula: highlight.text });
+        ? words("{formula}: true.", { formula })
+        : words("{formula}: false.", { formula });
     case "witnesses":
-      return words("{formula}: witnesses {objects}.", {
-        formula: highlight.text,
-        objects,
-      });
+      return capped
+        ? words(
+            "{formula}: witnesses {objects}, and others: {count} in all.",
+            {
+              count,
+              formula,
+              objects,
+            },
+          )
+        : words("{formula}: witnesses {objects}.", { formula, objects });
     case "counterexamples":
-      return words("{formula}: counterexamples {objects}.", {
-        formula: highlight.text,
-        objects,
-      });
-    default:
-      return highlight.described.length === 0
-        ? words("{formula}: satisfied by nothing.", {
-            formula: highlight.text,
-          })
-        : words("{formula}: satisfied by {objects}.", {
-            formula: highlight.text,
+      return capped
+        ? words(
+            "{formula}: counterexamples {objects}, and others: {count} in all.",
+            { count, formula, objects },
+          )
+        : words("{formula}: counterexamples {objects}.", {
+            formula,
             objects,
           });
+    default:
+      if (highlight.described.length === 0) {
+        return words("{formula}: satisfied by nothing.", { formula });
+      }
+
+      return capped
+        ? words(
+            "{formula}: satisfied by {objects}, and others: {count} in all.",
+            { count, formula, objects },
+          )
+        : words("{formula}: satisfied by {objects}.", { formula, objects });
   }
 }
 
