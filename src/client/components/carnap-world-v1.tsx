@@ -1430,9 +1430,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
 
       if (broken.length > 0) {
         this.announce(
-          this.words("{block} is pinned and cannot be changed.", {
-            block: kind.nameObject(world, broken[0] ?? "", this.words),
-          }),
+          kind.objectSentence(world, broken[0] ?? "", "pinned", this.words),
         );
         this.rerender();
         return false;
@@ -1673,10 +1671,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
         } else if (block !== undefined) {
           this.carry = { id: block.id };
           this.announce(
-            this.t(
-              "Picked up {block}. Arrow keys carry it, Enter drops it, Escape puts it back.",
-              { block: kind.nameObject(world, block.id, this.words) },
-            ),
+            kind.objectSentence(world, block.id, "picked-up", this.words),
           );
         }
         break;
@@ -1688,9 +1683,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
           if (carried !== undefined) {
             this.cursor = { col: carried.col, row: carried.row };
             this.announce(
-              this.t("Put {block} back.", {
-                block: kind.nameObject(world, carried.id, this.words),
-              }),
+              kind.objectSentence(world, carried.id, "put-back", this.words),
             );
           }
         } else {
@@ -1968,9 +1961,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
               {editable && pinned.size > 0 ? (
                 <p class="world-cursor-note">
                   {pinnedHere && block !== undefined
-                    ? words("{block} is pinned and cannot be changed.", {
-                        block: kind.nameObject(world, block.id, words),
-                      })
+                    ? kind.objectSentence(world, block.id, "pinned", words)
                     : null}
                 </p>
               ) : null}

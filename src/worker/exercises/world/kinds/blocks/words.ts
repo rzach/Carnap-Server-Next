@@ -7,7 +7,7 @@
  */
 
 import type { WorldStringId } from "../../strings";
-import type { WorldProblem, WorldWords } from "../contract";
+import type { ObjectSentence, WorldProblem, WorldWords } from "../contract";
 import type { BlocksMove } from "./moves";
 import type { Block, BlockShape, BlockSize, BlocksState } from "./state";
 import { blockById } from "./state";
@@ -35,8 +35,9 @@ function nameList(names: readonly string[]): string {
 }
 
 /**
- * How a sentence refers to a block: by its names where it has any, since
- * those are what the sentences use, and otherwise by its square.
+ * How a list refers to a block: by its names where it has any, since those
+ * are what the sentences use, and otherwise by its square. A sentence about
+ * one block is worded whole instead ({@link aboutBlock}).
  */
 export function blockReference(block: Block, words: WorldWords): string {
   return block.names.length > 0
@@ -55,6 +56,58 @@ export function reference(
   const block = id === undefined ? undefined : blockById(state, id);
 
   return block === undefined ? "?" : blockReference(block, words);
+}
+
+/**
+ * A sentence about one block, in its form for a named block or an unnamed
+ * one. Whole sentences rather than a reference dropped into one: where the
+ * square falls, what case it takes, and whether it opens the sentence (and so
+ * is capitalized) are the translation's to decide — "the block at column 2"
+ * begins a German sentence that its English puts last.
+ */
+function aboutBlock(
+  block: Block,
+  named: WorldStringId,
+  unnamed: WorldStringId,
+  words: WorldWords,
+  values: Readonly<Record<string, string>> = {},
+): string {
+  return block.names.length > 0
+    ? words(named, { ...values, block: nameList(block.names) })
+    : words(unnamed, {
+        ...values,
+        col: String(block.col),
+        row: String(block.row),
+      });
+}
+
+const OBJECT_SENTENCES: Readonly<
+  Record<ObjectSentence, readonly [WorldStringId, WorldStringId]>
+> = {
+  "picked-up": [
+    "Picked up {block}. Arrow keys carry it, Enter drops it, Escape puts it back.",
+    "Picked up the block at column {col}, row {row}. Arrow keys carry it, Enter drops it, Escape puts it back.",
+  ],
+  pinned: [
+    "{block} is pinned and cannot be changed.",
+    "The block at column {col}, row {row} is pinned and cannot be changed.",
+  ],
+  "put-back": [
+    "Put {block} back.",
+    "Put the block at column {col}, row {row} back.",
+  ],
+};
+
+export function objectSentence(
+  state: BlocksState,
+  id: string,
+  sentence: ObjectSentence,
+  words: WorldWords,
+): string {
+  const block = blockById(state, id);
+  const [named, unnamed] = OBJECT_SENTENCES[sentence];
+
+  return block === undefined ? "" : aboutBlock(block, named, unnamed, words);
 }
 
 export function describeBlock(
@@ -101,34 +154,60 @@ export function describeBlocksMove(
     return "";
   }
 
-  const who = blockReference(block, words);
-
   switch (move.type) {
     case "remove":
-      return words("Removed {block}.", { block: who });
+      return aboutBlock(
+        block,
+        "Removed {block}.",
+        "Removed the block at column {col}, row {row}.",
+        words,
+      );
     case "move":
-      return words("Moved {block} to column {col}, row {row}.", {
-        block: who,
-        col: String(move.col),
-        row: String(move.row),
-      });
+      // Two squares, so the unnamed form names the one it left as `from`.
+      return block.names.length > 0
+        ? words("Moved {block} to column {col}, row {row}.", {
+            block: nameList(block.names),
+            col: String(move.col),
+            row: String(move.row),
+          })
+        : words(
+            "Moved the block at column {fromCol}, row {fromRow} to column {col}, row {row}.",
+            {
+              col: String(move.col),
+              fromCol: String(block.col),
+              fromRow: String(block.row),
+              row: String(move.row),
+            },
+          );
     case "shape":
-      return words("{block} is now a {kind}.", {
-        block: who,
-        kind: blockKind(move.shape, block.size, words),
-      });
     case "size":
-      return words("{block} is now a {kind}.", {
-        block: who,
-        kind: blockKind(block.shape, move.size, words),
-      });
+      return aboutBlock(
+        block,
+        "{block} is now a {kind}.",
+        "The block at column {col}, row {row} is now a {kind}.",
+        words,
+        {
+          kind:
+            move.type === "shape"
+              ? blockKind(move.shape, block.size, words)
+              : blockKind(block.shape, move.size, words),
+        },
+      );
     default:
       return move.names.length === 0
-        ? words("{block} has no names now.", { block: who })
-        : words("{block} is now named {names}.", {
-            block: who,
-            names: nameList(move.names),
-          });
+        ? aboutBlock(
+            block,
+            "{block} has no names now.",
+            "The block at column {col}, row {row} has no names now.",
+            words,
+          )
+        : aboutBlock(
+            block,
+            "{block} is now named {names}.",
+            "The block at column {col}, row {row} is now named {names}.",
+            words,
+            { names: nameList(move.names) },
+          );
   }
 }
 
@@ -142,12 +221,21 @@ export function describeBlocksProblem(
   const second = reference(state, problem.objects[1], words);
 
   switch (problem.code) {
-    case "occupied":
-      return words("Column {col}, row {row} already holds {block}.", {
-        block: first,
-        col: values.col ?? "",
-        row: values.row ?? "",
-      });
+    case "occupied": {
+      // The square is already named, so an unnamed block is just "a block".
+      const square = { col: values.col ?? "", row: values.row ?? "" };
+      const holder =
+        problem.objects[0] === undefined
+          ? undefined
+          : blockById(state, problem.objects[0]);
+
+      return holder !== undefined && holder.names.length > 0
+        ? words("Column {col}, row {row} already holds {block}.", {
+            ...square,
+            block: nameList(holder.names),
+          })
+        : words("Column {col}, row {row} already holds a block.", square);
+    }
     case "off-board":
       return words("That square is off the board.");
     case "too-many":
@@ -155,6 +243,8 @@ export function describeBlocksProblem(
         max: values.max ?? "",
       });
     case "name-taken":
+      // The block holding a name is named, so no unnamed form is needed; the
+      // same goes for the two blocks sharing one below.
       return words("{name} already names {block}.", {
         block: first,
         name: values.name ?? "",

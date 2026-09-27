@@ -1173,6 +1173,10 @@ msgstr ""
 msgid "Column {col}, row {row} already holds {block}."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Column {col}, row {row} already holds a block."
+msgstr ""
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Column {col}, row {row} is not on the board."
 msgstr ""
@@ -2638,6 +2642,10 @@ msgstr ""
 msgid "Moved {block} to column {col}, row {row}."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Moved the block at column {fromCol}, row {fromRow} to column {col}, row {row}."
+msgstr ""
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Multiple-choice mode must be single or multiple."
 msgstr ""
@@ -3161,6 +3169,10 @@ msgstr ""
 msgid "Picked up {block}. Arrow keys carry it, Enter drops it, Escape puts it back."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Picked up the block at column {col}, row {row}. Arrow keys carry it, Enter drops it, Escape puts it back."
+msgstr ""
+
 #: src/worker/web/admin.tsx
 msgid "Platform administration"
 msgstr ""
@@ -3373,6 +3385,10 @@ msgstr ""
 msgid "Put a carried block back"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Put the block at column {col}, row {row} back."
+msgstr ""
+
 #: src/worker/web/content.tsx
 msgid "Quote this address in an aufbau-mm0 block's src to build proofs on this theory. It names this revision, so later revisions leave existing lessons alone."
 msgstr ""
@@ -3471,6 +3487,10 @@ msgstr ""
 
 #: src/worker/exercises/world/strings.ts
 msgid "Removed {block}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Removed the block at column {col}, row {row}."
 msgstr ""
 
 #: src/worker/web/courses.tsx
@@ -4087,6 +4107,22 @@ msgstr ""
 
 #: src/worker/exercises/world/strings.ts
 msgid "the block at column {col}, row {row}"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "The block at column {col}, row {row} has no names now."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "The block at column {col}, row {row} is now a {kind}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "The block at column {col}, row {row} is now named {names}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "The block at column {col}, row {row} is pinned and cannot be changed."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts

@@ -21,14 +21,17 @@ import {
   bindVocabulary,
   worldStructure,
 } from "../src/worker/exercises/world/logic/structure";
+import { buildWorldStrings } from "../src/worker/exercises/world/strings";
 import type { WorldPublicData } from "../src/worker/exercises/world/types";
 import {
   WORLD_ANSWER_KIND,
   WORLD_SCHEMA_VERSION,
 } from "../src/worker/exercises/world/types";
+import { i18nFor } from "../src/worker/i18n";
 import {
   formatMessage,
   passthroughTranslator,
+  stringsResolver,
 } from "../src/worker/i18n/translator";
 import { roleIndex } from "../src/worker/logic/specs/roles";
 import {
@@ -247,6 +250,69 @@ describe("the blocks kind", () => {
         formatMessage(id, values),
       ),
     ).toBe("Column 4, row 3 already holds b.");
+  });
+
+  describe("a sentence about an unnamed block is worded whole", () => {
+    const english = (id: string, values?: Readonly<Record<string, string>>) =>
+      formatMessage(id, values);
+    const unnamed = world(
+      block("o1", "tet", "small", 1, 1, ["a"]),
+      block("o2", "dodec", "large", 5, 6),
+    );
+
+    test("opening a sentence, it is capitalized", () => {
+      expect(
+        BLOCKS_KIND.describeMove(
+          unnamed,
+          { id: "o2", size: "small", type: "size" },
+          english,
+        ),
+      ).toBe("The block at column 5, row 6 is now a small dodec.");
+      expect(
+        BLOCKS_KIND.objectSentence(unnamed, "o2", "pinned", english),
+      ).toBe("The block at column 5, row 6 is pinned and cannot be changed.");
+    });
+
+    test("a move names both squares", () => {
+      expect(
+        BLOCKS_KIND.describeMove(
+          unnamed,
+          { col: 2, id: "o2", row: 3, type: "move" },
+          english,
+        ),
+      ).toBe("Moved the block at column 5, row 6 to column 2, row 3.");
+    });
+
+    test("an occupied square is not named twice", () => {
+      const result = BLOCKS_KIND.apply(unnamed, {
+        col: 5,
+        id: "o1",
+        row: 6,
+        type: "move",
+      });
+
+      expect(
+        BLOCKS_KIND.describeProblem(unnamed, result as never, english),
+      ).toBe("Column 5, row 6 already holds a block.");
+    });
+
+    test("a named block is still referred to by its name", () => {
+      expect(
+        BLOCKS_KIND.objectSentence(unnamed, "o1", "put-back", english),
+      ).toBe("Put a back.");
+    });
+
+    test("the translation decides where the square goes", () => {
+      const german = stringsResolver(buildWorldStrings(i18nFor("de")));
+
+      expect(
+        BLOCKS_KIND.describeMove(
+          unnamed,
+          { id: "o2", type: "remove" },
+          german,
+        ),
+      ).toMatch(/^Der Block in Spalte 5, Zeile 6 /);
+    });
   });
 
   test("refuses a name another block has", () => {

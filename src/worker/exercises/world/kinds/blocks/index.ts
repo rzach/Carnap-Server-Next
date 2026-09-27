@@ -21,6 +21,7 @@ import {
   describeBlock,
   describeBlocksMove,
   describeBlocksProblem,
+  objectSentence,
   reference,
 } from "./words";
 
@@ -42,6 +43,7 @@ export const BLOCKS_KIND = {
   nameObject: (state: BlocksState, id: string, words: WorldWords) =>
     reference(state, id, words),
   objectKey: "block",
+  objectSentence,
   objects: (state: BlocksState) => state.objects,
   parseMove: parseBlocksMove,
   parseObject: parseBlockLine,

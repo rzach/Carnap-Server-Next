@@ -32,6 +32,9 @@ export type WorldWords = (
  * complaints seen from two sides: a state with two blocks on one square is a
  * problem, and the move that would make one is refused for that reason.
  */
+/** A sentence the editor says about one object: see {@link WorldKind.objectSentence}. */
+export type ObjectSentence = "pinned" | "picked-up" | "put-back";
+
 export interface WorldProblem {
   readonly code: string;
   readonly objects: readonly string[];
@@ -174,6 +177,18 @@ export interface WorldKind<State = unknown, Move = unknown, Spec = unknown> {
    * any, since those are what the sentences use, and otherwise briefly.
    */
   nameObject(state: State, id: string, words: WorldWords): string;
+  /**
+   * One of the editor's sentences about an object, worded whole. An object
+   * with no name is referred to by where it is, and a translation needs the
+   * whole sentence to put that phrase where its grammar goes — first, and
+   * capitalized, in some languages but not others.
+   */
+  objectSentence(
+    state: State,
+    id: string,
+    sentence: ObjectSentence,
+    words: WorldWords,
+  ): string;
   describeMove(before: State, move: Move, words: WorldWords): string;
   describeProblem(
     state: State,

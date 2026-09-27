@@ -1173,6 +1173,10 @@ msgstr "Spalte {col}, Zeile {row}"
 msgid "Column {col}, row {row} already holds {block}."
 msgstr "In Spalte {col}, Zeile {row} steht schon {block}."
 
+#: src/worker/exercises/world/strings.ts
+msgid "Column {col}, row {row} already holds a block."
+msgstr "In Spalte {col}, Zeile {row} steht schon ein Block."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Column {col}, row {row} is not on the board."
 msgstr "Spalte {col}, Zeile {row} liegt nicht auf dem Brett."
@@ -2638,6 +2642,10 @@ msgstr "Zwischen Feldern wechseln"
 msgid "Moved {block} to column {col}, row {row}."
 msgstr "{block} nach Spalte {col}, Zeile {row} verschoben."
 
+#: src/worker/exercises/world/strings.ts
+msgid "Moved the block at column {fromCol}, row {fromRow} to column {col}, row {row}."
+msgstr "Der Block in Spalte {fromCol}, Zeile {fromRow} wurde nach Spalte {col}, Zeile {row} verschoben."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Multiple-choice mode must be single or multiple."
 msgstr "Der Multiple-Choice-Modus muss single oder multiple sein."
@@ -3161,6 +3169,10 @@ msgstr "Einen Block aufnehmen oder absetzen"
 msgid "Picked up {block}. Arrow keys carry it, Enter drops it, Escape puts it back."
 msgstr "{block} aufgenommen. Die Pfeiltasten tragen ihn, Enter setzt ihn ab, Escape stellt ihn zurück."
 
+#: src/worker/exercises/world/strings.ts
+msgid "Picked up the block at column {col}, row {row}. Arrow keys carry it, Enter drops it, Escape puts it back."
+msgstr "Der Block in Spalte {col}, Zeile {row} wurde aufgenommen. Die Pfeiltasten tragen ihn, Enter setzt ihn ab, Escape stellt ihn zurück."
+
 #: src/worker/web/admin.tsx
 msgid "Platform administration"
 msgstr "Plattformverwaltung"
@@ -3373,6 +3385,10 @@ msgstr "{block} zurückgestellt."
 msgid "Put a carried block back"
 msgstr "Einen getragenen Block zurückstellen"
 
+#: src/worker/exercises/world/strings.ts
+msgid "Put the block at column {col}, row {row} back."
+msgstr "Der Block in Spalte {col}, Zeile {row} wurde zurückgestellt."
+
 #: src/worker/web/content.tsx
 msgid "Quote this address in an aufbau-mm0 block's src to build proofs on this theory. It names this revision, so later revisions leave existing lessons alone."
 msgstr ""
@@ -3472,6 +3488,10 @@ msgstr "Entfernen"
 #: src/worker/exercises/world/strings.ts
 msgid "Removed {block}."
 msgstr "{block} entfernt."
+
+#: src/worker/exercises/world/strings.ts
+msgid "Removed the block at column {col}, row {row}."
+msgstr "Der Block in Spalte {col}, Zeile {row} wurde entfernt."
 
 #: src/worker/web/courses.tsx
 msgid "Removed user"
@@ -4088,6 +4108,22 @@ msgstr "Der Versuch wurde nicht gefunden."
 #: src/worker/exercises/world/strings.ts
 msgid "the block at column {col}, row {row}"
 msgstr "der Block in Spalte {col}, Zeile {row}"
+
+#: src/worker/exercises/world/strings.ts
+msgid "The block at column {col}, row {row} has no names now."
+msgstr "Der Block in Spalte {col}, Zeile {row} hat jetzt keinen Namen."
+
+#: src/worker/exercises/world/strings.ts
+msgid "The block at column {col}, row {row} is now a {kind}."
+msgstr "Der Block in Spalte {col}, Zeile {row} ist jetzt ein {kind}."
+
+#: src/worker/exercises/world/strings.ts
+msgid "The block at column {col}, row {row} is now named {names}."
+msgstr "Der Block in Spalte {col}, Zeile {row} heißt jetzt {names}."
+
+#: src/worker/exercises/world/strings.ts
+msgid "The block at column {col}, row {row} is pinned and cannot be changed."
+msgstr "Der Block in Spalte {col}, Zeile {row} ist fixiert und kann nicht geändert werden."
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The budget attribute must be a whole number of objects, 0 or more."

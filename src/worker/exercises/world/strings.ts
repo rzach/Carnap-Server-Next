@@ -111,11 +111,25 @@ export function buildWorldStrings(i18n: Translator) {
         placeholders("block"),
       ),
     "Put {block} back.": i18n.t("Put {block} back.", placeholders("block")),
+    "Picked up the block at column {col}, row {row}. Arrow keys carry it, Enter drops it, Escape puts it back.":
+      i18n.t(
+        "Picked up the block at column {col}, row {row}. Arrow keys carry it, Enter drops it, Escape puts it back.",
+        placeholders("col", "row"),
+      ),
+    "Put the block at column {col}, row {row} back.": i18n.t(
+      "Put the block at column {col}, row {row} back.",
+      placeholders("col", "row"),
+    ),
     "Undid the last change.": i18n.t("Undid the last change."),
     "{block} is pinned and cannot be changed.": i18n.t(
       "{block} is pinned and cannot be changed.",
       placeholders("block"),
     ),
+    "The block at column {col}, row {row} is pinned and cannot be changed.":
+      i18n.t(
+        "The block at column {col}, row {row} is pinned and cannot be changed.",
+        placeholders("col", "row"),
+      ),
 
     // ——— Help.
     "Using the world editor": i18n.t("Using the world editor"),
@@ -281,6 +295,31 @@ export function buildWorldStrings(i18n: Translator) {
       placeholders("block", "col", "row"),
     ),
     "Removed {block}.": i18n.t("Removed {block}.", placeholders("block")),
+    "Removed the block at column {col}, row {row}.": i18n.t(
+      "Removed the block at column {col}, row {row}.",
+      placeholders("col", "row"),
+    ),
+    "Moved the block at column {fromCol}, row {fromRow} to column {col}, row {row}.":
+      i18n.t(
+        "Moved the block at column {fromCol}, row {fromRow} to column {col}, row {row}.",
+        placeholders("col", "fromCol", "fromRow", "row"),
+      ),
+    "The block at column {col}, row {row} is now a {kind}.": i18n.t(
+      "The block at column {col}, row {row} is now a {kind}.",
+      placeholders("col", "kind", "row"),
+    ),
+    "The block at column {col}, row {row} has no names now.": i18n.t(
+      "The block at column {col}, row {row} has no names now.",
+      placeholders("col", "row"),
+    ),
+    "The block at column {col}, row {row} is now named {names}.": i18n.t(
+      "The block at column {col}, row {row} is now named {names}.",
+      placeholders("col", "names", "row"),
+    ),
+    "Column {col}, row {row} already holds a block.": i18n.t(
+      "Column {col}, row {row} already holds a block.",
+      placeholders("col", "row"),
+    ),
     "Moved {block} to column {col}, row {row}.": i18n.t(
       "Moved {block} to column {col}, row {row}.",
       placeholders("block", "col", "row"),

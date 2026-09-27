@@ -1173,6 +1173,10 @@ msgstr "Column {col}, row {row}"
 msgid "Column {col}, row {row} already holds {block}."
 msgstr "Column {col}, row {row} already holds {block}."
 
+#: src/worker/exercises/world/strings.ts
+msgid "Column {col}, row {row} already holds a block."
+msgstr "Column {col}, row {row} already holds a block."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Column {col}, row {row} is not on the board."
 msgstr "Column {col}, row {row} is not on the board."
@@ -2638,6 +2642,10 @@ msgstr "Move between squares"
 msgid "Moved {block} to column {col}, row {row}."
 msgstr "Moved {block} to column {col}, row {row}."
 
+#: src/worker/exercises/world/strings.ts
+msgid "Moved the block at column {fromCol}, row {fromRow} to column {col}, row {row}."
+msgstr "Moved the block at column {fromCol}, row {fromRow} to column {col}, row {row}."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Multiple-choice mode must be single or multiple."
 msgstr "Multiple-choice mode must be single or multiple."
@@ -3161,6 +3169,10 @@ msgstr "Pick up or drop a block"
 msgid "Picked up {block}. Arrow keys carry it, Enter drops it, Escape puts it back."
 msgstr "Picked up {block}. Arrow keys carry it, Enter drops it, Escape puts it back."
 
+#: src/worker/exercises/world/strings.ts
+msgid "Picked up the block at column {col}, row {row}. Arrow keys carry it, Enter drops it, Escape puts it back."
+msgstr "Picked up the block at column {col}, row {row}. Arrow keys carry it, Enter drops it, Escape puts it back."
+
 #: src/worker/web/admin.tsx
 msgid "Platform administration"
 msgstr "Platform administration"
@@ -3373,6 +3385,10 @@ msgstr "Put {block} back."
 msgid "Put a carried block back"
 msgstr "Put a carried block back"
 
+#: src/worker/exercises/world/strings.ts
+msgid "Put the block at column {col}, row {row} back."
+msgstr "Put the block at column {col}, row {row} back."
+
 #: src/worker/web/content.tsx
 msgid "Quote this address in an aufbau-mm0 block's src to build proofs on this theory. It names this revision, so later revisions leave existing lessons alone."
 msgstr "Quote this address in an aufbau-mm0 block's src to build proofs on this theory. It names this revision, so later revisions leave existing lessons alone."
@@ -3472,6 +3488,10 @@ msgstr "Remove it"
 #: src/worker/exercises/world/strings.ts
 msgid "Removed {block}."
 msgstr "Removed {block}."
+
+#: src/worker/exercises/world/strings.ts
+msgid "Removed the block at column {col}, row {row}."
+msgstr "Removed the block at column {col}, row {row}."
 
 #: src/worker/web/courses.tsx
 msgid "Removed user"
@@ -4088,6 +4108,22 @@ msgstr "The attempt was not found."
 #: src/worker/exercises/world/strings.ts
 msgid "the block at column {col}, row {row}"
 msgstr "the block at column {col}, row {row}"
+
+#: src/worker/exercises/world/strings.ts
+msgid "The block at column {col}, row {row} has no names now."
+msgstr "The block at column {col}, row {row} has no names now."
+
+#: src/worker/exercises/world/strings.ts
+msgid "The block at column {col}, row {row} is now a {kind}."
+msgstr "The block at column {col}, row {row} is now a {kind}."
+
+#: src/worker/exercises/world/strings.ts
+msgid "The block at column {col}, row {row} is now named {names}."
+msgstr "The block at column {col}, row {row} is now named {names}."
+
+#: src/worker/exercises/world/strings.ts
+msgid "The block at column {col}, row {row} is pinned and cannot be changed."
+msgstr "The block at column {col}, row {row} is pinned and cannot be changed."
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The budget attribute must be a whole number of objects, 0 or more."
