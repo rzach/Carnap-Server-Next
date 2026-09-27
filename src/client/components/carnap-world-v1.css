@@ -354,6 +354,11 @@ fieldset.world-marks {
   cursor: pointer;
   outline: none;
   position: relative;
+}
+
+/* A finger on a block that can be dragged drags it; anywhere else it scrolls
+   the page, so a board read-only, or an empty square, never traps a swipe. */
+.world-grid:not([aria-readonly="true"]) .world-cell[data-object] {
   touch-action: none;
 }
 
