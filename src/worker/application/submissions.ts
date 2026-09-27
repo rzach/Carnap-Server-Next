@@ -109,6 +109,12 @@ export interface SubmissionHistoryEntry {
    * answer it.
    */
   readonly nominalPoints: number | null;
+  /**
+   * The exercise's title, as its author wrote it — what a student knows it by,
+   * where the id is only what the grader keys on. Null for an untitled
+   * exercise, and for one no longer in the assignment's content.
+   */
+  readonly exerciseTitle: string | null;
   readonly submission: Submission;
 }
 
@@ -677,6 +683,7 @@ export class SubmissionService {
                 ? null
                 : viewerEvaluation(evaluation)
               : studentEvaluation(evaluation, declaration, assignment, now),
+          exerciseTitle: declaration?.title ?? null,
           nominalPoints: declaration?.nominalPoints ?? null,
           submission,
         };

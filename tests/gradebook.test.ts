@@ -979,7 +979,11 @@ Choose yes.
       const instructor = await login(env, "results-teacher@example.test");
       const student = await login(env, "results-student@example.test");
       const courseId = await createCourse(env, instructor);
-      const revisionId = await createRevision(env, instructor);
+      const revisionId = await createRevision(
+        env,
+        instructor,
+        `# Lesson\n\n${question("q1", 2, "Say yes")}`,
+      );
 
       await enrollStudent(env, instructor, student, courseId);
 
@@ -1046,7 +1050,9 @@ Choose yes.
       // feedback in the widget staring at an empty history. What release holds
       // is the numbers; the work is theirs to read back either way.
       expect(hiddenResultsHtml).toContain("Attempt 1");
-      expect(hiddenResultsHtml).toContain("q1");
+      // Named by the title the student met it under, not the source id.
+      expect(hiddenResultsHtml).toContain("<strong>Say yes</strong>");
+      expect(hiddenResultsHtml).not.toContain("<strong>q1</strong>");
       expect(hiddenResultsHtml).not.toContain("2/2");
 
       const releasePath = `/courses/${courseId}/instructor/assignments/${assignmentId}/grade-visibility`;
@@ -1096,7 +1102,7 @@ Choose yes.
       const releasedResultsHtml = await releasedResults.text();
 
       expect(releasedResultsHtml).toContain("Attempt 1");
-      expect(releasedResultsHtml).toContain("q1");
+      expect(releasedResultsHtml).toContain("<strong>Say yes</strong>");
     });
   });
 

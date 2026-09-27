@@ -344,7 +344,14 @@ const ResultExercise: FC<{ readonly entry: SubmissionHistoryEntry }> = ({
   return (
     <div class="result-exercise">
       <div class="result-exercise-header">
-        <strong>{entry.submission.exerciseId ?? i18n.t("Exercise")}</strong>
+        {/* By its title, the name the student met it under in the lesson —
+            the same fallback as the corrections ledger's (#189): the id where
+            there is no title, and a bare "Exercise" where there is no id. */}
+        <strong>
+          {entry.exerciseTitle ??
+            entry.submission.exerciseId ??
+            i18n.t("Exercise")}
+        </strong>
         {/* Three states, not two. No evaluation means nothing has graded this
             yet — a free response waiting on an instructor, or an exercise
             withholding its verdict, which are deliberately the same silence.
