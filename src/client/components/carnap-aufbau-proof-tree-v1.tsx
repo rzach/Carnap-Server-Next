@@ -59,7 +59,10 @@ import {
   playgroundGoalText,
   playgroundTheoryText,
 } from "../../worker/exercise-kit/proof/playground";
-import { flattenProofTree } from "../../worker/exercises/aufbau-proof-tree/flatten";
+import {
+  flattenProofTree,
+  proofTreeStarter,
+} from "../../worker/exercises/aufbau-proof-tree/flatten";
 import type { AufbauProofTreeStringId } from "../../worker/exercises/aufbau-proof-tree/strings";
 import type {
   AufbauProofTreePublicData,
@@ -70,6 +73,7 @@ import { register } from "./base";
 import shadowStyles from "./carnap-aufbau-proof-tree-v1.css" with {
   type: "text",
 };
+import { mountCopySource } from "./copy-source";
 import {
   createHelpDialog,
   HELP_DIALOG_STYLES,
@@ -972,6 +976,13 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
       this,
       this.t("Usage and keyboard shortcuts"),
       this.showHelp,
+    );
+    // In the author preview, the tree as it stands can be taken back to the
+    // lesson as its starter.
+    mountCopySource(
+      this,
+      { copied: this.t("Copied."), label: this.t("Copy as source") },
+      () => proofTreeStarter(serialize(this.doc.model)),
     );
 
     this.gateSubmit((event) => this.gate(event));

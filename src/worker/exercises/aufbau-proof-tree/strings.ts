@@ -1,3 +1,4 @@
+import { buildCopySourceStrings } from "../../exercise-kit/copy-source-strings";
 import { buildExerciseHelpStrings } from "../../exercise-kit/help-strings";
 import { buildProofEngineStrings } from "../../exercise-kit/proof/engine-strings";
 import { placeholders, type Translator } from "../../i18n/translator";
@@ -26,6 +27,7 @@ export function buildAufbauProofTreeStrings(i18n: Translator) {
     ...buildFormulaParserStrings(i18n),
     ...buildProofEngineStrings(i18n),
     ...buildExerciseHelpStrings(i18n),
+    ...buildCopySourceStrings(i18n),
     /** Help: what `p` does. */
     "Add a hypothesis above the line": i18n.t(
       "Add a hypothesis above the line",

@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { parseProofTree } from "../src/worker/exercise-kit/proof/tree-parse";
-import { flattenProofTree } from "../src/worker/exercises/aufbau-proof-tree/flatten";
+import {
+  flattenProofTree,
+  proofTreeStarter,
+} from "../src/worker/exercises/aufbau-proof-tree/flatten";
 import type { ProofTreeNode } from "../src/worker/exercises/aufbau-proof-tree/types";
 import { GENTZEN_CASES } from "./helpers/gentzen-cases";
 
@@ -144,5 +147,31 @@ describe("parseProofTree — inverse of flattenProofTree", () => {
         rule: "ax",
       });
     }
+  });
+});
+
+describe("proofTreeStarter — the tree as an author's starter", () => {
+  test("reads back as the same tree, for every Gentzen case", () => {
+    for (const testCase of GENTZEN_CASES) {
+      const parsed = parseProofTree(proofTreeStarter(testCase.tree));
+
+      expect(parsed.ok, testCase.name).toBe(true);
+      if (parsed.ok) {
+        expect(shape(parsed.tree), testCase.name).toEqual(
+          shape(testCase.tree),
+        );
+      }
+    }
+  });
+
+  test("keeps formulas and rule names as typed, not as the engine reads them", () => {
+    const tree: ProofTreeNode = {
+      formula: "P ∧ Q ⊢ Q",
+      id: "root",
+      premises: [{ formula: "", hyp: 1, id: "h", premises: [], rule: "" }],
+      rule: "∧E",
+    };
+
+    expect(proofTreeStarter(tree)).toBe("l1: $ P ∧ Q ⊢ Q $ by ∧E [#1]");
   });
 });

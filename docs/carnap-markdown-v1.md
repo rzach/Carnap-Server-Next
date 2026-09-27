@@ -754,8 +754,9 @@ either order, a square `at column,row`, and optional names. Columns run 1–8
 left to right and rows 1–8 back to front, so row 8 is nearest the viewer. A
 world holds at most 16 blocks, one per square, and a name names one block.
 
-In the author preview the start world is editable; **Copy as source** puts
-the edited world's object lines on the clipboard.
+In the author preview the start world is editable; **Copy as source**, in
+the exercise's action bar, puts the edited world's object lines on the
+clipboard.
 
 ### Constraints
 
@@ -1293,6 +1294,12 @@ be cited by at most one other line, and exactly one root remains uncited.
 A proof that reuses a line is a graph rather than a tree and is rejected with
 `proof_is_not_a_tree`; duplicate the shared derivation in each branch.
 Malformed lines, dangling references, and multiple roots are author errors.
+
+In the author preview, **Copy as source** in the action bar puts the tree
+being built on the clipboard as starter lines, to paste under the `----`.
+Formulas and rule names are copied as typed. A node still missing its formula
+or rule is copied that way too, and the compiler then names the line to
+finish.
 
 Students can add premises or hypothesis references and delete subtrees. A
 hypothesis reference is a leaf showing the cited hypothesis as the goal

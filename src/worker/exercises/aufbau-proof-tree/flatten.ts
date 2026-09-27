@@ -73,9 +73,6 @@ export function flattenProofTree(
   readFormula: ProofFormulaReader = ENGINE_TEXT,
   readRule: ProofRuleReader = ENGINE_RULE,
 ): FlattenedProofTree {
-  const lines: string[] = [];
-  const owners: { readonly nodeId: string }[] = [];
-  let counter = 0;
   // A `hyp` leaf cites the goal's n-th hypothesis and emits no line at all, so
   // whatever text it holds is never read and never reaches the compiler.
   const read = readNodeFormulas(
@@ -83,6 +80,48 @@ export function flattenProofTree(
     readFormula,
     (node) => node.hyp === undefined,
   );
+  const { lines, owners } = proofLines(read.root, readRule);
+
+  const statement: ProofStatement | null =
+    read.root.hyp === undefined
+      ? {
+          text: read.root.formula,
+          variables: read.variables.get(read.root.id) ?? null,
+        }
+      : null;
+
+  return {
+    ...assembleProofText(goalName, lines, owners),
+    formulaProblems: read.problems,
+    statement,
+  };
+}
+
+/**
+ * The tree as an author writes a starter: the body under the directive's
+ * `----`, formulas and rules as typed. The inverse of `parseProofTree`, up to
+ * node ids, which it mints from the labels. What the author preview's "Copy as
+ * source" hands back, so a tree built in the editor can be pasted in as the
+ * exercise's starting point.
+ */
+export function proofTreeStarter(root: ProofTreeNode): string {
+  return proofLines(root, ENGINE_RULE).lines.join("\n");
+}
+
+/**
+ * One `lN: $ formula $ by rule [refs]` line per derived node, in postorder, and
+ * the node each came from.
+ */
+function proofLines(
+  root: ProofTreeNode,
+  readRule: ProofRuleReader,
+): {
+  readonly lines: readonly string[];
+  readonly owners: readonly { readonly nodeId: string }[];
+} {
+  const lines: string[] = [];
+  const owners: { readonly nodeId: string }[] = [];
+  let counter = 0;
 
   function visit(node: ProofTreeNode): string {
     if (node.hyp !== undefined) {
@@ -99,19 +138,7 @@ export function flattenProofTree(
     return label;
   }
 
-  visit(read.root);
+  visit(root);
 
-  const statement: ProofStatement | null =
-    read.root.hyp === undefined
-      ? {
-          text: read.root.formula,
-          variables: read.variables.get(read.root.id) ?? null,
-        }
-      : null;
-
-  return {
-    ...assembleProofText(goalName, lines, owners),
-    formulaProblems: read.problems,
-    statement,
-  };
+  return { lines, owners };
 }

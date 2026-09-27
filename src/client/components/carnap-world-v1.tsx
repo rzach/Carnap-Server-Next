@@ -57,6 +57,7 @@ import type {
 import { describeWorldVerdict } from "../../worker/exercises/world/verdict-text";
 import { CarnapExerciseElement, register } from "./base";
 import islandStyles from "./carnap-world-v1.css" with { type: "text" };
+import { isAuthorPreview, mountCopySource } from "./copy-source";
 import {
   createHelpDialog,
   HELP_DIALOG_STYLES,
@@ -1065,7 +1066,6 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
   private newSize: BlockSize = "small";
   private announcement = "";
   private highlight: Highlight | null = null;
-  private copied = false;
   /** The author preview: the start world is editable and copyable as source. */
   private preview = false;
 
@@ -1088,9 +1088,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     this.data = data;
     this.resolved = resolved;
     this.kind = asBlocks(resolved.kind);
-    this.preview =
-      this.closest("form.exercise-submission") === null &&
-      globalThis.location?.href === "about:srcdoc";
+    this.preview = isAuthorPreview(this);
     this.restore(data, resolved);
 
     const body = root.querySelector<HTMLElement>("[data-role='body']");
@@ -1133,6 +1131,15 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     }
 
     this.buildCheck();
+
+    if (this.world !== null) {
+      mountCopySource(
+        this,
+        { copied: this.t("Copied."), label: this.t("Copy as source") },
+        () => this.worldSource(),
+      );
+    }
+
     root.querySelector("fieldset")?.removeAttribute("aria-busy");
     this.dataset.enhanced = "true";
   }
@@ -1273,7 +1280,6 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     this.past = [...this.past.slice(-(HISTORY_LIMIT - 1)), world];
     this.future = [];
     this.world = next;
-    this.copied = false;
     this.edited();
     return true;
   };
@@ -1606,13 +1612,14 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     this.rerender();
   };
 
-  private copySource(): void {
+  /** The world as it stands, as the directive's object lines. */
+  private worldSource(): string | null {
     const world = this.world;
     const kind = this.kind;
     const resolved = this.resolved;
 
     if (world === null || kind === null || resolved === null) {
-      return;
+      return null;
     }
 
     const lines = world.objects.map((block) => {
@@ -1622,14 +1629,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
       return `| ${key} : ${kind.formatObject(world, block.id)}`;
     });
 
-    void navigator.clipboard?.writeText(lines.join("\n")).then(
-      () => {
-        this.copied = true;
-        this.announce(this.t("Copied."));
-        this.rerender();
-      },
-      () => undefined,
-    );
+    return lines.join("\n");
   }
 
   private currentAnswer(): WorldAnswerData {
@@ -1802,20 +1802,6 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
             />
           )}
           {budget === null ? null : <p class="world-budget">{budget}</p>}
-          {this.preview && editable ? (
-            <p class="world-copy">
-              <button
-                class="world-tool"
-                onClick={() => this.copySource()}
-                type="button"
-              >
-                {words("Copy as source")}
-              </button>
-              {this.copied ? (
-                <span class="world-copied">{words("Copied.")}</span>
-              ) : null}
-            </p>
-          ) : null}
         </div>
         <div class="world-panel">
           {this.sentencePanel(data, resolved, values)}

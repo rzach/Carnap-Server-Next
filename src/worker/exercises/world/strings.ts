@@ -1,3 +1,4 @@
+import { buildCopySourceStrings } from "../../exercise-kit/copy-source-strings";
 import { buildExerciseHelpStrings } from "../../exercise-kit/help-strings";
 import { placeholders, type Translator } from "../../i18n/translator";
 import { buildFormulaParserStrings } from "../../logic/specs/strings";
@@ -25,6 +26,7 @@ export function buildWorldStrings(i18n: Translator) {
     ...buildFormulaParserStrings(i18n),
     // The frame of the `(?)` dialog, shared by every widget that explains itself.
     ...buildExerciseHelpStrings(i18n),
+    ...buildCopySourceStrings(i18n),
 
     // ——— Chrome.
     Board: i18n.t("Board"),
@@ -62,8 +64,6 @@ export function buildWorldStrings(i18n: Translator) {
     "Cannot be evaluated in this world": i18n.t(
       "Cannot be evaluated in this world",
     ),
-    "Copy as source": i18n.t("Copy as source"),
-    "Copied.": i18n.t("Copied."),
     Undo: i18n.t("Undo"),
     Redo: i18n.t("Redo"),
     "Remove block": i18n.t("Remove block"),

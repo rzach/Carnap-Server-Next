@@ -1275,7 +1275,7 @@ msgstr ""
 msgid "Copied"
 msgstr ""
 
-#: src/worker/exercises/world/strings.ts
+#: src/worker/exercise-kit/copy-source-strings.ts
 msgid "Copied."
 msgstr ""
 
@@ -1283,7 +1283,7 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
-#: src/worker/exercises/world/strings.ts
+#: src/worker/exercise-kit/copy-source-strings.ts
 msgid "Copy as source"
 msgstr ""
 

@@ -1275,7 +1275,7 @@ msgstr "Continue with this local login link"
 msgid "Copied"
 msgstr "Copied"
 
-#: src/worker/exercises/world/strings.ts
+#: src/worker/exercise-kit/copy-source-strings.ts
 msgid "Copied."
 msgstr "Copied."
 
@@ -1283,7 +1283,7 @@ msgstr "Copied."
 msgid "Copy"
 msgstr "Copy"
 
-#: src/worker/exercises/world/strings.ts
+#: src/worker/exercise-kit/copy-source-strings.ts
 msgid "Copy as source"
 msgstr "Copy as source"
 

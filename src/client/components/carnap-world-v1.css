@@ -269,18 +269,6 @@
   padding: 0 0.45rem;
 }
 
-.world-copy {
-  align-items: center;
-  display: flex;
-  gap: 0.5rem;
-  margin: 0.5rem 0 0;
-}
-
-.world-copied {
-  color: var(--_text-muted);
-  font-size: 0.85rem;
-}
-
 /* The sentences: a live mark says whether each meets its target. */
 .world-truth[data-met="true"] {
   background: var(--_correct-bg);
