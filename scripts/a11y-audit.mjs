@@ -481,7 +481,7 @@ async function main() {
              let d; try { d = f.contentDocument; } catch { continue; }
              if (!d) continue;
              const el = d.querySelector(
-               '.tt-cell, .mc-input, .tree-toolbar button, input[type=radio]');
+               '.tt-cell, .mc-input, .tree-toolbar button, input[type=radio], .world-check');
              if (el) { el.click(); return true; }
            }
            return false;
