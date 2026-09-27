@@ -128,6 +128,8 @@ export function layoutUiStrings(i18n: Translator): LayoutUiStrings {
 /** The exercise submission runtime and the component-failure notice. */
 export interface ExerciseUiStrings {
   readonly loadFailed: string;
+  /** The page's resolved locale, for the submission time on the status line. */
+  readonly locale: string;
   readonly noAnswerFields: string;
   readonly noSubmission: string;
   readonly notRecorded: string;
@@ -143,6 +145,7 @@ export function exerciseUiStrings(i18n: Translator): ExerciseUiStrings {
     loadFailed: i18n.t(
       "This exercise couldn't load. Please reload the page.",
     ),
+    locale: i18n.locale,
     noAnswerFields: i18n.t("This exercise form has no known answer fields."),
     noSubmission: i18n.t("No submission in this attempt."),
     notRecorded: i18n.t(

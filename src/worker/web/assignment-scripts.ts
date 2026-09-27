@@ -7,6 +7,7 @@ import {
   CORRECTNESS_MARK_GLYPHS,
   CORRECTNESS_MARK_LABEL_ATTRIBUTES,
 } from "../exercise-kit/correctness-mark";
+import { LOCAL_TIMESTAMP_FIELDS } from "./timestamp-formats";
 import {
   EXERCISE_UI_STRINGS_ATTRIBUTE,
   REVIEW_UI_STRINGS_ATTRIBUTE,
@@ -110,13 +111,29 @@ ${readStringsPrelude(EXERCISE_UI_STRINGS_ATTRIBUTE)}
     );
   }
 
+  // The reader's own clock, in the page's language, and the same form the
+  // shell gives every <time> element — the server's first paint of this line
+  // is in UTC, since it cannot know the zone.
+  const submittedFormat = new Intl.DateTimeFormat(
+    S.locale || undefined,
+    ${JSON.stringify(LOCAL_TIMESTAMP_FIELDS)},
+  );
+
+  function submittedText(timestamp) {
+    const date = new Date(timestamp);
+
+    return Number.isNaN(date.getTime())
+      ? String(timestamp)
+      : submittedFormat.format(date);
+  }
+
   function statusText(state) {
     if (state === undefined) {
       return S.noSubmission || "No submission in this attempt.";
     }
 
     const evaluation = state.evaluation;
-    const when = state.submission.submittedAt;
+    const when = submittedText(state.submission.submittedAt);
 
     // No evaluation, or one whose numbers this student may not see yet: the
     // line says the work is in and stops there. A score is a grade, and grades

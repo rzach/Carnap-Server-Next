@@ -99,6 +99,7 @@ import {
   revisionOptionTimeAttributes,
 } from "./revisions";
 import { EXERCISE_SCRIPT_ASSET, REVIEW_SCRIPT_ASSET } from "./script-assets";
+import { utcTimestampText } from "./timestamp-formats";
 import {
   EXERCISE_UI_STRINGS_ATTRIBUTE,
   exerciseUiStrings,
@@ -308,20 +309,21 @@ function exerciseStatusText(
   }
 
   const evaluation = state.evaluation;
+  // In UTC, zone named: the script rewrites the line in the reader's own clock
+  // on load, so this is only what shows before it runs, or without it.
+  const when = utcTimestampText(state.submission.submittedAt, i18n.locale);
 
   // Either no evaluation, or one whose numbers are still behind the release
   // date. The script's `statusText` draws the same line; both have to, since
   // this renders the first paint and that one every paint after.
   if (evaluation === null || evaluation.score === null) {
-    return i18n.t("Submitted at {when}.", {
-      when: state.submission.submittedAt,
-    });
+    return i18n.t("Submitted at {when}.", { when });
   }
 
   return i18n.t("Submitted at {when} · {score}/{maxScore}.", {
     maxScore: evaluation.maxScore,
     score: evaluation.score,
-    when: state.submission.submittedAt,
+    when,
   });
 }
 

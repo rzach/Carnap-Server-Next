@@ -1,5 +1,6 @@
 import type { ContentRevision } from "../domain/content";
 import type { Translator } from "../i18n/translator";
+import { utcTimestampText } from "./timestamp-formats";
 
 /**
  * The longest note a picker option carries before it is cut short. A native
@@ -37,45 +38,6 @@ export function revisionDateText(createdAt: string, locale: string): string {
 }
 
 /**
- * The fields a picker option's timestamp is written in. The day alone is enough
- * to *describe* a revision but not always enough to tell two apart: an author
- * who saves twice before lunch and names neither would otherwise get two options
- * reading exactly alike.
- *
- * Spelled out field by field because `dateStyle`/`timeStyle` cannot be combined
- * with `timeZoneName` — and the zone has to be named, because the server writes
- * this text in UTC and the script that rewrites it writes the reader's own zone
- * over the top. The same fields are built in `REVISION_OPTION_SCRIPT`; they are
- * two spellings of one format, and changing one without the other leaves the
- * page saying the same instant two ways.
- */
-const REVISION_TIMESTAMP_FIELDS = {
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-  month: "short",
-  timeZoneName: "short",
-  year: "numeric",
-} as const satisfies Intl.DateTimeFormatOptions;
-
-/**
- * The same instant to the minute in UTC — what a picker option is rendered
- * with, and what a reader without JavaScript keeps.
- */
-function revisionTimestampText(createdAt: string, locale: string): string {
-  const instant = new Date(createdAt);
-
-  if (Number.isNaN(instant.getTime())) {
-    return createdAt;
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    ...REVISION_TIMESTAMP_FIELDS,
-    timeZone: "UTC",
-  }).format(instant);
-}
-
-/**
  * What lets a rendered option be re-read in the reader's clock: the instant
  * itself, and the exact text the label was built with, since that text is what
  * the script has to find inside a label it did not compose.
@@ -86,7 +48,7 @@ export function revisionOptionTimeAttributes(
 ): Record<string, string> {
   return {
     "data-revision-time": createdAt,
-    "data-revision-time-utc": revisionTimestampText(createdAt, locale),
+    "data-revision-time-utc": utcTimestampText(createdAt, locale),
   };
 }
 
@@ -112,7 +74,7 @@ export function revisionOptionLabel(
   revision: Pick<ContentRevision, "createdAt" | "details">,
   itemTitle?: string,
 ): string {
-  const date = revisionTimestampText(revision.createdAt, locale);
+  const date = utcTimestampText(revision.createdAt, locale);
   const details = optionDetails(revision.details);
 
   if (itemTitle === undefined) {

@@ -1,4 +1,8 @@
 import {
+  LOCAL_TIMESTAMP_FIELDS,
+  ZONED_TIMESTAMP_FIELDS,
+} from "./timestamp-formats";
+import {
   LAYOUT_UI_STRINGS_ATTRIBUTE,
   readStringsPrelude,
 } from "./ui-strings";
@@ -197,10 +201,10 @@ ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
   // lines). For those we keep the font uniform but measure the cell and drop to
   // the longest form that fits on one line — the ladder runs from fullest to a
   // bare numeric date.
-  const full = new Intl.DateTimeFormat(locale, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  const full = new Intl.DateTimeFormat(
+    locale,
+    ${JSON.stringify(LOCAL_TIMESTAMP_FIELDS)},
+  );
   const ladder = [
     full,
     new Intl.DateTimeFormat(locale, { dateStyle: "medium" }),
@@ -307,22 +311,19 @@ ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
  * came from and with the exact date text it used, and this rewrites that
  * substring in the reader's zone — the rest of the label, an author's note that
  * may say anything, is left untouched. A reader with no script keeps the UTC
- * form, which is why the server names the zone there. The formatter's fields
- * mirror `REVISION_TIMESTAMP_FIELDS` in `web/revisions.ts`.
+ * form, which is why the server names the zone there. Both write
+ * `ZONED_TIMESTAMP_FIELDS`, so the substring the server wrote and the one this
+ * writes over it are the same format in two zones.
  */
 const REVISION_OPTION_SCRIPT = `
 (() => {
 ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
 
   const locale = S.locale || undefined;
-  const format = new Intl.DateTimeFormat(locale, {
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    month: "short",
-    timeZoneName: "short",
-    year: "numeric",
-  });
+  const format = new Intl.DateTimeFormat(
+    locale,
+    ${JSON.stringify(ZONED_TIMESTAMP_FIELDS)},
+  );
 
   for (const option of document.querySelectorAll("option[data-revision-time]")) {
     const date = new Date(option.dataset.revisionTime);

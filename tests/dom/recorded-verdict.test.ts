@@ -6,6 +6,7 @@ import {
   CORRECTNESS_MARK_GLYPHS,
 } from "../../src/worker/exercise-kit/correctness-mark";
 import { EXERCISE_RUNTIME_SCRIPT } from "../../src/worker/web/assignment-scripts";
+import { LOCAL_TIMESTAMP_FIELDS } from "../../src/worker/web/timestamp-formats";
 
 /**
  * The correctness mark for work the server already holds.
@@ -17,7 +18,7 @@ import { EXERCISE_RUNTIME_SCRIPT } from "../../src/worker/web/assignment-scripts
  * not, so it reads the verdict the server sends instead, and a mark that went
  * permanently idle would otherwise be invisible until someone looked at a page.
  */
-function pageWith(evaluation: unknown): string {
+function pageWith(evaluation: unknown, strings: object = {}): string {
   const state = {
     exercises: {
       q1: {
@@ -33,6 +34,9 @@ function pageWith(evaluation: unknown): string {
     `<!doctype html><html lang="en"><head><title>Content</title></head><body>
        <script data-carnap-exercise-runtime-state type="application/json">${JSON.stringify(
          state,
+       )}</script>
+       <script data-carnap-exercise-strings type="application/json">${JSON.stringify(
+         strings,
        )}</script>
        <form action="/attempts/a1/submissions" class="exercise-submission"
              data-exercise-id="q1" method="post">
@@ -61,6 +65,14 @@ function pageWith(evaluation: unknown): string {
   return `${mark?.textContent ?? ""}|${status?.textContent ?? ""}`;
 }
 
+/**
+ * The submission time as the runtime writes it: the reader's own clock, in the
+ * page's language (the test process's zone and, with no payload, its locale).
+ */
+const AT = new Intl.DateTimeFormat(undefined, LOCAL_TIMESTAMP_FIELDS).format(
+  new Date("2026-08-07T12:00:00.000Z"),
+);
+
 const recorded = (fields: Record<string, unknown>) => ({
   createdAt: "2026-08-07T12:00:00.000Z",
   evaluatorKind: "automatic",
@@ -75,35 +87,46 @@ describe("the mark for work already recorded", () => {
     // Released: the numbers are there and the line says them.
     expect(
       pageWith(recorded({ maxScore: 2, score: 2, verdict: "correct" })),
-    ).toBe(
-      `${CORRECTNESS_MARK_GLYPHS.ok}|Submitted at 2026-08-07T12:00:00.000Z · 2/2.`,
-    );
+    ).toBe(`${CORRECTNESS_MARK_GLYPHS.ok}|Submitted at ${AT} · 2/2.`);
 
     // Withheld: same verdict, no numbers, so the line drops the score rather
     // than printing `null/null`.
     expect(pageWith(recorded({ verdict: "correct" }))).toBe(
-      `${CORRECTNESS_MARK_GLYPHS.ok}|Submitted at 2026-08-07T12:00:00.000Z.`,
+      `${CORRECTNESS_MARK_GLYPHS.ok}|Submitted at ${AT}.`,
     );
   });
 
   test("stays idle on anything short of correct", () => {
     for (const verdict of ["partial", "incorrect"]) {
       expect(pageWith(recorded({ verdict }))).toBe(
-        `${CORRECTNESS_MARK_GLYPHS.idle}|Submitted at 2026-08-07T12:00:00.000Z.`,
+        `${CORRECTNESS_MARK_GLYPHS.idle}|Submitted at ${AT}.`,
       );
     }
 
     // Partial credit is not a green check even where the numbers are shown.
     expect(
       pageWith(recorded({ maxScore: 2, score: 1, verdict: "partial" })),
-    ).toBe(
-      `${CORRECTNESS_MARK_GLYPHS.idle}|Submitted at 2026-08-07T12:00:00.000Z · 1/2.`,
-    );
+    ).toBe(`${CORRECTNESS_MARK_GLYPHS.idle}|Submitted at ${AT} · 1/2.`);
 
     // And no evaluation at all — a sealed verdict, or a free response waiting
     // on an instructor — is not a claim that the work is wrong.
     expect(pageWith(null)).toBe(
-      `${CORRECTNESS_MARK_GLYPHS.idle}|Submitted at 2026-08-07T12:00:00.000Z.`,
+      `${CORRECTNESS_MARK_GLYPHS.idle}|Submitted at ${AT}.`,
     );
+  });
+});
+
+describe("the submission time", () => {
+  test("is written in the reader's clock and the page's language, not as ISO", () => {
+    const at = new Intl.DateTimeFormat("de", LOCAL_TIMESTAMP_FIELDS).format(
+      new Date("2026-08-07T12:00:00.000Z"),
+    );
+
+    expect(
+      pageWith(null, {
+        locale: "de",
+        submittedAt: "Abgegeben am {when}.",
+      }),
+    ).toBe(`${CORRECTNESS_MARK_GLYPHS.idle}|Abgegeben am ${at}.`);
   });
 });

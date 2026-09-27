@@ -4,6 +4,7 @@ import { submissionNeedsReview } from "../src/worker/domain/assessment";
 import type { Env } from "../src/worker/env";
 import { REVIEW_SCRIPT } from "../src/worker/web/assignment-scripts";
 import { REVIEW_SCRIPT_ASSET } from "../src/worker/web/script-assets";
+import { utcTimestampText } from "../src/worker/web/timestamp-formats";
 import { appRequest, createTestApp } from "./helpers/app";
 import { FITCH_THEORY_BLOCK } from "./helpers/fitch-theory";
 import {
@@ -589,8 +590,12 @@ theorem mp (a b: wff): $ (a → b) , a ⊢ b $
         },
         version: 1,
       });
-      expect(html).toContain("Submitted at");
-      expect(html).toContain("· 2/2.");
+      // The first paint is in UTC with the zone named, since the server has no
+      // reader's clock; the runtime rewrites it in theirs on load.
+      expect(html).toContain(
+        `Submitted at ${utcTimestampText(submission.submission.submittedAt, "en")} · 2/2.`,
+      );
+      expect(html).toContain("UTC · 2/2.");
 
       // The exercise embeds a hydration payload the client element reads on
       // connect: publicData to render from, plus the student's own prior answer
