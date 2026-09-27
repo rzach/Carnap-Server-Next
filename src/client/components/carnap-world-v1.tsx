@@ -159,7 +159,7 @@ interface BoardProps {
   readonly highlight: Highlight | null;
   readonly kind: Blocks;
   readonly label: string;
-  readonly onCellPointer: (cell: Cursor, pointerType: string) => void;
+  readonly onCellPointer: (cell: Cursor) => void;
   readonly onDragMove: (id: string, to: Cursor) => void;
   readonly onKeyDown: (event: KeyboardEvent) => void;
   readonly onPaletteDrop: (shape: BlockShape, to: Cursor) => void;
@@ -303,7 +303,7 @@ function Board(props: BoardProps) {
       return;
     }
 
-    props.onCellPointer(cell, event.pointerType);
+    props.onCellPointer(cell);
   };
 
   const onPointerCancel = (): void => {
@@ -1048,7 +1048,7 @@ const SHORTCUTS: readonly {
 ];
 
 const INTRO: readonly WorldStringId[] = [
-  "Drag a block to move it, or drag a shape from the palette onto a square to add one. On a touch screen, tap a block and then tap a square.",
+  "Drag a block to move it, or drag a shape from the palette onto a square to add one.",
   "The table lists every block and can do everything the board does.",
   "Point at part of a sentence to see what it is true of.",
 ];
@@ -1058,7 +1058,7 @@ const INTRO: readonly WorldStringId[] = [
  * no table and nothing to highlight, but two boards.
  */
 const PAIR_INTRO: readonly WorldStringId[] = [
-  "Drag a block to move it, or drag a shape from the palette onto a square to add one. On a touch screen, tap a block and then tap a square.",
+  "Drag a block to move it, or drag a shape from the palette onto a square to add one.",
   "Click a board, or move into it with Tab, to make it the one the palette edits.",
 ];
 
@@ -1563,13 +1563,10 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
 
   /**
    * A click or tap on a square moves the cursor there, and drops a block
-   * being carried. A tap also picks a block up, since a finger cannot point
-   * without pressing; a mouse drags instead, so its click only selects.
+   * carried from the keyboard. It never picks one up: a mouse or a finger
+   * moves a block by dragging it.
    */
-  private readonly onCellPointer = (
-    cell: Cursor,
-    pointerType: string,
-  ): void => {
+  private readonly onCellPointer = (cell: Cursor): void => {
     const world = this.world;
 
     if (world === null || !this.editable) {
@@ -1603,10 +1600,6 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
       });
       this.rerender();
       return;
-    }
-
-    if (block !== undefined && pointerType === "touch") {
-      this.carry = { id: block.id };
     }
 
     this.rerender();

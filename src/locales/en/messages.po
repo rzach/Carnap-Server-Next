@@ -1748,8 +1748,8 @@ msgid "Draft settings"
 msgstr "Draft settings"
 
 #: src/worker/exercises/world/strings.ts
-msgid "Drag a block to move it, or drag a shape from the palette onto a square to add one. On a touch screen, tap a block and then tap a square."
-msgstr "Drag a block to move it, or drag a shape from the palette onto a square to add one. On a touch screen, tap a block and then tap a square."
+msgid "Drag a block to move it, or drag a shape from the palette onto a square to add one."
+msgstr "Drag a block to move it, or drag a shape from the palette onto a square to add one."
 
 #: src/worker/web/labels.ts
 msgid "Dropped"

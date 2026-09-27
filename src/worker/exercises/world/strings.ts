@@ -133,9 +133,9 @@ export function buildWorldStrings(i18n: Translator) {
 
     // ——— Help.
     "Using the world editor": i18n.t("Using the world editor"),
-    "Drag a block to move it, or drag a shape from the palette onto a square to add one. On a touch screen, tap a block and then tap a square.":
+    "Drag a block to move it, or drag a shape from the palette onto a square to add one.":
       i18n.t(
-        "Drag a block to move it, or drag a shape from the palette onto a square to add one. On a touch screen, tap a block and then tap a square.",
+        "Drag a block to move it, or drag a shape from the palette onto a square to add one.",
       ),
     "The table lists every block and can do everything the board does.":
       i18n.t(

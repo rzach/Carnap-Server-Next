@@ -187,22 +187,24 @@ describe("editing", () => {
     expect(note()).toBe("");
   });
 
-  test("a click selects a block, and a tap picks it up", async () => {
+  test("a click or a tap selects a block, and never picks it up", async () => {
     const mounted = mountExercise(await worldExercise("", BUILD));
     const b = () =>
       mounted.root.querySelector<HTMLElement>(
         "td[data-col='4'][data-row='3']",
       );
 
-    // A mouse moves with a drag, so its click only moves the cursor.
-    tap(b(), "mouse");
-    expect(b()?.hasAttribute("data-cursor")).toBe(true);
-    expect(b()?.hasAttribute("data-carried")).toBe(false);
+    // A mouse or a finger moves a block by dragging it, so pressing and
+    // releasing on it only moves the cursor.
+    for (const pointerType of ["mouse", "touch"]) {
+      tap(b(), pointerType);
+      expect(b()?.hasAttribute("data-cursor")).toBe(true);
+      expect(b()?.hasAttribute("data-carried")).toBe(false);
+    }
 
-    // A finger cannot point without pressing: a tap picks the block up.
-    tap(b(), "touch");
+    // A block carried from the keyboard is dropped where the pointer lands.
+    press(mounted, " ");
     expect(b()?.hasAttribute("data-carried")).toBe(true);
-
     tap(
       mounted.root.querySelector("td[data-col='5'][data-row='3']"),
       "touch",
