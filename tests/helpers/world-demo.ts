@@ -47,6 +47,23 @@ Say whether each sentence is true in this world.
 | block : large dodec at 7,7
 ::::
 
+## Play the game
+
+::::world{#play system="blocks-lpl" variant="game" points="3" title="Defend your claim"}
+Claim each sentence true or false, and then defend your claim. When a
+quantifier needs a witness, you choose the block; when it needs every block,
+the computer tries to find one that breaks your claim.
+
+- ∃x(Cube(x) ∧ ∀y(Tet(y) → LeftOf(x, y)))
+- ∀x(Large(x) → ¬Adjoins(x, a))
+- Cube(a) ↔ Small(b)
+
+| block : small cube at 2,6 named a
+| block : large dodec at 6,2 named b
+| block : medium tet at 4,4 named c
+| block : large tet at 7,7
+::::
+
 ## A counterexample
 
 ::::world{#counter system="blocks-lpl" variant="counterexample" points="2" title="Not valid"}

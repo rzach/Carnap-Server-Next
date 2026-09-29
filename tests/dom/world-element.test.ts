@@ -510,3 +510,162 @@ describe("distinguish's author preview", () => {
     expect(mounted.form.querySelector(".copy-source")).toBeNull();
   });
 });
+
+describe("the evaluation game", () => {
+  const GAME = [
+    "- ∃x(Cube(x) ∧ Small(x))",
+    "- Cube(a) ∨ Tet(a)",
+    "| block : small cube at 2,2 named a",
+    "| block : large tet at 5,5",
+  ].join("\n");
+
+  function claim(mounted: Mounted, row: number, value: boolean): void {
+    mounted.root
+      .querySelectorAll(".world-game-row")
+      [row]?.querySelectorAll<HTMLButtonElement>(".world-mark")
+      [value ? 0 : 1]?.click();
+  }
+
+  function moves(mounted: Mounted): string[] {
+    return [...mounted.root.querySelectorAll(".world-game-moves li")].map(
+      (line) => line.textContent ?? "",
+    );
+  }
+
+  function cellAt(mounted: Mounted, col: number, row: number) {
+    return mounted.root.querySelector(
+      `td[data-col="${col}"][data-row="${row}"]`,
+    );
+  }
+
+  test("a claim starts the game, and a tap on a block chooses it", async () => {
+    const mounted = mountExercise(
+      await worldExercise('variant="game"', GAME),
+    );
+
+    claim(mounted, 0, true);
+
+    expect(
+      mounted.root.querySelector(".world-game-prompt")?.textContent,
+    ).toBe("Choose a block for x on the board.");
+    expect(
+      mounted.root
+        .querySelector("table[role='grid']")
+        ?.hasAttribute("data-choosing"),
+    ).toBe(true);
+
+    tap(cellAt(mounted, 2, 2), "touch");
+
+    expect(moves(mounted)).toEqual([
+      "You say ∃x(Cube(x) ∧ Small(x)) is true.",
+      "You choose a for x.",
+      "I pick Cube(x), which you say is true.",
+      "Cube(x) is true, so you win.",
+    ]);
+    expect(
+      mounted.root.querySelector(".world-game-result")?.textContent,
+    ).toBe("Won");
+    expect(
+      cellAt(mounted, 2, 2)?.querySelector(".world-binding")?.textContent,
+    ).toBe("x");
+    expect(answerOf(mounted)).toEqual({
+      games: [{ choices: ["o1"], claim: true }, null],
+    });
+  });
+
+  test("the keyboard chooses the block under the cursor, and names an unnamed one by its square", async () => {
+    const mounted = mountExercise(
+      await worldExercise('variant="game"', GAME),
+    );
+
+    claim(mounted, 0, true);
+    for (let step = 1; step < 5; step += 1) {
+      press(mounted, "ArrowRight");
+      press(mounted, "ArrowDown");
+    }
+    press(mounted, "Enter");
+
+    expect(moves(mounted)[1]).toBe(
+      "You choose the block at column 5, row 5 for x. This choice lost the game.",
+    );
+    expect(mounted.root.querySelector(".world-game-note")?.textContent).toBe(
+      "You could have won. The choice that lost the game is marked: take it back and try another.",
+    );
+    expect(
+      mounted.root.querySelector(".world-game-moves li[data-lost]")
+        ?.textContent,
+    ).toContain("This choice lost the game.");
+  });
+
+  test("a connective offers its parts, and Back takes the last move back", async () => {
+    const mounted = mountExercise(
+      await worldExercise('variant="game"', GAME),
+    );
+
+    claim(mounted, 1, true);
+
+    const options = [
+      ...mounted.root.querySelectorAll<HTMLButtonElement>(
+        ".world-game-options button",
+      ),
+    ];
+    expect(options.map((option) => option.textContent)).toEqual([
+      "Cube(a) is true",
+      "Tet(a) is true",
+    ]);
+
+    options[1]?.click();
+    expect(moves(mounted).at(-1)).toBe("Tet(a) is false, so I win.");
+    expect(answerOf(mounted)).toEqual({
+      games: [null, { choices: [[null, true]], claim: true }],
+    });
+
+    mounted.root
+      .querySelector<HTMLButtonElement>(".world-game-actions button")
+      ?.click();
+    expect(answerOf(mounted)).toEqual({
+      games: [null, { choices: [], claim: true }],
+    });
+    expect(announced(mounted)).toBe("Took back your last move.");
+
+    mounted.root
+      .querySelector<HTMLButtonElement>(".world-game-actions button")
+      ?.click();
+    expect(answerOf(mounted)).toEqual({ games: [null, null] });
+  });
+
+  test("terse feedback says who won, and not why", async () => {
+    const mounted = mountExercise(
+      await worldExercise('variant="game" feedback="terse"', GAME),
+      { options: { feedback: "terse" } },
+    );
+
+    claim(mounted, 0, false);
+    const option = mounted.root.querySelector<HTMLButtonElement>(
+      ".world-game-options button",
+    );
+    option?.click();
+
+    expect(moves(mounted).at(-1)).toMatch(/so I win\.$/);
+    expect(mounted.root.querySelector(".world-game-note")).toBeNull();
+    expect(mounted.root.querySelector("li[data-lost]")).toBeNull();
+  });
+
+  test("a prior game is restored and shown", async () => {
+    const mounted = mountExercise(
+      await worldExercise('variant="game"', GAME),
+      {
+        priorAnswer: {
+          games: [null, { choices: [[true, null]], claim: true }],
+        } as unknown as JsonValue,
+      },
+    );
+
+    expect(moves(mounted).at(-1)).toBe("Cube(a) is true, so you win.");
+    expect(
+      mounted.root
+        .querySelectorAll(".world-game-row")[1]
+        ?.hasAttribute("data-active"),
+    ).toBe(true);
+  });
+});

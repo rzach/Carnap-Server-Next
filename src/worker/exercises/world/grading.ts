@@ -18,6 +18,7 @@ import {
 } from "../../exercise-kit/formula";
 import { worldKindById } from "./kinds";
 import type { WorldKind } from "./kinds/contract";
+import { isWorldGameAnswer } from "./logic/game";
 import type { WorldVocabulary } from "./logic/structure";
 import { bindVocabulary } from "./logic/structure";
 import type {
@@ -96,6 +97,11 @@ export function isWorldAnswerData(value: unknown): value is WorldAnswerData {
   const data = value as Record<string, unknown>;
 
   return (
+    (data.games === undefined ||
+      (Array.isArray(data.games) &&
+        data.games.every(
+          (entry) => entry === null || isWorldGameAnswer(entry),
+        ))) &&
     (data.sentence === undefined || typeof data.sentence === "string") &&
     (data.values === undefined ||
       (Array.isArray(data.values) &&
@@ -190,8 +196,8 @@ export function resolveWorld(
 
 /**
  * The answer with only the field the variant reads, in the form grading
- * wants: an evaluate answer padded or cut to one mark per sentence, and a
- * world or sentence passed through as it came.
+ * wants: an evaluate or game answer padded or cut to one entry per sentence,
+ * and a world or sentence passed through as it came.
  */
 export function answerForVariant(
   publicData: WorldPublicData,
@@ -202,6 +208,12 @@ export function answerForVariant(
       return {
         values: publicData.sentences.map(
           (_, index) => answer.values?.[index] ?? null,
+        ),
+      };
+    case "game":
+      return {
+        games: publicData.sentences.map(
+          (_, index) => answer.games?.[index] ?? null,
         ),
       };
     case "distinguish":

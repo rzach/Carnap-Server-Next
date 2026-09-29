@@ -174,6 +174,30 @@ msgid "{field}: which element it names"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
+msgid "{formula} is false"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula} is false, so I win."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula} is false, so you win."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula} is true"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula} is true, so I win."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{formula} is true, so you win."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
 msgid "{formula}: counterexamples {objects}, and others: {count} in all."
 msgstr ""
 
@@ -225,6 +249,22 @@ msgstr ""
 msgid "{label} must be an http(s) URL."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "{left} and {right} are both false"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{left} and {right} are both true"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{left} is false and {right} is true"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{left} is true and {right} is false"
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 msgid "{minutes} min"
 msgstr ""
@@ -244,6 +284,10 @@ msgstr ""
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/ui-strings.ts
 msgid "{score}/{maxScore} · {evaluator}"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "{sentence}: your claim"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
@@ -321,6 +365,10 @@ msgstr ""
 
 #: src/worker/exercises/model/strings.ts
 msgid "A domain may have at most {max} elements."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A game exercise cannot hide its feedback, because the game shows who wins. Use feedback=\"terse\" to show only that."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -690,10 +738,6 @@ msgstr ""
 
 #: src/worker/application/courses.ts
 msgid "An email address is required."
-msgstr ""
-
-#: src/worker/application/content/diagnostic-strings.ts
-msgid "An evaluate exercise's sentences take no true: or false: prefix; the world decides their values."
 msgstr ""
 
 #: src/worker/web/donate.tsx
@@ -1109,6 +1153,10 @@ msgstr ""
 msgid "Checking"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Choose a block for {variable} on the board."
+msgstr ""
+
 #: src/worker/web/lti.tsx
 msgid "Choose an assignment"
 msgstr ""
@@ -1117,12 +1165,28 @@ msgstr ""
 msgid "Choose an assignment…"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Choose the block here"
+msgstr ""
+
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Choose the row you're claiming as a counterexample."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Choose what you will defend."
+msgstr ""
+
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Cited hypothesis"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Claim a sentence true or false to start its game."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Claim each sentence true or false, then defend your claim against the computer, one part at a time."
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
@@ -2230,6 +2294,22 @@ msgstr ""
 msgid "Human verification is misconfigured for this deployment."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "I choose {block} for {variable}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "I choose the block at column {col}, row {row} for {variable}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "I pick {formula}, which you say is false."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "I pick {formula}, which you say is true."
+msgstr ""
+
 #: src/worker/application/submissions.ts
 msgid "Idempotency keys must be 200 characters or fewer."
 msgstr ""
@@ -2476,6 +2556,10 @@ msgstr ""
 
 #: src/worker/routes/web.ts
 msgid "Login email delivery is not configured for this environment."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Lost"
 msgstr ""
 
 #: src/worker/web/labels.ts
@@ -3217,6 +3301,10 @@ msgstr ""
 msgid "Platform summary"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "Playing the evaluation game"
+msgstr ""
+
 #: src/worker/web/errors.tsx
 msgid "Please log in"
 msgstr ""
@@ -3832,6 +3920,14 @@ msgstr ""
 msgid "small tet"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "So you say {formula} is false."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "So you say {formula} is true."
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/gradebook.tsx
 msgid "Some scores here were graded when their exercises were worth different points. Each shows the points it was graded out of; the assignment total counts every exercise at its current points."
@@ -3999,6 +4095,10 @@ msgstr ""
 
 #: src/worker/exercises/world/strings.ts
 msgid "Table"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Take back your last move"
 msgstr ""
 
 #: src/worker/web/admin.tsx
@@ -4214,6 +4314,10 @@ msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The fill attribute must be all, connectives, or main."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "The game"
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -4472,7 +4576,7 @@ msgid "The user was not found."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
-msgid "The variant attribute must be evaluate, build, counterexample, or distinguish."
+msgid "The variant attribute must be evaluate, build, counterexample, distinguish, or game."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -4516,6 +4620,14 @@ msgstr ""
 msgid "There is no autograded score to approve on this submission."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "There is no block for me to choose for {variable}, so you win."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "There is no block to choose for {variable}, so I win."
+msgstr ""
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "There is no world kind called “{world}”. Known kinds: {known}."
 msgstr ""
@@ -4550,6 +4662,10 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "This assignment is not accepting new attempts."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "This choice lost the game."
 msgstr ""
 
 #: src/worker/application/lti.ts
@@ -4624,6 +4740,10 @@ msgstr ""
 
 #: src/worker/exercises/translation/strings.ts
 msgid "This exercise wants a propositional sentence: sentence letters and connectives only."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "This exercise's sentences take no true: or false: prefix; the world decides their values."
 msgstr ""
 
 #: src/worker/web/content.tsx
@@ -4850,6 +4970,10 @@ msgstr ""
 
 #: src/worker/application/login-rate-limit.ts
 msgid "Too many sign-in links have been requested. Check your inbox — a link sent in the last few minutes still works — or try again shortly."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Took back your last move."
 msgstr ""
 
 #: src/worker/web/gradebook.tsx
@@ -5109,8 +5233,24 @@ msgstr ""
 msgid "When I release them"
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "When the game asks for a block, click or tap it on the board."
+msgstr ""
+
 #: src/worker/web/content.tsx
 msgid "Whoever names this from a lesson freezes its text into that lesson, and their students read it there. Sharing a theory to be named is sharing what it says."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Won"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Won: {won} of {total}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Won: {won} of {total}. Take another look at: {formulas}."
 msgstr ""
 
 #: src/worker/exercises/world/types.ts
@@ -5151,6 +5291,18 @@ msgstr ""
 
 #: src/worker/web/courses.tsx
 msgid "You are not enrolled in any courses yet."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "You choose {block} for {variable}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "You choose the block at column {col}, row {row} for {variable}."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "You could have won. The choice that lost the game is marked: take it back and try another."
 msgstr ""
 
 #: src/worker/web/content.tsx
@@ -5213,6 +5365,34 @@ msgstr ""
 msgid "You have used all of your attempts on this assignment. Ask your instructor if you need another."
 msgstr ""
 
+#: src/worker/exercises/world/strings.ts
+msgid "You say {formula} is false."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "You say {formula} is true."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "You say {left} and {right} are both false."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "You say {left} and {right} are both true."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "You say {left} is false and {right} is true."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "You say {left} is true and {right} is false."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "You won every game."
+msgstr ""
+
 #: src/worker/web/lti.tsx
 msgid "Your {platform} identity is now connected to the Carnap account for {email}. Return to your LMS and launch again to sign in."
 msgstr ""
@@ -5247,6 +5427,10 @@ msgstr ""
 
 #: src/worker/application/lti.ts
 msgid "Your enrollment in this course is not active."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Your first claim was wrong, so you could not win."
 msgstr ""
 
 #: src/worker/routes/web.ts

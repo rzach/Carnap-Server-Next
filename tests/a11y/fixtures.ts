@@ -171,6 +171,14 @@ Say whether the sentence holds.
 | block : tet small at 3,1 named a
 ::::
 
+::::world{#wg system="blocks" variant="game" points="1"}
+Defend a claim about the sentence.
+
+- ∃x Tet(x)
+
+| block : tet small at 3,1 named a
+::::
+
 ::::world{#wx system="blocks" variant="distinguish" points="1"}
 Tell the worlds apart.
 

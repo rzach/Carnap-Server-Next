@@ -96,6 +96,14 @@ const OBJECT_SENTENCES: Readonly<
     "Put {block} back.",
     "Put the block at column {col}, row {row} back.",
   ],
+  "game-student-choice": [
+    "You choose {block} for {variable}.",
+    "You choose the block at column {col}, row {row} for {variable}.",
+  ],
+  "game-computer-choice": [
+    "I choose {block} for {variable}.",
+    "I choose the block at column {col}, row {row} for {variable}.",
+  ],
 };
 
 export function objectSentence(
@@ -103,11 +111,14 @@ export function objectSentence(
   id: string,
   sentence: ObjectSentence,
   words: WorldWords,
+  values: Readonly<Record<string, string>> = {},
 ): string {
   const block = blockById(state, id);
   const [named, unnamed] = OBJECT_SENTENCES[sentence];
 
-  return block === undefined ? "" : aboutBlock(block, named, unnamed, words);
+  return block === undefined
+    ? ""
+    : aboutBlock(block, named, unnamed, words, values);
 }
 
 export function describeBlock(

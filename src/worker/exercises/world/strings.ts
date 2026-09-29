@@ -131,6 +131,156 @@ export function buildWorldStrings(i18n: Translator) {
         placeholders("col", "row"),
       ),
 
+    // ——— The evaluation game.
+    "{sentence}: your claim": i18n.t(
+      "{sentence}: your claim",
+      placeholders("sentence"),
+    ),
+    Won: i18n.t("Won"),
+    Lost: i18n.t("Lost"),
+    "The game": i18n.t("The game"),
+    "Claim a sentence true or false to start its game.": i18n.t(
+      "Claim a sentence true or false to start its game.",
+    ),
+    "Take back your last move": i18n.t("Take back your last move"),
+    "Took back your last move.": i18n.t("Took back your last move."),
+    "Choose a block for {variable} on the board.": i18n.t(
+      "Choose a block for {variable} on the board.",
+      placeholders("variable"),
+    ),
+    "Choose what you will defend.": i18n.t("Choose what you will defend."),
+    "{formula} is true": i18n.t("{formula} is true", placeholders("formula")),
+    "{formula} is false": i18n.t(
+      "{formula} is false",
+      placeholders("formula"),
+    ),
+    "{left} and {right} are both true": i18n.t(
+      "{left} and {right} are both true",
+      placeholders("left", "right"),
+    ),
+    "{left} and {right} are both false": i18n.t(
+      "{left} and {right} are both false",
+      placeholders("left", "right"),
+    ),
+    "{left} is true and {right} is false": i18n.t(
+      "{left} is true and {right} is false",
+      placeholders("left", "right"),
+    ),
+    "{left} is false and {right} is true": i18n.t(
+      "{left} is false and {right} is true",
+      placeholders("left", "right"),
+    ),
+    "You say {formula} is true.": i18n.t(
+      "You say {formula} is true.",
+      placeholders("formula"),
+    ),
+    "You say {formula} is false.": i18n.t(
+      "You say {formula} is false.",
+      placeholders("formula"),
+    ),
+    "So you say {formula} is true.": i18n.t(
+      "So you say {formula} is true.",
+      placeholders("formula"),
+    ),
+    "So you say {formula} is false.": i18n.t(
+      "So you say {formula} is false.",
+      placeholders("formula"),
+    ),
+    "You say {left} and {right} are both true.": i18n.t(
+      "You say {left} and {right} are both true.",
+      placeholders("left", "right"),
+    ),
+    "You say {left} and {right} are both false.": i18n.t(
+      "You say {left} and {right} are both false.",
+      placeholders("left", "right"),
+    ),
+    "You say {left} is true and {right} is false.": i18n.t(
+      "You say {left} is true and {right} is false.",
+      placeholders("left", "right"),
+    ),
+    "You say {left} is false and {right} is true.": i18n.t(
+      "You say {left} is false and {right} is true.",
+      placeholders("left", "right"),
+    ),
+    "I pick {formula}, which you say is true.": i18n.t(
+      "I pick {formula}, which you say is true.",
+      placeholders("formula"),
+    ),
+    "I pick {formula}, which you say is false.": i18n.t(
+      "I pick {formula}, which you say is false.",
+      placeholders("formula"),
+    ),
+    "You choose {block} for {variable}.": i18n.t(
+      "You choose {block} for {variable}.",
+      placeholders("block", "variable"),
+    ),
+    "You choose the block at column {col}, row {row} for {variable}.": i18n.t(
+      "You choose the block at column {col}, row {row} for {variable}.",
+      placeholders("col", "row", "variable"),
+    ),
+    "I choose {block} for {variable}.": i18n.t(
+      "I choose {block} for {variable}.",
+      placeholders("block", "variable"),
+    ),
+    "I choose the block at column {col}, row {row} for {variable}.": i18n.t(
+      "I choose the block at column {col}, row {row} for {variable}.",
+      placeholders("col", "row", "variable"),
+    ),
+    "{formula} is true, so you win.": i18n.t(
+      "{formula} is true, so you win.",
+      placeholders("formula"),
+    ),
+    "{formula} is false, so you win.": i18n.t(
+      "{formula} is false, so you win.",
+      placeholders("formula"),
+    ),
+    "{formula} is true, so I win.": i18n.t(
+      "{formula} is true, so I win.",
+      placeholders("formula"),
+    ),
+    "{formula} is false, so I win.": i18n.t(
+      "{formula} is false, so I win.",
+      placeholders("formula"),
+    ),
+    "There is no block to choose for {variable}, so I win.": i18n.t(
+      "There is no block to choose for {variable}, so I win.",
+      placeholders("variable"),
+    ),
+    "There is no block for me to choose for {variable}, so you win.": i18n.t(
+      "There is no block for me to choose for {variable}, so you win.",
+      placeholders("variable"),
+    ),
+    /** Full feedback, after a lost game whose first claim was wrong. */
+    "Your first claim was wrong, so you could not win.": i18n.t(
+      "Your first claim was wrong, so you could not win.",
+    ),
+    /** Full feedback, after a lost game whose first claim was right. */
+    "You could have won. The choice that lost the game is marked: take it back and try another.":
+      i18n.t(
+        "You could have won. The choice that lost the game is marked: take it back and try another.",
+      ),
+    "This choice lost the game.": i18n.t("This choice lost the game."),
+    "Playing the evaluation game": i18n.t("Playing the evaluation game"),
+    "Claim each sentence true or false, then defend your claim against the computer, one part at a time.":
+      i18n.t(
+        "Claim each sentence true or false, then defend your claim against the computer, one part at a time.",
+      ),
+    "When the game asks for a block, click or tap it on the board.": i18n.t(
+      "When the game asks for a block, click or tap it on the board.",
+    ),
+    "Choose the block here": i18n.t("Choose the block here"),
+
+    // ——— Verdicts on a game.
+    "You won every game.": i18n.t("You won every game."),
+    "Won: {won} of {total}.": i18n.t(
+      "Won: {won} of {total}.",
+      placeholders("total", "won"),
+    ),
+    "Won: {won} of {total}. Take another look at: {formulas}.": i18n.t(
+      "Won: {won} of {total}. Take another look at: {formulas}.",
+      placeholders("formulas", "total", "won"),
+    ),
+
     // ——— Help.
     "Using the world editor": i18n.t("Using the world editor"),
     "Drag a block to move it, or drag a shape from the palette onto a square to add one.":

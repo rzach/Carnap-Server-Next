@@ -19,12 +19,15 @@ of where the blocks stand. The authoring contract is in
   shared by the browser's Check and the grader.
 - `logic/restriction.ts` — distinguish's `symbols=` / `without=`, checked
   on the parse tree, so `a≠b` is not blamed for a `¬`.
+- `logic/game.ts` — the evaluation game: positions, the computer's moves,
+  and the replay the grader scores a stored game by.
 - `grading.ts` — stored public data resolved back into formulas and states.
 - `authoring.ts`, `assessment.ts`, `read-only-view.ts`, `board-html.ts`,
   `strings.ts`, `verdict-text.ts` — the usual halves of a type.
 
 The editor is `src/client/components/carnap-world-v1.tsx`, with
-subformula highlighting in `world-highlight.tsx`.
+subformula highlighting in `world-highlight.tsx` and the game's panel in
+`world-game.tsx`.
 
 ## World kinds
 
@@ -55,8 +58,18 @@ because arity is part of a symbol's identity (`symbolKey`).
 
 ## Answer data
 
-`world-answer@1` is `{ values?, world?, sentence? }`; the variant decides
-which is read and normalization drops the rest. A world is kept as
+`world-answer@1` is `{ values?, world?, sentence?, games? }`; the variant
+decides which is read and normalization drops the rest.
+
+A game is `{ claim, choices }`: the first claim, and the student's choices in
+order — a block's id for a quantifier, or `[left, right]` part values (each
+`true`, `false`, or `null` for a part left open) for a connective. Values
+rather than an option's index, so what a stored game means does not depend
+on the order options are offered in. The computer's moves are not stored:
+they are a fixed function of the position (the first object or part that
+makes the student's claim false, else the first), which is what lets the
+grader replay a game and score only one that was really won. A choice that
+does not fit where it was made, or one after the game ended, loses. A world is kept as
 submitted — a world that breaks the physics is a zero with a reason, not a
 refused payload.
 
@@ -70,5 +83,5 @@ which is what a budget means.
 
 Laws enforced after every edit and move counts need a replayed move log,
 since they depend on the path; the editor is a reducer over typed moves so
-that log is only a matter of keeping the list. An isometric view, the
-evaluation game, and a graph kind are also later.
+that log is only a matter of keeping the list. They are shelved, as is an
+isometric view. A graph kind is later, with its own design pass.

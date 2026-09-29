@@ -294,9 +294,9 @@ export function buildDiagnosticStrings(i18n: Translator) {
       placeholders("field"),
     ),
     // The world exercise (`exercises/world/authoring.ts`).
-    "The variant attribute must be evaluate, build, counterexample, or distinguish.":
+    "The variant attribute must be evaluate, build, counterexample, distinguish, or game.":
       i18n.t(
-        "The variant attribute must be evaluate, build, counterexample, or distinguish.",
+        "The variant attribute must be evaluate, build, counterexample, distinguish, or game.",
       ),
     "Only a build or counterexample exercise has a budget.": i18n.t(
       "Only a build or counterexample exercise has a budget.",
@@ -409,9 +409,13 @@ export function buildDiagnosticStrings(i18n: Translator) {
       i18n.t(
         "A distinguish exercise lists no sentences: the student writes one.",
       ),
-    "An evaluate exercise's sentences take no true: or false: prefix; the world decides their values.":
+    "This exercise's sentences take no true: or false: prefix; the world decides their values.":
       i18n.t(
-        "An evaluate exercise's sentences take no true: or false: prefix; the world decides their values.",
+        "This exercise's sentences take no true: or false: prefix; the world decides their values.",
+      ),
+    'A game exercise cannot hide its feedback, because the game shows who wins. Use feedback="terse" to show only that.':
+      i18n.t(
+        'A game exercise cannot hide its feedback, because the game shows who wins. Use feedback="terse" to show only that.',
       ),
     "A world exercise needs at least one sentence.": i18n.t(
       "A world exercise needs at least one sentence.",

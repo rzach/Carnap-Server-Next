@@ -69,7 +69,7 @@ export const WORLD_ASSESSMENT = {
         diagnostics: [
           diagnostic(
             "malformed_answer_data",
-            "A world answer is a list of marks, a world, or a sentence.",
+            "A world answer is a list of marks, a list of games, a world, or a sentence.",
             ["data"],
           ),
         ],
@@ -145,8 +145,8 @@ export const WORLD_ASSESSMENT = {
     );
     const fraction = verdictScore(verdict);
 
-    // Evaluate is scored per sentence; the other three either do what was
-    // asked or do not.
+    // Evaluate and game are scored per sentence; the other three either do
+    // what was asked or do not.
     return {
       ...base,
       awardedScore: declaration.nominalPoints * fraction,

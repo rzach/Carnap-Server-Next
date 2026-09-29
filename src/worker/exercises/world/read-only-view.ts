@@ -25,7 +25,7 @@ import reviewStyles from "./review.css" with { type: "text" };
 import shadowStyles from "./shadow.css" with { type: "text" };
 import { buildWorldStrings } from "./strings";
 import type { WorldAnswerData, WorldPublicData } from "./types";
-import { WORLD_KIND, worldName } from "./types";
+import { readsFixedWorld, WORLD_KIND, worldName } from "./types";
 import { describeWorldVerdict } from "./verdict-text";
 
 const WORLD_SHADOW_STYLES = [EXERCISE_GROUP_SHADOW_STYLES, shadowStyles].join(
@@ -100,7 +100,7 @@ interface SentenceMarks {
     readonly laws: readonly (boolean | null)[];
     readonly sentences: readonly (boolean | null)[];
   };
-  /** An evaluate answer's marks, for the review. */
+  /** An evaluate answer's marks, or a game answer's claims, for the review. */
   readonly marks?: readonly (boolean | null)[];
   readonly disabled: boolean;
 }
@@ -126,11 +126,16 @@ function markToggle(
   mark: boolean | null,
   disabled: boolean,
   words: WorldWords,
+  variant: WorldPublicData["variant"],
 ): string {
   const button = (value: boolean, label: string): string =>
     `<button aria-pressed="${mark === value}" class="world-mark" data-mark="${value}" type="button"${disabled ? " disabled" : ""}>${escapeHtml(label)}</button>`;
+  const group =
+    variant === "game"
+      ? words("{sentence}: your claim", { sentence: text })
+      : words("{sentence}: your mark", { sentence: text });
 
-  return `<span aria-label="${escapeHtml(words("{sentence}: your mark", { sentence: text }))}" class="world-marks" data-index="${index}" role="group">${button(true, words("True"))}${button(false, words("False"))}</span>`;
+  return `<span aria-label="${escapeHtml(group)}" class="world-marks" data-index="${index}" role="group">${button(true, words("True"))}${button(false, words("False"))}</span>`;
 }
 
 function sentencesHtml(
@@ -146,16 +151,16 @@ function sentencesHtml(
   const items = resolved.sentences
     .map((sentence, index) => {
       const target = targetLabel(publicData, sentence.target, words);
-      const control =
-        publicData.variant === "evaluate"
-          ? markToggle(
-              index,
-              sentence.text,
-              marks.marks?.[index] ?? null,
-              marks.disabled,
-              words,
-            )
-          : truthMark(marks.values?.sentences[index], words);
+      const control = readsFixedWorld(publicData.variant)
+        ? markToggle(
+            index,
+            sentence.text,
+            marks.marks?.[index] ?? null,
+            marks.disabled,
+            words,
+            publicData.variant,
+          )
+        : truthMark(marks.values?.sentences[index], words);
 
       return `<li class="world-sentence" data-index="${index}"${sentence.target === undefined ? "" : ` data-target="${sentence.target}"`}>${
         target === ""
@@ -228,11 +233,14 @@ function exerciseBodyHtml(
       : (kind.parseState(options.answer.world) ?? resolved.start);
   const values =
     options.reveal &&
-    publicData.variant !== "evaluate" &&
+    !readsFixedWorld(publicData.variant) &&
     options.answer !== undefined &&
     kind.problems(shown).length === 0
       ? truthValues(resolved, shown)
       : undefined;
+  const marks =
+    options.answer?.games?.map((game) => game?.claim ?? null) ??
+    options.answer?.values;
   const budget =
     publicData.budget === undefined
       ? ""
@@ -255,9 +263,7 @@ function exerciseBodyHtml(
     words,
     {
       disabled: options.disabled,
-      ...(options.answer?.values === undefined
-        ? {}
-        : { marks: options.answer.values }),
+      ...(marks === undefined ? {} : { marks }),
       ...(values === undefined ? {} : { values }),
     },
   )}</div></div>`;

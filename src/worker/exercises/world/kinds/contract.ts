@@ -33,7 +33,13 @@ export type WorldWords = (
  * problem, and the move that would make one is refused for that reason.
  */
 /** A sentence the editor says about one object: see {@link WorldKind.objectSentence}. */
-export type ObjectSentence = "pinned" | "picked-up" | "put-back";
+export type ObjectSentence =
+  | "pinned"
+  | "picked-up"
+  | "put-back"
+  /** The evaluation game's choice of an object for `{variable}`. */
+  | "game-student-choice"
+  | "game-computer-choice";
 
 export interface WorldProblem {
   readonly code: string;
@@ -188,6 +194,7 @@ export interface WorldKind<State = unknown, Move = unknown, Spec = unknown> {
     id: string,
     sentence: ObjectSentence,
     words: WorldWords,
+    values?: Readonly<Record<string, string>>,
   ): string;
   describeMove(before: State, move: Move, words: WorldWords): string;
   describeProblem(

@@ -295,7 +295,10 @@ If an exercise omits `exam` and `feedback`, the assignment supplies defaults:
 
 An explicit exercise attribute overrides its own default. These defaults
 are resolved per assignment, not saved into the compiled exercise, so the
-same content can be used as both an exam and a practice activity.
+same content can be used as both an exam and a practice activity. The one
+exception is the world exercise's `game`, which cannot hide who won and so
+compiles to `full` when it says nothing (see
+[the evaluation game](#the-evaluation-game)).
 
 ### `exam`
 
@@ -743,8 +746,44 @@ names a theory block of the author's (see [the blocks language](#the-blocks-lang
   language accepts names its symbol, and a spelling with several meanings
   names them all: in forallx Calgary, `E` is both the predicate letter and
   an ASCII ∃.
+- `game`: the evaluation game. The world is fixed; the student claims each
+  sentence true or false and then defends the claim against the computer,
+  as below. Scored per sentence: a sentence counts when its game is won.
 
 Build, counterexample, and distinguish are all or nothing.
+
+### The evaluation game
+
+A position in the game is a part of the sentence as written, the value the
+student claims for it, and the blocks chosen for its variables so far. Each
+move takes the game into a smaller part, until an atomic sentence — which
+the world decides — says who won:
+
+- `¬A`: the claim flips, and play moves to `A`.
+- `∃x A` claimed true, or `∀x A` claimed false: the student chooses a block
+  for `x`, clicking or tapping it on the board or pressing Enter on it.
+  `∃x A` claimed false, or `∀x A` claimed true: the computer chooses.
+- A binary connective: the student chooses the fewest values for its two
+  parts that make the claim true — `A` true, or `B` true, for a true `A ∨ B`
+  — and where that takes both parts, the computer picks the one to play on.
+  So `A ∧ B` claimed true is the computer's pick, `A ∨ B` claimed true is the
+  student's, `A → B` claimed true offers "`A` is false" and "`B` is true", and
+  `A ↔ B` claimed true has the student pick "both true" or "both false"
+  before the computer picks a part. The same rule covers every connective the
+  language has. No sentence is rewritten: every part shown is one the author
+  wrote.
+
+The computer plays to win, so a true claim can always be defended and a
+false one never can. The undo button (or Ctrl-Z) takes back the student's
+last move, the first claim included. The answer is the claim and the
+student's choices for each sentence; the grader replays them against the
+computer's same moves, so a game counts only if it really was won.
+
+Who wins is the game itself, so its feedback cannot be withheld.
+`feedback="none"` is a compile error, and a game exercise that says nothing
+gets `full` rather than the assignment's default, which is `none` while
+grades are held back. `feedback="terse"` says who won; `full` also says, of a
+lost game, whether the first claim was wrong or which choice lost it.
 
 ### The world
 

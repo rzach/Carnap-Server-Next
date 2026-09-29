@@ -51,6 +51,24 @@ export function describeWorldVerdict(
       : words("Correct: {correct} of {total}.", counts);
   }
 
+  if (verdict.type === "game") {
+    if (verdict.ok) {
+      return words("You won every game.");
+    }
+
+    const counts = { total: String(verdict.total), won: String(verdict.won) };
+
+    return detail
+      ? words("Won: {won} of {total}. Take another look at: {formulas}.", {
+          ...counts,
+          formulas: formulas(
+            resolved,
+            [...verdict.lost, ...verdict.unfinished].sort((a, b) => a - b),
+          ),
+        })
+      : words("Won: {won} of {total}.", counts);
+  }
+
   if (verdict.type === "distinguish") {
     if (verdict.ok) {
       return words("The sentence is true in world A and false in world B.");

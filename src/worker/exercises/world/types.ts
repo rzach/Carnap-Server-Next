@@ -1,5 +1,6 @@
 import type { ExerciseCapabilities } from "../../domain/exercises";
 import type { Translator } from "../../i18n/translator";
+import type { WorldGameAnswer } from "./logic/game";
 /**
  * Constants and data shapes for the world exercise type. DOM-free; the logic
  * core, authoring, assessment, view, and client element all share it.
@@ -32,26 +33,38 @@ export function worldName(i18n: Translator): string {
  *                      (the default);
  *   - `counterexample` edit the world until the premises are true and the
  *                      conclusions false;
- *   - `distinguish`    write one sentence true in world A and false in B.
+ *   - `distinguish`    write one sentence true in world A and false in B;
+ *   - `game`           claim each sentence true or false in a fixed world,
+ *                      and defend the claim in the evaluation game.
  */
 export type WorldVariant =
   | "evaluate"
   | "build"
   | "counterexample"
-  | "distinguish";
+  | "distinguish"
+  | "game";
 
 export const WORLD_VARIANTS: readonly WorldVariant[] = [
   "evaluate",
   "build",
   "counterexample",
   "distinguish",
+  "game",
 ];
+
+/**
+ * The variants played over a fixed world the student does not edit, whose
+ * sentences therefore have no target: the world decides their values.
+ */
+export function readsFixedWorld(variant: WorldVariant): boolean {
+  return variant === "evaluate" || variant === "game";
+}
 
 /**
  * One sentence of the exercise, as engine text. `target` is the truth value
  * the student must bring it to: `true` for a build sentence unless the author
  * wrote `false:`, `true` for a premise and `false` for a conclusion. An
- * `evaluate` sentence has no target; the world decides its value.
+ * `evaluate` or `game` sentence has no target; the world decides its value.
  */
 export interface WorldSentence {
   readonly engine: string;
@@ -99,10 +112,12 @@ export interface WorldPublicData {
  * normalization drops the rest.
  *   - `values`: evaluate, one mark per sentence in order, `null` unmarked;
  *   - `world`: build and counterexample, the edited world as kind state;
- *   - `sentence`: distinguish, the text exactly as typed.
+ *   - `sentence`: distinguish, the text exactly as typed;
+ *   - `games`: game, one per sentence in order, `null` unplayed.
  * A recorded move log (`moves`) is reserved for path constraints.
  */
 export interface WorldAnswerData {
+  readonly games?: readonly (WorldGameAnswer | null)[];
   readonly sentence?: string;
   readonly values?: readonly (boolean | null)[];
   readonly world?: unknown;

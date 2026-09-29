@@ -51,7 +51,17 @@ import {
   judgeWorld,
   truthValues,
 } from "../../worker/exercises/world/logic/check";
-import { languageNames } from "../../worker/exercises/world/logic/structure";
+import type {
+  GameChoice,
+  PlayedGame,
+  WorldGameAnswer,
+} from "../../worker/exercises/world/logic/game";
+import { playGame } from "../../worker/exercises/world/logic/game";
+import type { WorldStructure } from "../../worker/exercises/world/logic/structure";
+import {
+  languageNames,
+  worldStructure,
+} from "../../worker/exercises/world/logic/structure";
 import type { WorldStringId } from "../../worker/exercises/world/strings";
 import type {
   WorldAnswerData,
@@ -69,6 +79,13 @@ import {
 } from "./help-dialog";
 import { ToolbarIcon } from "./toolbar-icon";
 import { TOOLBAR_STYLES, type ToolbarIconName } from "./toolbar-icons";
+import {
+  GameSentence,
+  gameLines,
+  gameText,
+  lossNote,
+  partValuesText,
+} from "./world-game";
 import type { Highlight } from "./world-highlight";
 import { FormulaView, highlightAnnouncement } from "./world-highlight";
 
@@ -151,7 +168,11 @@ function Glyph({ glyph }: { readonly glyph: readonly DrawPrimitive[] }) {
 // ---------------------------------------------------------------------------
 
 interface BoardProps {
+  /** The evaluation game's bound variables, by the id of their block. */
+  readonly badges?: ReadonlyMap<string, string> | undefined;
   readonly carry: Carry | null;
+  /** The evaluation game is waiting for a block to be chosen. */
+  readonly choosing?: boolean;
   readonly cursor: Cursor;
   readonly editable: boolean;
   readonly focusCursor: boolean;
@@ -404,6 +425,12 @@ function Board(props: BoardProps) {
         >
           <div class="world-square">
             {block === undefined ? null : <Glyph glyph={blockGlyph(block)} />}
+            {block === undefined ||
+            props.badges?.get(block.id) === undefined ? null : (
+              <span aria-hidden="true" class="world-binding">
+                {props.badges.get(block.id)}
+              </span>
+            )}
             {block !== undefined && props.pinned.has(block.id) ? (
               <span aria-hidden="true" class="world-pin" />
             ) : null}
@@ -434,6 +461,7 @@ function Board(props: BoardProps) {
         aria-readonly={props.editable ? undefined : "true"}
         class="world-grid"
         data-carrying={carry === null ? undefined : ""}
+        data-choosing={props.choosing ? "" : undefined}
         onKeyDown={props.onKeyDown}
         ref={gridRef}
         // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: the ARIA grid pattern is a table with role="grid"; the table's own markup carries the rows and headers.
@@ -1062,6 +1090,18 @@ const PAIR_INTRO: readonly WorldStringId[] = [
   "Click a board, or move into it with Tab, to make it the one the palette edits.",
 ];
 
+/** The help for the evaluation game, whose board is played on, not edited. */
+const GAME_INTRO: readonly WorldStringId[] = [
+  "Claim each sentence true or false, then defend your claim against the computer, one part at a time.",
+  "When the game asks for a block, click or tap it on the board.",
+];
+
+const GAME_SHORTCUTS: typeof SHORTCUTS = [
+  { action: "Move between squares", keys: ["←", "→", "↑", "↓"] },
+  { action: "Choose the block here", keys: ["Enter", "Space"] },
+  { action: "Take back your last move", icon: "undo", keys: ["Ctrl-Z"] },
+];
+
 type Side = "a" | "b";
 
 /** The editing state of the distinguish world the palette is not editing. */
@@ -1098,6 +1138,12 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
   private future: BlocksState[] = [];
   private marks: (boolean | null)[] = [];
   private sentence = "";
+  /** The evaluation game: each sentence's game so far, and the one shown. */
+  private games: (WorldGameAnswer | null)[] = [];
+  private activeGame: number | null = null;
+  private gameWorld: WorldStructure | null = null;
+  /** Move focus to the game's next control after the next render. */
+  private focusGame = false;
 
   private cursor: Cursor = { col: 1, row: 1 };
   private carry: Carry | null = null;
@@ -1154,22 +1200,29 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     this.mount = body;
     this.rerender();
 
+    const game = data.variant === "game";
+
     this.helpDialog = createHelpDialog({
       close: this.t("Close help"),
-      intro: (this.parked === null ? INTRO : PAIR_INTRO).map((id) =>
-        this.t(id),
-      ),
+      intro: (game
+        ? GAME_INTRO
+        : this.parked === null
+          ? INTRO
+          : PAIR_INTRO
+      ).map((id) => this.t(id)),
       keyboard: this.t("Keyboard"),
-      shortcuts: SHORTCUTS.map((shortcut) => ({
+      shortcuts: (game ? GAME_SHORTCUTS : SHORTCUTS).map((shortcut) => ({
         action: this.t(shortcut.action),
         keys: shortcut.keys,
         ...(shortcut.icon === undefined ? {} : { icon: shortcut.icon }),
       })),
-      title: this.t("Using the world editor"),
+      title: this.t(
+        game ? "Playing the evaluation game" : "Using the world editor",
+      ),
     });
     root.appendChild(this.helpDialog);
 
-    if (this.editable) {
+    if (this.editable || game) {
       mountHelpTrigger(
         this,
         this.t("Usage and keyboard shortcuts"),
@@ -1232,6 +1285,28 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
       return typeof mark === "boolean" ? mark : null;
     });
     this.sentence = typeof prior.sentence === "string" ? prior.sentence : "";
+
+    if (data.variant === "game") {
+      const world = worldStructure(
+        resolved.kind,
+        resolved.start,
+        resolved.vocabulary,
+      );
+      this.gameWorld = world;
+      // A stored game that no longer replays (the exercise was corrected
+      // under it) is dropped rather than shown half-understood.
+      this.games = resolved.sentences.map((sentence, index) => {
+        const game = prior.games?.[index];
+
+        return game === undefined ||
+          game === null ||
+          playGame(sentence.formula, world, game).state.type === "invalid"
+          ? null
+          : game;
+      });
+      const started = this.games.findIndex((game) => game !== null);
+      this.activeGame = started === -1 ? null : started;
+    }
   }
 
   private get editable(): boolean {
@@ -1245,9 +1320,12 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
 
   /** Whether live truth values may be shown: full feedback, never evaluate's. */
   private get liveTruth(): boolean {
+    const variant = this.data?.variant;
+
     return (
       this.feedback === "full" &&
-      (this.data?.variant !== "evaluate" || this.preview)
+      variant !== "game" &&
+      (variant !== "evaluate" || this.preview)
     );
   }
 
@@ -1571,6 +1649,16 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
 
     if (world === null || !this.editable) {
       this.cursor = cell;
+      const block = world?.objects.find(
+        (candidate) =>
+          candidate.col === cell.col && candidate.row === cell.row,
+      );
+
+      if (block !== undefined && this.choosingObject()) {
+        this.chooseInGame(block.id);
+        return;
+      }
+
       this.rerender();
       return;
     }
@@ -1649,6 +1737,12 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
       case "Enter":
       case " ":
         if (!this.editable) {
+          if (block !== undefined && this.choosingObject()) {
+            this.chooseInGame(block.id);
+            event.preventDefault();
+            return;
+          }
+
           break;
         }
 
@@ -1735,6 +1829,12 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
         break;
       case "z":
       case "Z":
+        if (ctrl && this.data?.variant === "game") {
+          this.back();
+          event.preventDefault();
+          return;
+        }
+
         if (ctrl && this.editable) {
           if (event.shiftKey) {
             this.redo();
@@ -1810,6 +1910,8 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
         return { values: [...this.marks] };
       case "distinguish":
         return { sentence: this.sentence };
+      case "game":
+        return { games: [...this.games] };
       default:
         return this.world === null ? {} : { world: this.world };
     }
@@ -1843,6 +1945,11 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
       mount,
     );
     this.focusCursor = false;
+
+    if (this.focusGame) {
+      this.focusGame = false;
+      mount.querySelector<HTMLElement>("[data-game-focus]")?.focus();
+    }
   }
 
   private worldView(
@@ -1918,7 +2025,9 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
                 />
               ) : null}
               <Board
+                badges={this.gameBadges()}
                 carry={this.carry}
+                choosing={this.choosingObject()}
                 cursor={this.cursor}
                 editable={editable}
                 focusCursor={this.focusCursor}
@@ -1979,7 +2088,9 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
           {budget === null ? null : <p class="world-budget">{budget}</p>}
         </div>
         <div class="world-panel">
-          {this.sentencePanel(data, resolved, values)}
+          {data.variant === "game"
+            ? this.gamePanel(resolved)
+            : this.sentencePanel(data, resolved, values)}
         </div>
         <p aria-live="polite" class="visually-hidden">
           {this.announcement}
@@ -2300,6 +2411,313 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
           </p>
         )}
       </div>
+    );
+  }
+
+  // --- The evaluation game ------------------------------------------------
+
+  /** A sentence's game replayed, or null when it has no claim yet. */
+  private played(index: number): PlayedGame | null {
+    const game = this.games[index] ?? null;
+    const sentence = this.resolved?.sentences[index];
+
+    return game === null || sentence === undefined || this.gameWorld === null
+      ? null
+      : playGame(sentence.formula, this.gameWorld, game);
+  }
+
+  private activePlayed(): PlayedGame | null {
+    return this.activeGame === null ? null : this.played(this.activeGame);
+  }
+
+  /** Whether the game shown is waiting for the student to choose a block. */
+  private choosingObject(): boolean {
+    return this.activePlayed()?.state.type === "choose-object";
+  }
+
+  /** The variables bound so far in the game shown, by their blocks' ids. */
+  private gameBadges(): ReadonlyMap<string, string> | undefined {
+    const played = this.activePlayed();
+    const state = played?.state;
+    const last = played?.steps.at(-1);
+    const position =
+      state !== undefined && state.type !== "invalid"
+        ? state.position
+        : last !== undefined && last.type !== "parts"
+          ? last.to
+          : undefined;
+
+    if (position === undefined) {
+      return undefined;
+    }
+
+    const bound = new Map<string, string>();
+
+    for (const [variable, id] of position.bindings) {
+      bound.set(variable, id);
+    }
+
+    const badges = new Map<string, string>();
+
+    for (const [variable, id] of bound) {
+      const held = badges.get(id);
+      badges.set(id, held === undefined ? variable : `${held}, ${variable}`);
+    }
+
+    return badges;
+  }
+
+  /** The game's lines in words, as the panel shows them. */
+  private gameLinesFor(index: number, played: PlayedGame) {
+    const resolved = this.resolved;
+    const sentence = resolved?.sentences[index];
+
+    if (resolved === null || sentence === undefined) {
+      return [];
+    }
+
+    return gameLines(
+      played,
+      {
+        kind: resolved.kind,
+        state: resolved.start,
+        text: gameText(sentence.text, resolved),
+        words: this.words,
+      },
+      this.showsDetail,
+    );
+  }
+
+  /**
+   * Change the game shown and announce what it added: the student's own move,
+   * the computer's replies, and how it ended or what it asks for next.
+   */
+  private updateGame(index: number, game: WorldGameAnswer | null): void {
+    const before = this.activeGame === index ? this.activePlayed() : null;
+    const told =
+      before === null ? 0 : this.gameLinesFor(index, before).length;
+
+    this.games[index] = game;
+    this.activeGame = index;
+
+    const after = this.played(index);
+
+    if (after !== null) {
+      const lines = this.gameLinesFor(index, after)
+        .slice(told)
+        .map((line) => line.text);
+      const prompt = this.gamePrompt(after);
+      this.announce([...lines, ...(prompt === "" ? [] : [prompt])].join(" "));
+    }
+
+    if (after?.state.type === "choose-object") {
+      this.focusCursor = true;
+    } else {
+      this.focusGame = true;
+    }
+
+    this.edited();
+  }
+
+  /** A claim about a sentence: its game starts over, or is shown again. */
+  private readonly claimGame = (index: number, claim: boolean): void => {
+    const game = this.games[index] ?? null;
+
+    if (game?.claim === claim) {
+      this.activeGame = index;
+      this.rerender();
+      return;
+    }
+
+    this.activeGame = null;
+    this.updateGame(index, { choices: [], claim });
+    this.focusGame = false;
+  };
+
+  private readonly chooseInGame = (choice: GameChoice): void => {
+    const index = this.activeGame;
+    const game = index === null ? null : (this.games[index] ?? null);
+
+    if (index === null || game === null) {
+      return;
+    }
+
+    this.updateGame(index, { ...game, choices: [...game.choices, choice] });
+  };
+
+  /** Take back the student's last move; past the first, the claim itself. */
+  private readonly back = (): void => {
+    const index = this.activeGame;
+    const game = index === null ? null : (this.games[index] ?? null);
+
+    if (index === null || game === null) {
+      return;
+    }
+
+    this.games[index] =
+      game.choices.length === 0
+        ? null
+        : { ...game, choices: game.choices.slice(0, -1) };
+    this.announce(this.t("Took back your last move."));
+    this.focusGame = true;
+    this.edited();
+  };
+
+  private gamePrompt(played: PlayedGame): string {
+    const state = played.state;
+
+    if (state.type === "choose-object") {
+      return this.t("Choose a block for {variable} on the board.", {
+        variable: state.variable,
+      });
+    }
+
+    return state.type === "choose-parts"
+      ? this.t("Choose what you will defend.")
+      : "";
+  }
+
+  private gamePanel(resolved: ResolvedWorld) {
+    const words = this.words;
+    const index = this.activeGame;
+    const sentence = index === null ? undefined : resolved.sentences[index];
+    const played = this.activePlayed();
+
+    return (
+      <>
+        <h3 class="world-panel-heading">{words("Sentences")}</h3>
+        <ol class="world-sentences">
+          {resolved.sentences.map((row, rowIndex) => {
+            const claim = this.games[rowIndex]?.claim;
+            const state = this.played(rowIndex)?.state;
+            const result =
+              state?.type === "over" ? (state.won ? "won" : "lost") : null;
+
+            return (
+              <li
+                class="world-sentence world-game-row"
+                data-active={rowIndex === index ? "" : undefined}
+                data-index={rowIndex}
+                key={row.text}
+              >
+                <span class="world-formula">{row.text}</span>
+                <span class="world-game-claim">
+                  <fieldset class="world-marks">
+                    <legend class="visually-hidden">
+                      {words("{sentence}: your claim", {
+                        sentence: row.text,
+                      })}
+                    </legend>
+                    {[true, false].map((value) => (
+                      <button
+                        aria-pressed={claim === value ? "true" : "false"}
+                        class="world-mark"
+                        key={String(value)}
+                        onClick={() => this.claimGame(rowIndex, value)}
+                        type="button"
+                      >
+                        {words(value ? "True" : "False")}
+                      </button>
+                    ))}
+                  </fieldset>
+                  {result === null ? null : (
+                    <span class="world-game-result" data-result={result}>
+                      {words(result === "won" ? "Won" : "Lost")}
+                    </span>
+                  )}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+        <section class="world-game">
+          <h3 class="world-panel-heading">{words("The game")}</h3>
+          {index === null || sentence === undefined || played === null ? (
+            <p class="world-game-empty">
+              {words("Claim a sentence true or false to start its game.")}
+            </p>
+          ) : (
+            this.gameBody(index, sentence.text, played, resolved)
+          )}
+        </section>
+      </>
+    );
+  }
+
+  private gameBody(
+    index: number,
+    text: string,
+    played: PlayedGame,
+    resolved: ResolvedWorld,
+  ) {
+    const words = this.words;
+    const state = played.state;
+    const lines = this.gameLinesFor(index, played);
+    const note = lossNote(played, words, this.showsDetail);
+    const position = state.type === "invalid" ? null : state.position;
+
+    return (
+      <>
+        <p class="world-game-sentence">
+          <GameSentence
+            path={position?.path ?? []}
+            resolved={resolved}
+            text={text}
+          />
+        </p>
+        <ol class="world-game-moves">
+          {lines.map((line, lineIndex) => (
+            <li data-lost={line.lostHere ? "" : undefined} key={lineIndex}>
+              {line.text}
+              {line.lostHere ? " " : null}
+              {line.lostHere ? (
+                <span class="world-game-lost-here">
+                  {words("This choice lost the game.")}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+        {note === "" ? null : <p class="world-game-note">{note}</p>}
+        {state.type === "choose-object" ? (
+          <p class="world-game-prompt">{this.gamePrompt(played)}</p>
+        ) : null}
+        {state.type === "choose-parts" ? (
+          <fieldset class="world-game-options">
+            <legend class="world-game-prompt">
+              {this.gamePrompt(played)}
+            </legend>
+            {state.options.map((option, optionIndex) => (
+              <button
+                class="world-tool"
+                data-game-focus={optionIndex === 0 ? "" : undefined}
+                key={option.join(",")}
+                onClick={() => this.chooseInGame(option)}
+                type="button"
+              >
+                {partValuesText(
+                  option,
+                  state.position,
+                  gameText(text, resolved),
+                  words,
+                  false,
+                )}
+              </button>
+            ))}
+          </fieldset>
+        ) : null}
+        <div class="proof-toolbar world-game-actions">
+          <button
+            aria-label={words("Take back your last move")}
+            data-game-focus={state.type === "choose-parts" ? undefined : ""}
+            onClick={this.back}
+            title={`${words("Take back your last move")} (Ctrl-Z)`}
+            type="button"
+          >
+            <ToolbarIcon name="undo" />
+          </button>
+        </div>
+      </>
     );
   }
 

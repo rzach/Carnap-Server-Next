@@ -4,6 +4,7 @@ import {
   diagnostic,
 } from "../../application/content/diagnostics";
 import { renderMarkdownSource } from "../../application/content/markdown";
+import type { ExerciseFeedback } from "../../domain/exercises";
 import {
   buildCompiledExercise,
   COMMON_EXERCISE_ATTRIBUTES,
@@ -45,6 +46,7 @@ import type {
   WorldVariant,
 } from "./types";
 import {
+  readsFixedWorld,
   WORLD_ANSWER_KIND,
   WORLD_CAPABILITIES,
   WORLD_COMPONENT_METADATA,
@@ -79,6 +81,35 @@ const WORLD_ATTRIBUTES = [
   "world",
 ] as const;
 
+/**
+ * A game's feedback. Who wins is the game itself, so it cannot be withheld:
+ * `none` is refused, and saying nothing means `full` rather than the
+ * assignment's default, which is `none` wherever grades are held back.
+ * Everything else leaves the feedback as the author wrote it.
+ */
+function gameFeedback(
+  block: DirectiveBlock,
+  variant: WorldVariant,
+  feedback: ExerciseFeedback | undefined,
+  diagnostics: CompilerDiagnostic[],
+): ExerciseFeedback | undefined {
+  if (variant !== "game") {
+    return feedback;
+  }
+
+  if (feedback === "none") {
+    diagnostics.push(
+      diagnostic(
+        block.line,
+        "world_game_feedback_none",
+        'A game exercise cannot hide its feedback, because the game shows who wins. Use feedback="terse" to show only that.',
+      ),
+    );
+  }
+
+  return feedback === "terse" ? "terse" : "full";
+}
+
 /** The variants whose student edits the world, and so may be constrained. */
 function edits(variant: WorldVariant): boolean {
   return variant === "build" || variant === "counterexample";
@@ -101,7 +132,7 @@ function parseVariant(
     diagnostic(
       line,
       "unsupported_world_variant",
-      "The variant attribute must be evaluate, build, counterexample, or distinguish.",
+      "The variant attribute must be evaluate, build, counterexample, distinguish, or game.",
     ),
   );
 
@@ -770,7 +801,12 @@ export async function compileWorld(
   const variant = parseVariant(block.attrs.variant, block.line, diagnostics);
   const title = block.attrs.title?.trim();
   const exam = parseExamAttribute(block.attrs.exam, block.line, diagnostics);
-  const feedback = reconcileFeedback(block, undefined, diagnostics);
+  const feedback = gameFeedback(
+    block,
+    variant,
+    reconcileFeedback(block, undefined, diagnostics),
+    diagnostics,
+  );
   const budget = parseBudget(block, variant, diagnostics);
   const kindId = block.attrs.world?.trim() || DEFAULT_WORLD_KIND;
   const kind = worldKindById(kindId);
@@ -904,12 +940,12 @@ export async function compileWorld(
     }
 
     for (const item of variant === "distinguish" ? [] : body.items) {
-      if (item.target !== undefined && variant === "evaluate") {
+      if (item.target !== undefined && readsFixedWorld(variant)) {
         diagnostics.push(
           diagnostic(
             item.line,
             "world_evaluate_target",
-            "An evaluate exercise's sentences take no true: or false: prefix; the world decides their values.",
+            "This exercise's sentences take no true: or false: prefix; the world decides their values.",
           ),
         );
       }
@@ -918,7 +954,7 @@ export async function compileWorld(
 
       if (read !== null) {
         sentences.push(
-          variant === "evaluate"
+          readsFixedWorld(variant)
             ? { engine: read.engine }
             : { engine: read.engine, target: item.target ?? true },
         );
@@ -965,7 +1001,7 @@ export async function compileWorld(
 
     // A name a sentence uses must name something in a world the student
     // cannot change; in one they edit, naming it is part of the task.
-    if (world !== null && variant === "evaluate") {
+    if (world !== null && readsFixedWorld(variant)) {
       const names = worldNames(kind, world.state);
 
       for (const { formula, line, text } of formulas) {

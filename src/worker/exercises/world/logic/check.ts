@@ -18,6 +18,8 @@ import {
 import type { ResolvedSentence, ResolvedWorld } from "../grading";
 import type { WorldProblem } from "../kinds/contract";
 import type { WorldAnswerData, WorldPublicData } from "../types";
+import type { WorldGameAnswer } from "./game";
+import { playGame } from "./game";
 import { restrictionBreaches } from "./restriction";
 import type { UninterpretedSymbol } from "./structure";
 import {
@@ -112,7 +114,23 @@ export interface DistinguishVerdict {
   readonly inB: TruthValue;
 }
 
-export type WorldVerdict = EditVerdict | EvaluateVerdict | DistinguishVerdict;
+/** How a set of games fared: game. */
+export interface GameVerdict {
+  readonly type: "game";
+  readonly ok: boolean;
+  readonly won: number;
+  readonly total: number;
+  /** The games played to the end and lost, or whose moves do not replay. */
+  readonly lost: readonly number[];
+  /** The sentences with no claim yet, or a game still going. */
+  readonly unfinished: readonly number[];
+}
+
+export type WorldVerdict =
+  | EditVerdict
+  | EvaluateVerdict
+  | DistinguishVerdict
+  | GameVerdict;
 
 function judgeEdit(
   publicData: WorldPublicData,
@@ -217,6 +235,42 @@ function judgeEvaluate(
   };
 }
 
+/** Each sentence's game, replayed against the computer in the start world. */
+function judgeGames(
+  resolved: ResolvedWorld,
+  games: readonly (WorldGameAnswer | null)[],
+): GameVerdict {
+  const world = worldStructure(
+    resolved.kind,
+    resolved.start,
+    resolved.vocabulary,
+  );
+  const lost: number[] = [];
+  const unfinished: number[] = [];
+
+  for (const [index, sentence] of resolved.sentences.entries()) {
+    const game = games[index] ?? null;
+
+    if (game === null) {
+      unfinished.push(index);
+      continue;
+    }
+
+    const { state } = playGame(sentence.formula, world, game);
+
+    if (state.type === "choose-object" || state.type === "choose-parts") {
+      unfinished.push(index);
+    } else if (state.type === "invalid" || !state.won) {
+      lost.push(index);
+    }
+  }
+
+  const total = resolved.sentences.length;
+  const won = total - lost.length - unfinished.length;
+
+  return { lost, ok: won === total, total, type: "game", unfinished, won };
+}
+
 /** The student's distinguishing sentence, judged against both worlds. */
 export function judgeDistinguish(
   publicData: WorldPublicData,
@@ -300,6 +354,8 @@ export function judgeWorld(
   switch (publicData.variant) {
     case "evaluate":
       return judgeEvaluate(resolved, answer.values ?? []);
+    case "game":
+      return judgeGames(resolved, answer.games ?? []);
     case "distinguish":
       return judgeDistinguish(publicData, resolved, answer.sentence ?? "");
     default:
@@ -311,6 +367,10 @@ export function judgeWorld(
 export function verdictScore(verdict: WorldVerdict): number {
   if (verdict.type === "evaluate") {
     return verdict.total === 0 ? 0 : verdict.correct / verdict.total;
+  }
+
+  if (verdict.type === "game") {
+    return verdict.total === 0 ? 0 : verdict.won / verdict.total;
   }
 
   return verdict.ok ? 1 : 0;

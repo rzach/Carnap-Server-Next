@@ -399,3 +399,119 @@ fieldset.world-marks {
   font-size: 0.82rem;
   white-space: nowrap;
 }
+
+/* The evaluation game. The board is read-only, but while the game waits for a
+   block it takes one: the cursor shows again, and a block takes a click. */
+.world-grid[data-choosing] .world-cell[data-cursor]::before {
+  display: block;
+}
+
+.world-grid[data-choosing] .world-cell[data-object] {
+  cursor: pointer;
+}
+
+.world-grid[data-choosing] .world-cell[data-object]:hover .world-square {
+  background: var(--_accent-bg);
+}
+
+/* A variable bound to a block, as a tag in its corner. */
+.world-binding {
+  background: var(--_accent);
+  border-radius: 3px;
+  bottom: 4%;
+  color: var(--_on-accent);
+  font-family: var(--_mono-font);
+  font-size: 0.72rem;
+  font-weight: 700;
+  left: 4%;
+  line-height: 1.3;
+  padding: 0 0.25em;
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+}
+
+.world-game-claim {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
+.world-game-row[data-active] {
+  background: var(--_inset-bg);
+}
+
+.world-game-result {
+  font-size: 0.8rem;
+  min-width: 3em;
+}
+
+.world-game-result[data-result="won"] {
+  color: var(--_correct);
+}
+
+.world-game-result[data-result="lost"] {
+  color: var(--_incorrect);
+}
+
+.world-game {
+  border-top: 1px solid var(--_divider);
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+}
+
+.world-game-sentence {
+  margin: 0 0 0.5rem;
+}
+
+.world-game-current {
+  background: var(--_accent-bg);
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--_accent);
+  color: inherit;
+}
+
+.world-game-moves {
+  display: grid;
+  font-size: 0.9rem;
+  gap: 0.2rem;
+  margin: 0;
+  padding-inline-start: 1.4rem;
+}
+
+.world-game-moves li[data-lost] {
+  color: var(--_incorrect);
+}
+
+.world-game-lost-here {
+  display: block;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.world-game-note,
+.world-game-empty {
+  color: var(--_text-muted);
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}
+
+.world-game-prompt {
+  font-weight: 560;
+  margin: 0.6rem 0 0.35rem;
+  padding: 0;
+}
+
+fieldset.world-game-options {
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  min-inline-size: 0;
+  padding: 0;
+}
+
+.world-game-options .world-tool {
+  text-align: start;
+}
