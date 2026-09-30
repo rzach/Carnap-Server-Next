@@ -19,7 +19,7 @@ import { dom, domDocument } from "../helpers/dom";
 
 // After `helpers/dom` has installed the globals: the module builds elements
 // through the document it finds on `globalThis`.
-const { createHelpDialog, mountHelpTrigger } = await import(
+const { createHelpDialog, holdPageStill, mountHelpTrigger } = await import(
   "../../src/client/components/help-dialog"
 );
 
@@ -129,5 +129,54 @@ describe("createHelpDialog", () => {
     expect(
       Array.from(withIcon.querySelectorAll("kbd")).map((k) => k.textContent),
     ).toEqual(["p"]);
+  });
+});
+
+/**
+ * A swipe over an open dialog must not scroll the page behind it. In a lesson
+ * the dialog is in the content frame, which never scrolls; the page around the
+ * frame does, so the hold has to reach out of the frame to it.
+ */
+describe("holdPageStill", () => {
+  function framedDialog(pointer: "coarse" | "fine") {
+    const frame = domDocument.createElement("iframe");
+    domDocument.body.appendChild(frame);
+
+    const framed = frame.contentWindow as unknown as Window;
+    Object.assign(framed, {
+      matchMedia: (query: string) => ({
+        matches: query === `(pointer: ${pointer})`,
+      }),
+    });
+    // What the page does to a frame it has sized to fit.
+    framed.document.documentElement.style.overflow = "hidden";
+
+    const dialog = framed.document.createElement("dialog");
+    framed.document.body.appendChild(dialog);
+
+    return { dialog, frame, framed, page: domDocument.documentElement };
+  }
+
+  test("holds the frame and the page around it until the dialog closes", () => {
+    const { dialog, frame, framed, page } = framedDialog("coarse");
+
+    holdPageStill(dialog);
+
+    expect(page.style.overflow).toBe("hidden");
+
+    dialog.dispatchEvent(new Event("close"));
+
+    expect(page.style.overflow).toBe("");
+    expect(framed.document.documentElement.style.overflow).toBe("hidden");
+    frame.remove();
+  });
+
+  test("leaves the page alone under a mouse", () => {
+    const { dialog, frame, page } = framedDialog("fine");
+
+    holdPageStill(dialog);
+
+    expect(page.style.overflow).toBe("");
+    frame.remove();
   });
 });

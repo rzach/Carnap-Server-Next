@@ -219,6 +219,32 @@ interface Band {
 }
 
 /**
+ * Each frame this window sits in, innermost first, with the window that holds
+ * it.
+ *
+ * `frameElement` is null once the window above is cross-origin, which is the
+ * only case this cannot see through. The depth bound is a guard against a
+ * pathological nesting, not something any page here does.
+ */
+function* framesAbove(
+  start: Window,
+): Generator<{ readonly above: Window; readonly frame: Element }> {
+  let win = start;
+
+  for (let depth = 0; depth < 8; depth += 1) {
+    const frame = win.frameElement;
+    const above = win.parent;
+
+    if (frame === null || above === win) {
+      return;
+    }
+
+    yield { above, frame };
+    win = above;
+  }
+}
+
+/**
  * The part of this document the reader can actually see.
  *
  * Not `innerHeight`: lesson content is served in an iframe the parent page
@@ -240,21 +266,10 @@ function readerViewport(): Band {
   };
 
   let { bottom, left, right, top } = own;
-  let win: Window = window;
   let offsetX = 0;
   let offsetY = 0;
 
-  // `frameElement` is null once the window above is cross-origin, which is the
-  // only case this cannot see through. The depth bound is a guard against a
-  // pathological nesting, not something any page here does.
-  for (let depth = 0; depth < 8; depth += 1) {
-    const frame = win.frameElement;
-    const above = win.parent;
-
-    if (frame === null || above === win) {
-      break;
-    }
-
+  for (const { above, frame } of framesAbove(window)) {
     // A frame's rect is in its parent's coordinates, so accumulating the
     // offsets maps that parent's viewport back into this document's.
     const rect = frame.getBoundingClientRect();
@@ -268,7 +283,6 @@ function readerViewport(): Band {
       right,
       above.document.documentElement.clientWidth - offsetX,
     );
-    win = above;
   }
 
   // A frame scrolled clean out of view leaves no band to place anything in.
@@ -356,6 +370,7 @@ export function openHelpDialog(
   dialog.style.top = `${String(Math.round(scrollY + top))}px`;
 
   dialog.showModal();
+  holdPageStill(dialog);
 
   // Belt and braces for the rounding above: a panel a pixel outside the band
   // would still be scrolled to. This can only undo a scroll of *this* document,
@@ -363,6 +378,53 @@ export function openHelpDialog(
   if (window.scrollX !== scrollX || window.scrollY !== scrollY) {
     window.scrollTo(scrollX, scrollY);
   }
+}
+
+/**
+ * Keep a swipe over an open dialog from scrolling the page behind it.
+ *
+ * A modal makes the page inert, not still: a swipe on the backdrop, or one
+ * that runs past the end of the panel's own scroll, carries on to whatever
+ * scrolls underneath. Inside the content frame that is not this document — the
+ * frame is sized to the whole lesson and never scrolls (`CONTENT_FRAME_SCRIPT`
+ * in `src/worker/web/layout-scripts.ts`) — but the page around it, which drags
+ * the panel away with the lesson. So every document out to the top gets
+ * `overflow: hidden` until the dialog closes, which leaves each scroll position
+ * where it was. `chrome.css` does the same for the page's own modals.
+ *
+ * Touch screens only. A wheel over a backdrop scrolling the page is every
+ * desktop browser's default and has not been a problem, and hiding a classic
+ * scrollbar would shift the page sideways by its width.
+ */
+export function holdPageStill(dialog: HTMLDialogElement): void {
+  const own = dialog.ownerDocument.defaultView;
+
+  if (own === null || !own.matchMedia("(pointer: coarse)").matches) {
+    return;
+  }
+
+  const windows = [
+    own,
+    ...Array.from(framesAbove(own), ({ above }) => above),
+  ];
+  const held = windows.map(({ document }) => ({
+    overflow: document.documentElement.style.overflow,
+    root: document.documentElement,
+  }));
+
+  for (const { root } of held) {
+    root.style.overflow = "hidden";
+  }
+
+  dialog.addEventListener(
+    "close",
+    () => {
+      for (const { overflow, root } of held) {
+        root.style.overflow = overflow;
+      }
+    },
+    { once: true },
+  );
 }
 
 /** The look; the prose is in the stylesheet, with the rules. */
