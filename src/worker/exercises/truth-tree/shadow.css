@@ -1,0 +1,16 @@
+/*
+ * Shadow-DOM styles for the truth-tree element, server-rendered into its
+ * Declarative Shadow Root and shared by the review. The tree itself is the
+ * tableau component's (`src/tableau/tableau.css`); this is the exercise
+ * around it. Colours come from the exercise tokens and nothing else.
+ */
+
+.truth-tree-body {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.truth-tree-review-verdict {
+  margin: 0 0 0.5rem;
+}

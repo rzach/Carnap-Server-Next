@@ -1,8 +1,10 @@
 /**
- * The shared first-order syntax core: the formula tree the model and the
- * translation both evaluate, and the reader that builds it from a language
- * spec. Both types read formulas through this barrel; everything semantic
- * (finite models, equivalence theories) stays with the type that owns it.
+ * The shared first-order syntax core: the formula tree the formula-reading
+ * types share, the reader that builds it from a language spec, and the few
+ * operations on it that more than one type needs (evaluation, forcing sets,
+ * substitution, the argument line). The types read formulas through this
+ * barrel; anything only one type needs (finite models, equivalence theories,
+ * tree rules) stays with the type that owns it.
  *
  * Every module here is DOM-free and free of any i18n import, because the client
  * elements import the same code the worker grades with.
@@ -11,6 +13,14 @@
 import type { SurfaceLanguage } from "@aufbau/syntax";
 import { languageById, languageFromSource } from "../../logic/specs";
 
+export type { ArgumentLine } from "./argument";
+export {
+  ARGUMENT_TURNSTILE,
+  isArgumentLine,
+  splitArgumentLine,
+} from "./argument";
+export type { PartValues } from "./forcing";
+export { forcingSets } from "./forcing";
 export type {
   BinaryConnective,
   Formula,
@@ -29,6 +39,7 @@ export {
   splitFormulaList,
   termToString,
 } from "./formula";
+export { languageNames } from "./language";
 export type { Structure } from "./semantics";
 export {
   evaluateTerm,
@@ -37,6 +48,14 @@ export {
   satisfies,
   symbolKey,
 } from "./semantics";
+export {
+  complementary,
+  isLiteral,
+  namesIn,
+  replaceName,
+  sameFormula,
+  substitute,
+} from "./syntax";
 
 export const DEFAULT_LANGUAGE_ID = "forallx-calgary-2019";
 

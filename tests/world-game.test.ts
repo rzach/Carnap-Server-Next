@@ -3,7 +3,10 @@ import { compileCarnapMarkdown } from "../src/worker/application/content/compile
 import type { ExerciseManifestItem } from "../src/worker/domain/content";
 import type { JsonValue } from "../src/worker/domain/json";
 import type { Formula } from "../src/worker/exercise-kit/formula";
-import { parseFormula } from "../src/worker/exercise-kit/formula";
+import {
+  forcingSets,
+  parseFormula,
+} from "../src/worker/exercise-kit/formula";
 import { withSystemText } from "../src/worker/exercise-kit/systems/join";
 import { WORLD_EXERCISE } from "../src/worker/exercises/world";
 import type {
@@ -15,10 +18,7 @@ import type {
   GameChoice,
   PlayedGame,
 } from "../src/worker/exercises/world/logic/game";
-import {
-  forcingSets,
-  playGame,
-} from "../src/worker/exercises/world/logic/game";
+import { playGame } from "../src/worker/exercises/world/logic/game";
 import {
   bindVocabulary,
   worldStructure,

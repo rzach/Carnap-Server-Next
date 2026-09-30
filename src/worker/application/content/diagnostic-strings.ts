@@ -293,6 +293,42 @@ export function buildDiagnosticStrings(i18n: Translator) {
       "This exercise has no field called “{field}”.",
       placeholders("field"),
     ),
+    // The truth-tree exercise (`exercises/truth-tree/authoring.ts`).
+    "Only the root's sentences may follow the first of them.": i18n.t(
+      "Only the root's sentences may follow the first of them.",
+    ),
+    "The develop attribute must be type or fill.": i18n.t(
+      "The develop attribute must be type or fill.",
+    ),
+    "“{formula}” has free variables, and a tree's root must be sentences.":
+      i18n.t(
+        "“{formula}” has free variables, and a tree's root must be sentences.",
+        placeholders("formula"),
+      ),
+    "The language “{name}” has no negation, which a truth tree needs.":
+      i18n.t(
+        "The language “{name}” has no negation, which a truth tree needs.",
+        placeholders("name"),
+      ),
+    "Write the root as one argument line or as a list of sentences, not both.":
+      i18n.t(
+        "Write the root as one argument line or as a list of sentences, not both.",
+      ),
+    "A truth tree tests an argument with one conclusion.": i18n.t(
+      "A truth tree tests an argument with one conclusion.",
+    ),
+    "A truth tree needs a root: an argument line “premises :|-: conclusion”, or a list of sentences.":
+      i18n.t(
+        "A truth tree needs a root: an argument line “premises :|-: conclusion”, or a list of sentences.",
+      ),
+    "The root could not be written in the language.": i18n.t(
+      "The root could not be written in the language.",
+    ),
+    "A truth tree's root may have at most {max} sentences.": i18n.t(
+      "A truth tree's root may have at most {max} sentences.",
+      placeholders("max"),
+    ),
+
     // The world exercise (`exercises/world/authoring.ts`).
     "The variant attribute must be evaluate, build, counterexample, distinguish, or game.":
       i18n.t(

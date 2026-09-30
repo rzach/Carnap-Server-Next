@@ -46,6 +46,7 @@ const LANGUAGE_IDS: readonly string[] = [
   "carnap-prop",
   "forallx-calgary-2019",
   "forallx-magnus",
+  "forallx-ubc",
 ];
 
 /**

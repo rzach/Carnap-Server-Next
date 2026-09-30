@@ -20,6 +20,7 @@
 
 import { render } from "preact";
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
+import { languageNames } from "../../worker/exercise-kit/formula";
 import type { ResolvedWorld } from "../../worker/exercises/world/grading";
 import {
   isWorldPublicData,
@@ -58,10 +59,7 @@ import type {
 } from "../../worker/exercises/world/logic/game";
 import { playGame } from "../../worker/exercises/world/logic/game";
 import type { WorldStructure } from "../../worker/exercises/world/logic/structure";
-import {
-  languageNames,
-  worldStructure,
-} from "../../worker/exercises/world/logic/structure";
+import { worldStructure } from "../../worker/exercises/world/logic/structure";
 import type { WorldStringId } from "../../worker/exercises/world/strings";
 import type {
   WorldAnswerData,

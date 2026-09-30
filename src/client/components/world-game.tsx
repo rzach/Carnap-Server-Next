@@ -10,7 +10,10 @@
  * sentence about a block is the kind's own, worded whole.
  */
 
-import type { FormulaNode } from "../../worker/exercise-kit/formula";
+import type {
+  FormulaNode,
+  PartValues,
+} from "../../worker/exercise-kit/formula";
 import {
   formulaToString,
   parseFormulaTree,
@@ -20,7 +23,6 @@ import type { WorldWords } from "../../worker/exercises/world/kinds/contract";
 import type {
   GamePosition,
   GameStep,
-  PartValues,
   PlayedGame,
 } from "../../worker/exercises/world/logic/game";
 

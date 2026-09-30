@@ -159,7 +159,7 @@ describe("the exercise import boundary", () => {
         edge.target !== `${EXERCISES}/${typeFolder(edge.target)}`,
     );
 
-    expect(glue.length).toBe(12);
+    expect(glue.length).toBe(13);
     expect(
       describeEdges(reaching),
       "the root is reading past a type's index.ts — whatever it wants belongs on that type's ExerciseType object",

@@ -9,6 +9,7 @@ import { MULTIPLE_CHOICE_EXERCISE } from "./multiple-choice";
 import { SHORT_ANSWER_EXERCISE } from "./short-answer";
 import { TRANSLATION_EXERCISE } from "./translation";
 import { TRUTH_TABLE_EXERCISE } from "./truth-table";
+import { TRUTH_TREE_EXERCISE } from "./truth-tree";
 import { WORLD_EXERCISE } from "./world";
 
 /**
@@ -35,4 +36,5 @@ export const EXERCISE_TYPES: readonly ExerciseType[] = [
   AUFBAU_PROOF_PRAWITZ_EXERCISE,
   TRANSLATION_EXERCISE,
   WORLD_EXERCISE,
+  TRUTH_TREE_EXERCISE,
 ];

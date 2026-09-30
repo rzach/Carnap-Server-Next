@@ -896,7 +896,7 @@ Question?
     const registry = createDefaultExerciseRegistry();
     const names = registry.directiveNames();
 
-    expect(names.length).toBe(11);
+    expect(names.length).toBe(12);
 
     // The bodies are nonsense, so every one of these compiles to a pile of
     // diagnostics — which is fine, because the attribute check runs before any

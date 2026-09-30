@@ -19,8 +19,10 @@ export {
   DEFAULT_LANGUAGE_ID,
   firstOrderLanguageFor,
   formulaToString,
+  isArgumentLine,
   parseEngineFormula,
   parseFormula,
+  splitArgumentLine,
   splitFormulaList,
   termToString,
 } from "../../../exercise-kit/formula";

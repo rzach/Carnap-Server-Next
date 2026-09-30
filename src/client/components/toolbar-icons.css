@@ -32,6 +32,12 @@
 .proof-toolbar button:hover:not(:disabled) {
   border-color: var(--_accent);
 }
+/* A button that holds a mode on, as the truth tree's Close while its rows are
+   marked, or the world's pressed tool. */
+.proof-toolbar button[aria-pressed="true"] {
+  background: var(--_accent-bg);
+  border-color: var(--_accent);
+}
 .proof-toolbar button:disabled {
   color: var(--_text-muted);
   cursor: default;

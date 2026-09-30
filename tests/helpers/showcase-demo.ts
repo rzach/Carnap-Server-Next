@@ -705,6 +705,32 @@ Change at most two blocks so that every sentence comes out as marked.
 | block : medium dodec at 6,7
 :::
 
+## 21. A truth tree
+
+A **truth tree** (a semantic tableau) decides a question by trying to make
+the root all true at once. The student develops it row by row, citing the row
+each step develops, closes a branch that holds a sentence and its negation,
+and marks a complete open branch \`↑\`. A list of sentences asks whether the
+set is consistent; an argument line, \`premises :|-: conclusion\`, asks
+whether the argument is valid, and the tree's root then negates the
+conclusion. The language is *forall x: UBC*'s, and so are the rules.
+
+\`\`\`md
+:::truth-tree{id="tree_ubc" title="Two disjunctions" points="3"}
+Use a tree to decide whether this set is consistent.
+
+- (D & ¬R) ∨ Q
+- ¬Q ∨ R
+:::
+\`\`\`
+
+:::truth-tree{id="tree_ubc" title="Two disjunctions" points="3"}
+Use a tree to decide whether this set is consistent.
+
+- (D & ¬R) ∨ Q
+- ¬Q ∨ R
+:::
+
 ## What else the format does
 
 - \`points\` on any exercise, and \`exam="true"\` when a submission should be

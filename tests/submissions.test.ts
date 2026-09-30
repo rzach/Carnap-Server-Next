@@ -2552,3 +2552,90 @@ describe("the review queue", () => {
     });
   });
 });
+
+describe("a truth tree on an assignment", () => {
+  test("renders its live form with hydration, and grades a submitted tree", async () => {
+    await withStorage(async (_storage, env) => {
+      const instructor = await login(env, "tree-teacher@example.test");
+      const student = await login(env, "tree-student@example.test");
+      const courseId = await createCourse(env, instructor);
+      const revisionId = await createRevision(
+        env,
+        instructor,
+        `# Lesson
+
+::::truth-tree{#tt points="2"}
+Use a tree.
+
+P & Q :|-: P
+::::`,
+      );
+
+      await enrollStudent(env, instructor, student, courseId);
+
+      const assignment = await createPublishedAssignment(
+        env,
+        instructor,
+        courseId,
+        revisionId,
+      );
+      const attemptId = await beginAttempt(
+        env,
+        student,
+        courseId,
+        assignment.id,
+      );
+      const documentHtml = await (
+        await appRequest(
+          createTestApp(),
+          `/courses/${courseId}/assignments/${assignment.id}/content`,
+          { headers: { Cookie: student.cookieHeader } },
+          env,
+        )
+      ).text();
+
+      // The element, inside the live form, with its payload and the bar.
+      expect(documentHtml).toContain("<carnap-truth-tree");
+      expect(documentHtml).toContain(`/attempts/${attemptId}/submissions`);
+      expect(documentHtml).toContain("data-exercise-hydration");
+      expect(documentHtml).toContain('slot="exercise-actions"');
+      expect(documentHtml).toContain("carnap-truth-tree-v1");
+
+      const tree = {
+        nodes: [
+          {
+            end: { cites: ["r3", "r2"], type: "closed" },
+            id: "n0",
+            parent: null,
+            rows: [
+              { cites: [], dev: "root", id: "r1", text: "P & Q" },
+              { cites: [], dev: "root", id: "r2", text: "¬P" },
+              { cites: ["r1"], dev: "d1", id: "r3", text: "P" },
+              { cites: ["r1"], dev: "d1", id: "r4", text: "Q" },
+            ],
+          },
+        ],
+      };
+      const response = await submitAnswer(
+        env,
+        student,
+        courseId,
+        assignment.id,
+        attemptId,
+        {
+          answer: {
+            data: tree,
+            kind: "truth-tree-answer@1",
+            schemaVersion: 1,
+          },
+          exerciseId: "tt",
+        },
+      );
+      const body = (await response.json()) as SubmissionResponse;
+
+      expect(response.status).toBe(201);
+      expect(body.evaluation.result.status).toBe("correct");
+      expect(body.evaluation.score).toBe(2);
+    });
+  });
+});

@@ -17,6 +17,7 @@
  *                    course (default the "Truth Tables demo"; see --course)
  *   world            worlds of blocks: build, evaluate, counterexample,
  *                    distinguish
+ *   truth-tree       forall x: UBC truth trees, typed and filled
  *
  * Flags: --base=URL (default http://localhost:8787), --email=ADDR,
  * --course=SUBSTRING (publish into the existing course whose title contains
@@ -29,6 +30,7 @@ import { GENTZEN_DEMO_SOURCE } from "../tests/helpers/gentzen-demo";
 import { GENTZEN_STARTER_DEMO_SOURCE } from "../tests/helpers/gentzen-starter-demo";
 import { PRAWITZ_DEMO_SOURCE } from "../tests/helpers/prawitz-demo";
 import { SHOWCASE_DEMO_SOURCE } from "../tests/helpers/showcase-demo";
+import { TRUTH_TREE_DEMO_SOURCE } from "../tests/helpers/truth-tree-demo";
 import { WORLD_DEMO_SOURCE } from "../tests/helpers/world-demo";
 import {
   flag,
@@ -77,6 +79,14 @@ const DEMOS: Readonly<Record<string, LessonSeed>> = {
       "Every exercise type, each shown next to the source that produced it.",
     itemTitle: "A tour of the exercise types",
     sourceText: SHOWCASE_DEMO_SOURCE,
+  },
+  "truth-tree": {
+    assignmentTitle: "Truth trees",
+    courseTitle: "Logic demo — truth trees",
+    description:
+      "forall x: UBC truth trees: consistency and validity, written by hand or filled in.",
+    itemTitle: "Truth trees",
+    sourceText: TRUTH_TREE_DEMO_SOURCE,
   },
   world: {
     assignmentTitle: "Worlds of blocks",

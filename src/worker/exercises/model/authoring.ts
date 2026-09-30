@@ -22,6 +22,7 @@ import type { ExerciseCompileContext } from "../../exercise-kit/type";
 import type { ModelField, ModelTarget } from "./logic";
 import {
   DEFAULT_LANGUAGE_ID,
+  isArgumentLine,
   modelSignature,
   parseDomain,
   parseEngineFormula,
@@ -29,6 +30,7 @@ import {
   parseFunctionTable,
   parseNatural,
   parseTupleList,
+  splitArgumentLine,
   splitFormulaList,
 } from "./logic";
 import type {
@@ -47,9 +49,6 @@ import {
 } from "./types";
 
 const FORMULA_LINE = /^\s*-\s+(.+?)\s*$/;
-
-/** The turnstile that separates premises from conclusions in a sequent. */
-const TURNSTILE = ":|-:";
 
 /**
  * A givens line: `| Domain : 0,1,2`.
@@ -247,14 +246,14 @@ function parseTarget(
 }
 
 function parseFormulaList(
-  source: string,
+  pieces: readonly string[],
   language: SurfaceLanguage,
   line: number,
   diagnostics: CompilerDiagnostic[],
 ): string[] {
   const formulas: string[] = [];
 
-  for (const piece of splitFormulaList(source)) {
+  for (const piece of pieces) {
     const trimmed = piece.trim();
 
     if (trimmed.length === 0) {
@@ -331,7 +330,12 @@ function parseSimpleBody(
     }
 
     targeted.push(
-      ...parseFormulaList(match[1] ?? "", language, lineNumber, diagnostics),
+      ...parseFormulaList(
+        splitFormulaList(match[1] ?? ""),
+        language,
+        lineNumber,
+        diagnostics,
+      ),
     );
   }
 
@@ -354,7 +358,7 @@ function parseValidityBody(
 
     // Checked before the givens test, because the turnstile itself contains a
     // `|` and would otherwise look like a givens line.
-    if (line.includes(TURNSTILE)) {
+    if (isArgumentLine(line)) {
       if (sequent === null) {
         sequent = { line: lineNumber, text: line };
       } else {
@@ -394,9 +398,9 @@ function parseValidityBody(
     return { givenLines, promptLines, required: [], targeted: [] };
   }
 
-  const parts = sequent.text.replace(/^\s*-\s+/, "").split(TURNSTILE);
+  const argument = splitArgumentLine(sequent.text);
 
-  if (parts.length !== 2 || extraTurnstile) {
+  if (argument === null || extraTurnstile) {
     diagnostics.push(
       diagnostic(
         sequent.line,
@@ -409,13 +413,13 @@ function parseValidityBody(
   }
 
   const required = parseFormulaList(
-    parts[0] ?? "",
+    argument.premises,
     language,
     sequent.line,
     diagnostics,
   );
   const targeted = parseFormulaList(
-    parts[1] ?? "",
+    argument.conclusions,
     language,
     sequent.line,
     diagnostics,
@@ -502,13 +506,13 @@ function parseConstraintBody(
 
   const separator = split.text.indexOf(":");
   const required = parseFormulaList(
-    split.text.slice(0, separator),
+    splitFormulaList(split.text.slice(0, separator)),
     language,
     split.line,
     diagnostics,
   );
   const targeted = parseFormulaList(
-    split.text.slice(separator + 1),
+    splitFormulaList(split.text.slice(separator + 1)),
     language,
     split.line,
     diagnostics,
@@ -553,7 +557,7 @@ export function modelDataBodyLines(
     const given = isGivenLine(line);
 
     pastPrompt ||=
-      !given && (FORMULA_LINE.test(line) || line.includes(TURNSTILE));
+      !given && (FORMULA_LINE.test(line) || isArgumentLine(line));
 
     if (given || pastPrompt) {
       data.add(block.bodyStartLine + index);

@@ -67,11 +67,6 @@
   cursor: grab;
 }
 
-.proof-toolbar button[aria-pressed="true"] {
-  background: var(--_accent-bg);
-  border-color: var(--_accent);
-}
-
 /* Buttons outside the toolbar: the table's, the names menu's, and Copy. */
 .world-tool {
   align-items: center;

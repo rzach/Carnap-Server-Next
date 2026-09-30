@@ -15,7 +15,8 @@ This reference follows the compiler in
   [free response](#free-response-directive), and
   [short answer](#short-answer-directive)
 - [Truth tables](#truth-table-directive), [models](#model-directive),
-  [translation](#translation-directive), and [worlds](#world-directive)
+  [translation](#translation-directive), [worlds](#world-directive), and
+  [truth trees](#truth-tree-directive)
 - [Linear proofs](#aufbau-proof-directive),
   [languages and theories](#languages-and-theories),
   [proof trees](#aufbau-proof-tree-directive),
@@ -849,6 +850,103 @@ all.
 See [the world reference](../src/worker/exercises/world/README.md) for the
 world-kind contract and the answer format.
 
+## Truth-tree directive
+
+A truth tree (a semantic tableau) decides whether an argument is valid, or a
+set of sentences consistent, by trying to make its root all true at once.
+The student develops the tree a step at a time, citing the row each step
+develops; closes a branch that holds a sentence and its negation, citing both
+rows (or the one row `a≠a`); and marks a complete open branch with `↑`. The tree is the whole
+answer: what it shows follows from it, so the student is not asked to say.
+(A multiple-choice exercise beside it can ask, if the lesson wants to.) The
+rules are those of *forall x: UBC* (Ichikawa and
+Jenkins), chapters 5, 10 and 12.
+
+```md
+::::truth-tree{#tt1 points="3"}
+Is this argument valid? Use a tree to decide.
+
+(D & ¬R) ∨ Q, ¬Q ∨ R :|-: D ∨ R
+::::
+
+::::truth-tree{#tt2 develop="fill" points="3"}
+Use a tree to decide whether this set is consistent.
+
+- ∀x(Fx ⊃ Gx)
+- ∃xFx
+- ¬∃xGx
+::::
+```
+
+The question comes from the body. An argument line,
+`premises :|-: conclusion`, asks whether the argument is valid, and the
+root is the premises followed by the negation of the conclusion. A list of
+sentences asks whether the set is consistent, and the root is the list.
+There may be no premises (`:|-: P ∨ ¬P` tests a logical truth), and there
+is exactly one conclusion.
+
+- `system` names the language, and defaults to `forallx-ubc`. It must have
+  a negation.
+- `develop="type"` (the default): the student writes every row. **Stack**
+  (`t`) adds a row at the end of the branch, **Split** (`s`) branches it in
+  two, and **Add row** (`r`) adds another row to the same step, as `≡`
+  needs. Whether a rule stacks or splits is part of what is being learned.
+- `develop="fill"`: **Develop** (`d`) writes the cited row's rule under
+  every open branch below it, asking only for an instance's name. On an
+  identity `a=b` it asks for the number of the row to rewrite, and, if that
+  row has both names, which one to replace. The exercise is then which row
+  to develop, which name to use, and where to close.
+
+The toolbar's buttons act on the row at the cursor; the `(?)` in the action
+bar lists their keys. **Close** (`x`) asks for the rows the branch
+closes on: a circle appears beside the number of each row on the branch, as
+a truth table's counterexample radios do, and the student ticks two. While
+it is open the circles are the only controls: ↑ and ↓ move between them,
+Space or Enter ticks one, and the rows take no clicks. The second tick
+closes the branch, or the first, on a row `a≠a`; Esc puts it away. A branch's `×` or `↑` takes the
+cursor too, below the branch's last row: Enter on a `×` marks its rows again,
+and Delete reopens the branch.
+
+### How a tree is checked
+
+Each step is checked against the rule for the row it cites: `A ∨ B` splits
+into `A` and `B`, `¬(A ∨ B)` stacks `¬A` and `¬B`, and so on. The rules for
+the binary connectives are derived from their truth tables, so a language
+that declares other connectives gets rules for them too. The rows of a
+branch may come in any order, and so may the branches of a split.
+
+- An existential (or a negated universal) takes an instance whose name is
+  new to its branch. A universal (or a negated existential) takes an
+  instance for any name, and may take several in one step.
+- **Identity** (UBC §12.7). A step may also cite two rows, an identity
+  `a=b` and any row above it on the branch (in either order, typed `3, 7`),
+  and write that row with every `a` made `b`, or every `b` made `a`. Its
+  margin reads `3, 7 =`, and it ticks neither row, which may be used again.
+- A closure cites two rows on its branch that are a sentence and its
+  negation, or one row `a≠a`.
+- A branch marked `↑` must be open and complete: every row on it developed
+  on that branch, every universal instantiated for every name on the
+  branch (and at least once, if there are none), and every identity `a=b`
+  substituted, in one direction or the other, into every atomic and negated
+  atomic sentence on the branch. A rewriting that says something is itself
+  (`b=b`, from rewriting `a=b` by itself) is never needed, as in the book's
+  own solutions.
+- The tree is done when every branch is closed, or when at least one branch
+  is marked `↑`, since one complete open branch settles the question
+  (UBC v2.4, §5.x). The other branches may be left unfinished.
+
+Marks (`✓`, `✓a`, `\a,b`) and the rule in each step's margin (`2 ∨`) are
+computed, not typed. As in the book, a step is justified once, beside its
+first row: a row added to the step leaves its margin blank, and a new step
+has its own. Rows are numbered the book's way: lines are shared across
+branches, and a step repeated on two branches shares its lines.
+
+Grading is all or nothing: every row and closure right, every `↑` on a
+complete open branch, and the tree done. Under
+full feedback the editor flags a wrong row as it is written, and Check names
+the first problem in tree order. Under terse feedback Check says only
+whether the tree is right. Trees are capped at 200 rows.
+
 ## Aufbau-proof directive
 
 The four proof directives share one grading mechanism. The browser compiles
@@ -938,13 +1036,15 @@ Use `src` to load a built-in into a named block:
 :::
 ```
 
-The six built-in IDs are:
+The seven built-in IDs are:
 
 - `forallx-calgary-2019`: Calgary natural deduction, first-order syntax,
   basic rules.
 - `forallx-calgary-2019-plus`: the same language with derived rules.
 - `forallx-magnus`: the original Magnus forallx QL rules and notation.
 - `forallx-magnus-plus`: the same language with derived/replacement rules.
+- `forallx-ubc`: the language of *forall x: UBC*, without proof rules; the
+  language of its truth trees.
 - `gentzen-lk`: classical multi-conclusion sequent calculus, suitable for
   proof trees. It has no student-language annotations.
 - `carnap-prop`: the default propositional signature, without proof rules.
@@ -1130,8 +1230,9 @@ Non-truth-functional roles include `forall`, `exists`, `identity`,
 
 ### Which forallx
 
-The two editions have different rules as well as notation. Select the one
-used by the course's textbook.
+The Calgary and Magnus editions have different rules as well as notation.
+Select the one used by the course's textbook. UBC's edition is Magnus's
+language with a stricter grammar, and ships as a language only.
 
 **Calgary (`forallx-calgary-2019`)**
 
@@ -1169,7 +1270,23 @@ used by the course's textbook.
   Disjunction elimination uses disjunction plus a negated disjunct rather
   than Calgary's two-case rule.
 
-Both forallx languages declare the `closed-sentences` lint, so their model
+**UBC (`forallx-ubc`)**
+
+- The lexicon, juxtaposed predicates and quantifier spellings are Magnus's.
+- Names also take a numeric subscript, `a1`–`w9`, typed as `a1` or `a₁` and
+  shown as `a₁`. Variables and predicate letters do not.
+- Canonical glyphs are the book's: `&`, `∨`, `⊃`, `≡`, and `a≠b` for `¬a=b`.
+- The grammar is the book's. Every binary sentence is bracketed except the
+  outermost; `[ ]` may stand for `( )`; a run of `&`, or of `∨`, may drop
+  its inner brackets and reads right-nested (`A & B & C` is `A & (B & C)`),
+  but the two never mix. `⊃` and `≡` take no unbracketed binary operand, so
+  `P & Q ⊃ R` is refused. Brackets around anything but a binary sentence,
+  such as `(¬A)` or `∀x(Fx)`, are refused.
+- Two of the book's rules are not enforced: a doubled pair such as
+  `((A & B))`, and a quantifier over a variable already bound inside it,
+  such as `∀x∃xFx`, both read.
+
+All three forallx languages declare the `closed-sentences` lint, so their model
 and translation sentences must be closed: unbound variables are rejected. The declared vocabularies are finite. Undeclared subscripted names
 such as `F_12` or `P0`, old arity annotations, and unsupported word operators
 are not supplied automatically. Extend the language if the course needs them.
@@ -1650,6 +1767,31 @@ Truth-table data uses `T`, `F`, or an empty string per cell:
 - `validity[row]` supplies the turnstile column for validity tables.
 - `counterexample` optionally selects the single row to grade.
 - A partial table uses the same layout with one row.
+
+A truth-tree answer is the tree as a list of nodes, each a run of rows with
+its parent:
+
+```json
+{
+  "kind": "truth-tree-answer@1",
+  "schemaVersion": 1,
+  "data": {
+    "nodes": [
+      {
+        "id": "n1",
+        "parent": null,
+        "rows": [
+          { "id": "r1", "text": "P & Q", "cites": [], "dev": "root" },
+          { "id": "r2", "text": "¬P", "cites": [], "dev": "root" },
+          { "id": "r3", "text": "P", "cites": ["r1"], "dev": "d1" },
+          { "id": "r4", "text": "Q", "cites": ["r1"], "dev": "d1" }
+        ],
+        "end": { "type": "closed", "cites": ["r3", "r2"] }
+      }
+    ]
+  }
+}
+```
 
 See each exercise package's reference for its full answer schema. The
 assessment registry rejects wrong kinds, unsupported versions, malformed

@@ -119,6 +119,7 @@ describe("language specs", () => {
       "carnap-prop": [],
       "forallx-calgary-2019": PROOF_THEORY_NOTATIONS,
       "forallx-magnus": PROOF_THEORY_NOTATIONS,
+      "forallx-ubc": [],
     };
 
     // Every registered spec, not every entry above: a spec this map does not
@@ -402,6 +403,81 @@ describe("language specs", () => {
       expect(printTerm(lang, result.term, "engine")).toBe(
         "((P (snil)) & (R (a , b)))",
       );
+    });
+  });
+
+  describe("forallx-ubc", () => {
+    const id = "forallx-ubc";
+
+    test("the book's glyphs print", () => {
+      expect(display(id, "P /\\ Q")).toBe("P & Q");
+      expect(display(id, "P -> Q")).toBe("P ⊃ Q");
+      expect(display(id, "P <-> Q")).toBe("P ≡ Q");
+      expect(display(id, "~Fa | Ga")).toBe("¬Fa ∨ Ga");
+      expect(display(id, "@x3yRxy")).toBe("∀x∃yRxy");
+    });
+
+    test("square brackets stand for round ones, and a pair must match", () => {
+      expect(display(id, "[P & Q] ∨ R")).toBe("(P & Q) ∨ R");
+      expect(refusal(id, "[P & Q) ∨ R").length).toBeGreaterThan(0);
+    });
+
+    test("a run of & or ∨ reads right-nested, and the two never mix", () => {
+      expect(display(id, "A & B & C")).toBe("A & (B & C)");
+      expect(display(id, "A ∨ B ∨ C")).toBe("A ∨ (B ∨ C)");
+      expect(refusal(id, "P & Q ∨ R")).toContain("mix_refused");
+    });
+
+    test("⊃ and ≡ take no unbracketed binary operand", () => {
+      // Magnus reads this one; the book does not.
+      expect(refusal(id, "P & Q ⊃ R")).toContain("nest_refused");
+      expect(refusal(id, "P ⊃ Q ⊃ R")).toContain("chain_refused");
+      expect(refusal(id, "P ⊃ Q ≡ R")).toContain("mix_refused");
+      expect(display(id, "(P & Q) ⊃ R")).toBe("(P & Q) ⊃ R");
+    });
+
+    test("brackets come only from the binary rules", () => {
+      expect(refusal(id, "(¬A)").length).toBeGreaterThan(0);
+      expect(refusal(id, "(Fa) & Gb").length).toBeGreaterThan(0);
+      expect(refusal(id, "∀x(Fx)").length).toBeGreaterThan(0);
+      expect(display(id, "∀x(Fx ⊃ Gx)")).toBe("∀x(Fx ⊃ Gx)");
+    });
+
+    test("≠ reads, and prints, as the book writes ¬a = b", () => {
+      expect(display(id, "a ≠ b")).toBe("a≠b");
+      expect(display(id, "¬a = b")).toBe("a≠b");
+    });
+
+    test("names take subscripts, typed either way", () => {
+      expect(display(id, "Fa1 & Gb₂")).toBe("Fa₁ & Gb₂");
+      expect(display(id, "∀x(Fx ⊃ Rxw9)")).toBe("∀x(Fx ⊃ Rxw₉)");
+      // Variables do not, so the ASCII ∃ still reads after one.
+      expect(display(id, "@x3yRxy")).toBe("∀x∃yRxy");
+
+      const lang = language(id);
+      const result = lang.parse("Fa₁");
+
+      if (!result.ok) {
+        throw new Error("expected 'Fa₁' to parse");
+      }
+
+      // The engine sees an ordinary MM0 identifier.
+      expect(printTerm(lang, result.term, "engine")).toBe("F (a1)");
+    });
+
+    test("every sentence is closed", () => {
+      expect(refusal(id, "Fx")).toContain("free_variable");
+    });
+
+    test("the generated lexicon is current", () => {
+      const run = Bun.spawnSync([
+        "bun",
+        resolve(import.meta.dir, "../scripts/forallx-ubc-lexicon.ts"),
+        "--check",
+      ]);
+
+      expect(run.stderr.toString()).toBe("");
+      expect(run.exitCode).toBe(0);
     });
   });
 });

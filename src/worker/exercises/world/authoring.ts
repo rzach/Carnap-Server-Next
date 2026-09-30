@@ -21,9 +21,10 @@ import type { Formula } from "../../exercise-kit/formula";
 import {
   formulaToString,
   freeVariables,
+  isArgumentLine,
   parseFormula,
   parseTerm,
-  splitFormulaList,
+  splitArgumentLine,
 } from "../../exercise-kit/formula";
 import { parseSystemAttribute } from "../../exercise-kit/systems/attribute";
 import type { ExerciseCompileContext } from "../../exercise-kit/type";
@@ -57,7 +58,6 @@ import {
 
 const LIST_ITEM = /^\s*-\s+(.+?)\s*$/;
 const TARGET_PREFIX = /^(true|false)\s*:\s*(.*)$/;
-const TURNSTILE = ":|-:";
 
 /**
  * A data line: `| key : value`. Keyed on a *leading* `|`, as in the model,
@@ -264,7 +264,7 @@ function parseBody(
     const lineNumber = block.bodyStartLine + index;
 
     // Before the data test, because the turnstile itself contains a `|`.
-    if (line.includes(TURNSTILE)) {
+    if (isArgumentLine(line)) {
       pastPrompt = true;
 
       if (sequent === null) {
@@ -355,7 +355,7 @@ export function worldDataBodyLines(
 
   for (const [index, line] of block.bodyLines.entries()) {
     pastPrompt ||=
-      isDataLine(line) || LIST_ITEM.test(line) || line.includes(TURNSTILE);
+      isDataLine(line) || LIST_ITEM.test(line) || isArgumentLine(line);
 
     if (pastPrompt) {
       data.add(block.bodyStartLine + index);
@@ -881,14 +881,20 @@ export async function compileWorld(
         ),
       );
     } else {
-      const [premises = "", conclusions = ""] =
-        body.sequent.text.split(TURNSTILE);
-      const side = (source: string, target: boolean): void => {
-        for (const piece of splitFormulaList(source)) {
-          if (piece.trim() === "") {
-            continue;
-          }
+      const argument = splitArgumentLine(body.sequent.text);
 
+      if (argument === null) {
+        diagnostics.push(
+          diagnostic(
+            body.sequent.line,
+            "multiple_turnstiles",
+            "A validity sequent must contain exactly one ':|-:' turnstile.",
+          ),
+        );
+      }
+
+      const side = (pieces: readonly string[], target: boolean): void => {
+        for (const piece of pieces) {
           const read = readSentence(
             piece,
             body.sequent?.line ?? 0,
@@ -902,11 +908,11 @@ export async function compileWorld(
         }
       };
 
-      side(premises, true);
+      side(argument?.premises ?? [], true);
       const before = sentences.length;
-      side(conclusions, false);
+      side(argument?.conclusions ?? [], false);
 
-      if (sentences.length === before) {
+      if (argument !== null && sentences.length === before) {
         diagnostics.push(
           diagnostic(
             body.sequent.line,

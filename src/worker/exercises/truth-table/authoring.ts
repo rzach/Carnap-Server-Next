@@ -16,7 +16,11 @@ import {
   validateAttributes,
   validateExerciseId,
 } from "../../exercise-kit/authoring";
-import { splitFormulaList } from "../../exercise-kit/formula";
+import {
+  isArgumentLine,
+  splitArgumentLine,
+  splitFormulaList,
+} from "../../exercise-kit/formula";
 import { parseSystemAttribute } from "../../exercise-kit/systems/attribute";
 import type { ExerciseCompileContext } from "../../exercise-kit/type";
 import {
@@ -54,9 +58,6 @@ import {
 } from "./types";
 
 const FORMULA_LINE = /^\s*-\s+(.+?)\s*$/;
-
-/** The turnstile that separates premises from conclusions in a validity sequent. */
-const TURNSTILE = ":|-:";
 
 /**
  * Whether a line belongs to the trailing given grid.
@@ -406,7 +407,12 @@ function parseListBody(
     // A single bullet may list several comma-separated formulas, so multiple
     // formulas can share one line just as they do on a validity sequent's sides.
     formulas.push(
-      ...parseFormulaList(match[1] ?? "", system, lineNumber, diagnostics),
+      ...parseFormulaList(
+        splitFormulaList(match[1] ?? ""),
+        system,
+        lineNumber,
+        diagnostics,
+      ),
     );
   }
 
@@ -418,13 +424,13 @@ function parseListBody(
 }
 
 /**
- * Parse one side of a sequent — a comma-separated list of formulas — into
- * engine text in the exercise's language, collecting a diagnostic per
- * unparseable formula. The split respects brackets, because a first-order
- * language's `R(a,b)` has a comma of its own.
+ * Parse the pieces of a comma-separated list of formulas (one side of a
+ * sequent, say) into engine text in the exercise's language, collecting a
+ * diagnostic per unparseable formula. The split respects brackets, because a
+ * first-order language's `R(a,b)` has a comma of its own.
  */
 function parseFormulaList(
-  source: string,
+  pieces: readonly string[],
   system: string,
   line: number,
   diagnostics: CompilerDiagnostic[],
@@ -439,7 +445,7 @@ function parseFormulaList(
     return formulas;
   }
 
-  for (const piece of splitFormulaList(source)) {
+  for (const piece of pieces) {
     const trimmed = piece.trim();
 
     if (trimmed.length === 0) {
@@ -496,7 +502,7 @@ function parseValidityBody(
   for (const [index, line] of block.bodyLines.entries()) {
     const lineNumber = block.bodyStartLine + index;
 
-    if (line.includes(TURNSTILE)) {
+    if (isArgumentLine(line)) {
       if (sequent === null) {
         sequent = { line: lineNumber, text: line };
       } else {
@@ -536,10 +542,10 @@ function parseValidityBody(
     return { formulas: [], givens: [], premiseCount: 0, promptLines };
   }
 
-  // Strip an optional leading list bullet, so '- P :|-: Q' also reads.
-  const parts = sequent.text.replace(/^\s*-\s+/, "").split(TURNSTILE);
+  // An optional leading list bullet is dropped, so '- P :|-: Q' also reads.
+  const argument = splitArgumentLine(sequent.text);
 
-  if (parts.length !== 2 || extraTurnstileLine) {
+  if (argument === null || extraTurnstileLine) {
     diagnostics.push(
       diagnostic(
         sequent.line,
@@ -551,13 +557,13 @@ function parseValidityBody(
   }
 
   const premises = parseFormulaList(
-    parts[0] ?? "",
+    argument.premises,
     system,
     sequent.line,
     diagnostics,
   );
   const conclusions = parseFormulaList(
-    parts[1] ?? "",
+    argument.conclusions,
     system,
     sequent.line,
     diagnostics,

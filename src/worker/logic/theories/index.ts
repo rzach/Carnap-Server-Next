@@ -60,6 +60,7 @@ import forallxCalgary2019 from "./forallx-calgary-2019.mm0" with {
   type: "text",
 };
 import forallxMagnus from "./forallx-magnus.mm0" with { type: "text" };
+import forallxUbc from "./forallx-ubc.mm0" with { type: "text" };
 import gentzenLk from "./gentzen-lk.mm0" with { type: "text" };
 
 /** Every built-in artifact's URL begins here, which is what the route matches on. */
@@ -101,6 +102,7 @@ export const THEORY_SOURCES: Readonly<Record<string, string>> = {
     forallxMagnus,
     forallxMagnusDerived,
   ),
+  "forallx-ubc.mm0": forallxUbc,
   "gentzen-lk.mm0": gentzenLk,
 };
 

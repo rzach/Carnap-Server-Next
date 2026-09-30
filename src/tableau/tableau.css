@@ -1,0 +1,122 @@
+/*
+ * The tableau's own styles: the grid, its rows, connectors, guides and end
+ * marks, for the static markup (`html.ts`) and the live view alike. Colours
+ * come from the exercise tokens' private twins (`--_text`, `--_accent`, …),
+ * which the consumer's shadow root declares, and nothing else.
+ */
+
+.tableau-scroller {
+  border-block: 1px solid var(--_divider);
+  overflow-x: auto;
+  padding-block: 0.6rem;
+}
+
+/* Numbers | one column per leaf | margin. Each line is two grid rows: a thin
+   one for the connectors above it, and its content. */
+.tableau-grid {
+  align-items: center;
+  column-gap: 0.25rem;
+  display: grid;
+  font-family: var(--_mono-font);
+  font-size: 0.95rem;
+  grid-auto-rows: auto;
+  /* The columns are set on the element: they depend on the tree's leaves. */
+  min-width: max-content;
+}
+
+.tableau-number {
+  color: var(--_text-faint);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  padding-right: 0.5rem;
+  text-align: right;
+}
+
+.tableau-margin {
+  color: var(--_text-muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  padding-left: 0.6rem;
+  white-space: nowrap;
+}
+
+.tableau-row {
+  border-radius: 4px;
+  justify-self: center;
+  line-height: 1.6;
+  padding: 0.15rem 0.5rem;
+  white-space: nowrap;
+}
+
+.tableau-mark {
+  color: var(--_text-muted);
+  font-size: 0.8rem;
+  margin-left: 0.45em;
+}
+
+/* Everything drawn as wrong takes one mark, the proof tree's: a red squiggle
+   under the field that is wrong. */
+.tableau-row[data-flagged] .tableau-text,
+.tableau-margin[data-flagged],
+.tableau-end[data-flagged] .tableau-end-mark {
+  text-decoration: underline wavy var(--_incorrect);
+  text-decoration-skip-ink: none;
+  text-underline-offset: 0.2em;
+}
+
+.tableau-fork {
+  align-self: stretch;
+  display: block;
+  height: 1rem;
+  width: 100%;
+}
+
+.tableau-fork path {
+  fill: none;
+  stroke: var(--_text-muted);
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+}
+
+/* A branch passing through lines it has nothing on. */
+.tableau-guide {
+  align-self: stretch;
+  border-left: 2px dotted var(--_text-muted);
+  justify-self: center;
+  margin-block: 2px;
+  width: 0;
+}
+
+/* Out of a fork, the guide meets the arm's end rather than stopping short. */
+.tableau-guide[data-from-fork] {
+  margin-top: 0;
+}
+
+.tableau-end {
+  justify-self: center;
+  line-height: 1.15;
+  padding-top: 2px;
+  text-align: center;
+}
+
+.tableau-end-mark {
+  display: block;
+  font-size: 1.05rem;
+}
+
+.tableau-end-note {
+  color: var(--_text-muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tableau-outline {
+  block-size: 1px;
+  clip-path: inset(50%);
+  inline-size: 1px;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+}

@@ -37,6 +37,7 @@ const WITH_STRINGS = createDefaultExerciseRegistry()
 const HELP_KINDS: readonly string[] = [
   "aufbau-proof-prawitz",
   "aufbau-proof-tree",
+  "truth-tree",
   "world",
 ];
 
@@ -50,6 +51,7 @@ describe("widget string maps", () => {
       "model",
       "translation",
       "truth-table",
+      "truth-tree",
       "world",
     ]);
   });

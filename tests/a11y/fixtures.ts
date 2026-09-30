@@ -184,6 +184,19 @@ Tell the worlds apart.
 
 | A block : cube small at 2,2
 | B block : cube large at 2,2
+::::
+
+::::truth-tree{#tv points="1"}
+Decide the argument with a tree.
+
+P ∨ Q, ¬P :|-: Q
+::::
+
+::::truth-tree{#tf develop="fill" points="1"}
+Develop the rows with the tool.
+
+- ∃xFx
+- ∀x¬Fx
 ::::`;
 
 /**

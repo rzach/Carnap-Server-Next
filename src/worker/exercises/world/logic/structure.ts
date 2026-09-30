@@ -307,32 +307,3 @@ export function worldStructure(
 export function worldNames(kind: WorldKind, state: unknown): Set<string> {
   return new Set(kind.objects(state).flatMap((object) => object.names));
 }
-
-/**
- * The names the language offers for objects: the tokens of every sort no
- * quantifier binds that reaches the individual sort. For the example blocks
- * language that is `a`–`f`. The editor's names menu lists these.
- */
-export function languageNames(lang: SurfaceLanguage): readonly string[] {
-  const names: string[] = [];
-
-  for (const info of lang.spec.sorts.values()) {
-    if (lang.bindableSorts.has(info.name)) {
-      continue;
-    }
-
-    const reaches = info.roles.includes("individual")
-      ? true
-      : [...lang.spec.sorts.values()].some(
-          (target) =>
-            target.roles.includes("individual") &&
-            lang.coerce(info.name, target.name) !== null,
-        );
-
-    if (reaches) {
-      names.push(...info.vars);
-    }
-  }
-
-  return names;
-}

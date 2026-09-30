@@ -10,9 +10,9 @@
  * the author did not write.
  *
  * One rule covers every binary truth function. The student names a smallest
- * set of values for the two parts that forces the claim ({@link forcingSets}),
- * and the computer then challenges one entry of it. Each step is skipped when
- * it offers only one option. For `∧` and `∨` that is the textbook game; `↔` and
+ * set of values for the two parts that forces the claim (the kit's
+ * `forcingSets`), and the computer then challenges one entry of it. Each step
+ * is skipped when it offers only one option. For `∧` and `∨` that is the textbook game; `↔` and
  * the rarer functions take both steps. A quantifier's object is chosen by the
  * student when the claim needs a witness (`∃` true, `∀` false) and by the
  * computer when it needs every object.
@@ -25,17 +25,10 @@
  * replays it to grade.
  */
 
-import type { Formula } from "../../../exercise-kit/formula";
-import { satisfies } from "../../../exercise-kit/formula";
+import type { Formula, PartValues } from "../../../exercise-kit/formula";
+import { forcingSets, satisfies } from "../../../exercise-kit/formula";
 import type { BinaryConnective } from "../../../logic/specs/connectives";
-import { applyBinaryConnective } from "../../../logic/specs/connectives";
 import type { WorldStructure } from "./structure";
-
-/**
- * A value for each of a binary connective's two parts, or `null` for a part
- * the set leaves open: `[true, null]` is "the left part is true".
- */
-export type PartValues = readonly [boolean | null, boolean | null];
 
 /**
  * One of the student's choices: the id of the object chosen for a quantifier,
@@ -150,70 +143,6 @@ function isBinary(formula: Formula): formula is Binary {
   return (
     "left" in formula && "right" in formula && formula.type !== "identity"
   );
-}
-
-const VALUES = [true, false] as const;
-
-/** Whether every way of filling the open parts gives the connective `value`. */
-function forces(
-  connective: BinaryConnective,
-  values: PartValues,
-  value: boolean,
-): boolean {
-  const lefts = values[0] === null ? VALUES : [values[0]];
-  const rights = values[1] === null ? VALUES : [values[1]];
-
-  return lefts.every((left) =>
-    rights.every(
-      (right) => applyBinaryConnective(connective, left, right) === value,
-    ),
-  );
-}
-
-/**
- * The smallest sets of part values that force a connective to `value`: a
- * single part where one settles it, and both parts only where neither alone
- * does. Empty when nothing gives the value, and `null` when anything does,
- * which are the two cases a connective's own value decides.
- *
- * The order is left before right and true before false, which is the order
- * the student is offered them in.
- */
-export function forcingSets(
-  connective: BinaryConnective,
-  value: boolean,
-): readonly PartValues[] | null {
-  if (forces(connective, [null, null], value)) {
-    return null;
-  }
-
-  const sets: PartValues[] = [];
-
-  for (const left of VALUES) {
-    if (forces(connective, [left, null], value)) {
-      sets.push([left, null]);
-    }
-  }
-
-  for (const right of VALUES) {
-    if (forces(connective, [null, right], value)) {
-      sets.push([null, right]);
-    }
-  }
-
-  for (const left of VALUES) {
-    for (const right of VALUES) {
-      if (
-        applyBinaryConnective(connective, left, right) === value &&
-        !forces(connective, [left, null], value) &&
-        !forces(connective, [null, right], value)
-      ) {
-        sets.push([left, right]);
-      }
-    }
-  }
-
-  return sets;
 }
 
 function sameValues(a: PartValues, b: PartValues): boolean {

@@ -1,0 +1,389 @@
+-- forall x: UBC (Jonathan Ichikawa and Jennifer Jenkins, after P.D. Magnus)
+-- as a language: what a student writes in a truth tree, and what a tree
+-- prints back. A language only, like `carnap-prop`: there is no proof system
+-- here, because the book's trees are checked by Carnap's built-in tree rules
+-- (`exercises/truth-tree/`), not derived in MM0.
+--
+-- Served at `/theories/forallx-ubc.mm0` and registered as the language id
+-- `forallx-ubc`, which is what a `system=` names.
+--
+-- The reference edition is the book's current source,
+-- github.com/jonathanichikawa/for-all-x, v2.4.1 (commit e01f809, 2025-04-13).
+--
+-- ## What this is, relative to forallx (Magnus)
+--
+-- UBC's SL and QL are Magnus's, and Carnap reads both with one parser. So
+-- this file is the language half of `forallx-magnus.mm0`, and the reader who
+-- wants the reasons for the sort layout, juxtaposed atoms (`Fa`, `Rab`), the
+-- lexicon (predicates `A`–`Z`, names `a`–`w`, variables `x`–`z`, no function
+-- symbols) and the dotted ASCII quantifiers (`Ax.`, `@x`) should read that
+-- header. What differs is the grammar, which here is the book's own (§2.9,
+-- §8.14 and the QL formation rules of §8), and the glyphs.
+--
+-- **The book's glyphs print.** `&`, `⊃` and `≡` are declared last, so they
+-- are canonical, as Carnap's `ichikawaJenkinsNotation` makes them. Every
+-- ASCII spelling Magnus reads is still read.
+--
+-- **The grammar is strict, with the book's four conventions.**
+--
+--   - Every binary sentence is bracketed, and the outermost pair may be
+--     dropped (`drop-outer-parens`).
+--   - Square brackets may stand for round ones (`brackets ( ) [ ]`); a pair
+--     must match.
+--   - A run of `&`, or of `∨`, may drop its inner brackets, and means the
+--     right-nested sentence: `A & B & C` is `A & (B & C)` (`infixr`). The two
+--     never mix unbracketed (`forbid mix`).
+--   - `⊃` and `≡` take no unbracketed binary operand at all, not even each
+--     other's or a conjunction (`forbid chain mix nest`): `P & Q ⊃ R` is
+--     refused, where Magnus reads it.
+--
+--   Brackets come only from the binary rules, so `(¬A)`, `(Fa)` and `∀x(Fx)`
+--   are refused (`lint parenthesize-binary-only`), and every formula is a
+--   sentence (`lint closed-sentences`). Two of the book's rules are not
+--   enforced: a doubled pair `((A & B))` reads, and so does `∀x∃xFx`, where
+--   the book forbids a quantifier over a variable already bound inside it.
+--
+-- **`a ≠ b` is the book's preferred spelling of `¬a = b`**, and an invertible
+-- elab rule reads it and prints it that way.
+--
+-- **Names take numeric subscripts**, as the book allows. MM0 identifiers are
+-- ASCII, so `a₁` is the identifier `a1` with an invertible elab rule that
+-- reads `a₁` and prints it; a student may type either. They are generated,
+-- `a1`–`w9`, by `scripts/forallx-ubc-lexicon.ts`, into the marked block below.
+-- Subscripted variables and predicate letters are not offered. A tree needs
+-- fresh names and never fresh variables, and a variable `x3` would swallow the
+-- ASCII `∃` in `@x3yRxy`.
+
+-- The surface delimiter set, as in Magnus: the letters are listed because
+-- juxtaposition leaves no punctuation in `Rab` to break on.
+--| @syntax delimiter $ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z $
+--| @syntax delimiter $ a b c d e f g h i j k l m n o p q r s t u v w x y z $
+--| @syntax delimiter $ ( ) [ ] , $
+--| @syntax delimiter $ - ~ ¬ /\ ^ & ∧ \/ | ∨ $
+--| @syntax delimiter $ -> => ⊃ > → <-> <=> <> ≡ ↔ $
+--| @syntax delimiter $ @ 3 ∀ ∃ = $
+-- BEGIN generated subscripts (scripts/forallx-ubc-lexicon.ts)
+--| @syntax delimiter $ a1 a2 a3 a4 a5 a6 a7 a8 a9 b1 b2 b3 b4 b5 b6 b7 b8 b9 c1 c2 c3 c4 c5 c6 c7 c8 c9 d1 d2 d3 d4 d5 d6 d7 d8 d9 e1 e2 e3 e4 e5 e6 e7 e8 e9 f1 f2 f3 f4 f5 f6 f7 f8 f9 g1 g2 g3 g4 g5 g6 g7 g8 g9 h1 h2 h3 h4 h5 h6 h7 h8 h9 i1 i2 i3 i4 i5 i6 i7 i8 i9 j1 j2 j3 j4 j5 j6 j7 j8 j9 k1 k2 k3 k4 k5 k6 k7 k8 k9 l1 l2 l3 l4 l5 l6 l7 l8 l9 m1 m2 m3 m4 m5 m6 m7 m8 m9 n1 n2 n3 n4 n5 n6 n7 n8 n9 o1 o2 o3 o4 o5 o6 o7 o8 o9 p1 p2 p3 p4 p5 p6 p7 p8 p9 q1 q2 q3 q4 q5 q6 q7 q8 q9 r1 r2 r3 r4 r5 r6 r7 r8 r9 s1 s2 s3 s4 s5 s6 s7 s8 s9 t1 t2 t3 t4 t5 t6 t7 t8 t9 u1 u2 u3 u4 u5 u6 u7 u8 u9 v1 v2 v3 v4 v5 v6 v7 v8 v9 w1 w2 w3 w4 w5 w6 w7 w8 w9 $
+--| @syntax elab $ a ₁ $ => $ a1 $
+--| @syntax elab $ a ₂ $ => $ a2 $
+--| @syntax elab $ a ₃ $ => $ a3 $
+--| @syntax elab $ a ₄ $ => $ a4 $
+--| @syntax elab $ a ₅ $ => $ a5 $
+--| @syntax elab $ a ₆ $ => $ a6 $
+--| @syntax elab $ a ₇ $ => $ a7 $
+--| @syntax elab $ a ₈ $ => $ a8 $
+--| @syntax elab $ a ₉ $ => $ a9 $
+--| @syntax elab $ b ₁ $ => $ b1 $
+--| @syntax elab $ b ₂ $ => $ b2 $
+--| @syntax elab $ b ₃ $ => $ b3 $
+--| @syntax elab $ b ₄ $ => $ b4 $
+--| @syntax elab $ b ₅ $ => $ b5 $
+--| @syntax elab $ b ₆ $ => $ b6 $
+--| @syntax elab $ b ₇ $ => $ b7 $
+--| @syntax elab $ b ₈ $ => $ b8 $
+--| @syntax elab $ b ₉ $ => $ b9 $
+--| @syntax elab $ c ₁ $ => $ c1 $
+--| @syntax elab $ c ₂ $ => $ c2 $
+--| @syntax elab $ c ₃ $ => $ c3 $
+--| @syntax elab $ c ₄ $ => $ c4 $
+--| @syntax elab $ c ₅ $ => $ c5 $
+--| @syntax elab $ c ₆ $ => $ c6 $
+--| @syntax elab $ c ₇ $ => $ c7 $
+--| @syntax elab $ c ₈ $ => $ c8 $
+--| @syntax elab $ c ₉ $ => $ c9 $
+--| @syntax elab $ d ₁ $ => $ d1 $
+--| @syntax elab $ d ₂ $ => $ d2 $
+--| @syntax elab $ d ₃ $ => $ d3 $
+--| @syntax elab $ d ₄ $ => $ d4 $
+--| @syntax elab $ d ₅ $ => $ d5 $
+--| @syntax elab $ d ₆ $ => $ d6 $
+--| @syntax elab $ d ₇ $ => $ d7 $
+--| @syntax elab $ d ₈ $ => $ d8 $
+--| @syntax elab $ d ₉ $ => $ d9 $
+--| @syntax elab $ e ₁ $ => $ e1 $
+--| @syntax elab $ e ₂ $ => $ e2 $
+--| @syntax elab $ e ₃ $ => $ e3 $
+--| @syntax elab $ e ₄ $ => $ e4 $
+--| @syntax elab $ e ₅ $ => $ e5 $
+--| @syntax elab $ e ₆ $ => $ e6 $
+--| @syntax elab $ e ₇ $ => $ e7 $
+--| @syntax elab $ e ₈ $ => $ e8 $
+--| @syntax elab $ e ₉ $ => $ e9 $
+--| @syntax elab $ f ₁ $ => $ f1 $
+--| @syntax elab $ f ₂ $ => $ f2 $
+--| @syntax elab $ f ₃ $ => $ f3 $
+--| @syntax elab $ f ₄ $ => $ f4 $
+--| @syntax elab $ f ₅ $ => $ f5 $
+--| @syntax elab $ f ₆ $ => $ f6 $
+--| @syntax elab $ f ₇ $ => $ f7 $
+--| @syntax elab $ f ₈ $ => $ f8 $
+--| @syntax elab $ f ₉ $ => $ f9 $
+--| @syntax elab $ g ₁ $ => $ g1 $
+--| @syntax elab $ g ₂ $ => $ g2 $
+--| @syntax elab $ g ₃ $ => $ g3 $
+--| @syntax elab $ g ₄ $ => $ g4 $
+--| @syntax elab $ g ₅ $ => $ g5 $
+--| @syntax elab $ g ₆ $ => $ g6 $
+--| @syntax elab $ g ₇ $ => $ g7 $
+--| @syntax elab $ g ₈ $ => $ g8 $
+--| @syntax elab $ g ₉ $ => $ g9 $
+--| @syntax elab $ h ₁ $ => $ h1 $
+--| @syntax elab $ h ₂ $ => $ h2 $
+--| @syntax elab $ h ₃ $ => $ h3 $
+--| @syntax elab $ h ₄ $ => $ h4 $
+--| @syntax elab $ h ₅ $ => $ h5 $
+--| @syntax elab $ h ₆ $ => $ h6 $
+--| @syntax elab $ h ₇ $ => $ h7 $
+--| @syntax elab $ h ₈ $ => $ h8 $
+--| @syntax elab $ h ₉ $ => $ h9 $
+--| @syntax elab $ i ₁ $ => $ i1 $
+--| @syntax elab $ i ₂ $ => $ i2 $
+--| @syntax elab $ i ₃ $ => $ i3 $
+--| @syntax elab $ i ₄ $ => $ i4 $
+--| @syntax elab $ i ₅ $ => $ i5 $
+--| @syntax elab $ i ₆ $ => $ i6 $
+--| @syntax elab $ i ₇ $ => $ i7 $
+--| @syntax elab $ i ₈ $ => $ i8 $
+--| @syntax elab $ i ₉ $ => $ i9 $
+--| @syntax elab $ j ₁ $ => $ j1 $
+--| @syntax elab $ j ₂ $ => $ j2 $
+--| @syntax elab $ j ₃ $ => $ j3 $
+--| @syntax elab $ j ₄ $ => $ j4 $
+--| @syntax elab $ j ₅ $ => $ j5 $
+--| @syntax elab $ j ₆ $ => $ j6 $
+--| @syntax elab $ j ₇ $ => $ j7 $
+--| @syntax elab $ j ₈ $ => $ j8 $
+--| @syntax elab $ j ₉ $ => $ j9 $
+--| @syntax elab $ k ₁ $ => $ k1 $
+--| @syntax elab $ k ₂ $ => $ k2 $
+--| @syntax elab $ k ₃ $ => $ k3 $
+--| @syntax elab $ k ₄ $ => $ k4 $
+--| @syntax elab $ k ₅ $ => $ k5 $
+--| @syntax elab $ k ₆ $ => $ k6 $
+--| @syntax elab $ k ₇ $ => $ k7 $
+--| @syntax elab $ k ₈ $ => $ k8 $
+--| @syntax elab $ k ₉ $ => $ k9 $
+--| @syntax elab $ l ₁ $ => $ l1 $
+--| @syntax elab $ l ₂ $ => $ l2 $
+--| @syntax elab $ l ₃ $ => $ l3 $
+--| @syntax elab $ l ₄ $ => $ l4 $
+--| @syntax elab $ l ₅ $ => $ l5 $
+--| @syntax elab $ l ₆ $ => $ l6 $
+--| @syntax elab $ l ₇ $ => $ l7 $
+--| @syntax elab $ l ₈ $ => $ l8 $
+--| @syntax elab $ l ₉ $ => $ l9 $
+--| @syntax elab $ m ₁ $ => $ m1 $
+--| @syntax elab $ m ₂ $ => $ m2 $
+--| @syntax elab $ m ₃ $ => $ m3 $
+--| @syntax elab $ m ₄ $ => $ m4 $
+--| @syntax elab $ m ₅ $ => $ m5 $
+--| @syntax elab $ m ₆ $ => $ m6 $
+--| @syntax elab $ m ₇ $ => $ m7 $
+--| @syntax elab $ m ₈ $ => $ m8 $
+--| @syntax elab $ m ₉ $ => $ m9 $
+--| @syntax elab $ n ₁ $ => $ n1 $
+--| @syntax elab $ n ₂ $ => $ n2 $
+--| @syntax elab $ n ₃ $ => $ n3 $
+--| @syntax elab $ n ₄ $ => $ n4 $
+--| @syntax elab $ n ₅ $ => $ n5 $
+--| @syntax elab $ n ₆ $ => $ n6 $
+--| @syntax elab $ n ₇ $ => $ n7 $
+--| @syntax elab $ n ₈ $ => $ n8 $
+--| @syntax elab $ n ₉ $ => $ n9 $
+--| @syntax elab $ o ₁ $ => $ o1 $
+--| @syntax elab $ o ₂ $ => $ o2 $
+--| @syntax elab $ o ₃ $ => $ o3 $
+--| @syntax elab $ o ₄ $ => $ o4 $
+--| @syntax elab $ o ₅ $ => $ o5 $
+--| @syntax elab $ o ₆ $ => $ o6 $
+--| @syntax elab $ o ₇ $ => $ o7 $
+--| @syntax elab $ o ₈ $ => $ o8 $
+--| @syntax elab $ o ₉ $ => $ o9 $
+--| @syntax elab $ p ₁ $ => $ p1 $
+--| @syntax elab $ p ₂ $ => $ p2 $
+--| @syntax elab $ p ₃ $ => $ p3 $
+--| @syntax elab $ p ₄ $ => $ p4 $
+--| @syntax elab $ p ₅ $ => $ p5 $
+--| @syntax elab $ p ₆ $ => $ p6 $
+--| @syntax elab $ p ₇ $ => $ p7 $
+--| @syntax elab $ p ₈ $ => $ p8 $
+--| @syntax elab $ p ₉ $ => $ p9 $
+--| @syntax elab $ q ₁ $ => $ q1 $
+--| @syntax elab $ q ₂ $ => $ q2 $
+--| @syntax elab $ q ₃ $ => $ q3 $
+--| @syntax elab $ q ₄ $ => $ q4 $
+--| @syntax elab $ q ₅ $ => $ q5 $
+--| @syntax elab $ q ₆ $ => $ q6 $
+--| @syntax elab $ q ₇ $ => $ q7 $
+--| @syntax elab $ q ₈ $ => $ q8 $
+--| @syntax elab $ q ₉ $ => $ q9 $
+--| @syntax elab $ r ₁ $ => $ r1 $
+--| @syntax elab $ r ₂ $ => $ r2 $
+--| @syntax elab $ r ₃ $ => $ r3 $
+--| @syntax elab $ r ₄ $ => $ r4 $
+--| @syntax elab $ r ₅ $ => $ r5 $
+--| @syntax elab $ r ₆ $ => $ r6 $
+--| @syntax elab $ r ₇ $ => $ r7 $
+--| @syntax elab $ r ₈ $ => $ r8 $
+--| @syntax elab $ r ₉ $ => $ r9 $
+--| @syntax elab $ s ₁ $ => $ s1 $
+--| @syntax elab $ s ₂ $ => $ s2 $
+--| @syntax elab $ s ₃ $ => $ s3 $
+--| @syntax elab $ s ₄ $ => $ s4 $
+--| @syntax elab $ s ₅ $ => $ s5 $
+--| @syntax elab $ s ₆ $ => $ s6 $
+--| @syntax elab $ s ₇ $ => $ s7 $
+--| @syntax elab $ s ₈ $ => $ s8 $
+--| @syntax elab $ s ₉ $ => $ s9 $
+--| @syntax elab $ t ₁ $ => $ t1 $
+--| @syntax elab $ t ₂ $ => $ t2 $
+--| @syntax elab $ t ₃ $ => $ t3 $
+--| @syntax elab $ t ₄ $ => $ t4 $
+--| @syntax elab $ t ₅ $ => $ t5 $
+--| @syntax elab $ t ₆ $ => $ t6 $
+--| @syntax elab $ t ₇ $ => $ t7 $
+--| @syntax elab $ t ₈ $ => $ t8 $
+--| @syntax elab $ t ₉ $ => $ t9 $
+--| @syntax elab $ u ₁ $ => $ u1 $
+--| @syntax elab $ u ₂ $ => $ u2 $
+--| @syntax elab $ u ₃ $ => $ u3 $
+--| @syntax elab $ u ₄ $ => $ u4 $
+--| @syntax elab $ u ₅ $ => $ u5 $
+--| @syntax elab $ u ₆ $ => $ u6 $
+--| @syntax elab $ u ₇ $ => $ u7 $
+--| @syntax elab $ u ₈ $ => $ u8 $
+--| @syntax elab $ u ₉ $ => $ u9 $
+--| @syntax elab $ v ₁ $ => $ v1 $
+--| @syntax elab $ v ₂ $ => $ v2 $
+--| @syntax elab $ v ₃ $ => $ v3 $
+--| @syntax elab $ v ₄ $ => $ v4 $
+--| @syntax elab $ v ₅ $ => $ v5 $
+--| @syntax elab $ v ₆ $ => $ v6 $
+--| @syntax elab $ v ₇ $ => $ v7 $
+--| @syntax elab $ v ₈ $ => $ v8 $
+--| @syntax elab $ v ₉ $ => $ v9 $
+--| @syntax elab $ w ₁ $ => $ w1 $
+--| @syntax elab $ w ₂ $ => $ w2 $
+--| @syntax elab $ w ₃ $ => $ w3 $
+--| @syntax elab $ w ₄ $ => $ w4 $
+--| @syntax elab $ w ₅ $ => $ w5 $
+--| @syntax elab $ w ₆ $ => $ w6 $
+--| @syntax elab $ w ₇ $ => $ w7 $
+--| @syntax elab $ w ₈ $ => $ w8 $
+--| @syntax elab $ w ₉ $ => $ w9 $
+-- END generated subscripts
+--| @syntax brackets ( ) [ ]
+--| @syntax lint closed-sentences
+--| @syntax lint parenthesize-binary-only
+--| @syntax display drop-outer-parens
+delimiter $ ( ) [ ] , ; { } $;
+
+--| @syntax role sentence
+provable sort wff;
+
+--| @vars x y z
+sort var;
+--| @vars a b c d e f g h i j k l m n o p q r s t u v w a1 a2 a3 a4 a5 a6 a7 a8 a9 b1 b2 b3 b4 b5 b6 b7 b8 b9 c1 c2 c3 c4 c5 c6 c7 c8 c9 d1 d2 d3 d4 d5 d6 d7 d8 d9 e1 e2 e3 e4 e5 e6 e7 e8 e9 f1 f2 f3 f4 f5 f6 f7 f8 f9 g1 g2 g3 g4 g5 g6 g7 g8 g9 h1 h2 h3 h4 h5 h6 h7 h8 h9 i1 i2 i3 i4 i5 i6 i7 i8 i9 j1 j2 j3 j4 j5 j6 j7 j8 j9 k1 k2 k3 k4 k5 k6 k7 k8 k9 l1 l2 l3 l4 l5 l6 l7 l8 l9 m1 m2 m3 m4 m5 m6 m7 m8 m9 n1 n2 n3 n4 n5 n6 n7 n8 n9 o1 o2 o3 o4 o5 o6 o7 o8 o9 p1 p2 p3 p4 p5 p6 p7 p8 p9 q1 q2 q3 q4 q5 q6 q7 q8 q9 r1 r2 r3 r4 r5 r6 r7 r8 r9 s1 s2 s3 s4 s5 s6 s7 s8 s9 t1 t2 t3 t4 t5 t6 t7 t8 t9 u1 u2 u3 u4 u5 u6 u7 u8 u9 v1 v2 v3 v4 v5 v6 v7 v8 v9 w1 w2 w3 w4 w5 w6 w7 w8 w9
+sort name;
+--| @syntax role individual
+sort tm;
+--| @syntax role argument-list
+sort seq;
+
+term v2t (x: var): tm;
+coercion v2t: var > tm;
+term n2t (a: name): tm;
+coercion n2t: name > tm;
+term t2s (te: tm): seq;
+coercion t2s: tm > seq;
+
+--| @syntax elided
+term snil: seq;
+--| @syntax juxtaposed
+term scomma (sq tq: seq): seq;
+infixl scomma: $,$ prec 10;
+
+term A (sq: seq): wff;
+term B (sq: seq): wff;
+term C (sq: seq): wff;
+term D (sq: seq): wff;
+term E (sq: seq): wff;
+term F (sq: seq): wff;
+term G (sq: seq): wff;
+term H (sq: seq): wff;
+term I (sq: seq): wff;
+term J (sq: seq): wff;
+term K (sq: seq): wff;
+term L (sq: seq): wff;
+term M (sq: seq): wff;
+term N (sq: seq): wff;
+term O (sq: seq): wff;
+term P (sq: seq): wff;
+term Q (sq: seq): wff;
+term R (sq: seq): wff;
+term S (sq: seq): wff;
+term T (sq: seq): wff;
+term U (sq: seq): wff;
+term V (sq: seq): wff;
+term W (sq: seq): wff;
+term X (sq: seq): wff;
+term Y (sq: seq): wff;
+term Z (sq: seq): wff;
+
+--| @syntax role negation
+term not (ph: wff): wff;
+prefix not: $-$ prec 40;
+prefix not: $~$ prec 40;
+prefix not: $¬$ prec 40;
+
+--| @syntax role conjunction
+--| @syntax forbid mix
+term and (ph ps: wff): wff;
+infixr and: $/\$ prec 30;
+infixr and: $^$ prec 30;
+infixr and: $∧$ prec 30;
+infixr and: $&$ prec 30;
+
+--| @syntax role disjunction
+--| @syntax forbid mix
+term or (ph ps: wff): wff;
+infixr or: $\/$ prec 30;
+infixr or: $|$ prec 30;
+infixr or: $∨$ prec 30;
+
+--| @syntax role conditional
+--| @syntax forbid chain mix nest
+term imp (ph ps: wff): wff;
+infixr imp: $->$ prec 20;
+infixr imp: $=>$ prec 20;
+infixr imp: $>$ prec 20;
+infixr imp: $→$ prec 20;
+infixr imp: $⊃$ prec 20;
+
+--| @syntax role biconditional
+--| @syntax forbid chain mix nest
+term iff (ph ps: wff): wff;
+infixr iff: $<->$ prec 20;
+infixr iff: $<=>$ prec 20;
+infixr iff: $<>$ prec 20;
+infixr iff: $↔$ prec 20;
+infixr iff: $≡$ prec 20;
+
+-- `Ax.` and `Ex.` for the ASCII typist, as in Magnus: `A` and `E` are
+-- predicate letters, and only the dot tells `Ax.Axx` apart from one.
+--| @syntax elab $ A ?x:var . $ => $ ∀ ?x $ input-only
+--| @syntax elab $ E ?x:var . $ => $ ∃ ?x $ input-only
+--| @syntax role forall
+term all {x: var} (ph: wff x): wff;
+prefix all: $@$ prec 40;
+prefix all: $∀$ prec 40;
+
+--| @syntax role exists
+term ex {x: var} (ph: wff x): wff;
+prefix ex: $3$ prec 40;
+prefix ex: $∃$ prec 40;
+
+--| @syntax elab $ ?a:tm ≠ ?b:tm $ => $ ¬ ?a = ?b $
+--| @syntax role identity
+term ideq (te ue: tm): wff;
+infixl ideq: $=$ prec 50;

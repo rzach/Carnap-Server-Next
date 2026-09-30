@@ -62,6 +62,7 @@ const ANSWERS: Readonly<Record<string, JsonValue>> = {
   "model@1": { domain: "1", fields: {} },
   "translation@1": { text: "F(a)" },
   "truth-table@1": { cells: [], reference: [] },
+  "truth-tree@1": { nodes: [] },
   "world@1": { world: { kind: "blocks@1", objects: [] } },
 };
 
@@ -69,6 +70,7 @@ const ANSWERS: Readonly<Record<string, JsonValue>> = {
 const SERVER_DRAWN: ReadonlySet<string> = new Set([
   "model@1",
   "translation@1",
+  "truth-tree@1",
   "world@1",
 ]);
 

@@ -28,6 +28,10 @@ msgid "“{construct}” is not something this exercise type can interpret."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
+msgid "“{formula}” has free variables, and a tree's root must be sentences."
+msgstr "„{formula}“ hat freie Variablen, aber die Wurzel eines Baums muss aus Sätzen bestehen."
+
+#: src/worker/application/content/diagnostic-strings.ts
 msgid "“{formula}” has free variables, and a world exercise's sentences must have none."
 msgstr "„{formula}“ hat freie Variablen, und die Sätze einer Welt-Aufgabe dürfen keine haben."
 
@@ -55,6 +59,7 @@ msgid "“{name}” is a free variable; every formula must be a sentence."
 msgstr "„{name}“ ist eine freie Variable; jede Formel muss ein Satz sein."
 
 #: src/worker/application/content/diagnostic-strings.ts
+#: src/worker/exercises/truth-tree/strings.ts
 msgid "“{name}” is not a name in this language."
 msgstr "„{name}“ ist kein Name dieser Sprache."
 
@@ -277,6 +282,10 @@ msgstr "{minutes} Min. Zeitlimit"
 msgid "{name} already names {block}."
 msgstr "{name} ist schon vergeben: {block}."
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "{name} is already on this branch, and row {cited} needs a new name."
+msgstr "{name} kommt auf diesem Ast bereits vor, und Zeile {cited} braucht einen neuen Namen."
+
 #: src/worker/exercises/world/strings.ts
 msgid "{name} names both {block} and {other}."
 msgstr "{name} benennt sowohl {block} als auch {other}."
@@ -323,6 +332,10 @@ msgstr "{used} von {allowed}"
 msgid "A “-- label:” comment must sit at the end of the proof line it marks, not on its own line."
 msgstr "Ein „-- label:“-Kommentar muss am Ende der Beweiszeile stehen, die er markiert, nicht in einer eigenen Zeile."
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "A branch closes on one row only if that row says something is not identical to itself."
+msgstr "Ein Ast schließt sich mit einer einzigen Zeile nur, wenn diese Zeile sagt, dass etwas nicht mit sich selbst identisch ist."
+
 #: src/worker/web/lti.tsx
 msgid "A Carnap account already exists for {email}. We sent a confirmation link to that address — open it to connect your LMS identity to the account, then launch again from your LMS."
 msgstr "Für {email} gibt es bereits ein Carnap-Konto. Wir haben einen Bestätigungslink an diese Adresse gesendet — öffnen Sie ihn, um Ihre LMS-Identität mit dem Konto zu verbinden, und starten Sie danach erneut aus Ihrem LMS."
@@ -334,6 +347,10 @@ msgstr "Ein zitierter Teilbeweis muss auf derselben Einrückungsebene beginnen u
 #: src/worker/exercises/aufbau-proof-fitch/strings.ts
 msgid "A cited subproof must not reach back out to a shallower line."
 msgstr "Ein zitierter Teilbeweis darf nicht auf eine weniger eingerückte Zeile zurückgreifen."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "A closure cites rows on its own branch."
+msgstr "Ein Abschluss zitiert Zeilen auf seinem eigenen Ast."
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A constraint exercise has only givens after its constraint line."
@@ -441,6 +458,10 @@ msgstr "Eine Lektüre erfasst keine Punktzahlen und hat daher kein Notenbuch."
 msgid "A reading records no work to grade."
 msgstr "Eine Lektüre erfasst keine zu bewertenden Arbeiten."
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "A row citing two rows substitutes by an identity, and neither row {cited} nor row {other} is one."
+msgstr "Eine Zeile, die zwei Zeilen zitiert, ersetzt gemäß einer Identität, aber weder Zeile {cited} noch Zeile {other} ist eine."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A short-answer exercise needs at least one accepted answer."
 msgstr "Eine Kurzantwort-Übung braucht mindestens eine akzeptierte Antwort."
@@ -461,6 +482,10 @@ msgstr "Eine Theorie namens „{name}“ ist bereits deklariert."
 msgid "A translation exercise requires at least one solution formula."
 msgstr "Eine Übersetzungsaufgabe braucht mindestens eine Lösungsformel."
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "A tree may have at most {limit} rows."
+msgstr "Ein Baum darf höchstens {limit} Zeilen haben."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A truth table may use at most {max} atoms; found {found}."
 msgstr "Eine Wahrheitstafel darf höchstens {max} Atome verwenden; gefunden: {found}."
@@ -468,6 +493,18 @@ msgstr "Eine Wahrheitstafel darf höchstens {max} Atome verwenden; gefunden: {fo
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A truth table may use at most {max} atoms; this one uses {found}."
 msgstr "Eine Wahrheitstafel darf höchstens {max} Atome verwenden; diese verwendet {found}."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A truth tree needs a root: an argument line “premises :|-: conclusion”, or a list of sentences."
+msgstr "Ein Wahrheitsbaum braucht eine Wurzel: eine Argumentzeile „Prämissen :|-: Konklusion“ oder eine Liste von Sätzen."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A truth tree tests an argument with one conclusion."
+msgstr "Ein Wahrheitsbaum prüft ein Argument mit genau einer Konklusion."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A truth tree's root may have at most {max} sentences."
+msgstr "Die Wurzel eines Wahrheitsbaums darf höchstens {max} Sätze haben."
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A truth-table exercise requires at least one formula."
@@ -619,6 +656,14 @@ msgstr "Manuelle Bewertung hinzufügen"
 msgid "Add a premise above the line"
 msgstr "Fügt eine Prämisse über der Zeile hinzu"
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Add a row at the end of the branch"
+msgstr "Eine Zeile am Ende des Asts anfügen"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Add a row to this step"
+msgstr "Diesem Schritt eine Zeile hinzufügen"
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "Add assumption above"
 msgstr "Annahme darüber hinzufügen"
@@ -670,6 +715,10 @@ msgstr "Prämisse darüber hinzufügen (p)"
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "Add premise above grows a line upward instead. On an assumption it makes the assumption a derived line; a labelled assumption stays as it is, since its label names a discharge."
 msgstr "Prämisse darüber hinzufügen lässt eine Zeile stattdessen nach oben wachsen. Aus einer Annahme wird dabei eine abgeleitete Zeile; eine markierte Annahme bleibt, wie sie ist, denn ihre Marke benennt eine Entlastung."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Add row"
+msgstr "Zeile hinzufügen"
 
 #: src/worker/web/courses.tsx
 msgid "Add staff"
@@ -1054,6 +1103,30 @@ msgstr "Ersten Site-Administrator einrichten"
 msgid "Bootstrap token, if configured"
 msgstr "Einrichtungstoken, falls konfiguriert"
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Branch {position} of {count}"
+msgstr "Ast {position} von {count}"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Branch closed"
+msgstr "Ast geschlossen"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Branch closed on row {row}"
+msgstr "Ast geschlossen mit Zeile {row}"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Branch closed on rows {first} and {second}"
+msgstr "Ast geschlossen mit den Zeilen {first} und {second}"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Branch marked open and complete"
+msgstr "Ast als offen und vollständig markiert"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Branch reopened."
+msgstr "Ast wieder geöffnet."
+
 #: src/worker/web/layout.tsx
 msgid "Breadcrumb"
 msgstr "Navigationspfad"
@@ -1062,6 +1135,7 @@ msgstr "Navigationspfad"
 msgid "Campus Moodle"
 msgstr "Campus-Moodle"
 
+#: src/worker/exercises/truth-tree/strings.ts
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/content.tsx
 msgid "Cancel"
@@ -1141,6 +1215,7 @@ msgstr "Änderungen: {used} von {limit}"
 
 #: src/worker/exercises/model/strings.ts
 #: src/worker/exercises/truth-table/strings.ts
+#: src/worker/exercises/truth-tree/strings.ts
 #: src/worker/exercises/world/strings.ts
 msgid "Check"
 msgstr "Prüfen"
@@ -1156,6 +1231,10 @@ msgstr "Wird geprüft"
 #: src/worker/exercises/world/strings.ts
 msgid "Choose a block for {variable} on the board."
 msgstr "Wählen Sie auf dem Brett einen Block für {variable}."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Choose a row to develop, and the rows its rule writes are added under every open branch below it."
+msgstr "Wählen Sie eine Zeile zum Entwickeln; die Zeilen, die ihre Regel schreibt, werden unter jedem offenen Ast darunter angefügt."
 
 #: src/worker/web/lti.tsx
 msgid "Choose an assignment"
@@ -1177,9 +1256,29 @@ msgstr "Markieren Sie die Zeile, die Sie als Gegenbeispiel angeben."
 msgid "Choose what you will defend."
 msgstr "Wählen Sie, was Sie verteidigen."
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Citation of row {row}, not yet written"
+msgstr "Zitat von Zeile {row}, noch nicht geschrieben"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Citation of row {row}: {cites}"
+msgstr "Zitat von Zeile {row}: {cites}"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Cite just one row, the one this row comes from, or two for a substitution by an identity."
+msgstr "Zitieren Sie nur eine Zeile, die, aus der diese Zeile stammt, oder zwei für eine Ersetzung gemäß einer Identität."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Cite the two rows the branch closes on."
+msgstr "Zitieren Sie die beiden Zeilen, mit denen sich der Ast schließt."
+
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Cited hypothesis"
 msgstr "Zitierte Hypothese"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Cites row"
+msgstr "Zitiert Zeile"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Claim a sentence true or false to start its game."
@@ -1202,15 +1301,28 @@ msgstr "Client-ID"
 msgid "Clone course"
 msgstr "Kurs duplizieren"
 
+#: src/worker/exercises/truth-tree/strings.ts
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/content.tsx
 #: src/worker/web/courses.tsx
 msgid "Close"
 msgstr "Schließen"
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Close a branch on a sentence and its negation, citing both rows, and mark a complete open branch ↑. The tree is done when every branch is closed, or one is marked open."
+msgstr "Schließen Sie einen Ast mit einem Satz und seiner Negation und zitieren Sie beide Zeilen, und markieren Sie einen vollständigen offenen Ast mit ↑. Der Baum ist fertig, wenn jeder Ast geschlossen oder einer als offen markiert ist."
+
 #: src/worker/exercise-kit/help-strings.ts
 msgid "Close help"
 msgstr "Hilfe schließen"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Close the branch"
+msgstr "Den Ast schließen"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Close the branch on row {row}"
+msgstr "Den Ast auf Zeile {row} schließen"
 
 #. Disambiguating id; only the word Closed is shown. A badge beside an assignment past its closing date.
 #: src/worker/web/assignments.tsx
@@ -1224,6 +1336,10 @@ msgstr "Schließt"
 #: src/worker/web/assignment-detail.tsx
 msgid "Closes {when}"
 msgstr "Schließt {when}"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Closing put away."
+msgstr "Schließen abgebrochen."
 
 #: src/worker/exercises/world/strings.ts
 msgid "Column"
@@ -1658,6 +1774,10 @@ msgstr "CSV der Noten des gesamten Kurses"
 msgid "Cube"
 msgstr "Würfel"
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Delete"
+msgstr "Löschen"
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Delete (Del)"
@@ -1681,6 +1801,10 @@ msgstr "Löscht die Zeile und alles darüber"
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "Delete the line and move its premises down to the focused row"
 msgstr "Löscht die Zeile und rückt ihre Prämissen in die fokussierte Zeile nach"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Delete the row or take back its split; on an end mark, reopen the branch"
+msgstr "Die Zeile löschen oder ihre Verzweigung zurücknehmen; auf einem Endzeichen den Ast wieder öffnen"
 
 #: src/worker/web/courses.tsx
 msgid "Delivery failed."
@@ -1726,6 +1850,14 @@ msgstr "Detail"
 #: src/worker/web/content.tsx
 msgid "Details"
 msgstr "Details"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Develop"
+msgstr "Entwickeln"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Develop the row on every open branch below it"
+msgstr "Die Zeile auf jedem offenen Ast darunter entwickeln"
 
 #: src/worker/application/content/registry.ts
 msgid "Directive {directiveName} is not supported."
@@ -1782,6 +1914,10 @@ msgstr "Individuenbereich"
 #: src/worker/web/layout.tsx
 msgid "Donate to charity →"
 msgstr "Für einen guten Zweck spenden →"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Done"
+msgstr "Fertig"
 
 #: src/worker/web/courses.tsx
 msgid "Download CSV"
@@ -1908,6 +2044,10 @@ msgstr "E-Mail-Status"
 #: src/worker/exercise-kit/assessment.ts
 msgid "Empty response"
 msgstr "Leere Antwort"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Empty row"
+msgstr "Leere Zeile"
 
 #: src/worker/web/admin-lti.tsx
 msgid "Enable platform"
@@ -2177,6 +2317,10 @@ msgstr "Formel {index} braucht {expected} Zellen-Tokens; gefunden: {found}."
 #: src/worker/exercises/free-response/types.ts
 msgid "Free-response question"
 msgstr "Freitext-Übung"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "From the end of a line, go on to its citation; Delete clears it"
+msgstr "Vom Ende einer Zeile weiter zu ihrem Zitat; Entf löscht es"
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Give symbols or without, not both."
@@ -2629,6 +2773,22 @@ msgstr "Manuelle Bewertung hinzugefügt."
 msgid "Manual grading work"
 msgstr "Offene manuelle Bewertungen"
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Mark a row the branch closes on, once closing"
+msgstr "Beim Schließen eine Zeile markieren, auf der der Ast schließt"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Mark open"
+msgstr "Als offen markieren"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Mark the branch open and complete"
+msgstr "Den Ast als offen und vollständig markieren"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Mark the rows that close this branch"
+msgstr "Markieren Sie die Zeilen, die diesen Ast schließen"
+
 #: src/worker/web/profile.tsx
 msgid "Match my browser"
 msgstr "Sprache des Browsers verwenden"
@@ -2718,9 +2878,21 @@ msgstr "Wechselt zwischen den Zeilen"
 msgid "Move between lines, leaving the ticks alone"
 msgstr "Wechselt zwischen den Zeilen, ohne die Häkchen zu ändern"
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Move between rows"
+msgstr "Zwischen Zeilen wechseln"
+
 #: src/worker/exercises/world/strings.ts
 msgid "Move between squares"
 msgstr "Zwischen Feldern wechseln"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Move to a row with the arrow keys or by clicking it; each action works on the row or branch there."
+msgstr "Wechseln Sie mit den Pfeiltasten oder per Klick zu einer Zeile; jede Aktion wirkt auf die Zeile oder den Ast dort."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Move to the end of a branch first."
+msgstr "Gehen Sie zuerst ans Ende eines Asts."
 
 #: src/worker/exercises/world/strings.ts
 msgid "Moved {block} to column {col}, row {row}."
@@ -2748,6 +2920,10 @@ msgstr "Übungen mit Mehrfachauswahl müssen mindestens eine richtige Option hab
 #: src/worker/web/profile.tsx
 msgid "Name"
 msgstr "Name"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Name for the instance"
+msgstr "Name für die Instanz"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Name it"
@@ -2804,6 +2980,10 @@ msgstr "Titel des neuen Kurses"
 #: src/worker/web/content.tsx
 msgid "New revision"
 msgstr "Neue Revision"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "New row {row}."
+msgstr "Neue Zeile {row}."
 
 #: src/worker/web/gradebook.tsx
 msgid "Newest submissions and manual grading"
@@ -3140,6 +3320,14 @@ msgstr "Auf den ersten Satz dürfen nur Satz-Listenpunkte und |-Zeilen folgen."
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Only solution list items may appear after the first solution."
 msgstr "Nach der ersten Lösung dürfen nur weitere Lösungs-Listenpunkte folgen."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Only the end of a branch can be closed or marked open."
+msgstr "Nur das Ende eines Asts kann geschlossen oder als offen markiert werden."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Only the root's sentences may follow the first of them."
+msgstr "Nach dem ersten Satz der Wurzel dürfen nur weitere Sätze der Wurzel folgen."
 
 #: src/worker/web/content.tsx
 msgid "Only you"
@@ -3519,6 +3707,7 @@ msgstr "Weiterleitungs-URL (Start)"
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
+#: src/worker/exercises/truth-tree/strings.ts
 #: src/worker/exercises/world/strings.ts
 msgid "Redo"
 msgstr "Wiederholen"
@@ -3527,6 +3716,10 @@ msgstr "Wiederholen"
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Redo (Ctrl-Y)"
 msgstr "Wiederholen (Strg-Y)"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Redone."
+msgstr "Wiederhergestellt."
 
 #: src/worker/exercises/aufbau-proof-fitch/strings.ts
 msgid "Reference “{token}” is inside a subproof that has already closed."
@@ -3585,6 +3778,10 @@ msgstr "Der Block in Spalte {col}, Zeile {row} wurde entfernt."
 msgid "Removed user"
 msgstr "Entferntes Konto"
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Replace {from} with {to}"
+msgstr "{from} durch {to} ersetzen"
+
 #: src/worker/web/admin.tsx
 msgid "Request"
 msgstr "Anfrage"
@@ -3607,6 +3804,7 @@ msgstr "Antwort"
 
 #: src/worker/exercises/model/assessment.ts
 #: src/worker/exercises/truth-table/assessment.ts
+#: src/worker/exercises/truth-tree/assessment.ts
 #: src/worker/exercises/world/assessment.ts
 msgid "Result"
 msgstr "Ergebnis"
@@ -3691,6 +3889,26 @@ msgstr "Widerrufen"
 msgid "Revoked"
 msgstr "Widerrufen"
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Rewriting row {into} by the identity on row {identity} does not give this sentence."
+msgstr "Zeile {into} gemäß der Identität in Zeile {identity} umzuschreiben, ergibt diesen Satz nicht."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Right: a complete open branch shows the argument is invalid."
+msgstr "Richtig: Ein vollständiger offener Ast zeigt, dass das Argument ungültig ist."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Right: a complete open branch shows the set is consistent."
+msgstr "Richtig: Ein vollständiger offener Ast zeigt, dass die Menge konsistent ist."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Right: the tree closes, so the argument is valid."
+msgstr "Richtig: Der Baum schließt sich, also ist das Argument gültig."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Right: the tree closes, so the set is inconsistent."
+msgstr "Richtig: Der Baum schließt sich, also ist die Menge inkonsistent."
+
 #: src/worker/web/admin.tsx
 #: src/worker/web/courses.tsx
 msgid "Role"
@@ -3703,6 +3921,118 @@ msgstr "Rolle und Status"
 #: src/worker/exercises/world/strings.ts
 msgid "Row"
 msgstr "Zeile"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {cited} does not read, so it cannot be developed."
+msgstr "Zeile {cited} lässt sich nicht lesen und kann daher nicht entwickelt werden."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {cited} has no rule: it is atomic, or the negation of an atomic sentence."
+msgstr "Für Zeile {cited} gibt es keine Regel: Sie ist atomar oder die Negation eines atomaren Satzes."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {cited} is an identity: cite it together with the row it rewrites."
+msgstr "Zeile {cited} ist eine Identität: Zitieren Sie sie zusammen mit der Zeile, die gemäß ihr umgeschrieben wird."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {cited} is not above this row on its branch."
+msgstr "Zeile {cited} steht auf diesem Ast nicht über dieser Zeile."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {cited} is not on an open branch through row {row}."
+msgstr "Zeile {cited} liegt auf keinem offenen Ast durch Zeile {row}."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {cited} rewritten by the identity on row {row}."
+msgstr "Zeile {cited} gemäß der Identität in Zeile {row} umgeschrieben."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} developed on {count} branches."
+msgstr "Zeile {row} auf {count} Ästen entwickelt."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} developed."
+msgstr "Zeile {row} entwickelt."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} does not read, so it cannot be developed."
+msgstr "Zeile {row} lässt sich nicht lesen und kann daher nicht entwickelt werden."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} has no rule to develop."
+msgstr "Für Zeile {row} gibt es keine Regel zum Entwickeln."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} is already developed on every open branch below it."
+msgstr "Zeile {row} ist auf jedem offenen Ast darunter bereits entwickelt."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} marked."
+msgstr "Zeile {row} markiert."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} no longer cites a row."
+msgstr "Zeile {row} zitiert keine Zeile mehr."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} now cites row {cited}."
+msgstr "Zeile {row} zitiert jetzt Zeile {cited}."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} now cites rows {cited} and {other}."
+msgstr "Zeile {row} zitiert jetzt die Zeilen {cited} und {other}."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} says something is not identical to itself, so this branch closes."
+msgstr "Zeile {row} sagt, dass etwas nicht mit sich selbst identisch ist, also schließt sich dieser Ast."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} still needs an instance for {names} on this branch."
+msgstr "Zeile {row} braucht auf diesem Ast noch eine Instanz für {names}."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} still needs an instance on this branch."
+msgstr "Zeile {row} braucht auf diesem Ast noch eine Instanz."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} still needs developing on this branch."
+msgstr "Zeile {row} muss auf diesem Ast noch entwickelt werden."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row} unmarked."
+msgstr "Markierung von Zeile {row} aufgehoben."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row}: {problem}"
+msgstr "Zeile {row}: {problem}"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row}: {text}"
+msgstr "Zeile {row}: {text}"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row}: {text}, from row {cited}, {rule}"
+msgstr "Zeile {row}: {text}, aus Zeile {cited}, {rule}"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row}: {text}, from rows {cited} and {other}, {rule}"
+msgstr "Zeile {row}: {text}, aus den Zeilen {cited} und {other}, {rule}"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row {row}: {text}, not yet cited"
+msgstr "Zeile {row}: {text}, noch nicht zitiert"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row deleted."
+msgstr "Zeile gelöscht."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Row to rewrite by this identity"
+msgstr "Zeile, die gemäß dieser Identität umgeschrieben wird"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Rows {first} and {second} are a sentence and its negation, so this branch closes."
+msgstr "Die Zeilen {first} und {second} sind ein Satz und seine Negation, also schließt sich dieser Ast."
 
 #: src/worker/web/components.tsx
 msgid "Rubric"
@@ -3755,6 +4085,10 @@ msgstr "Einstellungen speichern"
 #: src/worker/web/content.tsx
 msgid "Save sharing"
 msgstr ""
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Say which row this row comes from: type that row's number in the margin."
+msgstr "Geben Sie an, aus welcher Zeile diese Zeile hervorgeht: Tragen Sie deren Nummer am Rand ein."
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Schedule"
@@ -3831,6 +4165,10 @@ msgstr "Anmeldelink senden"
 #: src/worker/web/lti.tsx
 msgid "Sending your selection back to the LMS…"
 msgstr "Ihre Auswahl wird an das LMS zurückgesendet…"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Sentence on row {row}"
+msgstr "Satz in Zeile {row}"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Sentences"
@@ -3949,9 +4287,26 @@ msgstr ""
 msgid "Source"
 msgstr "Quelltext"
 
+#: src/worker/exercises/truth-tree/strings.ts
 #: src/worker/web/content.tsx
 msgid "Split"
 msgstr ""
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Split below row {row}: two new branches."
+msgstr "Verzweigung unter Zeile {row}: zwei neue Äste."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Split taken back."
+msgstr "Verzweigung zurückgenommen."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Split the branch in two"
+msgstr "Den Ast in zwei Äste verzweigen"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Stack"
+msgstr "Anfügen"
 
 #: src/worker/web/components.tsx
 msgid "Staff"
@@ -4063,6 +4418,10 @@ msgstr "Abgegebener Beweis"
 #: src/worker/web/ui-strings.ts
 msgid "Submitting…"
 msgstr "Wird abgegeben …"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Substituting by row {row} into row {cited} writes nothing new on any open branch."
+msgstr "Die Ersetzung gemäß Zeile {row} in Zeile {cited} schreibt auf keinem offenen Ast etwas Neues."
 
 #: src/worker/web/profile.tsx
 msgid "Supplied by your school's LMS."
@@ -4225,6 +4584,14 @@ msgstr "Der Block in Spalte {col}, Zeile {row} heißt jetzt {names}."
 msgid "The block at column {col}, row {row} is pinned and cannot be changed."
 msgstr "Der Block in Spalte {col}, Zeile {row} ist fixiert und kann nicht geändert werden."
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The branch ending at row {row}: {problem}"
+msgstr "Der Ast, der mit Zeile {row} endet: {problem}"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The branches of a split must all come from one step."
+msgstr "Die Äste einer Verzweigung müssen alle aus einem Schritt stammen."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The budget attribute must be a whole number of objects, 0 or more."
 msgstr "Das Attribut budget muss eine ganze Zahl von Objekten sein, 0 oder mehr."
@@ -4279,6 +4646,10 @@ msgstr "Die Kursmitgliedschaft wurde nicht gefunden."
 #: src/worker/application/errors.ts
 msgid "The course was not found."
 msgstr "Der Kurs wurde nicht gefunden."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The develop attribute must be type or fill."
+msgstr "Das Attribut develop muss type oder fill sein."
 
 #: src/worker/exercises/model/strings.ts
 msgid "The domain cannot be empty."
@@ -4357,6 +4728,10 @@ msgstr "Der Datensatz zum Notenabgleich wurde nicht gefunden."
 msgid "The grading attribute must be all-or-nothing or partial."
 msgstr "Das Attribut grading muss all-or-nothing oder partial sein."
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The identity on row {row} still needs substituting, one way or the other, into every atomic and negated atomic sentence on this branch."
+msgstr "Die Identität in Zeile {row} muss noch, in die eine oder die andere Richtung, in jeden atomaren und jeden negierten atomaren Satz auf diesem Ast eingesetzt werden."
+
 #: src/worker/exercises/aufbau-proof-fitch/strings.ts
 msgid "The justification after ':' must name a rule."
 msgstr "Die Begründung nach ':' muss eine Regel nennen."
@@ -4364,6 +4739,10 @@ msgstr "Die Begründung nach ':' muss eine Regel nennen."
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The label “{label}” is defined more than once."
 msgstr "Die Beschriftung „{label}“ ist mehr als einmal definiert."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The language “{name}” has no negation, which a truth tree needs."
+msgstr "Die Sprache „{name}“ hat keine Negation, die ein Wahrheitsbaum aber braucht."
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The language has no symbol “{symbol}”."
@@ -4501,6 +4880,34 @@ msgstr "Der Referenzabschnitt braucht {expected} Tokens (eines pro Atom); gefund
 msgid "The role “{role}” needs {arity} arguments, but “{symbol}” takes {declared}."
 msgstr "Die Rolle „{role}“ braucht {arity} Argumente, aber „{symbol}“ nimmt {declared}."
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The root could not be written in the language."
+msgstr "Die Wurzel ließ sich in der Sprache nicht schreiben."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The root's rows are given, and cannot be changed."
+msgstr "Die Zeilen der Wurzel sind vorgegeben und können nicht geändert werden."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The rows a closure cites must be a sentence and its negation."
+msgstr "Die Zeilen, die ein Abschluss zitiert, müssen ein Satz und seine Negation sein."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The rows of one step must cite the same row."
+msgstr "Die Zeilen eines Schritts müssen dieselbe Zeile zitieren."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The rule for row {cited} does not split the branch."
+msgstr "Die Regel für Zeile {cited} verzweigt den Ast nicht."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The rule for row {cited} does not write this sentence."
+msgstr "Die Regel für Zeile {cited} schreibt diesen Satz nicht."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The rule for row {cited} splits the branch into {branches} branches."
+msgstr "Die Regel für Zeile {cited} verzweigt den Ast in {branches} Äste."
+
 #: src/worker/web/assignment-detail.tsx
 msgid "The saved form of this revision does not match what the compiler produces, so the content cannot be shown or answered."
 msgstr "Die gespeicherte Form dieser Revision entspricht nicht dem, was der Compiler erzeugt; der Inhalt kann daher weder angezeigt noch bearbeitet werden."
@@ -4568,6 +4975,22 @@ msgstr ""
 #: src/worker/exercises/world/strings.ts
 msgid "The table lists every block and can do everything the board does."
 msgstr "Die Tabelle führt jeden Block auf und kann alles, was das Brett kann."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The tree is missing a row of its root."
+msgstr "Dem Baum fehlt eine Zeile seiner Wurzel."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The tree is not finished: close every branch, or mark a complete open branch."
+msgstr "Der Baum ist nicht fertig: Schließen Sie jeden Ast oder markieren Sie einen vollständigen offenen Ast."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The tree is not right yet."
+msgstr "Der Baum stimmt noch nicht."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The tree is right."
+msgstr "Der Baum stimmt."
 
 #: src/worker/application/admin.ts
 #: src/worker/application/auth.ts
@@ -4640,9 +5063,17 @@ msgstr "Irgendwo steckt ein Fehler."
 msgid "These are pinned and have been changed: {objects}."
 msgstr "Diese sind fixiert und wurden geändert: {objects}."
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "These branches are not the ones the rule for row {cited} writes."
+msgstr "Diese Äste sind nicht die, die die Regel für Zeile {cited} schreibt."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "These options leave no cells for the student to fill."
 msgstr "Mit diesen Optionen bleiben keine Zellen zum Ausfüllen übrig."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "These trees have no rules for identity."
+msgstr "Diese Bäume haben keine Regeln für die Identität."
 
 #: src/worker/web/courses.tsx
 msgid "These values are currently recorded for this member."
@@ -4663,6 +5094,14 @@ msgstr "Diese Antwort enthält keine Welt."
 #: src/worker/web/assignment-detail.tsx
 msgid "This assignment is not accepting new attempts."
 msgstr "Diese Aufgabe nimmt keine neuen Versuche an."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "This branch has no rows."
+msgstr "Dieser Ast hat keine Zeilen."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "This branch is already ended. Reopen it to add to it."
+msgstr "Dieser Ast ist bereits beendet. Öffnen Sie ihn wieder, um etwas hinzuzufügen."
 
 #: src/worker/exercises/world/strings.ts
 msgid "This choice lost the game."
@@ -4777,6 +5216,14 @@ msgstr ""
 msgid "This is a {kind}, not a complete sentence."
 msgstr ""
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "This is not an instance of row {cited}."
+msgstr "Das ist keine Instanz von Zeile {cited}."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "This is not the sentence the exercise gives."
+msgstr "Das ist nicht der Satz, den die Aufgabe vorgibt."
+
 #: src/worker/application/submissions.ts
 msgid "This item does not record work."
 msgstr "Dieses Element erfasst keine Bearbeitungen."
@@ -4849,6 +5296,10 @@ msgstr "Dieses Modell erfüllt alles, was die Aufgabe verlangt."
 msgid "This row is a counterexample, but it isn't filled in correctly."
 msgstr "Diese Zeile ist ein Gegenbeispiel, aber sie ist nicht richtig ausgefüllt."
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "This row is empty: write a sentence on it, or delete it."
+msgstr "Diese Zeile ist leer: Schreiben Sie einen Satz hinein, oder löschen Sie sie."
+
 #: src/worker/exercises/truth-table/strings.ts
 msgid "This row is filled in correctly, but it doesn't satisfy the given conditions."
 msgstr "Diese Zeile ist richtig ausgefüllt, erfüllt aber die vorgegebenen Bedingungen nicht."
@@ -4861,9 +5312,17 @@ msgstr "Diese Zeile ist kein Gegenbeispiel."
 msgid "This row isn't filled in correctly yet."
 msgstr "Diese Zeile ist noch nicht richtig ausgefüllt."
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "This row repeats one its step already wrote."
+msgstr "Diese Zeile wiederholt eine, die ihr Schritt schon geschrieben hat."
+
 #: src/worker/exercises/aufbau-proof-fitch/strings.ts
 msgid "This rule takes its premises from a subproof — cite a range “a-b”, not line “{token}”."
 msgstr "Diese Regel bezieht ihre Prämissen aus einem Teilbeweis — zitieren Sie einen Bereich „a-b“, nicht die Zeile „{token}“."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "This step is missing a row: the rule for row {cited} writes more."
+msgstr "Diesem Schritt fehlt eine Zeile: Die Regel für Zeile {cited} schreibt mehr."
 
 #: src/worker/exercises/translation/strings.ts
 msgid "This submission is not in Conjunctive Normal Form."
@@ -4985,6 +5444,10 @@ msgstr "Gesamt"
 msgid "Translation"
 msgstr "Übersetzung"
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Tree actions"
+msgstr "Baumaktionen"
+
 #. A truth-table cell's value, spoken as part of the cell's accessible name: “Q, row 3: true”. Lowercase, mid-sentence.
 #: src/worker/exercises/truth-table/strings.ts
 msgid "true"
@@ -5004,6 +5467,11 @@ msgstr "Wahr in dieser Welt"
 msgid "Truth table"
 msgstr "Wahrheitstafel"
 
+#: src/worker/exercises/truth-tree/strings.ts
+#: src/worker/exercises/truth-tree/types.ts
+msgid "Truth tree"
+msgstr "Wahrheitsbaum"
+
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Turnstile"
 msgstr "Ableitbarkeitszeichen"
@@ -5020,6 +5488,14 @@ msgstr "Zwei Objekte stehen in Spalte {col}, Zeile {row}."
 #: src/worker/web/assignments.tsx
 msgid "Type"
 msgstr "Art"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Type row numbers, such as 3."
+msgstr "Geben Sie Zeilennummern ein, etwa 3."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Type the row it develops; Alt-C also works while writing the row"
+msgstr "Die Zeile eingeben, die sie entwickelt; Alt-C funktioniert auch, während Sie die Zeile schreiben"
 
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Type the rule that justifies each inference in the field beneath its line. Add hypothesis makes a leaf that cites one of the goal's hypotheses."
@@ -5043,6 +5519,7 @@ msgstr "Letzte Änderung rückgängig gemacht."
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
+#: src/worker/exercises/truth-tree/strings.ts
 #: src/worker/exercises/world/strings.ts
 msgid "Undo"
 msgstr "Rückgängig"
@@ -5052,9 +5529,17 @@ msgstr "Rückgängig"
 msgid "Undo (Ctrl-Z)"
 msgstr "Rückgängig (Strg-Z)"
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Undo or redo"
+msgstr "Rückgängig machen oder wiederherstellen"
+
 #: src/worker/exercises/world/strings.ts
 msgid "Undo the last change"
 msgstr "Letzte Änderung rückgängig machen"
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Undone."
+msgstr "Rückgängig gemacht."
 
 #: src/worker/application/content/diagnostic-strings.ts
 #: src/worker/logic/specs/strings.ts
@@ -5182,6 +5667,10 @@ msgstr "Den Prawitz-Beweiseditor benutzen"
 msgid "Using the proof tree editor"
 msgstr "Den Beweisbaum-Editor benutzen"
 
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Using the tree editor"
+msgstr "Den Baumeditor verwenden"
+
 #: src/worker/exercises/world/strings.ts
 msgid "Using the world editor"
 msgstr "Den Welt-Editor benutzen"
@@ -5280,6 +5769,18 @@ msgstr "Schreiben"
 #: src/worker/exercises/world/strings.ts
 msgid "Write a sentence first."
 msgstr "Schreiben Sie zuerst einen Satz."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Write each step's rows, choosing whether they stack on the branch or split it, and type the row they develop in the margin."
+msgstr "Schreiben Sie die Zeilen jedes Schritts, wählen Sie, ob sie am Ast angefügt werden oder ihn verzweigen, und geben Sie am Rand die Zeile ein, die sie entwickeln."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Write the root as one argument line or as a list of sentences, not both."
+msgstr "Schreiben Sie die Wurzel als eine Argumentzeile oder als Liste von Sätzen, nicht beides."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Write the row's sentence"
+msgstr "Den Satz der Zeile schreiben"
 
 #: src/worker/web/courses.tsx
 msgid "You are about to join a course with an enrollment link."

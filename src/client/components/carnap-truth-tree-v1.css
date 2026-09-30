@@ -1,0 +1,242 @@
+/*
+ * The truth-tree editor's own styles, appended to its shadow root once the
+ * island mounts: the cursor, the inline inputs, and the prompt and note
+ * lines. The tree itself is the tableau component's
+ * (`src/tableau/tableau.css`), already in the root.
+ */
+
+.truth-tree-editor {
+  display: grid;
+  gap: 0.6rem;
+}
+
+/* The proof tree's conventions: the cursor's row is tinted, and the ring is
+   a mode indicator, not a selection marker. It shows exactly when the arrow
+   keys move between rows, because that is what focus on a row means; typing
+   puts focus in its input, which the ring leaves, and Esc hands it back.
+   `:focus` rather than `:focus-visible`: the UA's modality heuristic hides
+   the ring after mouse-first input, and Esc out of an input is precisely
+   when it must appear.
+   A branch's end mark is an item the cursor rests on too, and looks it, and
+   so is a line's citation, once the arrows have gone on to it. */
+.tableau-row[role="treeitem"],
+.tableau-end[role="treeitem"],
+.tableau-margin[role="treeitem"] {
+  cursor: pointer;
+  outline: none;
+}
+
+.tableau-row[data-cursor],
+.tableau-end[data-cursor],
+.tableau-margin[data-cursor] {
+  background: var(--_accent-bg);
+}
+
+.tableau-row[role="treeitem"]:not([data-cursor]):hover,
+.tableau-end[role="treeitem"]:not([data-cursor]):hover {
+  background: var(--_inset-bg);
+}
+
+.tableau-row[role="treeitem"]:focus,
+.tableau-end[role="treeitem"]:focus,
+.tableau-margin[role="treeitem"]:focus {
+  outline: 2px solid var(--_accent);
+  outline-offset: 2px;
+}
+
+/* A row marked as one the branch closes on: the truth table's tint for the
+   row its counterexample is claimed on. Nothing else recedes. */
+.tableau-row[role="treeitem"][data-picked] {
+  background: color-mix(in srgb, var(--_highlight) 14%, transparent);
+}
+
+/* While closing, the circles are the only controls: the rows are there to
+   be read, and do not offer a click. */
+.tableau-grid:has(.tableau-pick)
+:is(.tableau-row, .tableau-end)[role="treeitem"] {
+  cursor: default;
+}
+
+.tableau-grid:has(.tableau-pick)
+  :is(.tableau-row, .tableau-end)[role="treeitem"]:not([data-cursor]):not(
+    [data-picked]
+  ):hover {
+  background: none;
+}
+
+/* While closing, each of the branch's rows has a circle beside its number,
+   as a truth table's rows have their counterexample radios. Two may be
+   ticked, so it is a checkbox drawn as the radio is: a ring, with a dot. */
+.tableau-number:has(.tableau-pick) {
+  align-items: center;
+  display: flex;
+  gap: 0.45rem;
+  justify-content: flex-end;
+}
+
+.tableau-pick {
+  appearance: none;
+  border: 1.5px solid var(--_accent-text);
+  border-radius: 50%;
+  cursor: pointer;
+  flex: none;
+  height: 1rem;
+  margin: 0;
+  width: 1rem;
+}
+
+.tableau-pick:checked {
+  background: radial-gradient(
+    circle,
+    var(--_accent-text) 0 45%,
+    transparent 50%
+  );
+}
+
+.tableau-pick:focus-visible {
+  outline: 2px solid var(--_accent);
+  outline-offset: 2px;
+}
+
+/* Room around the mark, as a row has around its sentence. */
+.tableau-end[role="treeitem"] {
+  border-radius: 4px;
+  padding-inline: 0.5rem;
+}
+
+/* The citation, selected: the row's shape. */
+.tableau-margin[role="treeitem"] {
+  border-radius: 4px;
+  justify-self: start;
+  padding-block: 0.15rem;
+  padding-right: 0.5rem;
+}
+
+/* An empty row, as the proof tree's empty field: a tinted, comfortably
+   clickable box, and an uncited step's margin as its empty rule field. The
+   zero-width space gives it a line box, without which the row would have no
+   height to click. Blank is unfinished, not wrong, so it never takes the
+   error squiggle. Typing in a blank keeps the box until the first
+   character, as the proof tree's field does. */
+.tableau-row[role="treeitem"] .tableau-text:empty,
+.tableau-margin-slot,
+:is(.tableau-input, .tableau-cite-input)[data-empty] {
+  background: var(--_accent-bg);
+  border-radius: 0.2rem;
+  display: inline-block;
+  min-width: 2.6ch;
+  outline: 1px dashed var(--_accent);
+  outline-offset: 1px;
+}
+
+.tableau-row[role="treeitem"] .tableau-text:empty::before,
+.tableau-margin-slot::before {
+  content: "\200B";
+}
+
+/* An empty row's box is its whole ground: the row's own tint, cursor or
+   hover, would spill past the box into the row's padding. The cursor's box
+   is drawn solid instead, so the cursor still shows. */
+.tableau-row[role="treeitem"]:has(> .tableau-text:empty, > [data-empty]),
+.tableau-margin[role="treeitem"]:has(.tableau-margin-slot) {
+  background: none;
+}
+
+.tableau-row[data-cursor] :is(.tableau-text:empty, [data-empty]),
+.tableau-margin[data-cursor] .tableau-margin-slot {
+  outline-style: solid;
+}
+
+/* The proof tree's rule slot is wider than its formula's. */
+.tableau-margin-slot {
+  min-width: 3.4ch;
+}
+
+/* A line whose margin a click cites from. */
+.tableau-margin[data-citable] {
+  cursor: pointer;
+}
+
+.tableau-margin[data-citable]:hover {
+  color: var(--_accent-text);
+}
+
+/* The inputs are drawn as the proof tree's fields being typed in: no border
+   and no ground of their own, so the row being typed in shows the cursor's
+   tint through its input, and the citation, as the proof tree's rule field,
+   sits on the page's. The caret says where typing goes; the ring stays the
+   row's. */
+.tableau-input,
+.tableau-cite-input {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  color: var(--_text);
+  font: inherit;
+  font-family: var(--_mono-font);
+  outline: none;
+  padding: 0 0.1rem;
+}
+
+.tableau-cite-input {
+  width: 3.5rem;
+}
+
+.tableau-cite-input[data-empty] {
+  width: 3.4ch;
+}
+
+.truth-tree-prompt input {
+  background: var(--_field-bg);
+  border: 0;
+  border-radius: 3px 3px 0 0;
+  box-shadow: inset 0 -2px 0 var(--_accent);
+  color: var(--_text);
+  font: inherit;
+  font-family: var(--_mono-font);
+  outline: none;
+  padding: 0.1rem 0.3rem;
+}
+
+.truth-tree-prompt input:focus {
+  outline: 2px solid var(--_accent);
+  outline-offset: 1px;
+}
+
+.truth-tree-prompt {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.truth-tree-prompt label {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
+.truth-tree-prompt input {
+  width: 6rem;
+}
+
+.truth-tree-prompt p {
+  color: var(--_text-muted);
+  margin: 0;
+}
+
+.truth-tree-prompt button {
+  background: var(--_field-bg);
+  border: 1px solid var(--_border);
+  border-radius: 0.3rem;
+  color: var(--_accent-text);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.2rem 0.6rem;
+}
+
+.truth-tree-note {
+  color: var(--_incorrect);
+  font-size: 0.9rem;
+  margin: 0;
+}

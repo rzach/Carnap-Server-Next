@@ -68,6 +68,7 @@ describe("showcase demo lesson", () => {
       "pf_scratch",
       "pz_scratch",
       "wd_left",
+      "tree_ubc",
     ]);
 
     // "Every" is the registry's every, so that a type registered after this
@@ -102,7 +103,7 @@ describe("showcase demo lesson", () => {
     const exercises = compiled.artifact.document.nodes.filter(
       (node) => node.kind === "exercise",
     );
-    expect(exercises).toHaveLength(22);
+    expect(exercises).toHaveLength(23);
   });
 
   test("the closing Fitch exercise is left for the student to finish", async () => {
