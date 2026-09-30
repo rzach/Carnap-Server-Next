@@ -1,6 +1,5 @@
 /* The toolbar is styled by toolbar-icons.css, shared with the Prawitz editor. */
 .tree-edit {
-  border-bottom: 1px dashed transparent;
   /* The formula face, whose contextual ligatures turn typed connectives like
      -> and <-> into → and ↔ in the rendered proof. */
   font-family: var(--_mono-font);
@@ -9,19 +8,14 @@
   padding: 0 0.1rem;
   white-space: pre;
 }
-.tree-edit:focus {
-  border-bottom-color: var(--_accent);
-}
 .tree-edit.is-selected {
   background: var(--_accent-bg);
 }
 .tree-edit.is-error {
-  border-bottom: 1px wavy var(--_incorrect);
   text-decoration: underline wavy var(--_incorrect);
 }
 /* A rule admitted with sorry!, where the exercise allows it. */
 .tree-edit.is-warning {
-  border-bottom: 1px wavy var(--_warning);
   text-decoration: underline wavy var(--_warning);
 }
 .tree-edit:not(.is-selected):not(.is-empty):hover {
@@ -30,7 +24,6 @@
 /* An unfilled conclusion/rule: a tinted, comfortably-clickable box. */
 .tree-edit.is-empty {
   background: var(--_accent-bg);
-  border-bottom-color: transparent;
   border-radius: 0.2rem;
   display: inline-block;
   min-height: 1.15em;

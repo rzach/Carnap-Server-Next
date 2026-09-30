@@ -8,7 +8,6 @@
   padding-left: 1rem;
 }
 .pz-edit {
-  border-bottom: 1px dashed transparent;
   /* An atomic inline box, not a run of inline text. This is what makes the
      text caret visible: a root line's .pz-node wrapper is itself inline (its
      proof-proposition is the flex item, so only the proposition gets
@@ -29,14 +28,10 @@
   padding: 0 0.1rem;
   white-space: pre;
 }
-.pz-edit:focus {
-  border-bottom-color: var(--_accent);
-}
 .pz-edit.is-selected {
   background: var(--_accent-bg);
 }
 .pz-edit.is-error {
-  border-bottom: 1px wavy var(--_incorrect);
   text-decoration: underline wavy var(--_incorrect);
 }
 .pz-edit:not(.is-selected):not(.is-empty):hover {
@@ -45,7 +40,6 @@
 /* An unfilled field: a tinted, comfortably-clickable box. */
 .pz-edit.is-empty {
   background: var(--_accent-bg);
-  border-bottom-color: transparent;
   border-radius: 0.2rem;
   min-height: 1.15em;
   min-width: 2.6ch;
