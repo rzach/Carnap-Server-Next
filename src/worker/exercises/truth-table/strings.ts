@@ -147,7 +147,7 @@ export function buildTruthTableStrings(i18n: Translator) {
       {},
       {
         comment:
-          "Disambiguating id; only the word Incorrect is shown. The verdict on a single cell of a marked truth table.",
+          "Disambiguating id; only the word Incorrect is shown. The verdict on a single cell of a marked truth table, read beside the cell's value: use a word that cannot be heard as the value “false”.",
         message: "Incorrect",
       },
     ),
