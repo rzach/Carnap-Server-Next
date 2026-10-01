@@ -133,50 +133,70 @@ describe("createHelpDialog", () => {
 });
 
 /**
- * A swipe over an open dialog must not scroll the page behind it. In a lesson
- * the dialog is in the content frame, which never scrolls; the page around the
- * frame does, so the hold has to reach out of the frame to it.
+ * A wheel or a swipe over an open dialog must not scroll the page behind it.
+ * In a lesson the dialog is in the content frame, which never scrolls; the page
+ * around the frame does, so the hold has to reach out of the frame to it.
  */
 describe("holdPageStill", () => {
-  function framedDialog(pointer: "coarse" | "fine") {
+  function framedDialog(pageScrolls: boolean) {
     const frame = domDocument.createElement("iframe");
     domDocument.body.appendChild(frame);
 
     const framed = frame.contentWindow as unknown as Window;
-    Object.assign(framed, {
-      matchMedia: (query: string) => ({
-        matches: query === `(pointer: ${pointer})`,
-      }),
-    });
     // What the page does to a frame it has sized to fit.
     framed.document.documentElement.style.overflow = "hidden";
 
     const dialog = framed.document.createElement("dialog");
     framed.document.body.appendChild(dialog);
 
-    return { dialog, frame, framed, page: domDocument.documentElement };
+    // jsdom lays nothing out, so every height is 0: say how tall the page is.
+    const page = domDocument.documentElement;
+    Object.defineProperty(page, "scrollHeight", {
+      configurable: true,
+      value: pageScrolls ? 3000 : 600,
+    });
+    Object.defineProperty(page, "clientHeight", {
+      configurable: true,
+      value: 600,
+    });
+
+    return {
+      dialog,
+      framed,
+      page,
+      remove: () => {
+        frame.remove();
+        Reflect.deleteProperty(page, "scrollHeight");
+        Reflect.deleteProperty(page, "clientHeight");
+      },
+    };
   }
 
-  test("holds the frame and the page around it until the dialog closes", () => {
-    const { dialog, frame, framed, page } = framedDialog("coarse");
+  test("holds the page around the frame, gutter and all, until the dialog closes", () => {
+    const { dialog, framed, page, remove } = framedDialog(true);
 
     holdPageStill(dialog);
 
     expect(page.style.overflow).toBe("hidden");
+    expect(page.style.scrollbarGutter).toBe("stable");
+    // The frame never scrolls, so it is not held, and gets no gutter.
+    expect(framed.document.documentElement.style.scrollbarGutter).toBe("");
 
     dialog.dispatchEvent(new Event("close"));
 
     expect(page.style.overflow).toBe("");
+    expect(page.style.scrollbarGutter).toBe("");
     expect(framed.document.documentElement.style.overflow).toBe("hidden");
-    frame.remove();
+    remove();
   });
 
-  test("leaves the page alone under a mouse", () => {
-    const { dialog, frame, page } = framedDialog("fine");
+  test("leaves a page that does not scroll alone", () => {
+    const { dialog, page, remove } = framedDialog(false);
 
     holdPageStill(dialog);
 
     expect(page.style.overflow).toBe("");
-    frame.remove();
+    expect(page.style.scrollbarGutter).toBe("");
+    remove();
   });
 });

@@ -382,49 +382,65 @@ export function openHelpDialog(
 }
 
 /**
- * Keep a swipe over an open dialog from scrolling the page behind it.
+ * Keep the page behind an open dialog from scrolling.
  *
- * A modal makes the page inert, not still: a swipe on the backdrop, or one
- * that runs past the end of the panel's own scroll, carries on to whatever
- * scrolls underneath. Inside the content frame that is not this document — the
- * frame is sized to the whole lesson and never scrolls (`CONTENT_FRAME_SCRIPT`
- * in `src/worker/web/layout-scripts.ts`) — but the page around it, which drags
- * the panel away with the lesson. So every document out to the top gets
- * `overflow: hidden` until the dialog closes, which leaves each scroll position
- * where it was. `chrome.css` does the same for the page's own modals.
+ * A modal makes the page inert, not still: a wheel or a swipe on the backdrop,
+ * or one that runs past the end of the panel's own scroll, carries on to
+ * whatever scrolls underneath. Inside the content frame that is not this
+ * document — the frame is sized to the whole lesson and never scrolls
+ * (`CONTENT_FRAME_SCRIPT` in `src/worker/web/layout-scripts.ts`) — but the page
+ * around it, which drags the panel away with the lesson. So every document out
+ * to the top that scrolls gets `overflow: hidden` until the dialog closes,
+ * which leaves each scroll position where it was. `SHOW_MODAL_HELD` there does
+ * the same for the page's own modals.
  *
- * Touch screens only. A wheel over a backdrop scrolling the page is every
- * desktop browser's default and has not been a problem, and hiding a classic
- * scrollbar would shift the page sideways by its width.
+ * Hiding the overflow takes a classic scrollbar away, which would widen the
+ * page and shift it sideways; `scrollbar-gutter: stable` keeps the scrollbar's
+ * strip while the dialog is open, so nothing moves, fixed-position elements
+ * included. A document that does not scroll is left alone: it has no scrollbar
+ * to keep, and reserving a gutter it never had would shift it the other way.
  */
 export function holdPageStill(dialog: HTMLDialogElement): void {
   const own = dialog.ownerDocument.defaultView;
 
-  if (own === null || !own.matchMedia("(pointer: coarse)").matches) {
+  if (own === null) {
     return;
   }
 
-  const windows = [
-    own,
-    ...Array.from(framesAbove(own), ({ above }) => above),
-  ];
-  const held = windows.map(({ document }) => ({
-    overflow: document.documentElement.style.overflow,
-    root: document.documentElement,
-  }));
+  const held = [own, ...Array.from(framesAbove(own), ({ above }) => above)]
+    .filter(scrolls)
+    .map(({ document }) => ({
+      gutter: document.documentElement.style.scrollbarGutter,
+      overflow: document.documentElement.style.overflow,
+      root: document.documentElement,
+    }));
 
   for (const { root } of held) {
     root.style.overflow = "hidden";
+    root.style.scrollbarGutter = "stable";
   }
 
   dialog.addEventListener(
     "close",
     () => {
-      for (const { overflow, root } of held) {
+      for (const { gutter, overflow, root } of held) {
         root.style.overflow = overflow;
+        root.style.scrollbarGutter = gutter;
       }
     },
     { once: true },
+  );
+}
+
+/** Whether a window's page scrolls: overflowing, and not already held. */
+function scrolls(win: Window): boolean {
+  const root = win.document.documentElement;
+  const { overflowY } = win.getComputedStyle(root);
+
+  return (
+    overflowY !== "hidden" &&
+    overflowY !== "clip" &&
+    root.scrollHeight > root.clientHeight
   );
 }
 

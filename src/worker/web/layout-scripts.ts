@@ -25,8 +25,54 @@ import {
  * complete before the first line executes.
  */
 
-const DIALOG_SCRIPT = `
+/**
+ * `showModal`, holding the page behind the dialog still while it is open.
+ *
+ * A modal makes the page inert, not still: a wheel or a swipe over the
+ * backdrop, or past the end of a tall dialog's own scroll, carries on and
+ * scrolls the page underneath. Hiding the root's overflow holds it where it
+ * was, and `scrollbar-gutter: stable` keeps a classic scrollbar's strip so the
+ * page — fixed-position elements too — does not shift sideways into the room it
+ * left. A page that does not scroll is left alone: there is nothing to hold,
+ * and reserving a gutter it never had would shift it the other way.
+ *
+ * The exercises' help dialog does the same through the frames it sits in
+ * (`holdPageStill` in `client/components/help-dialog.ts`). Interpolated into
+ * each script that opens a modal, since each is its own IIFE.
+ */
+const SHOW_MODAL_HELD = `
+  const showModalHeld = (dialog) => {
+    dialog.showModal();
+
+    const root = document.documentElement;
+    const { overflowY } = getComputedStyle(root);
+
+    if (
+      overflowY === "hidden" ||
+      overflowY === "clip" ||
+      root.scrollHeight <= root.clientHeight
+    ) {
+      return;
+    }
+
+    const { overflow, scrollbarGutter } = root.style;
+    root.style.overflow = "hidden";
+    root.style.scrollbarGutter = "stable";
+
+    dialog.addEventListener(
+      "close",
+      () => {
+        root.style.overflow = overflow;
+        root.style.scrollbarGutter = scrollbarGutter;
+      },
+      { once: true },
+    );
+  };`;
+
+export const DIALOG_SCRIPT = `
 (() => {
+${SHOW_MODAL_HELD}
+
   // Click-outside-to-dismiss is not native to <dialog>. A modal paints its own
   // backdrop, so a click there targets the dialog element itself while a click
   // on the panel targets something inside it. The press has to have landed on
@@ -67,13 +113,15 @@ const DIALOG_SCRIPT = `
     const dialog = document.getElementById(targetId);
 
     if (dialog instanceof HTMLDialogElement) {
-      dialog.showModal();
+      showModalHeld(dialog);
     }
   });
 })();`;
 
-const CONFIRM_SUBMIT_SCRIPT = `
+export const CONFIRM_SUBMIT_SCRIPT = `
 (() => {
+${SHOW_MODAL_HELD}
+
   // A form naming a dialog in data-confirm-dialog does not submit on the
   // first attempt: the dialog opens in its place, and only its confirm
   // button — data-confirm-submit naming the form's id — sends the real
@@ -99,7 +147,7 @@ const CONFIRM_SUBMIT_SCRIPT = `
     }
 
     event.preventDefault();
-    dialog.showModal();
+    showModalHeld(dialog);
   });
 
   document.addEventListener("click", (event) => {

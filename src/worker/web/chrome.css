@@ -1085,18 +1085,6 @@ th > .column-sort:hover {
   );
 }
 
-/* A modal makes the page inert, not still: on a touch screen a swipe over the
-   backdrop, or past the end of a tall dialog's own scroll, would carry on and
-   scroll the page underneath. Hiding the root's overflow holds it where it
-   was. Touch only, as the exercises' help dialog does it (`holdPageStill` in
-   `client/components/help-dialog.ts`): a desktop wheel over a backdrop is the
-   browser's default, and a hidden classic scrollbar would shift the page. */
-@media (pointer: coarse) {
-  :root:has(dialog:modal) {
-    overflow: hidden;
-  }
-}
-
 /* A body's form is a column on one rhythm: the gap spaces every field, note
    and button alike, so the content layer's per-element top margins (and the
    container a modal happens to be rendered in) have no say. */
