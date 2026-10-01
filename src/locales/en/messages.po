@@ -2543,10 +2543,6 @@ msgstr "Instructors cannot deactivate their own instructor membership."
 msgid "Instructors have full access to course controls, including assignments, members, grades and settings."
 msgstr "Instructors have full access to course controls, including assignments, members, grades and settings."
 
-#: src/worker/web/labels.ts
-msgid "Invited"
-msgstr "Invited"
-
 #: src/worker/application/lti-admin.ts
 #: src/worker/web/admin-lti.tsx
 msgid "Issuer"

@@ -1725,20 +1725,8 @@ export class LtiService {
     );
 
     if (existing !== null) {
-      // The launch proves the person's identity, so an invited membership
-      // can activate; but a role or status set inside Carnap is otherwise
-      // authoritative — later launches never rewrite it.
-      if (existing.status === "invited") {
-        await this.options.stores.courses.updateMembershipStatus({
-          courseId,
-          membershipId: existing.id,
-          status: "active",
-          updatedAt: timestampNow(nowDate),
-        });
-
-        return existing.role;
-      }
-
+      // A role or status set inside Carnap is authoritative — later launches
+      // never rewrite it, so a suspended or dropped member stays out.
       if (existing.status !== "active") {
         throw new LtiLaunchError(
           "lti_membership_inactive",

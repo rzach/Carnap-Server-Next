@@ -11,7 +11,6 @@ export type CourseRole = (typeof COURSE_ROLES)[number];
 
 export const MEMBERSHIP_STATUSES = [
   "active",
-  "invited",
   "suspended",
   "dropped",
 ] as const;

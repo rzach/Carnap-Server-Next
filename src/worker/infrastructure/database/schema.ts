@@ -140,7 +140,7 @@ export const courseMemberships = sqliteTable(
       enum: ["student", "teacher_assistant", "instructor"],
     }).notNull(),
     status: text("status", {
-      enum: ["active", "invited", "suspended", "dropped"],
+      enum: ["active", "suspended", "dropped"],
     }).notNull(),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),

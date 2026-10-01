@@ -566,7 +566,7 @@ describe("native web workflow", () => {
       // beside their role, and sorts after the active members of that role.
       expect(roster).not.toContain('scope="col">Status</th>');
       expect(roster).toContain(
-        '<td data-sort-value="2">Student <span class="status-badge ' +
+        '<td data-sort-value="1">Student <span class="status-badge ' +
           'status-badge-danger">Suspended</span></td>',
       );
       expect(roster.match(/<span class="status-badge/g)?.length).toBe(1);

@@ -124,8 +124,6 @@ export function membershipStatusLabel(
       return i18n.t("Active");
     case "dropped":
       return i18n.t("Dropped");
-    case "invited":
-      return i18n.t("Invited");
     case "suspended":
       return i18n.t("Suspended");
   }

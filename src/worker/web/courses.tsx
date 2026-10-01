@@ -103,17 +103,16 @@ function supportedTimezones(): readonly string[] {
 
 const MEMBERSHIP_STATUS_TONES: Record<
   Exclude<CourseMembership["status"], "active">,
-  "danger" | "neutral" | "warn"
+  "danger" | "neutral"
 > = {
   dropped: "neutral",
-  invited: "warn",
   suspended: "danger",
 };
 
 /**
  * A membership's status, shown beside its role only when it is not the usual
  * one. Nearly every row is active, and a column saying so on each of them
- * buried the invited or suspended member it was there to point out.
+ * buried the suspended or dropped member it was there to point out.
  */
 const MembershipStatusBadge: FC<{
   readonly status: CourseMembership["status"];

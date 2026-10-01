@@ -2543,10 +2543,6 @@ msgstr "Lehrpersonen können ihre eigene Mitgliedschaft als Lehrperson nicht dea
 msgid "Instructors have full access to course controls, including assignments, members, grades and settings."
 msgstr "Lehrende haben vollen Zugriff auf die Kursverwaltung, einschließlich Aufgaben, Mitgliedern, Noten und Einstellungen."
 
-#: src/worker/web/labels.ts
-msgid "Invited"
-msgstr "Eingeladen"
-
 #: src/worker/application/lti-admin.ts
 #: src/worker/web/admin-lti.tsx
 msgid "Issuer"
