@@ -16,6 +16,7 @@
  * spent. Nothing of them is left visible — the `(?)` is the whole affordance.
  */
 
+import dialogStyles from "../../worker/web/dialog.css" with { type: "text" };
 import helpDialogStyles from "./help-dialog.css" with { type: "text" };
 import { createToolbarIcon, type ToolbarIconName } from "./toolbar-icons";
 
@@ -74,7 +75,7 @@ export function createHelpDialog(
   content: HelpDialogContent,
 ): HTMLDialogElement {
   const dialog = document.createElement("dialog");
-  dialog.className = "help-dialog";
+  dialog.className = "help-dialog dialog-panel";
 
   const titleId = "help-dialog-title";
   // Ids inside a shadow root are scoped to it, so this cannot collide with the
@@ -82,16 +83,16 @@ export function createHelpDialog(
   dialog.setAttribute("aria-labelledby", titleId);
 
   const header = document.createElement("div");
-  header.className = "help-dialog-header";
+  header.className = "dialog-header";
 
   const heading = document.createElement("h2");
-  heading.className = "help-dialog-title";
+  heading.className = "dialog-title";
   heading.id = titleId;
   heading.textContent = content.title;
   header.appendChild(heading);
 
   const dismiss = document.createElement("button");
-  dismiss.className = "help-dialog-close";
+  dismiss.className = "dialog-close";
   dismiss.type = "button";
   dismiss.setAttribute("aria-label", content.close);
   dismiss.title = content.close;
@@ -102,7 +103,7 @@ export function createHelpDialog(
   dialog.appendChild(header);
 
   const body = document.createElement("div");
-  body.className = "help-dialog-body";
+  body.className = "dialog-body help-dialog-body";
 
   for (const paragraph of content.intro) {
     const element = document.createElement("p");
@@ -427,5 +428,9 @@ export function holdPageStill(dialog: HTMLDialogElement): void {
   );
 }
 
-/** The look; the prose is in the stylesheet, with the rules. */
-export const HELP_DIALOG_STYLES = helpDialogStyles;
+/**
+ * The look: the frame every dialog shares (`web/dialog.css`, the page chrome's, which the
+ * page's modals wear too), then what is this panel's own. The prose is in the
+ * stylesheets, with the rules.
+ */
+export const HELP_DIALOG_STYLES = `${dialogStyles}\n${helpDialogStyles}`;

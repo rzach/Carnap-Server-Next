@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import { raw } from "hono/html";
 import type { FC } from "hono/jsx";
 
 import type {
@@ -368,6 +369,14 @@ const ResultExercise: FC<{ readonly entry: SubmissionHistoryEntry }> = ({
           </span>
         )}
       </div>
+      {/* The question as the lesson asked it, so the answer below reads
+          with its context. Compiled and sanitized at save time, as it is in
+          the lesson. */}
+      {entry.exercisePromptHtml === null ? null : (
+        <div class="result-exercise-prompt">
+          {raw(entry.exercisePromptHtml)}
+        </div>
+      )}
       {entry.answerReview === null ? null : (
         <AnswerReview review={entry.answerReview} />
       )}

@@ -547,6 +547,52 @@ export const CreateBar: FC<{
  * natural group) and shares a form with these, since that is where the script
  * looks — so a page with one such form per row needs no ids.
  */
+/**
+ * A page modal: the shared dialog frame (`web/dialog.css`, which the
+ * exercises' help panel wears too) with a titled header strip, a close
+ * button, and the body under it. Opened by a `data-dialog-target` trigger
+ * (see the layout's dialog script); Escape and a click on the backdrop close
+ * it too.
+ *
+ * The close button has a form of its own, `method="dialog"`, beside the
+ * body's forms rather than inside one: closing is not a submission, so it
+ * needs no `formnovalidate` and cannot pick up a form's button spacing. The
+ * title names the dialog for assistive technology.
+ */
+export const ModalDialog: FC<{
+  readonly children: Child;
+  readonly id: string;
+  readonly title: Child;
+}> = ({ children, id, title }) => {
+  const i18n = useI18n();
+  const titleId = `${id}-title`;
+
+  return (
+    <dialog
+      aria-labelledby={titleId}
+      class="modal-dialog dialog-panel"
+      id={id}
+    >
+      <header class="dialog-header">
+        <h2 class="dialog-title" id={titleId}>
+          {title}
+        </h2>
+        <form method="dialog">
+          <button
+            aria-label={i18n.t("Close")}
+            class="dialog-close"
+            title={i18n.t("Close")}
+            type="submit"
+          >
+            ×
+          </button>
+        </form>
+      </header>
+      <div class="dialog-body">{children}</div>
+    </dialog>
+  );
+};
+
 export const ChoiceNotes: FC<{
   readonly group: string;
   readonly notes: readonly {

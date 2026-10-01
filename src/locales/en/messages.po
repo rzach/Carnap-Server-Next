@@ -568,10 +568,6 @@ msgstr "A world may hold at most {max} objects."
 msgid "Access token URL"
 msgstr "Access token URL"
 
-#: src/worker/web/courses.tsx
-msgid "Accommodation limits"
-msgstr "Accommodation limits"
-
 #: src/worker/routes/courses.ts
 msgid "Accommodation not saved"
 msgstr "Accommodation not saved"
@@ -1302,9 +1298,7 @@ msgid "Clone course"
 msgstr "Clone course"
 
 #: src/worker/exercises/truth-tree/strings.ts
-#: src/worker/web/assignment-detail.tsx
-#: src/worker/web/content.tsx
-#: src/worker/web/courses.tsx
+#: src/worker/web/components.tsx
 msgid "Close"
 msgstr "Close"
 
@@ -1647,8 +1641,8 @@ msgid "Course role is not supported."
 msgstr "Course role is not supported."
 
 #: src/worker/web/courses.tsx
-msgid "Course roles and membership states. Promote a member to staff or adjust their access from the manage control. The course owner is marked with a crown."
-msgstr "Course roles and membership states. Promote a member to staff or adjust their access from the manage control. The course owner is marked with a crown."
+msgid "Course roles and membership states. The course owner is marked with a crown."
+msgstr "Course roles and membership states. The course owner is marked with a crown."
 
 #: src/worker/web/gradebook.tsx
 msgid "Course scores across published assignments."
@@ -5692,10 +5686,6 @@ msgstr "Value must be greater than zero."
 msgid "Verified {when}"
 msgstr "Verified {when}"
 
-#: src/worker/web/admin.tsx
-msgid "View full audit log"
-msgstr "View full audit log"
-
 #: src/worker/web/components.tsx
 msgid "View this course as"
 msgstr "View this course as"
@@ -5949,10 +5939,6 @@ msgstr "Your sentence"
 #: src/worker/routes/lti.ts
 msgid "Your session has expired. Start the content selection again from your LMS."
 msgstr "Your session has expired. Start the content selection again from your LMS."
-
-#: src/worker/web/courses.tsx
-msgid "Your status"
-msgstr "Your status"
 
 #: src/worker/exercises/translation/strings.ts
 msgid "Your translation"

@@ -52,6 +52,25 @@ export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * The exercise's prompt as its author wrote it, rendered and sanitized at
+ * compile time. Every type keeps it in its public data as `promptHtml` (a
+ * contract test pins that), so pages that show an exercise outside its
+ * lesson, like the student results page, can read it without asking the type.
+ * Null where stored public data has no prompt, or an empty one.
+ */
+export function exercisePromptHtml(publicData: JsonValue): string | null {
+  if (!isObject(publicData)) {
+    return null;
+  }
+
+  const prompt = publicData.promptHtml;
+
+  return typeof prompt === "string" && prompt.trim().length > 0
+    ? prompt
+    : null;
+}
+
 export function isStringArray(value: JsonValue): value is string[] {
   return (
     Array.isArray(value) && value.every((item) => typeof item === "string")

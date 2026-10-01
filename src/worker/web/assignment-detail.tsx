@@ -68,6 +68,7 @@ import {
   CsrfInput,
   ErrorSummary,
   LinkStrip,
+  ModalDialog,
   Notice,
   PointsDriftNote,
   Sheet,
@@ -1348,14 +1349,11 @@ const CorrectionForms: FC<{
           matter, so the ordinary no-grades repoint stays one click. Without
           JS the form posts directly, like every enhancement in the shell. */}
       {gradedWorkExists ? (
-        <dialog class="modal-dialog" id="confirm-correction">
+        <ModalDialog
+          id="confirm-correction"
+          title={i18n.t("Publish this correction?")}
+        >
           <form method="dialog">
-            <header class="modal-dialog-header">
-              <h3>{i18n.t("Publish this correction?")}</h3>
-              <button aria-label={i18n.t("Close")} type="submit">
-                ×
-              </button>
-            </header>
             <p>
               {i18n.t(
                 "Scores have already been recorded on this assignment. A correction keeps each recorded score and the points it was graded out of; assignment totals will count every exercise at the new revision's points.",
@@ -1370,7 +1368,7 @@ const CorrectionForms: FC<{
               </button>
             </div>
           </form>
-        </dialog>
+        </ModalDialog>
       ) : null}
       <div class="correction-bars">
         <form
@@ -1541,23 +1539,15 @@ const OverrideDialog: FC<{
   const name = userDisplayName(i18n, user, membership.userId);
 
   return (
-    <dialog class="modal-dialog" id={`override-${membership.id}`}>
+    <ModalDialog
+      id={`override-${membership.id}`}
+      title={i18n.t("Override for {name}", { name })}
+    >
       <form
         action={`/courses/${courseId}/instructor/assignments/${assignmentId}/overrides`}
         method="post"
       >
         <CsrfInput context={context} />
-        <header class="modal-dialog-header">
-          <h3>{i18n.t("Override for {name}", { name })}</h3>
-          <button
-            aria-label={i18n.t("Close")}
-            formmethod="dialog"
-            formnovalidate
-            type="submit"
-          >
-            ×
-          </button>
-        </header>
         <p class="small">
           {i18n.t(
             "Leave a field blank to keep the assignment default for this student.",
@@ -1603,7 +1593,7 @@ const OverrideDialog: FC<{
         </div>
         <button type="submit">{i18n.t("Save override")}</button>
       </form>
-    </dialog>
+    </ModalDialog>
   );
 };
 

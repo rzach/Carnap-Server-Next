@@ -568,10 +568,6 @@ msgstr ""
 msgid "Access token URL"
 msgstr ""
 
-#: src/worker/web/courses.tsx
-msgid "Accommodation limits"
-msgstr ""
-
 #: src/worker/routes/courses.ts
 msgid "Accommodation not saved"
 msgstr ""
@@ -1302,9 +1298,7 @@ msgid "Clone course"
 msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts
-#: src/worker/web/assignment-detail.tsx
-#: src/worker/web/content.tsx
-#: src/worker/web/courses.tsx
+#: src/worker/web/components.tsx
 msgid "Close"
 msgstr ""
 
@@ -1647,7 +1641,7 @@ msgid "Course role is not supported."
 msgstr ""
 
 #: src/worker/web/courses.tsx
-msgid "Course roles and membership states. Promote a member to staff or adjust their access from the manage control. The course owner is marked with a crown."
+msgid "Course roles and membership states. The course owner is marked with a crown."
 msgstr ""
 
 #: src/worker/web/gradebook.tsx
@@ -5692,10 +5686,6 @@ msgstr ""
 msgid "Verified {when}"
 msgstr ""
 
-#: src/worker/web/admin.tsx
-msgid "View full audit log"
-msgstr ""
-
 #: src/worker/web/components.tsx
 msgid "View this course as"
 msgstr ""
@@ -5948,10 +5938,6 @@ msgstr ""
 
 #: src/worker/routes/lti.ts
 msgid "Your session has expired. Start the content selection again from your LMS."
-msgstr ""
-
-#: src/worker/web/courses.tsx
-msgid "Your status"
 msgstr ""
 
 #: src/worker/exercises/translation/strings.ts

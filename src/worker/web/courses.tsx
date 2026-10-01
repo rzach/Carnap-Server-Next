@@ -34,6 +34,7 @@ import {
   CsrfInput,
   ErrorSummary,
   LinkStrip,
+  ModalDialog,
   Notice,
   Sheet,
   StatusBadge,
@@ -314,32 +315,21 @@ const AccommodationDialog: FC<{
       : i18n.t("These values are currently recorded for this member.");
 
   return (
-    <dialog class="modal-dialog" id={dialogId}>
+    <ModalDialog
+      id={dialogId}
+      title={i18n.t("Accommodations for {name}", {
+        name: userDisplayName(
+          i18n,
+          directory.get(membership.userId) ?? null,
+          membership.userId,
+        ),
+      })}
+    >
       <form action={`/courses/${courseId}/accommodations`} method="post">
         <CsrfInput context={context} />
-        <header class="modal-dialog-header">
-          <h3>
-            {i18n.t("Accommodations for {name}", {
-              name: userDisplayName(
-                i18n,
-                directory.get(membership.userId) ?? null,
-                membership.userId,
-              ),
-            })}
-          </h3>
-          <button
-            aria-label={i18n.t("Close")}
-            formmethod="dialog"
-            formnovalidate
-            type="submit"
-          >
-            ×
-          </button>
-        </header>
         <p class="small">{description}</p>
         <input name="userId" type="hidden" value={membership.userId} />
-        <fieldset class="input-group">
-          <legend>{i18n.t("Accommodation limits")}</legend>
+        <div class="field-grid">
           <label>
             {i18n.t("Due extension minutes")}
             <br />
@@ -381,10 +371,10 @@ const AccommodationDialog: FC<{
               value={accommodation?.timeLimitMultiplier ?? 1}
             />
           </label>
-        </fieldset>
+        </div>
         <button type="submit">{i18n.t("Save accommodation")}</button>
       </form>
-    </dialog>
+    </ModalDialog>
   );
 };
 
@@ -461,31 +451,21 @@ const MemberManageDialog: FC<{
   const i18n = useI18n();
 
   return (
-    <dialog class="modal-dialog" id={dialogId}>
+    <ModalDialog
+      id={dialogId}
+      title={i18n.t("Membership for {name}", {
+        name: userDisplayName(
+          i18n,
+          directory.get(membership.userId) ?? null,
+          membership.userId,
+        ),
+      })}
+    >
       <form
         action={`/courses/${courseId}/memberships/${membership.id}`}
         method="post"
       >
         <CsrfInput context={context} />
-        <header class="modal-dialog-header">
-          <h3>
-            {i18n.t("Membership for {name}", {
-              name: userDisplayName(
-                i18n,
-                directory.get(membership.userId) ?? null,
-                membership.userId,
-              ),
-            })}
-          </h3>
-          <button
-            aria-label={i18n.t("Close")}
-            formmethod="dialog"
-            formnovalidate
-            type="submit"
-          >
-            ×
-          </button>
-        </header>
         <p class="small">
           {i18n.t(
             "Promote a member to course staff by raising their role. Suspending or dropping a member keeps their record but removes their active access.",
@@ -526,7 +506,7 @@ const MemberManageDialog: FC<{
         </label>
         <button type="submit">{i18n.t("Update membership")}</button>
       </form>
-    </dialog>
+    </ModalDialog>
   );
 };
 
@@ -1052,20 +1032,9 @@ const CourseEditDialog: FC<{
   const i18n = useI18n();
 
   return (
-    <dialog class="modal-dialog" id={dialogId}>
+    <ModalDialog id={dialogId} title={i18n.t("Edit course")}>
       <form action={`/courses/${course.id}`} method="post">
         <CsrfInput context={context} />
-        <header class="modal-dialog-header">
-          <h3>{i18n.t("Edit course")}</h3>
-          <button
-            aria-label={i18n.t("Close")}
-            formmethod="dialog"
-            formnovalidate
-            type="submit"
-          >
-            ×
-          </button>
-        </header>
         <label>
           {i18n.t("Title")}
           <br />
@@ -1106,7 +1075,7 @@ const CourseEditDialog: FC<{
             : i18n.t("Unarchive course")}
         </button>
       </form>
-    </dialog>
+    </ModalDialog>
   );
 };
 
@@ -1419,13 +1388,11 @@ export function renderCourseDetail(
         ) : undefined
       }
       summary={
-        // Two statuses, each said whose it is. The course's own comes first
-        // and exists in both states: it is what an instructor checks after
-        // archiving, and a cell that appeared only once a course was archived
-        // would leave a reader who saw no change with nothing to read. The
-        // membership's used to be the only one here, labelled plainly
-        // "Status" — so archiving a course left the page's one status still
-        // reading "Active", which is a true fact about the wrong thing.
+        // The course's status exists in both states: it is what an instructor
+        // checks after archiving, and a cell that appeared only once a course
+        // was archived would leave a reader who saw no change with nothing to
+        // read. The reader's own membership status is not here: only an
+        // active member reaches this page, so it could only ever say "Active".
         <SummaryStrip
           items={[
             { label: i18n.t("Timezone"), value: model.course.timezone },
@@ -1439,10 +1406,6 @@ export function renderCourseDetail(
             {
               label: i18n.t("Your role"),
               value: courseRoleLabel(i18n, model.membership.role),
-            },
-            {
-              label: i18n.t("Your status"),
-              value: membershipStatusLabel(i18n, model.membership.status),
             },
           ]}
         />
@@ -1522,7 +1485,7 @@ export function renderCourseDetail(
         content={
           <Sheet
             description={i18n.t(
-              "Course roles and membership states. Promote a member to staff or adjust their access from the manage control. The course owner is marked with a crown.",
+              "Course roles and membership states. The course owner is marked with a crown.",
             )}
             footer={
               <AddStaffBar context={context} courseId={model.course.id} />

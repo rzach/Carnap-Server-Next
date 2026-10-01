@@ -600,9 +600,6 @@ export function renderAdminDashboard(
         title={i18n.t("Recent audit activity")}
       >
         <AuditTable directory={model.directory} events={model.auditEvents} />
-        <p>
-          <a href="/admin/audit">{i18n.t("View full audit log")}</a>
-        </p>
       </Sheet>
     </>,
   );

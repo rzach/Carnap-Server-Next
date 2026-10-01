@@ -1053,6 +1053,10 @@ Choose yes.
       // Named by the title the student met it under, not the source id.
       expect(hiddenResultsHtml).toContain("<strong>Say yes</strong>");
       expect(hiddenResultsHtml).not.toContain("<strong>q1</strong>");
+      // With the question it answers, as the lesson asked it.
+      expect(hiddenResultsHtml).toContain(
+        '<div class="result-exercise-prompt"><p>Choose yes.</p>',
+      );
       expect(hiddenResultsHtml).not.toContain("2/2");
 
       const releasePath = `/courses/${courseId}/instructor/assignments/${assignmentId}/grade-visibility`;

@@ -5,6 +5,7 @@ import exerciseStyles from "../exercise-kit/exercise.css" with {
 import { EXERCISE_GROUP_STYLES } from "../exercise-kit/group";
 import chromeStyles from "./chrome.css" with { type: "text" };
 import contentStyles from "./content.css" with { type: "text" };
+import dialogStyles from "./dialog.css" with { type: "text" };
 import { MATH_FONT_FACE } from "./math-font";
 import { UI_FONT_FACES } from "./ui-fonts";
 import utilityStyles from "./utilities.css" with { type: "text" };
@@ -43,4 +44,8 @@ export const CONTENT_STYLES = [
   THEORY_PANEL_STYLES,
 ].join("\n");
 
-export const CHROME_STYLES = chromeStyles;
+/**
+ * The dialog frame first, which the page's modals share with the exercises'
+ * help panel; the chrome's own modal rules build on it.
+ */
+export const CHROME_STYLES = [dialogStyles, chromeStyles].join("\n");

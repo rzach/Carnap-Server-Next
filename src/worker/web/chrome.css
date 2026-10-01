@@ -753,9 +753,11 @@ th > .column-sort:hover {
 }
 
 /* Footers hold secondary actions, not primary content: every button in a
-   sheet footer defaults to the compact dense-row size. */
-.sheet-footer button,
-.sheet-footer .button {
+   sheet footer defaults to the compact dense-row size. A modal kept beside
+   its trigger in a footer (the course editor) is in the top layer, not the
+   footer, and keeps its own — excluded under :where(), as in a table cell. */
+.sheet-footer button:not(:where(.modal-dialog button)),
+.sheet-footer .button:not(:where(.modal-dialog .button)) {
   font-size: 0.85rem;
   margin: 0;
   min-height: 0;
@@ -1057,17 +1059,16 @@ th > .column-sort:hover {
   margin: 0;
 }
 
-/* Dialogs */
+/* Dialogs
+
+   The frame — panel, header strip, close button, body padding — is
+   `dialog.css`, which the exercises' help panel wears too and which is served
+   ahead of this sheet. What is here is the page modal's own: its width, its
+   backdrop, and one layout for the forms in its body, which is what keeps six
+   different modals looking like one kind of thing. */
 
 .modal-dialog {
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  box-shadow: 0 24px 60px
-    color-mix(in srgb, var(--shadow-color) 22%, transparent);
-  color: var(--ink);
   max-width: 32rem;
-  padding: 0;
   width: calc(100vw - 2rem);
 }
 
@@ -1096,40 +1097,44 @@ th > .column-sort:hover {
   }
 }
 
-.modal-dialog form {
-  padding: 1.25rem 1.35rem 1.5rem;
-}
-
-.modal-dialog-header {
-  align-items: start;
+/* A body's form is a column on one rhythm: the gap spaces every field, note
+   and button alike, so the content layer's per-element top margins (and the
+   container a modal happens to be rendered in) have no say. */
+.modal-dialog .dialog-body form {
   display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
+  flex-direction: column;
+  gap: 0.9rem;
 }
 
-.modal-dialog-header h3 {
+.modal-dialog .dialog-body form > * {
   margin: 0;
 }
 
-/* The close button is inside the dialog's form, so it inherits the content
-   layer's `form button` top margin and hangs below the heading it is meant
-   to sit level with. Every modal header has it; the margin is for a submit
-   ending a stack of fields, which this is not. */
-.modal-dialog-header button {
-  background: transparent;
-  border: 0;
-  color: var(--ink-muted);
-  font-size: 1.4rem;
-  line-height: 1;
+/* A role's or a sharing scope's note belongs to the choice above it. */
+.modal-dialog .dialog-body .choice-note {
+  margin-top: -0.45rem;
+}
+
+/* One size of button in every modal, whatever the modal is rendered inside:
+   a sheet footer's compact rule and a table cell's bare one both reach a
+   dialog kept beside its trigger. The action ends the form, at its right. */
+.modal-dialog .dialog-body button {
+  font-size: 0.9rem;
   margin: 0;
   min-height: 0;
-  padding: 0.1rem 0.4rem;
+  padding: 0.45rem 0.95rem;
 }
 
-.modal-dialog-header button:hover {
-  color: var(--ink);
-  filter: none;
+.modal-dialog .dialog-body form > button {
+  align-self: flex-end;
+}
+
+/* A second form (the course editor's archive) is a separate action, not
+   more fields: a hairline says so. */
+.modal-dialog .dialog-body form + form {
+  border-top: 1px solid var(--rule-soft);
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
 }
 
 .icon-button {
@@ -1210,6 +1215,18 @@ th > .column-sort:hover {
   gap: 0.75rem;
   justify-content: space-between;
   margin-bottom: 0.75rem;
+}
+
+.result-exercise-prompt {
+  margin-bottom: 0.75rem;
+}
+
+.result-exercise-prompt > :first-child {
+  margin-top: 0;
+}
+
+.result-exercise-prompt > :last-child {
+  margin-bottom: 0;
 }
 
 .instructor-comment {

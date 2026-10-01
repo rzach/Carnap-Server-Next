@@ -405,9 +405,8 @@ describe("native web workflow", () => {
       expect(archive.status).toBe(303);
       expect(unarchive.status).toBe(303);
 
-      // The instructor's *membership* is active the whole way through, so a
-      // page whose only status is that one appears not to have registered the
-      // archive at all. Both statuses are named for whose they are.
+      // The status is the course's, named as such. The reader's membership
+      // status is not shown: only an active member reaches the page.
       expect(beforeHtml).toContain("<dt>Course status</dt><dd>Active</dd>");
       expect(archivedHtml).toContain(
         "<dt>Course status</dt><dd>Archived</dd>",
@@ -415,7 +414,7 @@ describe("native web workflow", () => {
       expect(unarchivedHtml).toContain(
         "<dt>Course status</dt><dd>Active</dd>",
       );
-      expect(archivedHtml).toContain("<dt>Your status</dt><dd>Active</dd>");
+      expect(archivedHtml).not.toContain("Your status");
 
       // The list has no status column to be misread that way: an active
       // membership goes unsaid, and only an exception is badged beside the

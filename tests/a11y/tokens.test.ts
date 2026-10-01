@@ -180,8 +180,16 @@ const SHADOW_SHEETS = FILES.filter(
     file.endsWith("/client/components/carnap-aufbau-proof-fitch-v1.ts"),
 );
 
-/** The kit's own sheets, served into the light DOM and (group.css) both. */
-const KIT_SHEETS = [join(KIT, "exercise.css"), join(KIT, "group.css")];
+/**
+ * The sheets that reach the light DOM with the mapping: the kit's own, and the
+ * dialog frame the page's modals share with the help panel. group.css and
+ * dialog.css are also served into shadow roots.
+ */
+const BOTH_WAYS_SHEETS = [
+  join(KIT, "exercise.css"),
+  join(KIT, "group.css"),
+  join(SOURCE_ROOT, "worker", "web", "dialog.css"),
+];
 
 function relative(file: string): string {
   return file.slice(SOURCE_ROOT.length + 1);
@@ -276,14 +284,15 @@ test("a widget stylesheet reads only the private twins", () => {
   expect(offenders).toEqual([]);
 });
 
-test("the kit's own chrome reads only the exercise tokens", () => {
+test("the kit's own chrome and the dialog frame read only the exercise tokens", () => {
   // The light-DOM chrome is served with the mapping and needs no default, so
-  // it reads the `--exercise-*` tokens directly. group.css is served both
-  // ways and reads each colour as `var(--_twin, var(--exercise-token))`: the
-  // twin in a shadow root, the token on the page.
+  // it reads the `--exercise-*` tokens directly. group.css and dialog.css are
+  // served both ways and read each colour as
+  // `var(--_twin, var(--exercise-token))`: the twin in a shadow root, the
+  // token on the page.
   const offenders: string[] = [];
 
-  for (const file of KIT_SHEETS) {
+  for (const file of BOTH_WAYS_SHEETS) {
     for (const use of varUses(SOURCES.get(file) as string)) {
       const viaTwin =
         TWINS.has(use.name) &&

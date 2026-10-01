@@ -4,6 +4,7 @@ import { compileCarnapMarkdown } from "../src/worker/application/content/compile
 import { createDefaultExerciseRegistry } from "../src/worker/application/content/registry";
 import type { ExerciseManifestItem } from "../src/worker/domain/content";
 import type { JsonValue } from "../src/worker/domain/json";
+import { exercisePromptHtml } from "../src/worker/exercise-kit/assessment";
 import type { ExerciseHydration } from "../src/worker/exercise-kit/hydration";
 import { EXERCISE_HYDRATION_VERSION } from "../src/worker/exercise-kit/hydration";
 import { i18nFor } from "../src/worker/i18n";
@@ -164,6 +165,26 @@ describe("review-mode hydration", () => {
       expect(
         Object.entries(expected).filter(([id, text]) => text !== id).length,
       ).toBeGreaterThan(0);
+    });
+  }
+});
+
+/**
+ * The results page shows each exercise's prompt beside the student's answer,
+ * reading it from public data by one name every type shares rather than
+ * asking the type. A type that kept it anywhere else would drop out of the
+ * results page silently, so every registered kind is checked by name.
+ */
+describe("every kind's prompt is where the results page reads it", () => {
+  for (const type of registry.types()) {
+    test(`${type.directiveName} keeps its prompt as promptHtml`, () => {
+      const declaration = manifest.find((item) => item.kind === type.kind);
+
+      if (declaration === undefined) {
+        throw new Error(`the showcase lesson has no ${type.kind} exercise`);
+      }
+
+      expect(exercisePromptHtml(declaration.publicData)).not.toBeNull();
     });
   }
 });

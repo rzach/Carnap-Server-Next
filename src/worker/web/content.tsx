@@ -28,6 +28,7 @@ import {
   CreateBar,
   CsrfInput,
   ErrorSummary,
+  ModalDialog,
   Notice,
   Sheet,
   StatusBadge,
@@ -641,27 +642,17 @@ const RevisionSharingDialog: FC<{
   const { origin } = publicRequestUrl(context);
 
   return (
-    <dialog class="modal-dialog" id={dialogId}>
+    <ModalDialog
+      id={dialogId}
+      title={i18n.t("Sharing for {name}", {
+        name: revisionDetailsText(i18n, revision.details),
+      })}
+    >
       <form
         action={`/content/revisions/${revision.id}/sharing`}
         method="post"
       >
         <CsrfInput context={context} />
-        <header class="modal-dialog-header">
-          <h3>
-            {i18n.t("Sharing for {name}", {
-              name: revisionDetailsText(i18n, revision.details),
-            })}
-          </h3>
-          <button
-            aria-label={i18n.t("Close")}
-            formmethod="dialog"
-            formnovalidate
-            type="submit"
-          >
-            ×
-          </button>
-        </header>
         <label>
           {i18n.t("Shared with:")}
           <br />
@@ -734,7 +725,7 @@ const RevisionSharingDialog: FC<{
           {i18n.t("Save sharing")}
         </button>
       </form>
-    </dialog>
+    </ModalDialog>
   );
 };
 

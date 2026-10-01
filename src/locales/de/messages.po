@@ -568,10 +568,6 @@ msgstr "Eine Welt kann höchstens {max} Objekte enthalten."
 msgid "Access token URL"
 msgstr "URL für Zugriffstoken"
 
-#: src/worker/web/courses.tsx
-msgid "Accommodation limits"
-msgstr "Grenzwerte der Anpassung"
-
 #: src/worker/routes/courses.ts
 msgid "Accommodation not saved"
 msgstr "Anpassung nicht gespeichert"
@@ -1302,9 +1298,7 @@ msgid "Clone course"
 msgstr "Kurs duplizieren"
 
 #: src/worker/exercises/truth-tree/strings.ts
-#: src/worker/web/assignment-detail.tsx
-#: src/worker/web/content.tsx
-#: src/worker/web/courses.tsx
+#: src/worker/web/components.tsx
 msgid "Close"
 msgstr "Schließen"
 
@@ -1647,8 +1641,8 @@ msgid "Course role is not supported."
 msgstr "Diese Kursrolle wird nicht unterstützt."
 
 #: src/worker/web/courses.tsx
-msgid "Course roles and membership states. Promote a member to staff or adjust their access from the manage control. The course owner is marked with a crown."
-msgstr "Kursrollen und Mitgliedschaftsstatus. Über das Verwalten-Symbol können Sie Mitglieder zum Lehrpersonal befördern oder ihren Zugang anpassen. Der Kursinhaber ist mit einer Krone gekennzeichnet."
+msgid "Course roles and membership states. The course owner is marked with a crown."
+msgstr "Kursrollen und Mitgliedschaftsstatus. Der Kursinhaber ist mit einer Krone gekennzeichnet."
 
 #: src/worker/web/gradebook.tsx
 msgid "Course scores across published assignments."
@@ -5692,10 +5686,6 @@ msgstr "Der Wert muss größer als null sein."
 msgid "Verified {when}"
 msgstr "Bestätigt {when}"
 
-#: src/worker/web/admin.tsx
-msgid "View full audit log"
-msgstr "Vollständiges Prüfprotokoll ansehen"
-
 #: src/worker/web/components.tsx
 msgid "View this course as"
 msgstr "Diesen Kurs ansehen als"
@@ -5949,10 +5939,6 @@ msgstr "Ihr Satz"
 #: src/worker/routes/lti.ts
 msgid "Your session has expired. Start the content selection again from your LMS."
 msgstr "Ihre Sitzung ist abgelaufen. Starten Sie die Inhaltsauswahl erneut aus Ihrem LMS."
-
-#: src/worker/web/courses.tsx
-msgid "Your status"
-msgstr "Ihr Status"
 
 #: src/worker/exercises/translation/strings.ts
 msgid "Your translation"

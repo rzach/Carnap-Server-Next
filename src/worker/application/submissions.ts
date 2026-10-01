@@ -27,6 +27,7 @@ import type { AppId } from "../domain/ids";
 import { createAppId } from "../domain/ids";
 import { assertJsonValue, type JsonValue } from "../domain/json";
 import { type Timestamp, timestampNow } from "../domain/time";
+import { exercisePromptHtml } from "../exercise-kit/assessment";
 import { deferred } from "../i18n/deferred";
 import type { Translator } from "../i18n/translator";
 import {
@@ -115,6 +116,12 @@ export interface SubmissionHistoryEntry {
    * exercise, and for one no longer in the assignment's content.
    */
   readonly exerciseTitle: string | null;
+  /**
+   * The exercise's prompt, rendered HTML, so a result reads with the question
+   * it answers. Null for an exercise without one, and for one no longer in the
+   * assignment's content.
+   */
+  readonly exercisePromptHtml: string | null;
   readonly submission: Submission;
 }
 
@@ -683,6 +690,10 @@ export class SubmissionService {
                 ? null
                 : viewerEvaluation(evaluation)
               : studentEvaluation(evaluation, declaration, assignment, now),
+          exercisePromptHtml:
+            declaration === undefined
+              ? null
+              : exercisePromptHtml(declaration.publicData),
           exerciseTitle: declaration?.title ?? null,
           nominalPoints: declaration?.nominalPoints ?? null,
           submission,
