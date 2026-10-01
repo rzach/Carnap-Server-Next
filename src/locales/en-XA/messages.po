@@ -139,7 +139,15 @@ msgid "{column}, row {row}: {value}"
 msgstr ""
 
 #: src/worker/exercises/truth-table/strings.ts
+msgid "{column}, row {row}: {value}, {verdict}"
+msgstr ""
+
+#: src/worker/exercises/truth-table/strings.ts
 msgid "{column}: {value}"
+msgstr ""
+
+#: src/worker/exercises/truth-table/strings.ts
+msgid "{column}: {value}, {verdict}"
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -1497,6 +1505,11 @@ msgstr ""
 msgid "Copy world B into world A"
 msgstr ""
 
+#. A checked truth-table cell's verdict, spoken as part of the cell's accessible name: “Q, row 3: false, correct”. Lowercase, mid-sentence.
+#: src/worker/exercises/truth-table/strings.ts
+msgid "correct"
+msgstr ""
+
 #: src/worker/exercise-kit/actions.ts
 #: src/worker/exercises/multiple-choice/assessment.ts
 msgid "Correct"
@@ -2486,6 +2499,11 @@ msgstr ""
 
 #: src/worker/exercises/model/strings.ts
 msgid "In this model {field} has no value for {argument}."
+msgstr ""
+
+#. A checked truth-table cell's verdict, spoken as part of the cell's accessible name: “Q, row 3: false, incorrect”. Lowercase, mid-sentence. Use a word that cannot be heard as the value “false”.
+#: src/worker/exercises/truth-table/strings.ts
+msgid "incorrect"
 msgstr ""
 
 #: src/worker/exercises/multiple-choice/read-only-view.ts

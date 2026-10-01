@@ -199,10 +199,20 @@ describe("Check", () => {
       "correct",
     ]);
     expect(markState(mounted)).toBe("idle");
+    // The verdict is said, not only drawn: a screen reader hears which cells
+    // are wrong rather than just how many.
+    expect(
+      cells(mounted)
+        .slice(0, 2)
+        .map((cell) => cell.getAttribute("aria-label")),
+    ).toEqual(["->, row 1: true, correct", "->, row 2: true, incorrect"]);
 
     // Fixing the cell wipes the verdict: it was about a different grid.
     (cells(mounted)[1] as HTMLButtonElement).click();
     expect(verdicts(mounted)).toEqual(["", "", "", ""]);
+    expect(cells(mounted)[0]?.getAttribute("aria-label")).toBe(
+      "->, row 1: true",
+    );
     expect(statusText(mounted)).toBe("");
 
     click(mounted, "Check");

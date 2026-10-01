@@ -74,6 +74,18 @@ export function buildTruthTableStrings(i18n: Translator) {
       "{column}: {value}",
       placeholders("column", "value"),
     ),
+    // The same two names after a Check has marked the cell, with the verdict
+    // (`correct` or `incorrect` below) said after the value. A sighted reader
+    // sees the mark on the cell; without these, a screen-reader user got only
+    // the count and no way to find the wrong cells.
+    "{column}, row {row}: {value}, {verdict}": i18n.t(
+      "{column}, row {row}: {value}, {verdict}",
+      placeholders("column", "row", "value", "verdict"),
+    ),
+    "{column}: {value}, {verdict}": i18n.t(
+      "{column}: {value}, {verdict}",
+      placeholders("column", "value", "verdict"),
+    ),
     // The value as a word rather than the author's `trueMark`/`falseMark` glyph,
     // which may be anything — "1"/"0", ✓/✗ — and reads as nothing aloud.
     //
@@ -105,6 +117,25 @@ export function buildTruthTableStrings(i18n: Translator) {
       {
         comment:
           "A truth-table cell's value, spoken as part of the cell's accessible name: “Q, row 3: true”. Lowercase, mid-sentence.",
+      },
+    ),
+    // The verdict a Check speaks after a cell's value. Plain ids for the same
+    // reason as the three values; the capitalised Correct and Incorrect in this
+    // map are the review's hidden text, which stands alone, not mid-sentence.
+    correct: i18n.t(
+      "correct",
+      {},
+      {
+        comment:
+          "A checked truth-table cell's verdict, spoken as part of the cell's accessible name: “Q, row 3: false, correct”. Lowercase, mid-sentence.",
+      },
+    ),
+    incorrect: i18n.t(
+      "incorrect",
+      {},
+      {
+        comment:
+          "A checked truth-table cell's verdict, spoken as part of the cell's accessible name: “Q, row 3: false, incorrect”. Lowercase, mid-sentence. Use a word that cannot be heard as the value “false”.",
       },
     ),
     // The column headed `⊢` in a validity table: the one the student marks F on a

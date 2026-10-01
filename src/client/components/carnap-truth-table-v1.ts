@@ -199,16 +199,23 @@ class CarnapTruthTable extends CarnapExerciseElement<TruthTableStringId> {
   /**
    * Write one cell's value, keeping in step the three things that describe it:
    * the `data-tt-value` the answer is read out of, the glyph a sighted reader
-   * sees, and the `aria-label` a screen reader hears. The label cannot be left to
-   * the glyph — that may be an author's custom mark, or under `nodash` nothing at
-   * all, leaving the button with no name — so it names the value in words, along
-   * with the column and row the cell sits in. The server rendered the first one;
-   * this keeps it true after every click.
+   * sees, and the `aria-label` a screen reader hears. The server rendered the
+   * first one; this keeps it true after every click.
    */
   private setCellValue(cell: HTMLElement, value: TruthTableCellValue): void {
     cell.dataset.ttValue = value;
     cell.textContent = this.glyph(value);
+    this.nameCell(cell, null);
+  }
 
+  /**
+   * A cell's accessible name. It cannot be left to the glyph — that may be an
+   * author's custom mark, or under `nodash` nothing at all, leaving the button
+   * with no name — so it names the value in words, along with the column and
+   * row the cell sits in, and after a Check the verdict the cell is marked
+   * with: the squiggle a sighted reader sees is no use to a screen reader.
+   */
+  private nameCell(cell: HTMLElement, verdict: boolean | null): void {
     const column = cell.dataset.ttName;
 
     if (column === undefined) {
@@ -217,24 +224,42 @@ class CarnapTruthTable extends CarnapExerciseElement<TruthTableStringId> {
 
     // One literal per `t()` call: the extraction gate reads these call sites
     // literally, so a computed argument would reach no catalog.
+    const value = cell.dataset.ttValue;
     const word =
       value === "T"
         ? this.t("true")
         : value === "F"
           ? this.t("false")
           : this.t("blank");
+    // 1-based, counting the all-true row as row 1, the way the grid reads.
+    const row = Number(cell.dataset.ttRow) + 1;
+    let name: string;
 
-    cell.setAttribute(
-      "aria-label",
-      this.partialTable
+    if (verdict === null) {
+      name = this.partialTable
         ? this.t("{column}: {value}", { column, value: word })
         : this.t("{column}, row {row}: {value}", {
             column,
-            // 1-based, counting the all-true row as row 1, the way the grid reads.
-            row: Number(cell.dataset.ttRow) + 1,
+            row,
             value: word,
-          }),
-    );
+          });
+    } else {
+      const said = verdict ? this.t("correct") : this.t("incorrect");
+      name = this.partialTable
+        ? this.t("{column}: {value}, {verdict}", {
+            column,
+            value: word,
+            verdict: said,
+          })
+        : this.t("{column}, row {row}: {value}, {verdict}", {
+            column,
+            row,
+            value: word,
+            verdict: said,
+          });
+    }
+
+    cell.setAttribute("aria-label", name);
   }
 
   /** Cycle a cell. Every row stays editable, counterexample mode or not. */
@@ -720,6 +745,7 @@ class CarnapTruthTable extends CarnapExerciseElement<TruthTableStringId> {
   private clearCheck(): void {
     for (const cell of this.cells) {
       cell.classList.remove("tt-correct", "tt-incorrect");
+      this.nameCell(cell, null);
     }
 
     // In counterexample mode keep the standing hint; only clear results.
@@ -733,7 +759,7 @@ class CarnapTruthTable extends CarnapExerciseElement<TruthTableStringId> {
   /**
    * Grade the current grid locally. A counterexample submission reports whether
    * the chosen row is valid; otherwise, in `cells` mode each fillable cell is
-   * marked green/red with a running count, and in `terse` mode only whether the
+   * marked right or wrong with a running count, and in `terse` mode only whether the
    * whole table is right, so students go find the error themselves.
    */
   private runCheck(): void {
@@ -863,6 +889,7 @@ class CarnapTruthTable extends CarnapExerciseElement<TruthTableStringId> {
       const verdict = this.verdictFor(grade, cell);
       cell.classList.toggle("tt-correct", verdict === true);
       cell.classList.toggle("tt-incorrect", verdict === false);
+      this.nameCell(cell, verdict);
     }
   }
 

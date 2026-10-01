@@ -56,7 +56,7 @@ export type TruthTableGrading = "all-or-nothing" | "partial";
 
 /**
  * How the local Check reports results (Submit always grades authoritatively):
- *   - `cells` marks every graded cell green/red with a running count
+ *   - `cells` marks every graded cell right or wrong with a running count
  *   - `terse` only says whether the table is right or "there's an error
  *             somewhere", so students go hunting for it
  *   - `off`   no Check button at all (cf. Carnap `nocheck`)
