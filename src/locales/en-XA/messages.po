@@ -3642,6 +3642,10 @@ msgstr ""
 msgid "Promote a member to course staff by raising their role. Suspending or dropping a member keeps their record but removes their active access."
 msgstr ""
 
+#: src/worker/web/assignment-detail.tsx
+msgid "Prompt"
+msgstr ""
+
 #: src/worker/exercises/aufbau-proof-prawitz/assessment.ts
 #: src/worker/exercises/aufbau-proof-tree/assessment.ts
 #: src/worker/exercises/aufbau-proof/assessment.ts
@@ -3658,6 +3662,7 @@ msgstr ""
 msgid "Proof tree"
 msgstr ""
 
+#: src/worker/exercise-kit/proof/goal-row.ts
 #: src/worker/exercises/aufbau-proof-fitch/strings.ts
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof/strings.ts
@@ -3665,6 +3670,7 @@ msgid "Prove"
 msgstr ""
 
 #: src/worker/exercise-kit/proof/engine-strings.ts
+#: src/worker/exercise-kit/proof/goal-row.ts
 msgid "Proves"
 msgstr ""
 

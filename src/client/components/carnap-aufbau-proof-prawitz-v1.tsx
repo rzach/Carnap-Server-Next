@@ -56,6 +56,9 @@ import {
   proofRuleReader,
   proofTheoryText,
 } from "../../worker/exercise-kit/proof/formulas";
+import goalStyles from "../../worker/exercise-kit/proof/goal.css" with {
+  type: "text",
+};
 import type { PlaygroundGoal } from "../../worker/exercise-kit/proof/playground";
 import {
   playgroundGoal,
@@ -90,7 +93,6 @@ import {
   stepToProblem,
 } from "./problem-keys";
 import { ProofExerciseElement } from "./proof-element";
-import goalStyles from "./proof-goal.css" with { type: "text" };
 import { ToolbarIcon } from "./toolbar-icon";
 import { TOOLBAR_STYLES, type ToolbarIconName } from "./toolbar-icons";
 import "../vendor/proofml.mjs";

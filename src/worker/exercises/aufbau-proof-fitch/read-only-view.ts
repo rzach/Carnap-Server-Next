@@ -12,6 +12,13 @@ import {
   exerciseLegendHtml,
 } from "../../exercise-kit/group";
 import { reviewHydrationScript } from "../../exercise-kit/hydration";
+import goalStyles from "../../exercise-kit/proof/goal.css" with {
+  type: "text",
+};
+import {
+  type ProofGoalRow,
+  proofGoalRowHtml,
+} from "../../exercise-kit/proof/goal-row";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
 import type { Translator } from "../../i18n/translator";
 import shadowStyles from "./shadow.css" with { type: "text" };
@@ -36,6 +43,12 @@ const FITCH_ASSET_URL = `/assets/components/${AUFBAU_PROOF_FITCH_COMPONENT_METAD
 const AUFBAU_PROOF_FITCH_SHADOW_STYLES = [
   EXERCISE_GROUP_SHADOW_STYLES,
   shadowStyles,
+].join("\n");
+
+/** A review draws the goal row itself; the editor brings its own copy. */
+const AUFBAU_PROOF_FITCH_REVIEW_STYLES = [
+  AUFBAU_PROOF_FITCH_SHADOW_STYLES,
+  goalStyles,
 ].join("\n");
 
 interface AufbauProofFitchElementMeta extends ExerciseElementMeta {
@@ -77,7 +90,7 @@ export function renderAufbauProofFitchElement(
 
 /**
  * The Fitch proof element in `review` mode: the submitted Fitch source, drawn
- * read-only. The Declarative Shadow Root attaches at parse time, so the inert
+ * read-only under the goal row the editor showed above it. The Declarative Shadow Root attaches at parse time, so the inert
  * `<pre>` of source text renders inline on the review and results pages with no
  * JS. The appended module then upgrades the element in place, replacing that
  * `<pre>` with a read-only CodeMirror that draws the subproof scope-lines — the
@@ -99,6 +112,7 @@ export function renderAufbauProofFitchReview(
     readonly assumptionSpellings: readonly string[];
     readonly exerciseId: string;
     readonly fitchText: string;
+    readonly goal: ProofGoalRow | null;
   },
   i18n: Translator,
 ): string {
@@ -106,7 +120,8 @@ export function renderAufbauProofFitchReview(
 
   return `<carnap-aufbau-proof-fitch data-exercise-id="${escapeHtml(review.exerciseId)}" data-review data-assumption-rule="${escapeHtml(review.assumptionRule)}" data-assumption-spellings="${escapeHtml(review.assumptionSpellings.join(" "))}">
         <template shadowrootmode="open">
-          <style>${AUFBAU_PROOF_FITCH_SHADOW_STYLES}</style>
+          <style>${AUFBAU_PROOF_FITCH_REVIEW_STYLES}</style>
+          ${proofGoalRowHtml(review.goal)}
           <pre class="proof-source">${escapeHtml(review.fitchText)}</pre>
         </template>
         ${hydration}

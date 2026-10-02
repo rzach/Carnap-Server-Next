@@ -228,6 +228,9 @@ theorem k (a b: wff): $ a ⊢ b → a $
     expect(review.elementHtml).toContain("data-review");
     expect(review.elementHtml).toContain("a → b");
     expect(review.elementHtml).toContain("imp_elim");
+    expect(review.elementHtml).toContain(
+      '<span class="proof-goal-label">Prove</span> <span class="proof-goal-statement">(a → b) , a ⊢ b</span>',
+    );
     // The bundle loads on review pages so the element upgrades to the
     // read-only forest.
     expect(review.elementHtml).toContain(

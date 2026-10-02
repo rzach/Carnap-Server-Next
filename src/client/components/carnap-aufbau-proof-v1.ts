@@ -31,6 +31,10 @@ import type { Diagnostic } from "@codemirror/lint";
 import { EditorState } from "@codemirror/state";
 import { EditorView, keymap, lineNumbers } from "@codemirror/view";
 import { proofTheoryText } from "../../worker/exercise-kit/proof/formulas";
+import goalStyles from "../../worker/exercise-kit/proof/goal.css" with {
+  type: "text",
+};
+import { goalDeclaration } from "../../worker/exercise-kit/proof/goal-row";
 import type { PlaygroundGoal } from "../../worker/exercise-kit/proof/playground";
 import {
   lastProofStatement,
@@ -48,7 +52,6 @@ import { byteToCharIndex, type CompileDiagnostic } from "../proof-compiler";
 import { register } from "./base";
 import {
   clamp,
-  goalDeclaration,
   mountProofEditor,
   mountProofEditorHelp,
   problemKeys,
@@ -57,7 +60,6 @@ import {
 } from "./proof-editor";
 import editorStyles from "./proof-editor.css" with { type: "text" };
 import { ProofExerciseElement } from "./proof-element";
-import goalStyles from "./proof-goal.css" with { type: "text" };
 
 function isProofPublicData(value: unknown): value is AufbauProofPublicData {
   return (

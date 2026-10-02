@@ -33,6 +33,7 @@ import {
   AUFBAU_PROOF_FITCH_SCHEMA_VERSION,
 } from "../src/worker/exercises/aufbau-proof-fitch/types";
 import { prawitzToAuf } from "../src/worker/exercises/aufbau-proof-prawitz/translate";
+import { AUFBAU_PROOF_TREE_EXERCISE } from "../src/worker/exercises/aufbau-proof-tree";
 import { flattenProofTree } from "../src/worker/exercises/aufbau-proof-tree/flatten";
 import { passthroughTranslator } from "../src/worker/i18n/translator";
 import { theorySourceByFileName } from "../src/worker/logic/theories";
@@ -560,6 +561,34 @@ describe("the pipeline against the engine", () => {
     expect(review.details).toEqual([
       { label: "Goal", value: "∀x(Fx → Gx); Fa ⊢ Ga" },
     ]);
+    // A playground was asked nothing: its row says what the proof proves.
+    expect(review.elementHtml).toContain(
+      '<span class="proof-goal-label">Proves</span> <span class="proof-goal-statement">∀x(Fx → Gx); Fa ⊢ Ga</span>',
+    );
+  });
+
+  test("a tree review states a playground's goal, which no fixed root shows", async () => {
+    const item = await compileOne(
+      `:::aufbau-proof-tree{system="fx" id="tp" playground points="1"}\nBuild a tree.\n:::`,
+    );
+    const { goal } = submit(QUANTIFIER_PROOF);
+    const answer: NormalizedAnswer = {
+      data: {
+        goal,
+        proofText: "playground\n----\n",
+        tree: { formula: "G(a)", id: "n1", premises: [], rule: "sorry!" },
+      } as unknown as NormalizedAnswer["data"],
+      kind: "aufbau-proof-tree-answer@1",
+      schemaVersion: 1,
+    };
+    const review = AUFBAU_PROOF_TREE_EXERCISE.reviewAnswer(answer, item, {
+      audience: "student",
+      i18n: passthroughTranslator,
+    });
+
+    expect(review.elementHtml).toContain(
+      '<span class="proof-goal-label">Proves</span> <span class="proof-goal-statement">∀x(Fx → Gx); Fa ⊢ Ga</span>',
+    );
   });
 
   test("a playground answer without a goal is malformed; a goal the theory cannot vouch for is invalid", async () => {

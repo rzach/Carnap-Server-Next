@@ -488,12 +488,20 @@ describe("prawitzTreeMarkup — textbook notation", () => {
 
   test("the review element embeds the tree and loads the component module", () => {
     const html = renderAufbauProofPrawitzReview(
-      { assumptionRule: "ax", exerciseId: "p1", tree },
+      {
+        assumptionRule: "ax",
+        exerciseId: "p1",
+        goal: { label: "Prove", statement: "a ⊢ a" },
+        tree,
+      },
       i18nFor("en"),
     );
     expect(html).toContain("<carnap-aufbau-proof-prawitz ");
     expect(html).toContain("data-review");
     expect(html).toContain("[a]<sup>1</sup>");
+    expect(html).toContain(
+      '<div class="proof-goal"><span class="proof-goal-label">Prove</span> <span class="proof-goal-statement">a ⊢ a</span></div>',
+    );
     expect(html).toContain("carnap-aufbau-proof-prawitz-v1.js");
   });
 });

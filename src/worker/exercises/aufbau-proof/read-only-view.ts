@@ -12,6 +12,13 @@ import {
   exerciseLegendHtml,
 } from "../../exercise-kit/group";
 import { reviewHydrationScript } from "../../exercise-kit/hydration";
+import goalStyles from "../../exercise-kit/proof/goal.css" with {
+  type: "text",
+};
+import {
+  type ProofGoalRow,
+  proofGoalRowHtml,
+} from "../../exercise-kit/proof/goal-row";
 import { proofTextOf } from "../../exercise-kit/proof/proof-text";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
 import type { Translator } from "../../i18n/translator";
@@ -27,6 +34,12 @@ import {
 const AUFBAU_PROOF_SHADOW_STYLES = [
   EXERCISE_GROUP_SHADOW_STYLES,
   shadowStyles,
+].join("\n");
+
+/** A review draws the goal row itself; the editor brings its own copy. */
+const AUFBAU_PROOF_REVIEW_STYLES = [
+  AUFBAU_PROOF_SHADOW_STYLES,
+  goalStyles,
 ].join("\n");
 
 interface AufbauProofElementMeta extends ExerciseElementMeta {
@@ -72,7 +85,7 @@ export function renderAufbauProofElement(
 
 /**
  * The proof element in `review` mode: the submitted `.auf` shown read-only in a
- * shadow-isolated `<pre>`. The Declarative Shadow Root attaches at parse time
+ * shadow-isolated `<pre>`, under the goal row the editor showed above it. The Declarative Shadow Root attaches at parse time
  * (no JS), so it renders inline on the review and results pages. The correctness
  * verdict comes from the recorded evaluation, not from re-verifying here.
  *
@@ -84,13 +97,15 @@ export function renderAufbauProofElement(
 export function renderAufbauProofReview(
   review: {
     readonly exerciseId: string;
+    readonly goal: ProofGoalRow | null;
     readonly proofText: string;
   },
   i18n: Translator,
 ): string {
   return `<carnap-aufbau-proof data-exercise-id="${escapeHtml(review.exerciseId)}" data-review>
         <template shadowrootmode="open">
-          <style>${AUFBAU_PROOF_SHADOW_STYLES}</style>
+          <style>${AUFBAU_PROOF_REVIEW_STYLES}</style>
+          ${proofGoalRowHtml(review.goal)}
           <pre class="proof-source">${escapeHtml(review.proofText)}</pre>
         </template>
         ${reviewHydrationScript(buildAufbauProofStrings(i18n))}

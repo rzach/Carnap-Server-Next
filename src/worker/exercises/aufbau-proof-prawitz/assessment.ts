@@ -13,6 +13,7 @@ import {
   normalizeProofAnswer,
 } from "../../exercise-kit/proof/assessment";
 import { proofTheoryText } from "../../exercise-kit/proof/formulas";
+import { reviewGoalRow } from "../../exercise-kit/proof/goal-row";
 import {
   isPlaygroundExercise,
   playgroundGoalText,
@@ -99,18 +100,27 @@ export const AUFBAU_PROOF_PRAWITZ_ASSESSMENT = {
     context: ExerciseReviewContext,
   ): ExerciseAnswerReview {
     const data = prawitzAnswerData(answer);
-    const assumptionRule = isAufbauProofPrawitzPublicData(
-      declaration.publicData,
-    )
-      ? declaration.publicData.assumptionRule
-      : DEFAULT_ASSUMPTION_RULE;
+    const publicData = isAufbauProofPrawitzPublicData(declaration.publicData)
+      ? declaration.publicData
+      : null;
 
     return {
       details: [reviewDetail(data, declaration, context)],
       elementHtml: renderAufbauProofPrawitzReview(
         {
-          assumptionRule,
+          assumptionRule:
+            publicData?.assumptionRule ?? DEFAULT_ASSUMPTION_RULE,
           exerciseId: declaration.id,
+          goal:
+            publicData === null
+              ? null
+              : reviewGoalRow(
+                  context.i18n,
+                  publicData,
+                  data.goal,
+                  proofTheoryText(publicData),
+                  publicData.goalFormula,
+                ),
           tree: data.tree,
         },
         context.i18n,

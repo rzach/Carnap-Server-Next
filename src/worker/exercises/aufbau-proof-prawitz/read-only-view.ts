@@ -12,6 +12,13 @@ import {
   exerciseLegendHtml,
 } from "../../exercise-kit/group";
 import { reviewHydrationScript } from "../../exercise-kit/hydration";
+import goalStyles from "../../exercise-kit/proof/goal.css" with {
+  type: "text",
+};
+import {
+  type ProofGoalRow,
+  proofGoalRowHtml,
+} from "../../exercise-kit/proof/goal-row";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
 import type { Translator } from "../../i18n/translator";
 import shadowStyles from "./shadow.css" with { type: "text" };
@@ -37,6 +44,12 @@ const PRAWITZ_ASSET_URL = `/assets/components/${AUFBAU_PROOF_PRAWITZ_COMPONENT_M
 const AUFBAU_PROOF_PRAWITZ_SHADOW_STYLES = [
   EXERCISE_GROUP_SHADOW_STYLES,
   shadowStyles,
+].join("\n");
+
+/** A review draws the goal row itself; the editor brings its own copy. */
+const AUFBAU_PROOF_PRAWITZ_REVIEW_STYLES = [
+  AUFBAU_PROOF_PRAWITZ_SHADOW_STYLES,
+  goalStyles,
 ].join("\n");
 
 interface AufbauProofPrawitzElementMeta extends ExerciseElementMeta {
@@ -118,7 +131,8 @@ export function renderAufbauProofPrawitzElement(
 
 /**
  * The Prawitz proof element in `review` mode: the submitted tree drawn
- * read-only in textbook notation. The Declarative Shadow Root attaches at
+ * read-only in textbook notation, under the goal row the editor showed above
+ * it. The Declarative Shadow Root attaches at
  * parse time, so it renders inline on the review and results pages; those
  * pages load the component module so the ProofML layout resolves (without it
  * the tree degrades to nested text). The correctness verdict comes from the
@@ -128,6 +142,7 @@ export function renderAufbauProofPrawitzReview(
   review: {
     readonly assumptionRule: string;
     readonly exerciseId: string;
+    readonly goal: ProofGoalRow | null;
     readonly tree: PrawitzProofNode;
   },
   i18n: Translator,
@@ -138,7 +153,8 @@ export function renderAufbauProofPrawitzReview(
 
   return `<carnap-aufbau-proof-prawitz data-exercise-id="${escapeHtml(review.exerciseId)}" data-review>
         <template shadowrootmode="open">
-          <style>${AUFBAU_PROOF_PRAWITZ_SHADOW_STYLES}</style>
+          <style>${AUFBAU_PROOF_PRAWITZ_REVIEW_STYLES}</style>
+          ${proofGoalRowHtml(review.goal)}
           <div class="prawitz-canvas">${prawitzTreeMarkup(review.tree, review.assumptionRule)}</div>
         </template>
         ${hydration}

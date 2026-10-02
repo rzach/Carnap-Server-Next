@@ -231,5 +231,9 @@ l1: $ top $ by top_i []
     );
     expect(review.elementHtml).toContain("l1: $ top $ by top_i []");
     expect(review.elementHtml).toContain("data-review");
+    // Under the row the editor showed: the declaration, as written.
+    expect(review.elementHtml).toContain(
+      '<div class="proof-goal"><span class="proof-goal-label">Prove</span> <span class="proof-goal-statement">thm_top: $ top $</span></div>',
+    );
   });
 });

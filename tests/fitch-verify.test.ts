@@ -198,6 +198,10 @@ describe("aufbau-proof-fitch assessment", () => {
       "/assets/components/carnap-aufbau-proof-fitch-v1.js",
     );
     expect(review.elementHtml).toContain('data-assumption-rule="ax"');
+    // The detail and the row the review draws say the same thing.
+    expect(review.elementHtml).toContain(
+      '<span class="proof-goal-label">Prove</span> <span class="proof-goal-statement">(a → b) , a ⊢ b</span>',
+    );
   });
 
   test("over a language, the review names the statement the student proved", async () => {

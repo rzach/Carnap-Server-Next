@@ -13,6 +13,7 @@ import {
   normalizeProofAnswer,
 } from "../../exercise-kit/proof/assessment";
 import { proofTheoryText } from "../../exercise-kit/proof/formulas";
+import { reviewGoalRow } from "../../exercise-kit/proof/goal-row";
 import {
   isPlaygroundExercise,
   playgroundGoalText,
@@ -96,12 +97,27 @@ export const AUFBAU_PROOF_TREE_ASSESSMENT = {
     context: ExerciseReviewContext,
   ): ExerciseAnswerReview {
     const data = treeAnswerData(answer);
+    const publicData = isAufbauProofTreePublicData(declaration.publicData)
+      ? declaration.publicData
+      : null;
 
     return {
       details: [reviewDetail(data, declaration, context)],
       elementHtml: renderAufbauProofTreeReview(
         {
           exerciseId: declaration.id,
+          goal:
+            publicData === null
+              ? null
+              : reviewGoalRow(
+                  context.i18n,
+                  publicData,
+                  data.goal,
+                  proofTheoryText(publicData),
+                  // No fixed statement, so no row outside a playground: the
+                  // goal is the tree's root, in view here as in the editor.
+                  "",
+                ),
           tree: data.tree,
         },
         context.i18n,

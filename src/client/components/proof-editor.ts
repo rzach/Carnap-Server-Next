@@ -30,18 +30,6 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-/** The theorem declaration line, its keyword and trailing `;` taken off. */
-export function goalDeclaration(mm0: string): string {
-  const lines = mm0.split("\n");
-  for (let index = lines.length - 1; index >= 0; index -= 1) {
-    const line = (lines[index] ?? "").trim();
-    if (/^theorem\b/.test(line)) {
-      return line.replace(/;\s*$/, "").replace(/^theorem\s+/, "");
-    }
-  }
-  return "";
-}
-
 /** What {@link mountProofEditor} put in the shadow root. */
 export interface ProofEditorChrome {
   /** The `.proof` card the server rendered, now without its inert source. */

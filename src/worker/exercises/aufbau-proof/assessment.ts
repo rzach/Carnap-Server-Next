@@ -11,6 +11,11 @@ import {
   evaluateProofCertificate,
   normalizeProofAnswer,
 } from "../../exercise-kit/proof/assessment";
+import { proofTheoryText } from "../../exercise-kit/proof/formulas";
+import {
+  goalDeclaration,
+  reviewGoalRow,
+} from "../../exercise-kit/proof/goal-row";
 import {
   isPlaygroundExercise,
   playgroundGoalText,
@@ -62,6 +67,10 @@ export const AUFBAU_PROOF_ASSESSMENT = {
     context: ExerciseReviewContext,
   ): ExerciseAnswerReview {
     const data = proofAnswerData(answer);
+    const publicData = isAufbauProofPublicData(declaration.publicData)
+      ? declaration.publicData
+      : null;
+    const theory = publicData === null ? null : proofTheoryText(publicData);
     const firstLine = data.proofText.split("\n", 1)[0] ?? "";
     // A playground's header names the fixed `playground`; what a reviewer
     // wants to see is the statement the proof derived.
@@ -69,12 +78,7 @@ export const AUFBAU_PROOF_ASSESSMENT = {
       isPlaygroundExercise(declaration.publicData) && data.goal !== undefined
         ? {
             label: context.i18n.t("Goal"),
-            value: playgroundGoalText(
-              isAufbauProofPublicData(declaration.publicData)
-                ? declaration.publicData.source
-                : null,
-              data.goal,
-            ),
+            value: playgroundGoalText(publicData?.source, data.goal),
           }
         : { label: context.i18n.t("Proof"), value: firstLine };
 
@@ -83,6 +87,18 @@ export const AUFBAU_PROOF_ASSESSMENT = {
       elementHtml: renderAufbauProofReview(
         {
           exerciseId: declaration.id,
+          // The editor shows the declaration as written, the register the
+          // student writes the `.auf` below it in.
+          goal:
+            theory === null
+              ? null
+              : reviewGoalRow(
+                  context.i18n,
+                  publicData,
+                  data.goal,
+                  theory,
+                  goalDeclaration(theory.mm0),
+                ),
           proofText: data.proofText,
         },
         context.i18n,

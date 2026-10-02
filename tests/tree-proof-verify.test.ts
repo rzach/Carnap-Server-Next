@@ -181,5 +181,8 @@ describe("aufbau-proof-tree verification", () => {
     expect(review.elementHtml).toContain(
       "<proof-inference>top_i</proof-inference>",
     );
+    // The fixed goal is the root, so there is no row to restate it — as in
+    // the editor, which shows one only in a playground.
+    expect(review.elementHtml).not.toContain('class="proof-goal"');
   });
 });

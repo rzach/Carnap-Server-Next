@@ -215,6 +215,8 @@ export interface InstructorSubmissionReviewEntry {
   readonly answerReview: ExerciseAnswerReview | null;
   readonly attemptId: string;
   readonly evaluation: ViewerEvaluation | null;
+  /** The question the answer is to, as the lesson asked it; null for none. */
+  readonly exercisePromptHtml: string | null;
   /** What the exercise is worth — the hand-grading form's max score. */
   readonly nominalPoints: number | null;
   readonly submission: Submission;
@@ -1992,6 +1994,18 @@ const SubmissionReviewCard: FC<{
           {reviewStateLabel(i18n, reviewState(entry.evaluation))}
         </span>
       </p>
+      {/* The question, behind a disclosure: a queue is many answers to the
+          same few exercises, and the grader wrote them, so it is there to
+          check rather than to read on every card. Compiled and sanitized at
+          save time, as it is in the lesson. */}
+      {entry.exercisePromptHtml === null ? null : (
+        <details class="submission-review-prompt">
+          <summary>{i18n.t("Prompt")}</summary>
+          <div class="result-exercise-prompt">
+            {raw(entry.exercisePromptHtml)}
+          </div>
+        </details>
+      )}
       {entry.answerReview === null ? (
         <p class="small">{i18n.t("No answer review is available.")}</p>
       ) : (

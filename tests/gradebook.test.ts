@@ -1059,6 +1059,20 @@ Choose yes.
       );
       expect(hiddenResultsHtml).not.toContain("2/2");
 
+      // The grader's card carries the same question, folded away: a queue is
+      // many answers to the same few exercises.
+      const reviewPage = await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/instructor/assignments/${assignmentId}/submissions?review=all`,
+        { headers: { Accept: "text/html", Cookie: instructor.cookieHeader } },
+        env,
+      );
+
+      expect(reviewPage.status).toBe(200);
+      expect(await reviewPage.text()).toContain(
+        '<details class="submission-review-prompt"><summary>Prompt</summary><div class="result-exercise-prompt"><p>Choose yes.</p>',
+      );
+
       const releasePath = `/courses/${courseId}/instructor/assignments/${assignmentId}/grade-visibility`;
 
       // A student cannot release grades.

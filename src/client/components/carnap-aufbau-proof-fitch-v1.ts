@@ -51,12 +51,15 @@ import type {
 import {
   ENGINE_RULE,
   ENGINE_TEXT,
-  goalStatementText,
   hasTheoryText,
   proofFormulaReader,
   proofRuleReader,
   proofTheoryText,
 } from "../../worker/exercise-kit/proof/formulas";
+import goalStyles from "../../worker/exercise-kit/proof/goal.css" with {
+  type: "text",
+};
+import { goalText } from "../../worker/exercise-kit/proof/goal-row";
 import type { PlaygroundGoal } from "../../worker/exercise-kit/proof/playground";
 import {
   playgroundGoal,
@@ -86,7 +89,6 @@ import shadowStyles from "./carnap-aufbau-proof-fitch-v1.css" with {
 };
 import {
   clamp,
-  goalDeclaration,
   mountProofEditor,
   mountProofEditorHelp,
   problemKeys,
@@ -95,7 +97,6 @@ import {
 } from "./proof-editor";
 import editorStyles from "./proof-editor.css" with { type: "text" };
 import { ProofExerciseElement } from "./proof-element";
-import goalStyles from "./proof-goal.css" with { type: "text" };
 
 /** Left gutter (CSS px) before the outermost scope-line; the bars themselves
  * sit at the student's own indentation columns, not at a fixed per-depth step. */
@@ -132,31 +133,6 @@ function isFitchPublicData(
     hasTheoryText(value) &&
     typeof (value as { goalName?: unknown }).goalName === "string" &&
     typeof (value as { assumptionRule?: unknown }).assumptionRule === "string"
-  );
-}
-
-/**
- * What to show the student as the goal, given the exercise's two theory texts.
- *
- * The statement the goal declares, with the theorem's name, its binders and
- * its `$ … $` taken off — the same thing the tree and Prawitz editors show,
- * and the same register as the surface text the student types below it. A
- * declaration is how a goal is *stored*, not how it is asked: `unimp {x: var}
- * {a: name}` names an engine handle that is not even the exercise id, and
- * binds a variable whose only job is to make `∀ x` legal.
- *
- * Whether the theory is a *language* does not come into it — that decides how
- * the formulas are read, not how the declaration around them splits. The
- * fallback is the declaration this row used to show, reached only when the
- * text declares no such goal at all, where showing the line as written beats
- * showing nothing.
- */
-function goalText(
-  theory: { readonly mm0: string; readonly source: string | null },
-  goalName: string,
-): string {
-  return (
-    goalStatementText(theory.source, goalName) ?? goalDeclaration(theory.mm0)
   );
 }
 

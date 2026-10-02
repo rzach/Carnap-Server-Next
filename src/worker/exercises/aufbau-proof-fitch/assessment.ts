@@ -13,20 +13,13 @@ import {
   normalizeProofAnswer,
 } from "../../exercise-kit/proof/assessment";
 import {
-  goalStatementText,
   proofRuleSpellings,
   proofTheoryText,
 } from "../../exercise-kit/proof/formulas";
-import {
-  isPlaygroundExercise,
-  playgroundGoalText,
-} from "../../exercise-kit/proof/playground";
+import { goalText, reviewGoalRow } from "../../exercise-kit/proof/goal-row";
 import type { ExerciseAssessment } from "../../exercise-kit/type";
 import { renderAufbauProofFitchReview } from "./read-only-view";
-import type {
-  AufbauProofFitchAnswerData,
-  AufbauProofFitchPublicData,
-} from "./types";
+import type { AufbauProofFitchAnswerData } from "./types";
 import {
   AUFBAU_PROOF_FITCH_ANSWER_KIND,
   AUFBAU_PROOF_FITCH_SCHEMA_VERSION,
@@ -60,41 +53,6 @@ function fitchAnswerData(
   return answer.data as unknown as AufbauProofFitchAnswerData;
 }
 
-/**
- * The goal a review names, in the terms the student was asked it: the statement
- * the theorem declares, not the theorem's name. The name is the engine's handle
- * on the goal and means nothing to a reader — least of all here, where it sits
- * beside the exercise id it is free to differ from.
- *
- * A playground was asked nothing, and its goal is the one the answer derived
- * — the statement the recorded verdict is about.
- *
- * The name is still the fallback, as it was the whole of this line before, for
- * a declaration this artifact's text does not carry.
- */
-function reviewGoal(
-  publicData: AufbauProofFitchPublicData | null,
-  answer: AufbauProofFitchAnswerData,
-  declaration: ExerciseManifestItem,
-): string {
-  if (publicData === null) {
-    return declaration.id;
-  }
-
-  const theory = proofTheoryText(publicData);
-
-  if (isPlaygroundExercise(publicData)) {
-    return answer.goal === undefined
-      ? declaration.id
-      : playgroundGoalText(theory.source, answer.goal);
-  }
-
-  return (
-    goalStatementText(theory.source, publicData.goalName) ??
-    publicData.goalName
-  );
-}
-
 export const AUFBAU_PROOF_FITCH_ASSESSMENT = {
   normalizeAnswer(
     envelope: AnswerEnvelope,
@@ -120,11 +78,25 @@ export const AUFBAU_PROOF_FITCH_ASSESSMENT = {
     const publicData = isAufbauProofFitchPublicData(declaration.publicData)
       ? declaration.publicData
       : null;
+    // The goal in the terms the student was asked it: the statement the
+    // theorem declares, not its name, which is the engine's handle on the goal
+    // and free to differ from the exercise id beside it. A playground was
+    // asked nothing; its goal is the one the answer derived.
+    const goal =
+      publicData === null
+        ? null
+        : reviewGoalRow(
+            context.i18n,
+            publicData,
+            data.goal,
+            proofTheoryText(publicData),
+            goalText(proofTheoryText(publicData), publicData.goalName),
+          );
     return {
       details: [
         {
           label: context.i18n.t("Goal"),
-          value: reviewGoal(publicData, data, declaration),
+          value: goal?.statement ?? declaration.id,
         },
       ],
       elementHtml: renderAufbauProofFitchReview(
@@ -140,6 +112,7 @@ export const AUFBAU_PROOF_FITCH_ASSESSMENT = {
                 ),
           exerciseId: declaration.id,
           fitchText: data.fitchText,
+          goal,
         },
         context.i18n,
       ),

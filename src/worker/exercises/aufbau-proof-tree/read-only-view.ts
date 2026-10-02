@@ -12,6 +12,13 @@ import {
   exerciseLegendHtml,
 } from "../../exercise-kit/group";
 import { reviewHydrationScript } from "../../exercise-kit/hydration";
+import goalStyles from "../../exercise-kit/proof/goal.css" with {
+  type: "text",
+};
+import {
+  type ProofGoalRow,
+  proofGoalRowHtml,
+} from "../../exercise-kit/proof/goal-row";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
 import type { Translator } from "../../i18n/translator";
 import shadowStyles from "./shadow.css" with { type: "text" };
@@ -37,6 +44,12 @@ const TREE_ASSET_URL = `/assets/components/${AUFBAU_PROOF_TREE_COMPONENT_METADAT
 const AUFBAU_PROOF_TREE_SHADOW_STYLES = [
   EXERCISE_GROUP_SHADOW_STYLES,
   shadowStyles,
+].join("\n");
+
+/** A review draws the goal row itself; the editor brings its own copy. */
+const AUFBAU_PROOF_TREE_REVIEW_STYLES = [
+  AUFBAU_PROOF_TREE_SHADOW_STYLES,
+  goalStyles,
 ].join("\n");
 
 interface AufbauProofTreeElementMeta extends ExerciseElementMeta {
@@ -104,11 +117,14 @@ export function renderAufbauProofTreeElement(
 }
 
 /**
- * The tree proof element in `review` mode: the submitted tree drawn read-only.
- * The Declarative Shadow Root attaches at parse time, so it renders inline on the
- * review and results pages; those pages load the vendored ProofML module so the
- * fitch layout resolves (without it the tree degrades to nested text). The
- * correctness verdict comes from the recorded evaluation, not from re-verifying.
+ * The tree proof element in `review` mode: the submitted tree drawn read-only,
+ * under the goal row only where the editor has one: in a playground, which
+ * has no fixed root to say what is being proved. Elsewhere the goal is the
+ * root, in view on the page as it was in the editor. The Declarative Shadow
+ * Root attaches at parse time, so it renders inline on the review and results
+ * pages; those pages load the vendored ProofML module so the fitch layout
+ * resolves (without it the tree degrades to nested text). The correctness
+ * verdict comes from the recorded evaluation, not from re-verifying.
  *
  * That module also defines `<carnap-aufbau-proof-tree>`, so the element does upgrade
  * here; the embedded hydration payload is what tells it this is `review` mode
@@ -118,6 +134,7 @@ export function renderAufbauProofTreeElement(
 export function renderAufbauProofTreeReview(
   review: {
     readonly exerciseId: string;
+    readonly goal: ProofGoalRow | null;
     readonly tree: ProofTreeNode;
   },
   i18n: Translator,
@@ -126,7 +143,8 @@ export function renderAufbauProofTreeReview(
 
   return `<carnap-aufbau-proof-tree data-exercise-id="${escapeHtml(review.exerciseId)}" data-review>
         <template shadowrootmode="open">
-          <style>${AUFBAU_PROOF_TREE_SHADOW_STYLES}</style>
+          <style>${AUFBAU_PROOF_TREE_REVIEW_STYLES}</style>
+          ${proofGoalRowHtml(review.goal)}
           <div class="proof-tree-canvas">${proofTreeMarkup(review.tree)}</div>
         </template>
         ${hydration}
