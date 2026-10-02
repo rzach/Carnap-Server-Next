@@ -38,8 +38,8 @@ export function buildDiagnosticStrings(i18n: Translator) {
       i18n.t(
         "Exercise IDs must be 1 to 64 characters long and contain no spaces.",
       ),
-    "Exercise points must be a positive number no greater than 1000.": i18n.t(
-      "Exercise points must be a positive number no greater than 1000.",
+    "Exercise points must be a number from 0 to 1000.": i18n.t(
+      "Exercise points must be a number from 0 to 1000.",
     ),
     "The check and feedback attributes say the same thing; keep feedback and drop check.":
       i18n.t(

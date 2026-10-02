@@ -100,12 +100,12 @@ export function parsePoints(
 
   const points = Number(value);
 
-  if (!Number.isFinite(points) || points <= 0 || points > 1000) {
+  if (!Number.isFinite(points) || points < 0 || points > 1000) {
     diagnostics.push(
       diagnostic(
         line,
         "invalid_points",
-        "Exercise points must be a positive number no greater than 1000.",
+        "Exercise points must be a number from 0 to 1000.",
       ),
     );
 

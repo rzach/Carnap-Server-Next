@@ -278,7 +278,10 @@ is an exercise.
   exercise's heading is its number and kind, such as "Exercise 3: Truth
   table", heard but not shown. The number counts every exercise in the
   document, titled or not.
-- `points` defaults to `1`. It must be greater than zero and at most `1000`.
+- `points` defaults to `1`, and may be anything from `0` to `1000`. A
+  zero-point exercise is recorded and checked as usual but adds nothing to a
+  total, so it suits a playground; its score line shows no `0/0` to the
+  student. With every score 0, the newest evaluation is the one that stands.
 - `exam` and `feedback` control recording and displayed results, as below.
 
 Keep an exercise's ID stable when revising it so its recorded work can still
@@ -680,8 +683,8 @@ Write a sentence about `a` and `F` that this model makes true.
 ::::
 ```
 
-The answer gains a `sentences` string. `points="0"` is still refused, as for
-every exercise.
+The answer gains a `sentences` string. Add `points="0"` for an ungraded
+playground.
 
 See [Languages and theories](#languages-and-theories) for formula notation,
 and [the model reference](../src/worker/exercises/model/README.md) for field
@@ -1474,7 +1477,7 @@ nothing else can be, so a playground statement is always a concrete sentence
 or sequent in the system's own vocabulary, never a schema over metavariables.
 
 A playground is scored like any other exercise: the proof is correct when its
-certificate verifies, and worth `points`. A tree playground has no goal
+certificate verifies, and worth `points` (`points="0"` for an ungraded one). A tree playground has no goal
 hypotheses to cite, so its "Add hypothesis" control is disabled, as it is for
 any goal that declares none.
 

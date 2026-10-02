@@ -2228,7 +2228,7 @@ msgid "Exercise kind {kind} is not supported."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
-msgid "Exercise points must be a positive number no greater than 1000."
+msgid "Exercise points must be a number from 0 to 1000."
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -4270,6 +4270,7 @@ msgstr ""
 msgid "Sentence on row {row}"
 msgstr ""
 
+#: src/worker/exercises/model/strings.ts
 #: src/worker/exercises/world/strings.ts
 msgid "Sentences"
 msgstr ""
@@ -6094,10 +6095,6 @@ msgstr ""
 
 #: src/worker/exercises/world/strings.ts
 msgid "Your sentence"
-msgstr ""
-
-#: src/worker/exercises/model/strings.ts
-msgid "Your sentences"
 msgstr ""
 
 #: src/worker/routes/lti.ts

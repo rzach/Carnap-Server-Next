@@ -39,7 +39,7 @@ Fill in both tables and compare their results.
   to `carnap-prop`.
 - `options`: space-separated flags, listed below.
 - `title`, `points`, `exam`, `feedback`: common settings. Points default to
-  1 and must be greater than zero and at most 1000.
+  1 and may be anything from 0 to 1000.
 
 Omitted `exam` and `feedback` use assignment defaults. Unreleased graded work
 uses `true` and `none`; released grades, practice, readings, and previews use

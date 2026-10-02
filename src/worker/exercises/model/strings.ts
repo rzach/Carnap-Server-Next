@@ -127,7 +127,7 @@ export function buildModelStrings(i18n: Translator) {
         placeholders("symbol"),
       ),
     "Write at least one sentence.": i18n.t("Write at least one sentence."),
-    "Your sentences": i18n.t("Your sentences"),
+    Sentences: i18n.t("Sentences"),
     // One field's accessible name. `F(_,_)` on its own says nothing about what
     // to type into it, and the blanks are not read aloud usefully.
     "{field}: the tuples in its extension": i18n.t(

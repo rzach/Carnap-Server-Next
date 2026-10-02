@@ -148,9 +148,22 @@ export type EvaluationVerdict = "correct" | "partial" | "incorrect";
  * still in hand, rather than in a browser that no longer has them.
  */
 export function evaluationVerdict(
-  evaluation: Pick<Evaluation, "maxScore" | "score">,
+  evaluation: Pick<Evaluation, "maxScore" | "result" | "score">,
 ): EvaluationVerdict {
-  if (evaluation.maxScore > 0 && evaluation.score >= evaluation.maxScore) {
+  // A zero-point exercise scores 0 whether it is right or wrong, so the
+  // numbers cannot say; the checker's own status, stored in its result, can.
+  if (evaluation.maxScore === 0) {
+    const status =
+      typeof evaluation.result === "object" && evaluation.result !== null
+        ? (evaluation.result as { readonly status?: unknown }).status
+        : undefined;
+
+    return status === "correct" || status === "partial"
+      ? status
+      : "incorrect";
+  }
+
+  if (evaluation.score >= evaluation.maxScore) {
     return "correct";
   }
 

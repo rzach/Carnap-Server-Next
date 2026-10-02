@@ -247,7 +247,7 @@ function renderField(field: ModelField, context: FieldRenderContext): string {
  * enhances.
  */
 function sentencesRow(strings: ModelStrings): string {
-  return `<div class="model-sentences"><label class="model-label" for="model-sentences">${escapeHtml(strings("Your sentences"))}</label><input aria-describedby="model-sentences-hint" autocapitalize="off" autocomplete="off" class="model-input" data-role="sentences" disabled id="model-sentences" spellcheck="false" type="text" value=""><span class="model-hint" id="model-sentences-hint">${escapeHtml(strings("Separate sentences with commas."))}</span><p aria-live="polite" class="model-preview" data-role="preview"></p></div>`;
+  return `<div class="model-sentences"><label class="model-label" for="model-sentences">${escapeHtml(strings("Sentences"))}</label><input aria-describedby="model-sentences-hint" autocapitalize="off" autocomplete="off" class="model-input" data-role="sentences" disabled id="model-sentences" spellcheck="false" type="text" value=""><span class="model-hint" id="model-sentences-hint">${escapeHtml(strings("Separate sentences with commas."))}</span><p aria-live="polite" class="model-preview" data-role="preview"></p></div>`;
 }
 
 interface ModelElementMeta extends ExerciseElementMeta {
@@ -358,7 +358,7 @@ export function renderModelReview(
   const sentences =
     publicData.playground === undefined
       ? ""
-      : reviewItem(strings("Your sentences"), review.answer.sentences ?? "");
+      : reviewItem(strings("Sentences"), review.answer.sentences ?? "");
   const rows = (resolved?.signature ?? [])
     .map((field) => {
       const value =

@@ -201,12 +201,28 @@ describe("storedPointsDrift", () => {
   });
 });
 
+describe("a zero-point exercise", () => {
+  // Right and wrong both score 0 of 0, so the verdict is the checker's word.
+  test("takes its verdict from the checker, not the numbers", () => {
+    const zero = (result: unknown) =>
+      evaluationVerdict({ maxScore: 0, result: result as never, score: 0 });
+
+    expect(zero({ status: "correct" })).toBe("correct");
+    expect(zero({ status: "partial" })).toBe("partial");
+    expect(zero({ status: "incorrect" })).toBe("incorrect");
+    expect(zero(null)).toBe("incorrect");
+    expect(zero({ comment: "Hand-marked." })).toBe("incorrect");
+  });
+});
+
 describe("bonus grades against the stored maximum", () => {
   // The one place the stored max still decides something on its own: a grade
   // at or above it is full marks. A bonus 7/5 is an instructor's deliberate
   // act, so it reads as correct and needs no second look.
   test("a bonus grade is correct and leaves the review queue", () => {
-    expect(evaluationVerdict({ maxScore: 5, score: 7 })).toBe("correct");
+    expect(evaluationVerdict({ maxScore: 5, result: null, score: 7 })).toBe(
+      "correct",
+    );
     expect(
       submissionNeedsReview({
         evaluatorKind: "automatic",

@@ -244,8 +244,8 @@ const BROKEN_LESSON_SOURCE = `# Broken fixture lesson
 
 <div>Raw HTML is rejected by this dialect.</div>
 
-::::multiple-choice{#mc points="0"}
-Only one option, and zero points.
+::::multiple-choice{#mc points="-1"}
+Only one option, and negative points.
 
 - [x] yes | Yes
 ::::

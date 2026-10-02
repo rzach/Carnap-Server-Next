@@ -375,7 +375,12 @@ function exerciseStatusText(
   // Either no evaluation, or one whose numbers are still behind the release
   // date. The script's `statusText` draws the same line; both have to, since
   // this renders the first paint and that one every paint after.
-  if (evaluation === null || evaluation.score === null) {
+  // A zero-point exercise has no score worth a line: `0/0` says nothing.
+  if (
+    evaluation === null ||
+    evaluation.score === null ||
+    evaluation.maxScore === 0
+  ) {
     return i18n.t("Submitted at {when}.", { when });
   }
 

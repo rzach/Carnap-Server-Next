@@ -2228,8 +2228,8 @@ msgid "Exercise kind {kind} is not supported."
 msgstr "Exercise kind {kind} is not supported."
 
 #: src/worker/application/content/diagnostic-strings.ts
-msgid "Exercise points must be a positive number no greater than 1000."
-msgstr "Exercise points must be a positive number no greater than 1000."
+msgid "Exercise points must be a number from 0 to 1000."
+msgstr "Exercise points must be a number from 0 to 1000."
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Exercise to excuse"
@@ -4270,6 +4270,7 @@ msgstr "Sending your selection back to the LMS…"
 msgid "Sentence on row {row}"
 msgstr "Sentence on row {row}"
 
+#: src/worker/exercises/model/strings.ts
 #: src/worker/exercises/world/strings.ts
 msgid "Sentences"
 msgstr "Sentences"
@@ -6095,10 +6096,6 @@ msgstr "Your role"
 #: src/worker/exercises/world/strings.ts
 msgid "Your sentence"
 msgstr "Your sentence"
-
-#: src/worker/exercises/model/strings.ts
-msgid "Your sentences"
-msgstr "Your sentences"
 
 #: src/worker/routes/lti.ts
 msgid "Your session has expired. Start the content selection again from your LMS."

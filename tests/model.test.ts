@@ -1116,6 +1116,30 @@ describe("a playground", () => {
     ).toEqual({ score: 0, status: "incorrect" });
   });
 
+  test("points may be zero, never negative", async () => {
+    expect(
+      await compileCodes(directive('#pz points="0"', "- AxF(x)")),
+    ).toEqual([]);
+    expect(
+      await compileCodes(directive('#pn points="-1"', "- AxF(x)")),
+    ).toEqual(["invalid_points"]);
+  });
+
+  test("an ungraded playground is worth nothing and still judged", async () => {
+    const item = await declaration(
+      directive('#p0 playground points="0"', "Make it so."),
+    );
+
+    expect(item.nominalPoints).toBe(0);
+    expect(
+      await score(directive('#p0 playground points="0"', "Make it so."), {
+        domain: "0",
+        fields: { "F(_)": "0" },
+        sentences: "AxF(x)",
+      }),
+    ).toEqual({ score: 0, status: "correct" });
+  });
+
   test("the rendered element has a sentence box, and no fixed goal", async () => {
     const artifact = await compileArtifact(
       directive("#p14 playground", "Make it so."),
@@ -1146,7 +1170,7 @@ describe("a playground", () => {
     );
 
     expect(html).toContain("AxF(x)");
-    expect(html).toContain("Your sentences");
+    expect(html).toContain(">Sentences:<");
     expect(html).not.toContain('class="model-review-goal"');
   });
 });

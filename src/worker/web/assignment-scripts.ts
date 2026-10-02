@@ -138,7 +138,7 @@ ${readStringsPrelude(EXERCISE_UI_STRINGS_ATTRIBUTE)}
     // No evaluation, or one whose numbers this student may not see yet: the
     // line says the work is in and stops there. A score is a grade, and grades
     // wait for the release date however much the exercise is willing to say.
-    if (!evaluation || evaluation.score === null) {
+    if (!evaluation || evaluation.score === null || evaluation.maxScore === 0) {
       return fill(S.submittedAt || "Submitted at {when}.", { when });
     }
 

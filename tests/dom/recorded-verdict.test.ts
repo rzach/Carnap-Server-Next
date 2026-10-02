@@ -96,6 +96,12 @@ describe("the mark for work already recorded", () => {
     );
   });
 
+  test("a zero-point exercise is marked on its verdict, with no 0/0", () => {
+    expect(
+      pageWith(recorded({ maxScore: 0, score: 0, verdict: "correct" })),
+    ).toBe(`${CORRECTNESS_MARK_GLYPHS.ok}|Submitted at ${AT}.`);
+  });
+
   test("stays idle on anything short of correct", () => {
     for (const verdict of ["partial", "incorrect"]) {
       expect(pageWith(recorded({ verdict }))).toBe(
