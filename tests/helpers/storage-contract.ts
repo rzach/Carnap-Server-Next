@@ -126,6 +126,8 @@ export function describeStorageContract(
       dueAt: null,
       availableUntil: null,
       gradesVisibleAt: null,
+      workVisibility: "with_grades",
+      workVisibleAt: null,
       listed: true,
       maxAttempts: 1,
       timeLimitMinutes: null,
@@ -873,6 +875,29 @@ export function describeStorageContract(
             note: "",
           },
         ]);
+
+        // Published settings write the work-visibility pair, both columns.
+        const scheduled = await stores.assignments.updatePublishedSettings({
+          assignmentId: assignment.id,
+          availableFrom: null,
+          availableUntil: null,
+          description: assignment.description,
+          displayOrder: 0,
+          dueAt: null,
+          listed: true,
+          maxAttempts: 1,
+          timeLimitMinutes: null,
+          title: assignment.title,
+          updatedAt: NOW,
+          workVisibility: "scheduled",
+          workVisibleAt: "2030-01-01T00:00:00.000Z",
+        });
+
+        expect(assignment.workVisibility).toBe("with_grades");
+        expect(scheduled?.workVisibility).toBe("scheduled");
+        expect(
+          (await stores.assignments.getById(assignment.id))?.workVisibleAt,
+        ).toBe("2030-01-01T00:00:00.000Z");
       });
     });
 
@@ -903,6 +928,8 @@ export function describeStorageContract(
           dueAt: null,
           availableUntil: null,
           gradesVisibleAt: null,
+          workVisibility: "with_grades",
+          workVisibleAt: null,
           listed: true,
           maxAttempts: 1,
           timeLimitMinutes: null,
@@ -1191,6 +1218,8 @@ export function describeStorageContract(
             dueAt: null,
             availableUntil: null,
             gradesVisibleAt: null,
+            workVisibility: "with_grades",
+            workVisibleAt: null,
             listed: true,
             maxAttempts: 1,
             timeLimitMinutes: null,

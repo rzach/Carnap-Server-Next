@@ -17,6 +17,7 @@ import type {
   AssignmentExerciseExcuse,
   AssignmentLatePolicy,
   AssignmentOverride,
+  WorkVisibility,
 } from "../domain/assignments";
 import type { AuthSession, NativeLoginChallenge } from "../domain/auth";
 import type {
@@ -569,6 +570,8 @@ export interface CreateAssignmentInput {
   readonly dueAt: Timestamp | null;
   readonly availableUntil: Timestamp | null;
   readonly gradesVisibleAt: Timestamp | null;
+  readonly workVisibility: WorkVisibility;
+  readonly workVisibleAt: Timestamp | null;
   readonly listed: boolean;
   readonly maxAttempts: number;
   readonly timeLimitMinutes: number | null;
@@ -587,6 +590,8 @@ export interface UpdateAssignmentInput {
   readonly dueAt: Timestamp | null;
   readonly availableUntil: Timestamp | null;
   readonly gradesVisibleAt: Timestamp | null;
+  readonly workVisibility: WorkVisibility;
+  readonly workVisibleAt: Timestamp | null;
   readonly listed: boolean;
   readonly maxAttempts: number;
   readonly timeLimitMinutes: number | null;
@@ -669,6 +674,8 @@ export interface UpdatePublishedSettingsInput {
   readonly timeLimitMinutes: number | null;
   readonly title: string;
   readonly updatedAt: Timestamp;
+  readonly workVisibility: WorkVisibility;
+  readonly workVisibleAt: Timestamp | null;
 }
 
 export interface AssignmentStore {

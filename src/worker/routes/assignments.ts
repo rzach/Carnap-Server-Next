@@ -106,6 +106,8 @@ interface CreateAssignmentBody {
   readonly maxAttempts?: unknown;
   readonly timeLimitMinutes?: unknown;
   readonly title?: unknown;
+  readonly workVisibility?: unknown;
+  readonly workVisibleAt?: unknown;
 }
 
 interface PublishedSettingsBody {
@@ -118,6 +120,8 @@ interface PublishedSettingsBody {
   readonly maxAttempts?: unknown;
   readonly timeLimitMinutes?: unknown;
   readonly title?: unknown;
+  readonly workVisibility?: unknown;
+  readonly workVisibleAt?: unknown;
 }
 
 interface RepointAssignmentBody {
@@ -216,6 +220,8 @@ function publicAssignment(assignment: Assignment) {
     timeLimitMinutes: assignment.timeLimitMinutes,
     title: assignment.title,
     updatedAt: assignment.updatedAt,
+    workVisibility: assignment.workVisibility,
+    workVisibleAt: assignment.workVisibleAt,
   };
 }
 
@@ -451,6 +457,8 @@ function assignmentFormValues(form: FormData) {
     maxAttempts: fieldValue(form.get("maxAttempts")),
     timeLimitMinutes: fieldValue(form.get("timeLimitMinutes")),
     title: fieldValue(form.get("title")),
+    workVisibility: fieldValue(form.get("workVisibility")),
+    workVisibleAt: fieldValue(form.get("workVisibleAt")),
   };
 }
 
@@ -474,6 +482,8 @@ function assignmentFormCommand(form: FormData) {
     maxAttempts: formOptionalInteger(form, "maxAttempts"),
     timeLimitMinutes: formOptionalInteger(form, "timeLimitMinutes"),
     title: values.title,
+    workVisibility: values.workVisibility,
+    workVisibleAt: formTimestamp(form, "workVisibleAt"),
   };
 }
 
@@ -1947,6 +1957,14 @@ function publishedSettingsCommandFromJson(body: PublishedSettingsBody) {
       "invalid_assignment_time_limit",
     ),
     title: body.title,
+    workVisibility: nullableString(
+      body.workVisibility,
+      "invalid_assignment_work_visibility",
+    ),
+    workVisibleAt: nullableString(
+      body.workVisibleAt,
+      "invalid_assignment_work_visible_at",
+    ),
   };
 }
 
@@ -1972,6 +1990,8 @@ function commandFromJson(body: CreateAssignmentBody) {
     "dueAt",
     "gradesVisibleAt",
     "gradesVisibility",
+    "workVisibility",
+    "workVisibleAt",
   ] as const) {
     const value = body[field];
 
@@ -2049,6 +2069,10 @@ function commandFromJson(body: CreateAssignmentBody) {
         ? body.timeLimitMinutes
         : null,
     title: body.title,
+    workVisibility:
+      typeof body.workVisibility === "string" ? body.workVisibility : null,
+    workVisibleAt:
+      typeof body.workVisibleAt === "string" ? body.workVisibleAt : null,
   };
 }
 

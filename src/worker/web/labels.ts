@@ -5,6 +5,7 @@ import type {
   AssignmentState,
   GradesVisibility,
   LatePolicyKind,
+  WorkVisibility,
 } from "../domain/assignments";
 import {
   COURSE_ROLES,
@@ -99,6 +100,27 @@ function gradesVisibilityLabel(
       return i18n.t("As soon as work is checked");
     case "manual":
       return i18n.t("When I release them");
+    case "scheduled":
+      return i18n.t("At the time below");
+  }
+}
+
+/**
+ * The answers to "when can students read back their submitted work?" — the
+ * prompts, their answers, and comments, after the attempt. Scores are not the
+ * question here; they go out with the grades whatever is chosen.
+ */
+export function workVisibilityLabel(
+  i18n: Translator,
+  visibility: WorkVisibility,
+): string {
+  switch (visibility) {
+    case "with_grades":
+      return i18n.t("With the grades");
+    case "immediate":
+      return i18n.t("As soon as it is submitted");
+    case "never":
+      return i18n.t("Never");
     case "scheduled":
       return i18n.t("At the time below");
   }
@@ -309,6 +331,14 @@ export const GRADES_VISIBILITY_ORDER: readonly GradesVisibility[] = [
   "scheduled",
 ];
 
+/** First is the default a blank form preselects. */
+export const WORK_VISIBILITY_ORDER: readonly WorkVisibility[] = [
+  "with_grades",
+  "immediate",
+  "never",
+  "scheduled",
+];
+
 /** The domain's order is the select's: least to most privileged. */
 export const COURSE_ROLE_ORDER: readonly CourseRole[] = COURSE_ROLES;
 
@@ -349,6 +379,15 @@ export function gradesVisibilityOptions(
 ): readonly SelectOption[] {
   return GRADES_VISIBILITY_ORDER.map((visibility) => ({
     label: gradesVisibilityLabel(i18n, visibility),
+    value: visibility,
+  }));
+}
+
+export function workVisibilityOptions(
+  i18n: Translator,
+): readonly SelectOption[] {
+  return WORK_VISIBILITY_ORDER.map((visibility) => ({
+    label: workVisibilityLabel(i18n, visibility),
     value: visibility,
   }));
 }

@@ -296,6 +296,12 @@ export const assignments = sqliteTable(
     dueAt: text("due_at"),
     availableUntil: text("available_until"),
     gradesVisibleAt: text("grades_visible_at"),
+    workVisibility: text("work_visibility", {
+      enum: ["with_grades", "immediate", "never", "scheduled"],
+    })
+      .notNull()
+      .default("immediate"),
+    workVisibleAt: text("work_visible_at"),
     listed: integer("listed", { mode: "boolean" }).notNull().default(true),
     maxAttempts: integer("max_attempts").notNull().default(1),
     timeLimitMinutes: integer("time_limit_minutes"),

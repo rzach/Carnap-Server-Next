@@ -128,7 +128,7 @@ export interface EffectiveSubmissionPolicy {
   readonly reasons: readonly SubmissionPolicyReason[];
 }
 
-function isActiveAttempt(attempt: Attempt, now: Timestamp): boolean {
+export function isActiveAttempt(attempt: Attempt, now: Timestamp): boolean {
   return (
     attempt.status === "active" &&
     (attempt.expiresAt === null || attempt.expiresAt > now)

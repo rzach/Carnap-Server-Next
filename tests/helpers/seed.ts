@@ -89,6 +89,8 @@ export async function seedCourseWithAssignment(
     displayOrder: 0,
     dueAt: null,
     gradesVisibleAt: null,
+    workVisibility: "with_grades",
+    workVisibleAt: null,
     id: `assignment-${key}`,
     listed: true,
     maxAttempts: options.maxAttempts ?? 5,

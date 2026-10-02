@@ -5,7 +5,7 @@ import {
   type Submission,
   type ViewerEvaluation,
 } from "../domain/assessment";
-import type { Assignment } from "../domain/assignments";
+import { type Assignment, workReleased } from "../domain/assignments";
 import type {
   AnswerEnvelope,
   AutomaticEvaluationStatus,
@@ -51,7 +51,7 @@ import {
   contentRevisionNotFound,
 } from "./errors";
 import { GradebookService } from "./gradebook";
-import { effectiveSubmissionPolicy } from "./policies";
+import { effectiveSubmissionPolicy, isActiveAttempt } from "./policies";
 import type { AppStores } from "./stores";
 
 export interface SubmissionServiceOptions {
@@ -134,6 +134,40 @@ export interface StudentAttemptResult {
 export interface StudentAssignmentResults {
   readonly attempts: readonly StudentAttemptResult[];
   readonly released: boolean;
+  /**
+   * Whether the entries carry the work: prompts, answers, and comments. When
+   * false they carry only each exercise's name and verdict — the assignment's
+   * work visibility is holding the rest back (see `workReleased`).
+   */
+  readonly workReleased: boolean;
+  /**
+   * Whether withheld work is due to be shown later — with the grades, or at a
+   * scheduled time — which is what the page says out loud. Under `never` it
+   * says nothing: a standing notice that the work is being kept back reads as
+   * something gone wrong, or a promise, when it is simply how this assignment
+   * is run.
+   */
+  readonly workToCome: boolean;
+}
+
+/**
+ * A history entry with the work taken out, for a student whose assignment is
+ * withholding it: the exercise's name and its verdict stay, numbers included
+ * once grades are out, and everything that would let the work be passed on —
+ * the prompt, the answer and its review, the evaluation's result with any
+ * instructor comment in it — goes.
+ */
+function withoutWork(entry: SubmissionHistoryEntry): SubmissionHistoryEntry {
+  return {
+    ...entry,
+    answerReview: null,
+    evaluation:
+      entry.evaluation === null
+        ? null
+        : { ...entry.evaluation, result: null },
+    exercisePromptHtml: null,
+    submission: { ...entry.submission, answer: null },
+  };
 }
 
 function exerciseNotFound(): AppHttpError {
@@ -470,7 +504,17 @@ export class SubmissionService {
       throw attemptNotFound();
     }
 
-    return this.historyForAttempt(attempt.id, "student", i18n);
+    // An attempt still in progress shows its work regardless — the lesson is
+    // open in front of the student, restoring their answers from here.
+    const now = timestampNow(this.options.now?.() ?? new Date());
+
+    if (workReleased(assignment, now) || isActiveAttempt(attempt, now)) {
+      return this.historyForAttempt(attempt.id, "student", i18n);
+    }
+
+    return (await this.historyForAttempt(attempt.id, "student", null)).map(
+      withoutWork,
+    );
   }
 
   async listResultsForStudent(
@@ -491,11 +535,13 @@ export class SubmissionService {
 
     // The page used to be empty until grades were released, which meant a
     // student could be getting live feedback in the widget and find nothing at
-    // all in their own history. What release actually holds is the numbers, and
-    // `historyForAttempt` withholds those per exercise; the work itself is
-    // theirs to read back either way. `released` is what the view uses to say
-    // the grades are still to come.
+    // all in their own history. What release holds is the numbers, and
+    // `historyForAttempt` withholds those per exercise; the work itself has
+    // its own setting, so an instructor can put the scores out while answers
+    // that could pass to another section stay in. `released` is what the view
+    // uses to say the grades are still to come.
     const released = !gradesWithheld(assignment, now);
+    const workShown = workReleased(assignment, now);
 
     const attempts = (
       await this.options.stores.assessment.listAttemptsForAssignmentUser(
@@ -507,19 +553,28 @@ export class SubmissionService {
       .sort((left, right) => left.ordinal - right.ordinal);
 
     const results = await Promise.all(
-      attempts.map(async (attempt) => ({
-        entries: await this.historyForAttempt(
+      attempts.map(async (attempt) => {
+        const entries = await this.historyForAttempt(
           attempt.id,
           "student",
-          i18n,
+          workShown ? i18n : null,
           true,
-        ),
-        ordinal: attempt.ordinal,
-        status: attempt.status,
-      })),
+        );
+
+        return {
+          entries: workShown ? entries : entries.map(withoutWork),
+          ordinal: attempt.ordinal,
+          status: attempt.status,
+        };
+      }),
     );
 
-    return { attempts: results, released };
+    return {
+      attempts: results,
+      released,
+      workReleased: workShown,
+      workToCome: !workShown && assignment.workVisibility !== "never",
+    };
   }
 
   async listForInstructorAssignment(

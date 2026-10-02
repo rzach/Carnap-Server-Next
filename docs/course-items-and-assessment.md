@@ -123,6 +123,30 @@ Releasing grades while submissions remain open also changes the defaults for
 future submissions. Check the release warning on the instructor page before
 doing this.
 
+## Submitted-work visibility
+
+A graded assignment also says when a student may read back their own work
+after an attempt: each exercise's prompt, their answer, and any instructor
+comment, on the results page and in the attempt's submission JSON. Scores are
+not part of it; they follow grade release. The setting exists so an instructor
+can release scores while keeping worked answers from passing between sections
+that sit the same exam at different times.
+
+- **With the grades** (`with_grades`): visible once grades are released,
+  following `gradesVisibleAt` wherever the release control moves it. The
+  default for new assignments.
+- **Immediately** (`immediate`): always visible. Assignments created before
+  the setting existed were migrated to this, which is what they already did.
+- **Never** (`never`): not visible.
+- **Scheduled** (`scheduled`): visible from `workVisibleAt`.
+
+`workVisibility` and `workVisibleAt` are stored on the assignment. Unlike
+grade visibility, the setting stays editable after publication, because it
+changes no score and sends nothing to the LMS. API commands that omit
+`workVisibility` keep the current value. An attempt still in progress always
+shows its own work, since the lesson is open and restores it. Practice
+assignments and readings ignore the setting.
+
 ## Policy and route boundaries
 
 Routes parse requests and call application services. They must not duplicate

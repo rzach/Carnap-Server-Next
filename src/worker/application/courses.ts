@@ -838,6 +838,8 @@ export class CourseService {
         maxAttempts: assignment.maxAttempts,
         timeLimitMinutes: assignment.timeLimitMinutes,
         title: assignment.title,
+        workVisibility: assignment.workVisibility,
+        workVisibleAt: assignment.workVisibleAt,
       });
 
       if (assignment.state === "published") {

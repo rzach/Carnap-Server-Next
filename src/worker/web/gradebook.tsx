@@ -445,18 +445,37 @@ export function renderStudentAssignmentResults(
           )}
         </Notice>
       ) : null}
-      {model.results.released ? null : (
-        <Sheet title={i18n.t("Results")}>
-          <p>
-            {i18n.t("Grades for this assignment have not been released yet.")}
-          </p>
-        </Sheet>
+      {/* A banner, not a sheet: a line of explanation above the attempts.
+          Each sentence is whole on its own, and either can stand alone. */}
+      {model.results.released && !model.results.workToCome ? null : (
+        <Notice>
+          {[
+            model.results.released
+              ? null
+              : i18n.t(
+                  "Grades for this assignment have not been released yet.",
+                ),
+            // Only for work that is coming: under "never" the page just shows
+            // the scores, with no notice to read as a fault or a promise.
+            model.results.workToCome
+              ? i18n.t(
+                  "Your answers and any instructor comments for this assignment will be shown here once your instructor releases them.",
+                )
+              : null,
+          ]
+            .filter((sentence) => sentence !== null)
+            .join(" ")}
+        </Notice>
       )}
       {model.results.attempts.map((attempt) => (
         <Sheet
-          description={i18n.t(
-            "Your answers, the expected results, and instructor comments.",
-          )}
+          description={
+            model.results.workReleased
+              ? i18n.t(
+                  "Your answers, the expected results, and instructor comments.",
+                )
+              : undefined
+          }
           title={i18n.t("Attempt {ordinal}", { ordinal: attempt.ordinal })}
         >
           {attempt.entries.length === 0 ? (

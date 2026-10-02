@@ -2854,6 +2854,69 @@ describe("grade visibility", () => {
     });
   });
 
+  test("the form asks when submitted work shows, and keeps asking once published", async () => {
+    await withStorage(async (_storage, env) => {
+      const instructor = await login(env, "form-work@example.test");
+      const courseId = await createCourse(env, instructor);
+      const revision = await createRevision(
+        env,
+        instructor,
+        source("q_form_work", "Choose yes."),
+      );
+      const headers = {
+        Accept: "text/html",
+        Cookie: instructor.cookieHeader,
+      };
+      const workSelect = (html: string) =>
+        html.match(
+          /<select[^>]*name="workVisibility"[\s\S]*?<\/select>/,
+        )?.[0];
+
+      const newPage = await (
+        await appRequest(
+          createTestApp(),
+          `/courses/${courseId}/instructor/assignments/new`,
+          { headers },
+          env,
+        )
+      ).text();
+      const blank = workSelect(newPage);
+
+      expect(blank).toContain('data-gates-field="workVisibleAt"');
+      expect(blank).toContain("With the grades");
+      expect(blank).toContain("Never");
+      expect(blank).toMatch(/<option selected(="")? value="with_grades">/);
+      expect((blank ?? "").match(/selected/g)?.length).toBe(1);
+      expect(newPage).toContain('name="workVisibleAt"');
+
+      const draft = await createDraft(
+        env,
+        instructor,
+        courseId,
+        revision.revision.id,
+        { workVisibility: "never" },
+      );
+
+      await publish(env, instructor, courseId, draft.assignment.id);
+
+      const editPage = await (
+        await appRequest(
+          createTestApp(),
+          `/courses/${courseId}/instructor/assignments/${draft.assignment.id}/edit`,
+          { headers },
+          env,
+        )
+      ).text();
+
+      // Grades have their release buttons once published; the work does not,
+      // so its choice stays in the form, holding what was saved.
+      expect(editPage).not.toContain('name="gradesVisibility"');
+      expect(workSelect(editPage)).toMatch(
+        /<option selected(="")? value="never">/,
+      );
+    });
+  });
+
   test("quick create takes the same default the form shows", async () => {
     await withStorage(async (_storage, env) => {
       const instructor = await login(env, "quick-visibility@example.test");

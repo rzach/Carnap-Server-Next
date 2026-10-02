@@ -893,6 +893,10 @@ msgid "Arrow keys move between cells. Space or Enter changes one."
 msgstr ""
 
 #: src/worker/web/labels.ts
+msgid "As soon as it is submitted"
+msgstr ""
+
+#: src/worker/web/labels.ts
 msgid "As soon as work is checked"
 msgstr ""
 
@@ -2361,6 +2365,10 @@ msgstr ""
 msgid "Give the time when grades become visible, or choose another option."
 msgstr ""
 
+#: src/worker/application/assignments.ts
+msgid "Give the time when submitted work becomes visible, or choose another option."
+msgstr ""
+
 #: src/worker/web/errors.tsx
 msgid "Go to the login page"
 msgstr ""
@@ -3007,6 +3015,10 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Needs review ({count})"
+msgstr ""
+
+#: src/worker/web/labels.ts
+msgid "Never"
 msgstr ""
 
 #: src/worker/web/assignments.tsx
@@ -4486,6 +4498,18 @@ msgstr ""
 msgid "Submitted proof"
 msgstr ""
 
+#: src/worker/application/assignments.ts
+msgid "Submitted work visibility must be with_grades, immediate, never, or scheduled."
+msgstr ""
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Submitted work visible"
+msgstr ""
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Submitted work visible at"
+msgstr ""
+
 #: src/worker/web/ui-strings.ts
 msgid "Submitting…"
 msgstr ""
@@ -5807,6 +5831,10 @@ msgstr ""
 msgid "Whoever names this from a lesson freezes its text into that lesson, and their students read it there. Sharing a theory to be named is sharing what it says."
 msgstr ""
 
+#: src/worker/web/labels.ts
+msgid "With the grades"
+msgstr ""
+
 #: src/worker/exercises/world/strings.ts
 msgid "Won"
 msgstr ""
@@ -5989,6 +6017,10 @@ msgstr ""
 
 #: src/worker/exercises/multiple-choice/read-only-view.ts
 msgid "Your answer"
+msgstr ""
+
+#: src/worker/web/gradebook.tsx
+msgid "Your answers and any instructor comments for this assignment will be shown here once your instructor releases them."
 msgstr ""
 
 #: src/worker/web/gradebook.tsx

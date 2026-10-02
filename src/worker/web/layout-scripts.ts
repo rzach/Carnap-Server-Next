@@ -481,10 +481,10 @@ const TIMESTAMP_INPUT_SCRIPT = `
  * The gate names the field it governs and the value that wants it
  * (`data-gates-field`, `data-gates-value`); the field is found by the same
  * `data-timestamp-local` name the mirroring above uses, so the pair needs no id
- * of its own. Grade visibility is the one case today — the date matters only for
- * "at the time below" — and the mechanism is worth its handful of lines because
- * the alternative is a label that calls a field optional when it is sometimes
- * required.
+ * of its own. Grade and submitted-work visibility are the cases today — each
+ * date matters only for "at the time below" — and the mechanism is worth its
+ * handful of lines because the alternative is a label that calls a field
+ * optional when it is sometimes required.
  *
  * The server renders the field plain: enabled, not required. Whoever has no
  * script keeps a field they can fill and a server that still refuses a schedule

@@ -19,6 +19,8 @@ function assignment(fields: Partial<Assignment> = {}): Assignment {
     description: "Practice.",
     dueAt: null,
     gradesVisibleAt: null,
+    workVisibility: "with_grades",
+    workVisibleAt: null,
     id: "assignment-1",
     listed: true,
     maxAttempts: 1,

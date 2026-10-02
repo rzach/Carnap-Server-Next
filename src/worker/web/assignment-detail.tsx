@@ -96,6 +96,9 @@ import {
   latePolicyKindOptions,
   type ReviewState,
   reviewStateLabel,
+  type SelectOption,
+  workVisibilityLabel,
+  workVisibilityOptions,
 } from "./labels";
 import { type PageStatus, renderShell, useI18n } from "./layout";
 import {
@@ -131,7 +134,54 @@ export interface AssignmentFormValues {
   readonly maxAttempts?: string;
   readonly timeLimitMinutes?: string;
   readonly title?: string;
+  readonly workVisibility?: string;
+  readonly workVisibleAt?: string;
 }
+
+/**
+ * A choice of when something becomes visible, and the time its "At the time
+ * below" option needs. A blank form preselects the first option the order
+ * tuple lists.
+ *
+ * The time is not "optional": the choice that points at it requires it, and
+ * the others ignore it. The option's own wording is what ties them without
+ * script; with it, the gate script disables the field under every other
+ * choice (`data-gates-field`).
+ */
+const ScheduledChoice: FC<{
+  readonly at: string | undefined;
+  readonly atLabel: string;
+  readonly atName: string;
+  readonly choice: string | undefined;
+  readonly label: string;
+  readonly name: string;
+  readonly options: readonly SelectOption[];
+}> = ({ at, atLabel, atName, choice, label, name, options }) => (
+  <>
+    <label>
+      {label}
+      <br />
+      <select
+        data-gates-field={atName}
+        data-gates-value="scheduled"
+        name={name}
+        required
+      >
+        {options.map((option, index) => (
+          <option
+            selected={
+              choice === undefined ? index === 0 : option.value === choice
+            }
+            value={option.value}
+          >
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+    <TimestampInput label={atLabel} name={atName} value={at} />
+  </>
+);
 
 export interface AssignmentRevisionOption {
   readonly item: ContentItem;
@@ -296,6 +346,8 @@ export function assignmentValues(
     maxAttempts: assignment.maxAttempts.toString(),
     timeLimitMinutes: assignment.timeLimitMinutes?.toString() ?? "",
     title: assignment.title,
+    workVisibility: assignment.workVisibility,
+    workVisibleAt: assignment.workVisibleAt ?? "",
   };
 }
 
@@ -507,47 +559,36 @@ const AssignmentForm: FC<{
               name="availableUntil"
               value={values.availableUntil}
             />
+            {/* Grades are set here only before publishing; a published
+                assignment releases them with its own buttons, which also
+                schedule the passback. Releasing grades by default as work is
+                checked is what ordinary homework wants, and what the bare
+                timestamp this replaced could never say. */}
             {published ? null : (
-              <>
-                <label>
-                  {i18n.t("Grades visible")}
-                  <br />
-                  <select
-                    data-gates-field="gradesVisibleAt"
-                    data-gates-value="scheduled"
-                    name="gradesVisibility"
-                    required
-                  >
-                    {gradesVisibilityOptions(i18n).map((option, index) => (
-                      <option
-                        selected={
-                          // A blank form preselects the first choice the order
-                          // tuple lists — releasing as work is checked, which is
-                          // what ordinary homework wants and what the bare
-                          // timestamp this replaced could never say.
-                          values.gradesVisibility === undefined
-                            ? index === 0
-                            : option.value === values.gradesVisibility
-                        }
-                        value={option.value}
-                      >
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {/* Not "optional": it is required by the choice above that
-                    points at it, and ignored by the two that do not. The
-                    option's own wording ("At the time below") is what ties
-                    them, since a server-rendered form cannot show and hide
-                    this as the choice changes. */}
-                <TimestampInput
-                  label={i18n.t("Grades visible at")}
-                  name="gradesVisibleAt"
-                  value={values.gradesVisibleAt}
-                />
-              </>
+              <ScheduledChoice
+                at={values.gradesVisibleAt}
+                atLabel={i18n.t("Grades visible at")}
+                atName="gradesVisibleAt"
+                choice={values.gradesVisibility}
+                label={i18n.t("Grades visible")}
+                name="gradesVisibility"
+                options={gradesVisibilityOptions(i18n)}
+              />
             )}
+            {/* Work visibility stays editable once published: it moves no
+                score and sends nothing to the LMS, and "never" is often a
+                choice to revisit once every section has sat the exam. */}
+            {showGradedTiming ? (
+              <ScheduledChoice
+                at={values.workVisibleAt}
+                atLabel={i18n.t("Submitted work visible at")}
+                atName="workVisibleAt"
+                choice={values.workVisibility}
+                label={i18n.t("Submitted work visible")}
+                name="workVisibility"
+                options={workVisibilityOptions(i18n)}
+              />
+            ) : null}
           </div>
         </fieldset>
         {showGradedTiming ? (
@@ -879,6 +920,15 @@ function assignmentSummaryItems(
       {
         label: i18n.t("Grades visible at"),
         value: <Time fallback={notSet} value={assignment.gradesVisibleAt} />,
+      },
+      {
+        label: i18n.t("Submitted work visible"),
+        value:
+          assignment.workVisibility === "scheduled" ? (
+            <Time fallback={notSet} value={assignment.workVisibleAt} />
+          ) : (
+            workVisibilityLabel(i18n, assignment.workVisibility)
+          ),
       },
       {
         label: i18n.t("Max attempts"),

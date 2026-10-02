@@ -987,11 +987,14 @@ Choose yes.
 
       await enrollStudent(env, instructor, student, courseId);
 
+      // Work shown immediately, which is what every assignment did before the
+      // setting existed; withholding it is the next test's.
       const assignmentId = await createPublishedAssignment(
         env,
         instructor,
         courseId,
         revisionId,
+        { workVisibility: "immediate" },
       );
       const attemptId = await beginAttempt(
         env,
@@ -1121,6 +1124,209 @@ Choose yes.
 
       expect(releasedResultsHtml).toContain("Attempt 1");
       expect(releasedResultsHtml).toContain("<strong>Say yes</strong>");
+    });
+  });
+
+  test("scores can be released while the submitted work stays in", async () => {
+    await withStorage(async ({ stores }, env) => {
+      const instructor = await login(env, "withhold-teacher@example.test");
+      const student = await login(env, "withhold-student@example.test");
+      const courseId = await createCourse(env, instructor);
+      const revisionId = await createRevision(
+        env,
+        instructor,
+        `# Lesson\n\n${question("q1", 2, "Say yes")}`,
+      );
+
+      await enrollStudent(env, instructor, student, courseId);
+
+      // The default is to show the work with the grades.
+      const defaultDraft = await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/assignments`,
+        jsonRequest(
+          { contentRevisionId: revisionId, title: "Defaulted" },
+          instructor,
+        ),
+        env,
+      );
+
+      expect(defaultDraft.status).toBe(201);
+      expect(
+        ((await defaultDraft.json()) as AssignmentResponse).assignment,
+      ).toMatchObject({ workVisibility: "with_grades", workVisibleAt: null });
+
+      // A schedule with nothing to schedule is refused, as for grades.
+      const unscheduled = await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/assignments`,
+        jsonRequest(
+          {
+            contentRevisionId: revisionId,
+            title: "Unscheduled",
+            workVisibility: "scheduled",
+          },
+          instructor,
+        ),
+        env,
+      );
+
+      expect(unscheduled.status).toBe(400);
+      expect(await unscheduled.text()).toContain(
+        "invalid_assignment_work_visibility",
+      );
+
+      const assignmentId = await createPublishedAssignment(
+        env,
+        instructor,
+        courseId,
+        revisionId,
+        { timeLimitMinutes: 30, workVisibility: "never" },
+      );
+      const attemptId = await beginAttempt(
+        env,
+        student,
+        courseId,
+        assignmentId,
+      );
+
+      expect(
+        (
+          await submitAnswer(
+            env,
+            student,
+            courseId,
+            assignmentId,
+            attemptId,
+            ["yes"],
+          )
+        ).status,
+      ).toBe(201);
+
+      const submissionsPath = `/courses/${courseId}/assignments/${assignmentId}/attempts/${attemptId}/submissions`;
+      const submissionsJson = async () => {
+        const response = await appRequest(
+          createTestApp(),
+          submissionsPath,
+          { headers: authHeaders(student) },
+          env,
+        );
+
+        expect(response.status).toBe(200);
+
+        return (
+          (await response.json()) as {
+            readonly submissions: readonly {
+              readonly answerReview: unknown;
+              readonly submission: { readonly answer: unknown };
+            }[];
+          }
+        ).submissions;
+      };
+
+      // While the attempt is open the lesson restores the answer from here,
+      // so the work is the student's whatever the setting says.
+      expect((await submissionsJson())[0]?.submission.answer).not.toBeNull();
+
+      // The attempt runs out, and the instructor releases the scores.
+      await stores.assessment.expireOpenAttempts(
+        assignmentId,
+        student.actorId,
+        "2999-01-01T00:00:00.000Z",
+      );
+      expect(
+        (
+          await appRequest(
+            createTestApp(),
+            `/courses/${courseId}/instructor/assignments/${assignmentId}/grade-visibility`,
+            jsonRequest({ release: true }, instructor),
+            env,
+          )
+        ).status,
+      ).toBe(200);
+
+      const resultsPath = `/courses/${courseId}/assignments/${assignmentId}/results`;
+      const resultsHtml = async () => {
+        const response = await appRequest(
+          createTestApp(),
+          resultsPath,
+          { headers: { Accept: "text/html", Cookie: student.cookieHeader } },
+          env,
+        );
+
+        expect(response.status).toBe(200);
+
+        return response.text();
+      };
+      const withheld = await resultsHtml();
+
+      // The score and the exercise's name, and nothing that could be passed on.
+      expect(withheld).toContain("<strong>Say yes</strong>");
+      expect(withheld).toContain("2/2");
+      expect(withheld).not.toContain("Choose yes.");
+      // And no notice: under "never" withholding is how the assignment is
+      // run, not something to explain or promise an end to.
+      expect(withheld).not.toContain(
+        "will be shown here once your instructor releases them",
+      );
+      expect(withheld).not.toContain('class="notice"');
+
+      const [withheldEntry] = await submissionsJson();
+
+      expect(withheldEntry?.submission.answer).toBeNull();
+      expect(withheldEntry?.answerReview).toBeNull();
+
+      // Work that is coming, at a set time, is said to be held back.
+      const schedule = await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/instructor/assignments/${assignmentId}/settings`,
+        jsonRequest(
+          {
+            timeLimitMinutes: 30,
+            title: "Homework",
+            workVisibility: "scheduled",
+            workVisibleAt: "2999-01-01T00:00:00.000Z",
+          },
+          instructor,
+        ),
+        env,
+      );
+
+      expect(schedule.status).toBe(200);
+
+      const scheduled = await resultsHtml();
+
+      expect(scheduled).toContain(
+        "will be shown here once your instructor releases them",
+      );
+      expect(scheduled).not.toContain("Choose yes.");
+
+      // Settings stay editable after publishing; opening the work shows it.
+      const reopen = await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/instructor/assignments/${assignmentId}/settings`,
+        jsonRequest(
+          {
+            timeLimitMinutes: 30,
+            title: "Homework",
+            workVisibility: "immediate",
+          },
+          instructor,
+        ),
+        env,
+      );
+
+      expect(reopen.status).toBe(200);
+
+      const shown = await resultsHtml();
+
+      expect(shown).toContain(
+        '<div class="result-exercise-prompt"><p>Choose yes.</p>',
+      );
+      expect(shown).not.toContain(
+        "will be shown here once your instructor releases them",
+      );
+      expect((await submissionsJson())[0]?.submission.answer).not.toBeNull();
     });
   });
 

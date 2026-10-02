@@ -641,7 +641,9 @@ export async function collectFixtures(
     instructor,
   );
   // Released grades: the student results page has two mutually exclusive
-  // shapes, and the withheld one is captured before this runs.
+  // shapes, and the withheld one is captured before this runs. The work shows
+  // with the grades by default, so that shape withholds both, with both
+  // notices.
   const withheldResults = await page(
     env,
     `/courses/${courseId}/assignments/${assignmentId}/results`,

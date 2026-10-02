@@ -5,6 +5,7 @@ import type {
   AssignmentLatePolicy,
   AssignmentOverride,
   GradesVisibility,
+  WorkVisibility,
 } from "../domain/assignments";
 import type {
   CompiledContentArtifact,
@@ -75,16 +76,27 @@ export interface CreateAssignmentCommand {
   readonly maxAttempts?: number | null;
   readonly timeLimitMinutes?: number | null;
   readonly title: string;
+  /**
+   * One of {@link WorkVisibility}. Omitted, a new assignment takes
+   * `with_grades` and an edit keeps what the assignment has — an API caller
+   * that predates the setting must not reset it by saving something else.
+   */
+  readonly workVisibility?: string | null;
+  /** The time to open the work at; read only under `scheduled`. */
+  readonly workVisibleAt?: string | null;
 }
 
 export type UpdateAssignmentCommand = CreateAssignmentCommand;
 
 /**
  * The subset of assignment properties an instructor may change after the
- * assignment is published: scheduling and presentation only. Content
- * (`contentRevisionId`) has its own controlled path (repointing), grade
- * visibility has the release control, and the assessment mode stays frozen —
- * changing any of those on a live assignment would invalidate existing work.
+ * assignment is published: scheduling, presentation, and when students may
+ * read back their work. Content (`contentRevisionId`) has its own controlled
+ * path (repointing), grade visibility has the release control, and the
+ * assessment mode stays frozen — changing any of those on a live assignment
+ * would invalidate existing work. Work visibility touches no score and no
+ * passback, so it stays open: "never" is often a choice to revisit once every
+ * section has sat the exam.
  */
 export type UpdatePublishedSettingsCommand = Pick<
   CreateAssignmentCommand,
@@ -97,6 +109,8 @@ export type UpdatePublishedSettingsCommand = Pick<
   | "maxAttempts"
   | "timeLimitMinutes"
   | "title"
+  | "workVisibility"
+  | "workVisibleAt"
 >;
 
 export interface RepointPublishedAssignmentCommand {
@@ -398,6 +412,73 @@ function resolveGradesVisibleAt(
   }
 }
 
+const DEFAULT_WORK_VISIBILITY: Pick<
+  Assignment,
+  "workVisibility" | "workVisibleAt"
+> = { workVisibility: "with_grades", workVisibleAt: null };
+
+function normalizeWorkVisibility(
+  value: string | null | undefined,
+): WorkVisibility | null {
+  if (value === undefined || value === null || value.trim().length === 0) {
+    return null;
+  }
+
+  const normalized = value.trim();
+
+  if (
+    normalized !== "immediate" &&
+    normalized !== "never" &&
+    normalized !== "scheduled" &&
+    normalized !== "with_grades"
+  ) {
+    throw badRequest(
+      "invalid_assignment_work_visibility",
+      deferred.i18n.t(
+        "Submitted work visibility must be with_grades, immediate, never, or scheduled.",
+      ),
+    );
+  }
+
+  return normalized;
+}
+
+/**
+ * The work-visibility pair to store, or `current` when the command names no
+ * choice. A time is kept only under `scheduled`, which refuses to go without
+ * one, as the grade schedule does.
+ */
+function resolveWorkVisibility(
+  command: Pick<CreateAssignmentCommand, "workVisibility" | "workVisibleAt">,
+  current: Pick<Assignment, "workVisibility" | "workVisibleAt">,
+): Pick<Assignment, "workVisibility" | "workVisibleAt"> {
+  const visibility = normalizeWorkVisibility(command.workVisibility);
+
+  if (visibility === null) {
+    return {
+      workVisibility: current.workVisibility,
+      workVisibleAt: current.workVisibleAt,
+    };
+  }
+
+  if (visibility !== "scheduled") {
+    return { workVisibility: visibility, workVisibleAt: null };
+  }
+
+  const at = normalizeTimestamp(command.workVisibleAt, "work_visible_at");
+
+  if (at === null) {
+    throw badRequest(
+      "invalid_assignment_work_visibility",
+      deferred.i18n.t(
+        "Give the time when submitted work becomes visible, or choose another option.",
+      ),
+    );
+  }
+
+  return { workVisibility: visibility, workVisibleAt: at };
+}
+
 function normalizeDisplayOrder(value: number | null | undefined): number {
   if (value === undefined || value === null) {
     return 0;
@@ -553,6 +634,10 @@ export class AssignmentService {
       assessmentMode === "graded"
         ? resolveGradesVisibleAt(command, now)
         : null;
+    const workVisibility =
+      assessmentMode === "graded"
+        ? resolveWorkVisibility(command, DEFAULT_WORK_VISIBILITY)
+        : DEFAULT_WORK_VISIBILITY;
     const maxAttempts =
       assessmentMode === "graded"
         ? normalizeMaxAttempts(command.maxAttempts)
@@ -596,6 +681,7 @@ export class AssignmentService {
       maxAttempts,
       timeLimitMinutes,
       title,
+      ...workVisibility,
     });
 
     return {
@@ -652,6 +738,10 @@ export class AssignmentService {
       assessmentMode === "graded"
         ? resolveGradesVisibleAt(command, updatedAt)
         : null;
+    const workVisibility =
+      assessmentMode === "graded"
+        ? resolveWorkVisibility(command, existing)
+        : DEFAULT_WORK_VISIBILITY;
     const maxAttempts =
       assessmentMode === "graded"
         ? normalizeMaxAttempts(command.maxAttempts)
@@ -690,6 +780,7 @@ export class AssignmentService {
       timeLimitMinutes,
       title,
       updatedAt,
+      ...workVisibility,
     });
 
     if (updated === null) {
@@ -939,6 +1030,9 @@ export class AssignmentService {
     const timeLimitMinutes = graded
       ? normalizeTimeLimitMinutes(command.timeLimitMinutes)
       : existing.timeLimitMinutes;
+    const workVisibility = graded
+      ? resolveWorkVisibility(command, existing)
+      : existing;
 
     assertTitle(title);
     assertDescription(description);
@@ -958,6 +1052,8 @@ export class AssignmentService {
         timeLimitMinutes,
         title,
         updatedAt,
+        workVisibility: workVisibility.workVisibility,
+        workVisibleAt: workVisibility.workVisibleAt,
       });
 
     if (updated === null) {

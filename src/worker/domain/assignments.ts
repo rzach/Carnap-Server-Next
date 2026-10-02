@@ -18,6 +18,9 @@ export interface Assignment {
   readonly dueAt: Timestamp | null;
   readonly availableUntil: Timestamp | null;
   readonly gradesVisibleAt: Timestamp | null;
+  readonly workVisibility: WorkVisibility;
+  /** The time a `scheduled` {@link WorkVisibility} opens; null otherwise. */
+  readonly workVisibleAt: Timestamp | null;
   readonly listed: boolean;
   readonly maxAttempts: number;
   readonly timeLimitMinutes: number | null;
@@ -39,6 +42,24 @@ export interface Assignment {
  * until someone came back and released them.
  */
 export type GradesVisibility = "immediate" | "manual" | "scheduled";
+
+/**
+ * When a student may read back their own submitted work on a graded
+ * assignment — each exercise's prompt, their answer, and the instructor's
+ * comment — once they are no longer in an attempt.
+ *
+ * Stored, unlike {@link GradesVisibility}, because a timestamp cannot carry it:
+ * `with_grades` follows `gradesVisibleAt` wherever a release control later moves
+ * it, and `immediate` and `never` have no time at all. Scores are not governed
+ * here; they stay with the grade release, so an instructor can publish the
+ * numbers while worked answers stay in (sections sitting the same exam at
+ * different times being the case this is for).
+ */
+export type WorkVisibility =
+  | "immediate"
+  | "never"
+  | "scheduled"
+  | "with_grades";
 
 export type AssignmentAvailability = "closed" | "open" | "upcoming";
 
@@ -82,6 +103,34 @@ export function gradesReleased(
   return (
     assignment.gradesVisibleAt !== null && assignment.gradesVisibleAt <= now
   );
+}
+
+/**
+ * Whether a student may read back their submitted work on this assignment.
+ * Only graded assignments withhold it: practice and readings show their
+ * content openly, and their widgets restore the student's last answer, so
+ * there would be nothing to keep in.
+ */
+export function workReleased(
+  assignment: Assignment,
+  now: Timestamp,
+): boolean {
+  if (assignment.assessmentMode !== "graded") {
+    return true;
+  }
+
+  switch (assignment.workVisibility) {
+    case "immediate":
+      return true;
+    case "never":
+      return false;
+    case "scheduled":
+      return (
+        assignment.workVisibleAt !== null && assignment.workVisibleAt <= now
+      );
+    case "with_grades":
+      return gradesReleased(assignment, now);
+  }
 }
 
 export interface AssignmentContentVersion {

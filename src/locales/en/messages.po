@@ -893,6 +893,10 @@ msgid "Arrow keys move between cells. Space or Enter changes one."
 msgstr "Arrow keys move between cells. Space or Enter changes one."
 
 #: src/worker/web/labels.ts
+msgid "As soon as it is submitted"
+msgstr "As soon as it is submitted"
+
+#: src/worker/web/labels.ts
 msgid "As soon as work is checked"
 msgstr "As soon as work is checked"
 
@@ -2361,6 +2365,10 @@ msgstr "Give symbols or without, not both."
 msgid "Give the time when grades become visible, or choose another option."
 msgstr "Give the time when grades become visible, or choose another option."
 
+#: src/worker/application/assignments.ts
+msgid "Give the time when submitted work becomes visible, or choose another option."
+msgstr "Give the time when submitted work becomes visible, or choose another option."
+
 #: src/worker/web/errors.tsx
 msgid "Go to the login page"
 msgstr "Go to the login page"
@@ -3008,6 +3016,10 @@ msgstr "Needs review"
 #: src/worker/web/assignment-detail.tsx
 msgid "Needs review ({count})"
 msgstr "Needs review ({count})"
+
+#: src/worker/web/labels.ts
+msgid "Never"
+msgstr "Never"
 
 #: src/worker/web/assignments.tsx
 msgid "new assignment"
@@ -4486,6 +4498,18 @@ msgstr "Submitted at {when}."
 msgid "Submitted proof"
 msgstr "Submitted proof"
 
+#: src/worker/application/assignments.ts
+msgid "Submitted work visibility must be with_grades, immediate, never, or scheduled."
+msgstr "Submitted work visibility must be with_grades, immediate, never, or scheduled."
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Submitted work visible"
+msgstr "Submitted work visible"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Submitted work visible at"
+msgstr "Submitted work visible at"
+
 #: src/worker/web/ui-strings.ts
 msgid "Submitting…"
 msgstr "Submitting…"
@@ -5807,6 +5831,10 @@ msgstr "When the game asks for a block, click or tap it on the board."
 msgid "Whoever names this from a lesson freezes its text into that lesson, and their students read it there. Sharing a theory to be named is sharing what it says."
 msgstr "Whoever names this from a lesson freezes its text into that lesson, and their students read it there. Sharing a theory to be named is sharing what it says."
 
+#: src/worker/web/labels.ts
+msgid "With the grades"
+msgstr "With the grades"
+
 #: src/worker/exercises/world/strings.ts
 msgid "Won"
 msgstr "Won"
@@ -5990,6 +6018,10 @@ msgstr "Your account details and preferences."
 #: src/worker/exercises/multiple-choice/read-only-view.ts
 msgid "Your answer"
 msgstr "Your answer"
+
+#: src/worker/web/gradebook.tsx
+msgid "Your answers and any instructor comments for this assignment will be shown here once your instructor releases them."
+msgstr "Your answers and any instructor comments for this assignment will be shown here once your instructor releases them."
 
 #: src/worker/web/gradebook.tsx
 msgid "Your answers, the expected results, and instructor comments."

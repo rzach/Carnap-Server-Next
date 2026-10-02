@@ -405,6 +405,8 @@ function mapAssignment(row: typeof assignments.$inferSelect): Assignment {
     dueAt: row.dueAt,
     availableUntil: row.availableUntil,
     gradesVisibleAt: row.gradesVisibleAt,
+    workVisibility: row.workVisibility,
+    workVisibleAt: row.workVisibleAt,
     listed: row.listed,
     maxAttempts: row.maxAttempts,
     timeLimitMinutes: row.timeLimitMinutes,
@@ -1580,6 +1582,8 @@ class SqliteAssignmentStore implements AssignmentStore {
             dueAt: input.dueAt,
             availableUntil: input.availableUntil,
             gradesVisibleAt: input.gradesVisibleAt,
+            workVisibility: input.workVisibility,
+            workVisibleAt: input.workVisibleAt,
             listed: input.listed,
             maxAttempts: input.maxAttempts,
             timeLimitMinutes: input.timeLimitMinutes,
@@ -2011,6 +2015,8 @@ class SqliteAssignmentStore implements AssignmentStore {
           timeLimitMinutes: input.timeLimitMinutes,
           title: input.title,
           updatedAt: input.updatedAt,
+          workVisibility: input.workVisibility,
+          workVisibleAt: input.workVisibleAt,
         })
         .where(
           and(
@@ -2036,6 +2042,8 @@ class SqliteAssignmentStore implements AssignmentStore {
           availableFrom: input.availableFrom,
           availableUntil: input.availableUntil,
           gradesVisibleAt: input.gradesVisibleAt,
+          workVisibility: input.workVisibility,
+          workVisibleAt: input.workVisibleAt,
           contentRevisionId: input.contentRevisionId,
           description: input.description,
           dueAt: input.dueAt,

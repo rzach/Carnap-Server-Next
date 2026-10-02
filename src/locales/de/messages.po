@@ -893,6 +893,10 @@ msgid "Arrow keys move between cells. Space or Enter changes one."
 msgstr "Mit den Pfeiltasten zwischen den Feldern wechseln. Leertaste oder Eingabe ändert ein Feld."
 
 #: src/worker/web/labels.ts
+msgid "As soon as it is submitted"
+msgstr "Sobald sie eingereicht ist"
+
+#: src/worker/web/labels.ts
 msgid "As soon as work is checked"
 msgstr "Sobald die Bearbeitung geprüft ist"
 
@@ -2361,6 +2365,10 @@ msgstr "Geben Sie symbols oder without an, nicht beides."
 msgid "Give the time when grades become visible, or choose another option."
 msgstr "Geben Sie den Zeitpunkt an, ab dem die Noten sichtbar werden, oder wählen Sie eine andere Option."
 
+#: src/worker/application/assignments.ts
+msgid "Give the time when submitted work becomes visible, or choose another option."
+msgstr "Geben Sie den Zeitpunkt an, ab dem eingereichte Bearbeitungen sichtbar werden, oder wählen Sie eine andere Option."
+
 #: src/worker/web/errors.tsx
 msgid "Go to the login page"
 msgstr "Zur Anmeldeseite"
@@ -3008,6 +3016,10 @@ msgstr "Prüfung erforderlich"
 #: src/worker/web/assignment-detail.tsx
 msgid "Needs review ({count})"
 msgstr "Prüfung erforderlich ({count})"
+
+#: src/worker/web/labels.ts
+msgid "Never"
+msgstr "Nie"
 
 #: src/worker/web/assignments.tsx
 msgid "new assignment"
@@ -4486,6 +4498,18 @@ msgstr "Abgegeben am {when}."
 msgid "Submitted proof"
 msgstr "Abgegebener Beweis"
 
+#: src/worker/application/assignments.ts
+msgid "Submitted work visibility must be with_grades, immediate, never, or scheduled."
+msgstr "Die Sichtbarkeit eingereichter Bearbeitungen muss with_grades, immediate, never oder scheduled sein."
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Submitted work visible"
+msgstr "Eingereichte Bearbeitungen sichtbar"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Submitted work visible at"
+msgstr "Eingereichte Bearbeitungen sichtbar ab"
+
 #: src/worker/web/ui-strings.ts
 msgid "Submitting…"
 msgstr "Wird abgegeben …"
@@ -5807,6 +5831,10 @@ msgstr "Wenn das Spiel nach einem Block fragt, klicken oder tippen Sie ihn auf d
 msgid "Whoever names this from a lesson freezes its text into that lesson, and their students read it there. Sharing a theory to be named is sharing what it says."
 msgstr ""
 
+#: src/worker/web/labels.ts
+msgid "With the grades"
+msgstr "Mit den Noten"
+
 #: src/worker/exercises/world/strings.ts
 msgid "Won"
 msgstr "Gewonnen"
@@ -5990,6 +6018,10 @@ msgstr "Ihre Kontodaten und Einstellungen."
 #: src/worker/exercises/multiple-choice/read-only-view.ts
 msgid "Your answer"
 msgstr "Ihre Antwort"
+
+#: src/worker/web/gradebook.tsx
+msgid "Your answers and any instructor comments for this assignment will be shown here once your instructor releases them."
+msgstr "Ihre Antworten und etwaige Kommentare der Lehrperson zu dieser Aufgabe werden hier angezeigt, sobald Ihre Lehrperson sie freigibt."
 
 #: src/worker/web/gradebook.tsx
 msgid "Your answers, the expected results, and instructor comments."
