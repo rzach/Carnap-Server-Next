@@ -88,6 +88,16 @@ export interface ModelPublicData {
    */
   readonly givens?: Readonly<Record<string, string>>;
   readonly options: ModelOptions;
+  /**
+   * Present on a playground: the student writes the sentences, and the model's
+   * fields are those the sentences use plus those the {@link givens} name —
+   * which is how a fixed model (its fields given, under `strictGivens`) says
+   * which symbols it is a model *of*. Without givens the playground is free.
+   *
+   * A playground has no {@link targeted} formulas of its own: both lists are
+   * empty and {@link target} says what the student's sentences must do.
+   */
+  readonly playground?: true;
   readonly promptHtml: string;
   /**
    * Formulas that must come out true whatever else happens — a validity
@@ -105,7 +115,7 @@ export interface ModelPublicData {
   readonly source?: string;
   readonly system?: string;
   readonly target: ModelTarget;
-  /** The formulas {@link target} applies to, as engine text. Never empty. */
+  /** The formulas {@link target} applies to, as engine text. Never empty, except on a playground. */
   readonly targeted: readonly string[];
   readonly variant: ModelVariant;
 }
@@ -121,4 +131,12 @@ export interface ModelPublicData {
  * generated function value table is an editor over the string it produces, not a
  * different format.
  */
-export type ModelAnswerData = ModelInput;
+export interface ModelAnswerData extends ModelInput {
+  /**
+   * A playground's sentences, exactly as typed (comma-separated, as an author
+   * writes a list). Raw text for the reason the fields are: a review shows what
+   * was written, and the sentences are read again against the language at every
+   * check rather than trusted.
+   */
+  readonly sentences?: string;
+}

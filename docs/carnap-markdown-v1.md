@@ -633,9 +633,55 @@ In addition to the common attributes:
   `forallx-calgary-2019`; `forallx-magnus` uses the original book's notation.
 - `counterexample-to`: `validity`/`tautology`, `equivalence`, or
   `inconsistency`/`contradiction`.
+- `playground`: boolean, simple variant only. The student writes the
+  sentences and builds the model; see [Model playground](#model-playground).
 - `check`: legacy `on` or `off`; prefer `feedback`.
 - `options`: `nocheck`, `strictGivens`, `double-turnstile`, or
   `negated-double-turnstile`. `forallxStyle` is recognized but not effective.
+
+### Model playground
+
+With the boolean `playground` attribute the student supplies the sentences
+too. They type them, separated by commas, into a box above the fields; the
+interface shows how each reads, and the fields are those the sentences use
+(the domain, plus a menu or extension for every constant, predicate, function,
+and free variable). The exercise is correct when every typed sentence has the
+target property in the model, which is true by default and follows
+`counterexample-to` as in the simple variant. There is no check that a
+sentence is interesting; `P → P` is true in any model.
+
+```md
+::::model{id="free" playground}
+Write a sentence that is true in a model with two elements and false in
+every model with one, then build the model.
+::::
+```
+
+A playground has no formula list: its sentences are the student's, and a list
+item is a compile error (`playground_lists_formulas`). Givens name the
+symbols the model always interprets instead. A given may name any field the
+language could have, spelled as the interface labels it (`F(_,_)`, `a`,
+`f(_)`), and its field is shown whatever the student writes. A label the
+language cannot read is refused (`unknown_model_given_field`).
+
+With `strictGivens` the givens are a fixed model: the student only writes
+sentences, and a sentence using a symbol the givens do not name is refused.
+A locked playground needs at least one given
+(`playground_strict_without_givens`); `| Domain : 0,1,2` alone is a model of
+the pure identity language.
+
+```md
+::::model{id="fixed" playground options="strictGivens"}
+Write a sentence about `a` and `F` that this model makes true.
+
+| Domain : 0,1
+| F(_) : 0
+| a : 0
+::::
+```
+
+The answer gains a `sentences` string. `points="0"` is still refused, as for
+every exercise.
 
 See [Languages and theories](#languages-and-theories) for formula notation,
 and [the model reference](../src/worker/exercises/model/README.md) for field

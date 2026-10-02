@@ -89,6 +89,27 @@ only in `validity`):
 
 The compiled exercise stores the resolved property, not the synonym used.
 
+### Playground
+
+`playground` (simple variant only; `playground_variant` otherwise) makes the
+student write the sentences. A list item is refused
+(`playground_lists_formulas`). Givens name the symbols the model always
+interprets: in a playground a given's label is read back against the language
+by `fieldForLabel` (`logic/signature.ts`), which fills each `_` with a name,
+reads the result as a sentence or a term, and accepts the field only when it
+prints back to exactly the label. Without givens the playground is free.
+`counterexample-to` still selects the target property. With `strictGivens`
+at least one given is required (`playground_strict_without_givens`) and a
+symbol the givens do not name is refused (`symbol-outside-model`).
+
+The public data carries `playground: true`; the vocabulary is not stored
+separately, because it is the givens' labels. `resolveModelFor(publicData,
+sentences)` in `grading.ts` builds the task and signature from those fields
+plus the readable typed sentences, and `judgeAnswer` grades. Grading is
+all-or-nothing with no triviality refusal. The client reshapes its field rows
+only when the sentences read or are empty, so a half-typed sentence does not
+discard values.
+
 ### Options
 
 - `nocheck`: equivalent to `check="off"`.
@@ -249,7 +270,9 @@ above.
 { "domain": "0,1", "fields": { "F(_)": "0,1", "a": "0" } }
 ```
 
-Normalization drops fields not requested by the exercise. Raw values are
+A playground's answer also carries `"sentences": "<text as typed>"`; no other
+exercise stores it. Normalization drops fields not requested by the exercise
+(for a playground, those neither its sentences nor its givens use). Raw values are
 retained so review can show the submitted answer, including mistakes.
 Grading is all-or-nothing.
 

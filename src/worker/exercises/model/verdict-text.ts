@@ -76,10 +76,21 @@ export function describeProblem(
         "In this model {field} has more than one value for {argument}.",
         { argument: problem.argument, field: problem.field },
       );
-    default:
+    case "function-too-large":
       return strings(
         "This domain gives {field} too many arguments to fill in.",
         { field: problem.field },
+      );
+    case "sentences-missing":
+      return strings("Write at least one sentence.");
+    case "sentence-unreadable":
+      return `${strings("Could not read the sentence “{sentence}”.", {
+        sentence: problem.sentence,
+      })} ${strings(problem.message as ModelStringId, problem.params)}`;
+    default:
+      return strings(
+        "This model gives {symbol} no meaning, so a sentence cannot use it.",
+        { symbol: problem.symbol },
       );
   }
 }

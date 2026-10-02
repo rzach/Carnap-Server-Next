@@ -309,6 +309,23 @@ conclusion fails.
 AxEyR(x,y) :|-: ExAyR(y,x)
 :::
 
+With \`playground\` the student supplies the sentences as well. They type them
+into the box, comma-separated, and the fields follow what they wrote; the
+exercise is correct when the model makes every one of them true. An instructor
+can use an empty one in lecture to try a model out.
+
+\`\`\`md
+:::model{id="md_playground" title="A model of your own" playground}
+Write a sentence that mentions a relation, then build a model in which it is
+true.
+:::
+\`\`\`
+
+:::model{id="md_playground" title="A model of your own" playground}
+Write a sentence that mentions a relation, then build a model in which it is
+true.
+:::
+
 ## 10. Translation
 
 Symbolization, the skill the proof types assume. The prompt is an English

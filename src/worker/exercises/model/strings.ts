@@ -1,4 +1,5 @@
 import { placeholders, type Translator } from "../../i18n/translator";
+import { buildFormulaParserStrings } from "../../logic/specs/strings";
 
 /**
  * Every string the model widget can show, in the viewer's language.
@@ -20,11 +21,20 @@ import { placeholders, type Translator } from "../../i18n/translator";
  */
 export function buildModelStrings(i18n: Translator) {
   return {
+    // What a playground's sentence box can complain about, in the parser's own
+    // words: the same sentences the translation widget and the proofs say.
+    ...buildFormulaParserStrings(i18n),
     "A domain may have at most {max} elements.": i18n.t(
       "A domain may have at most {max} elements.",
       placeholders("max"),
     ),
     Check: i18n.t("Check"),
+    // A playground's sentence that will not parse. The parser's own complaint
+    // follows it as a second sentence.
+    "Could not read the sentence “{sentence}”.": i18n.t(
+      "Could not read the sentence “{sentence}”.",
+      placeholders("sentence"),
+    ),
     "Could not read the value of {field}.": i18n.t(
       "Could not read the value of {field}.",
       placeholders("field"),
@@ -102,6 +112,22 @@ export function buildModelStrings(i18n: Translator) {
       placeholders("field"),
     ),
     True: i18n.t("True"),
+    "Reads as {formula}": i18n.t(
+      "Reads as {formula}",
+      placeholders("formula"),
+    ),
+    "Separate sentences with commas.": i18n.t(
+      "Separate sentences with commas.",
+    ),
+    // Under `strictGivens` the model is the author's, and a sentence cannot
+    // reach for a symbol it does not interpret.
+    "This model gives {symbol} no meaning, so a sentence cannot use it.":
+      i18n.t(
+        "This model gives {symbol} no meaning, so a sentence cannot use it.",
+        placeholders("symbol"),
+      ),
+    "Write at least one sentence.": i18n.t("Write at least one sentence."),
+    "Your sentences": i18n.t("Your sentences"),
     // One field's accessible name. `F(_,_)` on its own says nothing about what
     // to type into it, and the blanks are not read aloud usefully.
     "{field}: the tuples in its extension": i18n.t(

@@ -19,7 +19,13 @@
 
 import type { SurfaceLanguage } from "@aufbau/syntax";
 import type { Formula, Term } from "../../../exercise-kit/formula";
-import { symbolKey, termToString } from "../../../exercise-kit/formula";
+import {
+  languageNames,
+  parseFormula,
+  parseTerm,
+  symbolKey,
+  termToString,
+} from "../../../exercise-kit/formula";
 
 export type ModelFieldKind =
   | "domain"
@@ -207,8 +213,18 @@ const KIND_ORDER: readonly ModelFieldKind[] = [
 export function modelSignature(
   formulas: readonly Formula[],
   lang: SurfaceLanguage,
+  extra: readonly ModelField[] = [],
 ): readonly ModelField[] {
-  const collected = new Map<string, ModelField>();
+  const collected = new Map<string, ModelField>(
+    extra
+      .filter((field) => field.kind !== "domain")
+      .map((field) => [
+        field.kind === "variable"
+          ? variableKey(field.symbol)
+          : symbolKey(field.symbol, field.arity),
+        field,
+      ]),
+  );
 
   for (const formula of formulas) {
     collectFromFormula(formula, collected, lang, new Set());
@@ -230,4 +246,53 @@ export function modelSignature(
   });
 
   return [DOMAIN_FIELD, ...fields];
+}
+
+/**
+ * The field a label names, read back against the language: `F(_,_)` is a
+ * two-place relation, `f(_)` a function, `a` a constant, as {@link
+ * blankedLabel} would print them.
+ *
+ * Each blank is filled with one of the language's names and the result read as
+ * a sentence, then as a term; the field it yields counts only if it prints back
+ * to exactly the label. So a label is accepted in the spelling the exercise
+ * would show it in, and nothing the language does not have becomes a field.
+ */
+export function fieldForLabel(
+  label: string,
+  lang: SurfaceLanguage,
+): ModelField | null {
+  if (label === DOMAIN_FIELD_LABEL) {
+    return DOMAIN_FIELD;
+  }
+
+  const blanks = label.split("_").length - 1;
+  const names = languageNames(lang).slice(0, blanks);
+
+  if (names.length < blanks) {
+    return null;
+  }
+
+  let index = 0;
+  const filled = label.replace(/_/g, () => names[index++] ?? "_");
+  const sentence = parseFormula(filled, lang);
+  const formulas: Formula[] = [];
+
+  if (sentence.ok) {
+    formulas.push(sentence.formula);
+  } else {
+    const term = parseTerm(filled, lang);
+
+    if (!term.ok) {
+      return null;
+    }
+
+    formulas.push({ left: term.term, right: term.term, type: "identity" });
+  }
+
+  return (
+    modelSignature(formulas, lang).find(
+      (field) => field.kind !== "domain" && field.label === label,
+    ) ?? null
+  );
 }

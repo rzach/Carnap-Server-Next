@@ -268,6 +268,18 @@ export function buildDiagnosticStrings(i18n: Translator) {
     "A model exercise requires at least one formula.": i18n.t(
       "A model exercise requires at least one formula.",
     ),
+    "A playground takes the simple variant: the student writes the sentences, so there is no argument or constraint to state.":
+      i18n.t(
+        "A playground takes the simple variant: the student writes the sentences, so there is no argument or constraint to state.",
+      ),
+    "A playground with strictGivens needs givens: they are the model the student's sentences are read in.":
+      i18n.t(
+        "A playground with strictGivens needs givens: they are the model the student's sentences are read in.",
+      ),
+    "A playground's sentences are the student's to write. To give the model a symbol, give its field instead, as in '| F(_) : 0,1'.":
+      i18n.t(
+        "A playground's sentences are the student's to write. To give the model a symbol, give its field instead, as in '| F(_) : 0,1'.",
+      ),
     "A validity exercise has only givens after its sequent line.": i18n.t(
       "A validity exercise has only givens after its sequent line.",
     ),
@@ -293,6 +305,11 @@ export function buildDiagnosticStrings(i18n: Translator) {
       "This exercise has no field called “{field}”.",
       placeholders("field"),
     ),
+    "This language has nothing a field “{field}” could interpret. Write a field with its arguments blanked, as in 'F(_,_)'.":
+      i18n.t(
+        "This language has nothing a field “{field}” could interpret. Write a field with its arguments blanked, as in 'F(_,_)'.",
+        placeholders("field"),
+      ),
     // The truth-tree exercise (`exercises/truth-tree/authoring.ts`).
     "Only the root's sentences may follow the first of them.": i18n.t(
       "Only the root's sentences may follow the first of them.",

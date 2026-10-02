@@ -19,6 +19,7 @@ import type { ResolvedModel } from "./grading";
 import {
   isModelPublicData,
   resolveModel,
+  resolveModelFor,
   seededFunctionRows,
 } from "./grading";
 import type { Formula, ModelField, ModelVerdict } from "./logic";
@@ -60,6 +61,9 @@ const TURNSTILES: Readonly<Record<ModelTurnstileGlyph, string>> = {
  * *parsed* formulas, so it takes the resolved exercise; without one (stored data
  * that no longer resolves) it falls back to the stored source.
  *
+ * A playground has none: the student writes the sentences, and the author's
+ * prompt says what they are to do.
+ *
  * A validity exercise shows its sequent. The other two show only the targeted
  * formulas: a constraint exercise's constraints stay *implicit*, as the manual
  * calls them, so the model that satisfies a universal claim by having one
@@ -79,6 +83,10 @@ export function modelGoalText(
           .map((formula) => formulaToString(formula, resolved.language))
           .join(", ");
   const targeted = show(resolved?.task.targeted ?? [], publicData.targeted);
+
+  if (publicData.playground !== undefined) {
+    return "";
+  }
 
   if (publicData.variant !== "validity") {
     return targeted;
@@ -233,6 +241,15 @@ function renderField(field: ModelField, context: FieldRenderContext): string {
   );
 }
 
+/**
+ * A playground's sentence box: what the student writes, and under it the
+ * parser's live reading of it. Inert like every control here until the element
+ * enhances.
+ */
+function sentencesRow(strings: ModelStrings): string {
+  return `<div class="model-sentences"><label class="model-label" for="model-sentences">${escapeHtml(strings("Your sentences"))}</label><input aria-describedby="model-sentences-hint" autocapitalize="off" autocomplete="off" class="model-input" data-role="sentences" disabled id="model-sentences" spellcheck="false" type="text" value=""><span class="model-hint" id="model-sentences-hint">${escapeHtml(strings("Separate sentences with commas."))}</span><p aria-live="polite" class="model-preview" data-role="preview"></p></div>`;
+}
+
 interface ModelElementMeta extends ExerciseElementMeta {
   readonly i18n: Translator;
   /** The author's title, or null for the hidden generic group name. */
@@ -254,7 +271,7 @@ export function renderModelElement(
   meta: ModelElementMeta,
   actions = "",
 ): string {
-  const resolved = resolveModel(publicData);
+  const resolved = resolveModelFor(publicData).resolved;
   const strings = stringsResolver(buildModelStrings(meta.i18n));
   const legend = exerciseLegendHtml(
     exerciseGroupLabel(modelName(meta.i18n), meta),
@@ -276,7 +293,11 @@ export function renderModelElement(
           <fieldset aria-busy="true" class="exercise-group model">
             ${legend}
             <slot name="prompt"></slot>
-            <p class="model-goal">${escapeHtml(modelGoalText(publicData, resolved))}</p>
+            ${
+              publicData.playground === undefined
+                ? `<p class="model-goal">${escapeHtml(modelGoalText(publicData, resolved))}</p>`
+                : sentencesRow(strings)
+            }
             <div class="model-fields">${fields}</div>
             <slot name="exercise-actions"></slot>
           </fieldset>
@@ -287,6 +308,10 @@ export function renderModelElement(
 }
 
 const MODEL_REVIEW_STYLES = [EXERCISE_TOKEN_STYLES, reviewStyles].join("\n");
+
+function reviewItem(label: string, value: string): string {
+  return `<li class="model-review-field"><span class="model-review-label">${escapeHtml(label)}:</span> <span class="model-review-value">${escapeHtml(value)}</span></li>`;
+}
 
 export interface ModelReview {
   readonly answer: ModelAnswerData;
@@ -311,7 +336,10 @@ export function renderModelReview(
   i18n: Translator,
   reveal = true,
 ): string {
-  const resolved = resolveModel(publicData);
+  const resolved = resolveModelFor(
+    publicData,
+    review.answer.sentences,
+  ).resolved;
   const strings = stringsResolver(buildModelStrings(i18n));
   const verdict =
     resolved === null || !reveal
@@ -327,6 +355,10 @@ export function renderModelReview(
           },
           strings,
         );
+  const sentences =
+    publicData.playground === undefined
+      ? ""
+      : reviewItem(strings("Your sentences"), review.answer.sentences ?? "");
   const rows = (resolved?.signature ?? [])
     .map((field) => {
       const value =
@@ -335,16 +367,20 @@ export function renderModelReview(
           : (review.answer.fields[field.label] ?? "");
       const label = field.kind === "domain" ? strings("Domain") : field.label;
 
-      return `<li class="model-review-field"><span class="model-review-label">${escapeHtml(label)}:</span> <span class="model-review-value">${escapeHtml(value)}</span></li>`;
+      return reviewItem(label, value);
     })
     .join("");
 
   return `<carnap-model data-exercise-id="${escapeHtml(review.exerciseId)}" data-review>
         <template shadowrootmode="open">
           <style>${MODEL_REVIEW_STYLES}</style>
-          <p class="model-review-goal">${escapeHtml(modelGoalText(publicData, resolved))}</p>
+          ${
+            publicData.playground === undefined
+              ? `<p class="model-review-goal">${escapeHtml(modelGoalText(publicData, resolved))}</p>`
+              : ""
+          }
           ${verdict.length === 0 ? "" : `<p class="model-review-verdict">${escapeHtml(verdict)}</p>`}
-          <ul class="model-review">${rows}</ul>
+          <ul class="model-review">${sentences}${rows}</ul>
         </template>
       </carnap-model>`;
 }

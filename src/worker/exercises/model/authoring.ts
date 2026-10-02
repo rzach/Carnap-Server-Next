@@ -10,6 +10,7 @@ import {
   COMMON_EXERCISE_ATTRIBUTES,
   type CompiledExercise,
   type DirectiveBlock,
+  parseBooleanAttribute,
   parseExamAttribute,
   parsePoints,
   reconcileFeedback,
@@ -22,6 +23,7 @@ import type { ExerciseCompileContext } from "../../exercise-kit/type";
 import type { ModelField, ModelTarget } from "./logic";
 import {
   DEFAULT_LANGUAGE_ID,
+  fieldForLabel,
   isArgumentLine,
   modelSignature,
   parseDomain,
@@ -568,6 +570,14 @@ export function modelDataBodyLines(
 }
 
 /**
+ * What a given may name: a field of the exercise's formulas, or — on a
+ * playground, which has none — any field the language could interpret.
+ */
+type FieldsForGivens =
+  | { readonly kind: "signature"; readonly signature: readonly ModelField[] }
+  | { readonly kind: "language"; readonly language: SurfaceLanguage };
+
+/**
  * Read the `| Field : value` lines, checking each names a field this exercise
  * actually has and holds something that field could contain.
  *
@@ -578,10 +588,13 @@ export function modelDataBodyLines(
  */
 function parseGivens(
   lines: readonly { line: number; text: string }[],
-  signature: readonly ModelField[],
+  fields: FieldsForGivens,
   diagnostics: CompilerDiagnostic[],
 ): Record<string, string> {
-  const byLabel = new Map(signature.map((field) => [field.label, field]));
+  const byLabel =
+    fields.kind === "signature"
+      ? new Map(fields.signature.map((field) => [field.label, field]))
+      : null;
   const givens: Record<string, string> = {};
 
   for (const { line, text } of lines) {
@@ -600,16 +613,26 @@ function parseGivens(
 
     const label = (match[1] ?? "").trim();
     const value = (match[2] ?? "").trim();
-    const field = byLabel.get(label);
+    const field =
+      fields.kind === "language"
+        ? (fieldForLabel(label, fields.language) ?? undefined)
+        : byLabel?.get(label);
 
     if (field === undefined) {
       diagnostics.push(
-        diagnostic(
-          line,
-          "unknown_model_given_field",
-          "This exercise has no field called “{field}”.",
-          { params: { field: label } },
-        ),
+        fields.kind === "language"
+          ? diagnostic(
+              line,
+              "unknown_model_given_field",
+              "This language has nothing a field “{field}” could interpret. Write a field with its arguments blanked, as in 'F(_,_)'.",
+              { params: { field: label } },
+            )
+          : diagnostic(
+              line,
+              "unknown_model_given_field",
+              "This exercise has no field called “{field}”.",
+              { params: { field: label } },
+            ),
       );
       continue;
     }
@@ -669,6 +692,7 @@ const MODEL_ATTRIBUTES = [
   "check",
   "counterexample-to",
   "options",
+  "playground",
   "system",
   "variant",
 ] as const;
@@ -696,6 +720,23 @@ export async function compileModel(
   );
   const title = block.attrs.title?.trim();
   const exam = parseExamAttribute(block.attrs.exam, block.line, diagnostics);
+  const playground = parseBooleanAttribute(
+    block.attrs.playground,
+    block.line,
+    "playground",
+    diagnostics,
+  );
+
+  if (playground && variant !== "simple") {
+    diagnostics.push(
+      diagnostic(
+        block.line,
+        "playground_variant",
+        "A playground takes the simple variant: the student writes the sentences, so there is no argument or constraint to state.",
+      ),
+    );
+  }
+
   const body =
     variant === "validity"
       ? parseValidityBody(block, language, diagnostics)
@@ -732,7 +773,20 @@ export async function compileModel(
     turnstileGlyph: turnstileGlyphFromFlags(flags),
   };
 
-  if (body.targeted.length === 0) {
+  // A playground's sentences are the student's; its model's symbols come from
+  // the givens, read against the language, since there are no formulas to read
+  // them off.
+  if (playground && body.targeted.length > 0) {
+    diagnostics.push(
+      diagnostic(
+        block.line,
+        "playground_lists_formulas",
+        "A playground's sentences are the student's to write. To give the model a symbol, give its field instead, as in '| F(_) : 0,1'.",
+      ),
+    );
+  }
+
+  if (!playground && body.targeted.length === 0) {
     diagnostics.push(
       diagnostic(
         block.line,
@@ -750,9 +804,21 @@ export async function compileModel(
   });
   const givens = parseGivens(
     body.givenLines,
-    modelSignature(parsed, language),
+    playground
+      ? { kind: "language", language }
+      : { kind: "signature", signature: modelSignature(parsed, language) },
     diagnostics,
   );
+
+  if (playground && flags.strictGivens && Object.keys(givens).length === 0) {
+    diagnostics.push(
+      diagnostic(
+        block.line,
+        "playground_strict_without_givens",
+        "A playground with strictGivens needs givens: they are the model the student's sentences are read in.",
+      ),
+    );
+  }
 
   const publicData: ModelPublicData = {
     ...(Object.keys(givens).length > 0 ? { givens } : {}),
@@ -761,6 +827,7 @@ export async function compileModel(
       ...renderOptions,
       lineOffset: block.bodyStartLine - 1,
     }),
+    ...(playground ? { playground: true as const } : {}),
     required: body.required,
     system,
     target,

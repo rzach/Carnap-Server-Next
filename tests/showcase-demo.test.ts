@@ -55,6 +55,7 @@ describe("showcase demo lesson", () => {
       "tt_row",
       "md_both",
       "md_invalid",
+      "md_playground",
       "tr_and",
       "tr_fine",
       "tr_exact",
@@ -103,7 +104,7 @@ describe("showcase demo lesson", () => {
     const exercises = compiled.artifact.document.nodes.filter(
       (node) => node.kind === "exercise",
     );
-    expect(exercises).toHaveLength(23);
+    expect(exercises).toHaveLength(24);
   });
 
   test("the closing Fitch exercise is left for the student to finish", async () => {

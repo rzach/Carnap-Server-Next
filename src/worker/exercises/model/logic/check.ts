@@ -76,7 +76,18 @@ export type ModelProblem =
       readonly field: string;
       readonly argument: string;
     }
-  | { readonly kind: "function-too-large"; readonly field: string };
+  | { readonly kind: "function-too-large"; readonly field: string }
+  // The three below are a playground's: a model is read from sentences the
+  // student wrote, so the sentences can fail before the model is looked at.
+  | { readonly kind: "sentences-missing" }
+  | {
+      readonly kind: "sentence-unreadable";
+      /** The parser's own complaint, an id the widget's strings can say. */
+      readonly message: string;
+      readonly params?: Readonly<Record<string, string>>;
+      readonly sentence: string;
+    }
+  | { readonly kind: "symbol-outside-model"; readonly symbol: string };
 
 export type ModelRead =
   | {

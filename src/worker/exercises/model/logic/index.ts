@@ -60,6 +60,7 @@ export {
   blankedLabel,
   DOMAIN_FIELD,
   DOMAIN_FIELD_LABEL,
+  fieldForLabel,
   modelSignature,
   symbolKey,
 } from "./signature";

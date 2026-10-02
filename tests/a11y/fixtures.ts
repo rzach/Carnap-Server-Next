@@ -147,6 +147,10 @@ Build a model in which this is true.
 - ExF(x)
 ::::
 
+::::model{#mp playground points="1"}
+Write a sentence, then build a model that makes it true.
+::::
+
 ::::translation{#tl points="1"}
 Symbolize *it rains and it pours* with \`P\` for rain and \`Q\` for pour.
 

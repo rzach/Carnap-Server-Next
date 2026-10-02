@@ -640,3 +640,175 @@ describe("a free variable", () => {
     expect(checkStatus(mounted)?.dataset.state).toBe("correct");
   });
 });
+
+describe("a playground", () => {
+  const sentencesBox = (mounted: Mounted) => {
+    const box = mounted.root.querySelector<HTMLInputElement>(
+      '[data-role="sentences"]',
+    );
+
+    if (box === null) {
+      throw new Error("No sentences box.");
+    }
+
+    return box;
+  };
+  const previewText = (mounted: Mounted) =>
+    mounted.root.querySelector<HTMLElement>('[data-role="preview"]');
+  const labels = (mounted: Mounted) =>
+    Array.from(mounted.root.querySelectorAll<HTMLElement>(".model-row")).map(
+      (row) => row.dataset.field,
+    );
+
+  test("the sentence box comes alive and the answer carries it", async () => {
+    const mounted = mountExercise(
+      await modelExercise("Make it so.", "#pg playground"),
+    );
+
+    expect(sentencesBox(mounted).disabled).toBe(false);
+    expect(answerOf(mounted)).toEqual({
+      domain: "0",
+      fields: {},
+      sentences: "",
+    });
+  });
+
+  test("typing a sentence brings in the fields it needs, and drops them again", async () => {
+    const mounted = mountExercise(
+      await modelExercise("Make it so.", "#pg playground"),
+    );
+
+    expect(labels(mounted)).toEqual(["Domain"]);
+
+    type(sentencesBox(mounted), "ExG(x), H(a)");
+
+    expect(labels(mounted)).toEqual(["Domain", "G(_)", "H(_)", "a"]);
+    expect(answerOf(mounted).sentences).toBe("ExG(x), H(a)");
+    expect(valueControl(mounted.root, "G(_)").disabled).toBe(false);
+
+    type(sentencesBox(mounted), "ExG(x)");
+
+    expect(labels(mounted)).toEqual(["Domain", "G(_)"]);
+  });
+
+  test("a given's field is there before any sentence, and stays", async () => {
+    const mounted = mountExercise(
+      await modelExercise("Go.\n| F(_) : 1", "#pg playground"),
+    );
+
+    expect(labels(mounted)).toEqual(["Domain", "F(_)"]);
+    expect(valueControl(mounted.root, "F(_)").value).toBe("1");
+
+    type(sentencesBox(mounted), "ExG(x)");
+    type(sentencesBox(mounted), "");
+
+    expect(labels(mounted)).toEqual(["Domain", "F(_)"]);
+  });
+
+  test("a new field's values survive another edit of the sentences", async () => {
+    const mounted = mountExercise(
+      await modelExercise("Make it so.", "#pg playground"),
+    );
+
+    type(sentencesBox(mounted), "ExG(x)");
+    type(valueControl(mounted.root, "Domain"), "0,1");
+    type(valueControl(mounted.root, "G(_)"), "1");
+    type(sentencesBox(mounted), "ExG(x), H(a)");
+
+    expect(answerOf(mounted).fields["G(_)"]).toBe("1");
+  });
+
+  test("the preview reads the sentences back, and complains when it cannot", async () => {
+    const mounted = mountExercise(
+      await modelExercise("Make it so.", "#pg playground"),
+    );
+    const preview = () => previewText(mounted);
+
+    expect(preview()?.textContent).toBe("");
+
+    type(sentencesBox(mounted), "AxF(x)");
+
+    expect(preview()?.textContent).toBe("Reads as ∀xF(x)");
+    expect(preview()?.dataset.mood).toBeUndefined();
+
+    type(sentencesBox(mounted), "AxF(x");
+
+    expect(preview()?.dataset.mood).toBe("error");
+    expect(preview()?.textContent).toContain("Could not read the sentence");
+  });
+
+  test("the rows are left alone while a sentence does not read", async () => {
+    const mounted = mountExercise(
+      await modelExercise("Make it so.", "#pg playground"),
+    );
+
+    type(sentencesBox(mounted), "ExG(x)");
+    type(valueControl(mounted.root, "G(_)"), "0");
+    type(sentencesBox(mounted), "ExG(x");
+
+    expect(labels(mounted)).toEqual(["Domain", "G(_)"]);
+    expect(valueControl(mounted.root, "G(_)").value).toBe("0");
+  });
+
+  test("Check judges the model against what was typed", async () => {
+    const mounted = mountExercise(
+      await modelExercise("Make it so.", "#pg playground"),
+    );
+
+    type(sentencesBox(mounted), "ExG(x)");
+    clickCheck(mounted);
+
+    expect(checkStatus(mounted)?.dataset.state).not.toBe("correct");
+
+    type(valueControl(mounted.root, "G(_)"), "0");
+    clickCheck(mounted);
+
+    expect(checkStatus(mounted)?.dataset.state).toBe("correct");
+  });
+
+  test("Check asks for a sentence when there is none", async () => {
+    const mounted = mountExercise(
+      await modelExercise("Make it so.", "#pg playground"),
+    );
+
+    clickCheck(mounted);
+
+    expect(statusText(mounted)).toBe("Write at least one sentence.");
+  });
+
+  test("a prior answer restores the sentences and the fields they ask for", async () => {
+    const mounted = mountExercise(
+      await modelExercise("Make it so.", "#pg playground"),
+      {
+        priorAnswer: {
+          domain: "0,1",
+          fields: { "G(_)": "1" },
+          sentences: "ExG(x)",
+        },
+      },
+    );
+
+    expect(sentencesBox(mounted).value).toBe("ExG(x)");
+    expect(valueControl(mounted.root, "G(_)").value).toBe("1");
+    expect(previewText(mounted)?.textContent).toBe("Reads as ∃xG(x)");
+    expect(answerOf(mounted)).toEqual({
+      domain: "0,1",
+      fields: { "G(_)": "1" },
+      sentences: "ExG(x)",
+    });
+  });
+
+  test("a locked playground refuses a symbol outside its vocabulary", async () => {
+    const mounted = mountExercise(
+      await modelExercise(
+        "Go.\n| Domain : 0,1\n| F(_) : 0",
+        '#pg playground options="strictGivens"',
+      ),
+    );
+
+    type(sentencesBox(mounted), "ExG(x)");
+
+    expect(previewText(mounted)?.dataset.mood).toBe("error");
+    expect(previewText(mounted)?.textContent).toContain("G");
+  });
+});

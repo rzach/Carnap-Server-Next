@@ -12,7 +12,9 @@ import {
 import { MODEL_EXERCISE } from "../src/worker/exercises/model";
 import {
   effectiveAnswer,
+  judgeAnswer,
   resolveModel,
+  resolveModelFor,
 } from "../src/worker/exercises/model/grading";
 import {
   modelGoalText,
@@ -933,5 +935,218 @@ ${FIXED_ARITY_SPEC_SOURCE.replace("--| @syntax lint closed-sentences\n", "")}:::
 
     expect(html).toContain('data-field="x" data-kind="variable"');
     expect(html).toContain("x: which element it is assigned");
+  });
+});
+
+describe("a playground", () => {
+  test("a playground lists no formulas of its own", async () => {
+    const data = publicDataOf(
+      await declaration(directive("#p1 playground", "Write a sentence.")),
+    );
+
+    expect(data.playground).toBe(true);
+    expect(data.targeted).toEqual([]);
+    expect(data.required).toEqual([]);
+  });
+
+  test("a list item in a playground is refused, not quietly ignored", async () => {
+    expect(
+      await compileCodes(directive("#p2 playground", "- AxF(x)")),
+    ).toEqual(["playground_lists_formulas"]);
+  });
+
+  test("an ordinary exercise still needs a formula", async () => {
+    expect(await compileCodes(directive("#p3", "Write a sentence."))).toEqual(
+      ["empty_model_exercise"],
+    );
+  });
+
+  test("it is a simple-variant feature", async () => {
+    expect(
+      await compileCodes(
+        directive('#p4 playground variant="validity"', "P :|-: Q"),
+      ),
+    ).toContain("playground_variant");
+  });
+
+  test("a locked playground has to say what it fixes", async () => {
+    expect(
+      await compileCodes(
+        directive('#p5 playground options="strictGivens"', "Prose."),
+      ),
+    ).toEqual(["playground_strict_without_givens"]);
+    expect(
+      await compileCodes(
+        directive(
+          '#p5b playground options="strictGivens"',
+          "Prose.\n| Domain : 0,1",
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  test("a given names any field the language could interpret", async () => {
+    expect(
+      await compileCodes(
+        directive(
+          "#p6 playground",
+          "Go.\n| F(_) : 0\n| R(_,_) : [0,0]\n| P : true\n| a : 0\n| f(_) : [0;0]",
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  test("a given the language cannot read, or spells differently, is refused", async () => {
+    for (const label of ["Q(", "F( _ )", "_", "Fred"]) {
+      expect(
+        await compileCodes(
+          directive("#p6b playground", `Go.\n| ${label} : 0`),
+        ),
+      ).toEqual(["unknown_model_given_field"]);
+    }
+  });
+
+  test("the givens and the sentences decide the fields", async () => {
+    const data = publicDataOf(
+      await declaration(directive("#p7 playground", "Go.\n| F(_) : 0")),
+    );
+    const signature = (sentences: string) =>
+      resolveModelFor(data, sentences).resolved?.signature ?? [];
+    const labels = (sentences: string) =>
+      signature(sentences).map((field) => field.label);
+
+    expect(labels("")).toEqual(["Domain", "F(_)"]);
+    expect(signature("")[1]?.kind).toBe("relation");
+    expect(labels("ExG(x), H(a)")).toEqual([
+      "Domain",
+      "F(_)",
+      "G(_)",
+      "H(_)",
+      "a",
+    ]);
+  });
+
+  test("a model that makes the sentences true is correct", async () => {
+    const source = directive("#p8 playground", "Make it so.");
+
+    expect(
+      await score(source, {
+        domain: "0,1",
+        fields: { "G(_)": "0", "F(_)": "0,1" },
+        sentences: "ExG(x), AxF(x)",
+      }),
+    ).toEqual({ score: 1, status: "correct" });
+    expect(
+      await score(source, {
+        domain: "0,1",
+        fields: { "G(_)": "", "F(_)": "0,1" },
+        sentences: "ExG(x), AxF(x)",
+      }),
+    ).toEqual({ score: 0, status: "incorrect" });
+  });
+
+  test("counterexample-to asks for the sentences to come out false", async () => {
+    const source = directive(
+      '#p9 playground counterexample-to="validity"',
+      "Make it so.",
+    );
+
+    expect(
+      await score(source, {
+        domain: "0,1",
+        fields: { "F(_)": "0" },
+        sentences: "AxF(x)",
+      }),
+    ).toEqual({ score: 1, status: "correct" });
+  });
+
+  test("no sentences, or an unreadable one, scores zero", async () => {
+    const source = directive("#p10 playground", "Make it so.");
+
+    for (const sentences of ["", "  ,  ", "AxF(", "∃∃"]) {
+      expect(
+        await score(source, {
+          domain: "0",
+          fields: {},
+          sentences,
+        }),
+      ).toEqual({ score: 0, status: "incorrect" });
+    }
+  });
+
+  test("the sentences are stored with the answer, and only on a playground", async () => {
+    const playground = await declaration(directive("#p11 playground", "Go."));
+    const ordinary = await declaration(directive("#p12", "- AxF(x)"));
+    const answer = {
+      domain: "0",
+      fields: { "F(_)": "0" },
+      sentences: "AxF(x)",
+    };
+    const stored = (item: ExerciseManifestItem) => {
+      const result = handler.normalizeAnswer(envelope(answer) as never, item);
+
+      return result.ok
+        ? (result.answer.data as unknown as ModelAnswerData)
+        : null;
+    };
+
+    expect(stored(playground)?.sentences).toBe("AxF(x)");
+    expect(stored(ordinary)?.sentences).toBeUndefined();
+  });
+
+  test("a locked playground refuses a sentence about a symbol it does not interpret", async () => {
+    const source = directive(
+      '#p13 playground options="strictGivens"',
+      "Go.\n| Domain : 0,1\n| F(_) : 0,1",
+    );
+
+    expect(
+      await score(source, {
+        domain: "0",
+        fields: {},
+        sentences: "AxF(x)",
+      }),
+    ).toEqual({ score: 1, status: "correct" });
+    expect(
+      await score(source, {
+        domain: "0",
+        fields: {},
+        sentences: "ExG(x)",
+      }),
+    ).toEqual({ score: 0, status: "incorrect" });
+  });
+
+  test("the rendered element has a sentence box, and no fixed goal", async () => {
+    const artifact = await compileArtifact(
+      directive("#p14 playground", "Make it so."),
+    );
+    const html = renderCompiledContent(artifact, i18nFor("en"));
+
+    expect(html).toContain('data-role="sentences"');
+    expect(html).not.toContain('class="model-goal"');
+  });
+
+  test("the review shows what was typed and judges it", async () => {
+    const item = await declaration(directive("#p15 playground", "Go."));
+    const data = publicDataOf(item);
+    const answer: ModelAnswerData = {
+      domain: "0,1",
+      fields: { "F(_)": "0" },
+      sentences: "AxF(x)",
+    };
+    const judged = judgeAnswer(data, answer);
+    const html = renderModelReview(
+      data,
+      {
+        answer,
+        exerciseId: "p15",
+        verdict: judged.verdict as NonNullable<typeof judged.verdict>,
+      },
+      passthroughTranslator,
+    );
+
+    expect(html).toContain("AxF(x)");
+    expect(html).toContain("Your sentences");
+    expect(html).not.toContain('class="model-review-goal"');
   });
 });

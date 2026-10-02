@@ -447,6 +447,18 @@ msgid "A playground exercise takes its goal from the proof itself; remove the 't
 msgstr "Eine Spielwiesen-Übung nimmt ihr Ziel aus dem Beweis selbst; entfernen Sie die Zeile 'theorem …' oder lassen Sie 'playground' weg."
 
 #: src/worker/application/content/diagnostic-strings.ts
+msgid "A playground takes the simple variant: the student writes the sentences, so there is no argument or constraint to state."
+msgstr "Ein Spielfeld verwendet die einfache Variante: Die Studierenden schreiben die Sätze selbst, daher gibt es kein Argument und keine Bedingung anzugeben."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A playground with strictGivens needs givens: they are the model the student's sentences are read in."
+msgstr "Ein Spielfeld mit strictGivens braucht Vorgaben: Sie sind das Modell, in dem die Sätze der Studierenden gelesen werden."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A playground's sentences are the student's to write. To give the model a symbol, give its field instead, as in '| F(_) : 0,1'."
+msgstr "Die Sätze eines Spielfelds schreiben die Studierenden selbst. Um dem Modell ein Symbol zu geben, geben Sie stattdessen sein Feld vor, etwa '| F(_) : 0,1'."
+
+#: src/worker/application/content/diagnostic-strings.ts
 msgid "A Prawitz proof has no “#n” hypothesis leaves — write each premise as its own assumption line."
 msgstr "Ein Prawitz-Beweis hat keine „#n“-Hypothesenblätter — schreiben Sie jede Prämisse als eigene Annahmezeile."
 
@@ -1590,6 +1602,10 @@ msgstr "Die Formel „{formula}“ konnte nicht gelesen werden: {detail}"
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Could not parse the goal's formula “{formula}”: {detail}"
 msgstr ""
+
+#: src/worker/exercises/model/strings.ts
+msgid "Could not read the sentence “{sentence}”."
+msgstr "Der Satz „{sentence}“ konnte nicht gelesen werden."
 
 #: src/worker/exercises/model/strings.ts
 msgid "Could not read the value of {field}."
@@ -3771,6 +3787,7 @@ msgstr "Lektüre"
 msgid "Reading / resource"
 msgstr "Lektüre / Material"
 
+#: src/worker/exercises/model/strings.ts
 #: src/worker/exercises/translation/strings.ts
 msgid "Reads as {formula}"
 msgstr "Gelesen als {formula}"
@@ -4256,6 +4273,10 @@ msgstr "Satz in Zeile {row}"
 #: src/worker/exercises/world/strings.ts
 msgid "Sentences"
 msgstr "Sätze"
+
+#: src/worker/exercises/model/strings.ts
+msgid "Separate sentences with commas."
+msgstr "Trennen Sie Sätze durch Kommas."
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Set an override for {name}"
@@ -5328,6 +5349,10 @@ msgstr "Dieses Element erfasst keine Bearbeitungen."
 msgid "This kind of LMS message is not supported."
 msgstr "Diese Art von LMS-Nachricht wird nicht unterstützt."
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "This language has nothing a field “{field}” could interpret. Write a field with its arguments blanked, as in 'F(_,_)'."
+msgstr "Diese Sprache hat nichts, was ein Feld „{field}“ interpretieren könnte. Schreiben Sie ein Feld mit leeren Argumentstellen, etwa 'F(_,_)'."
+
 #: src/worker/application/lti.ts
 msgid "This launch came from an unexpected LMS."
 msgstr "Dieser Start kam von einem unerwarteten LMS."
@@ -5387,6 +5412,10 @@ msgstr ""
 #: src/worker/exercises/model/strings.ts
 msgid "This model does everything the exercise asks."
 msgstr "Dieses Modell erfüllt alles, was die Aufgabe verlangt."
+
+#: src/worker/exercises/model/strings.ts
+msgid "This model gives {symbol} no meaning, so a sentence cannot use it."
+msgstr "Dieses Modell gibt {symbol} keine Bedeutung, daher kann ein Satz es nicht verwenden."
 
 #: src/worker/exercises/truth-table/strings.ts
 msgid "This row is a counterexample, but it isn't filled in correctly."
@@ -5875,6 +5904,10 @@ msgstr "Schreiben"
 msgid "Write a sentence first."
 msgstr "Schreiben Sie zuerst einen Satz."
 
+#: src/worker/exercises/model/strings.ts
+msgid "Write at least one sentence."
+msgstr "Schreiben Sie mindestens einen Satz."
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Write each step's rows, choosing whether they stack on the branch or split it, and type the row they develop in the margin."
 msgstr "Schreiben Sie die Zeilen jedes Schritts, wählen Sie, ob sie am Ast angefügt werden oder ihn verzweigen, und geben Sie am Rand die Zeile ein, die sie entwickeln."
@@ -6062,6 +6095,10 @@ msgstr "Ihre Rolle"
 #: src/worker/exercises/world/strings.ts
 msgid "Your sentence"
 msgstr "Ihr Satz"
+
+#: src/worker/exercises/model/strings.ts
+msgid "Your sentences"
+msgstr "Ihre Sätze"
 
 #: src/worker/routes/lti.ts
 msgid "Your session has expired. Start the content selection again from your LMS."

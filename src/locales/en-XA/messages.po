@@ -447,6 +447,18 @@ msgid "A playground exercise takes its goal from the proof itself; remove the 't
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
+msgid "A playground takes the simple variant: the student writes the sentences, so there is no argument or constraint to state."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A playground with strictGivens needs givens: they are the model the student's sentences are read in."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A playground's sentences are the student's to write. To give the model a symbol, give its field instead, as in '| F(_) : 0,1'."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
 msgid "A Prawitz proof has no “#n” hypothesis leaves — write each premise as its own assumption line."
 msgstr ""
 
@@ -1589,6 +1601,10 @@ msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Could not parse the goal's formula “{formula}”: {detail}"
+msgstr ""
+
+#: src/worker/exercises/model/strings.ts
+msgid "Could not read the sentence “{sentence}”."
 msgstr ""
 
 #: src/worker/exercises/model/strings.ts
@@ -3771,6 +3787,7 @@ msgstr ""
 msgid "Reading / resource"
 msgstr ""
 
+#: src/worker/exercises/model/strings.ts
 #: src/worker/exercises/translation/strings.ts
 msgid "Reads as {formula}"
 msgstr ""
@@ -4255,6 +4272,10 @@ msgstr ""
 
 #: src/worker/exercises/world/strings.ts
 msgid "Sentences"
+msgstr ""
+
+#: src/worker/exercises/model/strings.ts
+msgid "Separate sentences with commas."
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -5328,6 +5349,10 @@ msgstr ""
 msgid "This kind of LMS message is not supported."
 msgstr ""
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "This language has nothing a field “{field}” could interpret. Write a field with its arguments blanked, as in 'F(_,_)'."
+msgstr ""
+
 #: src/worker/application/lti.ts
 msgid "This launch came from an unexpected LMS."
 msgstr ""
@@ -5386,6 +5411,10 @@ msgstr ""
 
 #: src/worker/exercises/model/strings.ts
 msgid "This model does everything the exercise asks."
+msgstr ""
+
+#: src/worker/exercises/model/strings.ts
+msgid "This model gives {symbol} no meaning, so a sentence cannot use it."
 msgstr ""
 
 #: src/worker/exercises/truth-table/strings.ts
@@ -5875,6 +5904,10 @@ msgstr ""
 msgid "Write a sentence first."
 msgstr ""
 
+#: src/worker/exercises/model/strings.ts
+msgid "Write at least one sentence."
+msgstr ""
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Write each step's rows, choosing whether they stack on the branch or split it, and type the row they develop in the margin."
 msgstr ""
@@ -6061,6 +6094,10 @@ msgstr ""
 
 #: src/worker/exercises/world/strings.ts
 msgid "Your sentence"
+msgstr ""
+
+#: src/worker/exercises/model/strings.ts
+msgid "Your sentences"
 msgstr ""
 
 #: src/worker/routes/lti.ts

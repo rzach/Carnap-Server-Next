@@ -16,6 +16,43 @@
   margin-bottom: 0.75rem;
 }
 
+/* A playground's sentence box. The label, the box and its one-line hint sit
+   on a row like a field's; the reading of what was typed goes beneath, and is
+   the parser's complaint, in the prose face, while it does not read. */
+.model-sentences {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.model-sentences .model-input {
+  flex: 1 1 24ch;
+}
+
+.model-hint {
+  color: var(--_text-muted);
+  flex-basis: 100%;
+  font-size: 0.875em;
+}
+
+.model-preview {
+  flex-basis: 100%;
+  font-family: var(--_mono-font);
+  margin: 0;
+  min-height: 1.4em;
+}
+
+.model-preview[data-mood="error"] {
+  color: var(--_incorrect);
+  font-family: inherit;
+}
+
+.model-preview:empty {
+  display: none;
+}
+
 .model-fields {
   display: grid;
   gap: 0.5rem;

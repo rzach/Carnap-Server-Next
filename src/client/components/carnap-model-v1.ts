@@ -22,10 +22,11 @@
  * function (`[0,0;1],[0,1;2]`), so what is recorded matches what an author
  * writes in a given.
  */
+import { formulaToString } from "../../worker/exercise-kit/formula";
 import {
-  effectiveAnswer,
   isModelPublicData,
-  resolveModel,
+  judgeAnswer,
+  resolveModelFor,
   seededFunctionRows,
 } from "../../worker/exercises/model/grading";
 import type {
@@ -33,7 +34,6 @@ import type {
   ModelField,
 } from "../../worker/exercises/model/logic";
 import {
-  checkModel,
   formatFunctionTable,
   functionTableLayout,
   parseDomain,
@@ -47,7 +47,10 @@ import type {
   ModelAnswerData,
   ModelPublicData,
 } from "../../worker/exercises/model/types";
-import { describeVerdict } from "../../worker/exercises/model/verdict-text";
+import {
+  describeProblem,
+  describeVerdict,
+} from "../../worker/exercises/model/verdict-text";
 import { CarnapExerciseElement, register } from "./base";
 
 /** A field's row in the shadow root, with the field it stands for. */
@@ -60,6 +63,9 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
   private data: ModelPublicData | null = null;
   private rows: FieldRow[] = [];
   private domainInput: HTMLInputElement | null = null;
+  private fieldsHost: HTMLElement | null = null;
+  private sentencesInput: HTMLInputElement | null = null;
+  private preview: HTMLElement | null = null;
 
   protected enhance(): void {
     const root = this.shadowRoot;
@@ -74,30 +80,30 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
 
     this.data = data;
     this.rows = this.collectRows(root, data);
+    this.fieldsHost = root.querySelector<HTMLElement>(".model-fields");
+    this.sentencesInput = root.querySelector<HTMLInputElement>(
+      'input[data-role="sentences"]',
+    );
+    this.preview = root.querySelector<HTMLElement>('[data-role="preview"]');
 
-    for (const { field, row } of this.rows) {
-      if (field.kind === "domain") {
-        this.domainInput = row.querySelector<HTMLInputElement>("input");
+    for (const fieldRow of this.rows) {
+      if (fieldRow.field.kind === "domain") {
+        this.domainInput =
+          fieldRow.row.querySelector<HTMLInputElement>("input");
       }
 
-      for (const control of controlsIn(row)) {
-        // A locked given stays disabled: it is a requirement, not a hint. The
-        // lock is marked on the control, because a function's given may fix
-        // some cells of its table and leave the rest to the student.
-        if (control.dataset.locked === undefined) {
-          control.disabled = false;
-        }
+      this.wireRow(fieldRow);
+    }
 
-        control.addEventListener("input", () => {
-          this.onFieldEdit(field);
-        });
-        control.addEventListener("change", () => {
-          this.onFieldEdit(field);
-        });
-      }
+    if (this.sentencesInput !== null) {
+      this.sentencesInput.disabled = false;
+      this.sentencesInput.addEventListener("input", () => {
+        this.onSentencesEdit();
+      });
     }
 
     this.restorePriorAnswer();
+    this.updatePreview();
     this.buildControls();
     this.markWarnings();
 
@@ -109,7 +115,7 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
   /** Every field row in the shadow root, paired with the field it renders. */
   private collectRows(root: ShadowRoot, data: ModelPublicData): FieldRow[] {
     const byLabel = new Map(
-      (resolveModel(data)?.signature ?? []).map((field) => [
+      (resolveModelFor(data).resolved?.signature ?? []).map((field) => [
         field.label,
         field,
       ]),
@@ -121,6 +127,25 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
       const field = byLabel.get(row.dataset.field ?? "");
       return field === undefined ? [] : [{ field, row }];
     });
+  }
+
+  /** Enable one row's controls and have them report edits. */
+  private wireRow({ field, row }: FieldRow): void {
+    for (const control of controlsIn(row)) {
+      // A locked given stays disabled: it is a requirement, not a hint. The
+      // lock is marked on the control, because a function's given may fix
+      // some cells of its table and leave the rest to the student.
+      if (control.dataset.locked === undefined) {
+        control.disabled = false;
+      }
+
+      control.addEventListener("input", () => {
+        this.onFieldEdit(field);
+      });
+      control.addEventListener("change", () => {
+        this.onFieldEdit(field);
+      });
+    }
   }
 
   /**
@@ -158,6 +183,202 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
       check,
       bar.querySelector<HTMLElement>('button[type="submit"]'),
     );
+  }
+
+  /** The sentences changed: reread them, reshape the fields, re-mirror. */
+  private onSentencesEdit(): void {
+    this.updatePreview();
+    this.syncRows();
+    this.markWarnings();
+    this.clearStatus();
+    this.syncAnswer();
+  }
+
+  /** The student's sentences, as typed; empty when this is not a playground. */
+  private sentences(): string {
+    return this.sentencesInput?.value ?? "";
+  }
+
+  /**
+   * What the typed sentences read as, or what is wrong with them.
+   *
+   * The parser's complaint stands in the same line as the reading, as the
+   * translation widget's does. A sentence that has not been written yet is not
+   * a complaint, and says nothing.
+   */
+  private updatePreview(): void {
+    const preview = this.preview;
+    const data = this.data;
+
+    if (preview === null || data === null) {
+      return;
+    }
+
+    const { problem, resolved } = resolveModelFor(data, this.sentences());
+    const strings = (id: ModelStringId, values?: Record<string, string>) =>
+      this.t(id, values);
+
+    if (resolved === null || problem?.kind === "sentences-missing") {
+      preview.textContent = "";
+      delete preview.dataset.mood;
+      return;
+    }
+
+    if (problem !== null) {
+      preview.textContent = describeProblem(problem, strings);
+      preview.dataset.mood = "error";
+      return;
+    }
+
+    preview.textContent = this.t("Reads as {formula}", {
+      formula: resolved.task.targeted
+        .map((formula) => formulaToString(formula, resolved.language))
+        .join(", "),
+    });
+    delete preview.dataset.mood;
+  }
+
+  /**
+   * Give a playground the fields its sentences ask for.
+   *
+   * Rows the sentences still use keep their values. While a sentence does not
+   * read the fields stay as they are: a sentence passes through unreadable
+   * states on the way to being finished, and a row's contents should not be
+   * thrown away because a bracket is not closed yet.
+   */
+  private syncRows(): void {
+    const data = this.data;
+    const host = this.fieldsHost;
+
+    if (data?.playground === undefined || host === null) {
+      return;
+    }
+
+    const { problem, resolved } = resolveModelFor(data, this.sentences());
+
+    if (resolved === null || problem?.kind === "sentence-unreadable") {
+      return;
+    }
+
+    const existing = new Map(
+      this.rows.map((fieldRow) => [fieldRow.field.label, fieldRow]),
+    );
+    const parsed = parseDomain(this.domainInput?.value ?? "");
+    const domain = parsed.ok ? parsed.value : [0];
+
+    this.rows = resolved.signature.map((field) => {
+      const kept = existing.get(field.label);
+
+      if (kept !== undefined) {
+        return kept;
+      }
+
+      const made = { field, row: this.buildRow(field, domain) };
+
+      // A function's table selects report their own edits.
+      if (field.kind !== "function") {
+        this.wireRow(made);
+      }
+
+      return made;
+    });
+    host.replaceChildren(...this.rows.map(({ row }) => row));
+  }
+
+  /**
+   * One new field's row, enabled and over the current domain — the DOM twin of
+   * the worker's `renderField`, for a symbol the student's sentences brought in
+   * after the page was drawn. A symbol the author named is drawn by the server.
+   */
+  private buildRow(
+    field: ModelField,
+    domain: readonly number[],
+  ): HTMLElement {
+    const id = `model-field-${encodeURIComponent(field.label)}`;
+    const row = document.createElement("div");
+    row.className = "model-row";
+    row.dataset.field = field.label;
+    row.dataset.kind = field.kind;
+
+    if (field.kind === "function") {
+      const name = document.createElement("span");
+      name.className = "model-label";
+      name.textContent = field.label;
+
+      const table = document.createElement("div");
+      table.className = "model-function";
+      table.dataset.role = "table";
+      table.setAttribute("role", "group");
+      table.setAttribute("aria-label", field.label);
+
+      row.append(name, table);
+      this.rebuildFunctionTable(field, row, domain);
+
+      return row;
+    }
+
+    const label = document.createElement("label");
+    label.className = "model-label";
+    label.htmlFor = id;
+    label.textContent = field.label;
+
+    const hint = document.createElement("span");
+    hint.className = "visually-hidden";
+    hint.id = `${id}-hint`;
+
+    let control: HTMLInputElement | HTMLSelectElement;
+
+    if (field.kind === "relation") {
+      control = document.createElement("input");
+      control.type = "text";
+      control.className = "model-input";
+      hint.textContent = this.t("{field}: the tuples in its extension", {
+        field: field.label,
+      });
+    } else {
+      control = document.createElement("select");
+      control.className = "model-select";
+
+      if (field.kind === "proposition") {
+        for (const value of ["True", "False"] as const) {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = this.t(value);
+          control.append(option);
+        }
+
+        hint.textContent = this.t("{field}: its truth value", {
+          field: field.label,
+        });
+      } else {
+        fillOptions(control, domain, null);
+        hint.textContent =
+          field.kind === "constant"
+            ? this.t("{field}: which element it names", {
+                field: field.label,
+              })
+            : this.t("{field}: which element it is assigned", {
+                field: field.label,
+              });
+      }
+    }
+
+    control.id = id;
+    control.dataset.role = "value";
+    control.setAttribute("aria-describedby", hint.id);
+    row.append(label, control);
+
+    if (field.kind === "relation") {
+      const warning = document.createElement("span");
+      warning.className = "model-warning";
+      warning.dataset.role = "warning";
+      warning.setAttribute("aria-live", "polite");
+      row.append(warning);
+    }
+
+    row.append(hint);
+
+    return row;
   }
 
   /** A field changed: rebuild what depends on it, then re-mirror the answer. */
@@ -372,6 +593,12 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
       return;
     }
 
+    // The sentences come first: they decide which fields there are to restore.
+    if (this.sentencesInput !== null && prior.sentences !== undefined) {
+      this.sentencesInput.value = prior.sentences;
+      this.syncRows();
+    }
+
     // A locked domain is the exercise's, not the attempt's: grading puts it
     // back either way, and showing the student's own instead would make every
     // other field look like it was built over the wrong one.
@@ -439,17 +666,16 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
   /** Grade the current model in the browser and say how it did. */
   private runCheck(): void {
     const data = this.data;
-    const resolved = data === null ? null : resolveModel(data);
 
-    if (data === null || resolved === null) {
+    if (data === null) {
       return;
     }
 
-    const verdict = checkModel(
-      resolved.signature,
-      resolved.task,
-      effectiveAnswer(data, this.currentAnswer(), resolved.signature),
-    );
+    const { resolved, verdict } = judgeAnswer(data, this.currentAnswer());
+
+    if (resolved === null || verdict === null) {
+      return;
+    }
 
     this.setCheckStatus(
       describeVerdict(
@@ -492,7 +718,9 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
       fields[field.label] = this.fieldValue(field, row);
     }
 
-    return { domain, fields };
+    return this.sentencesInput === null
+      ? { domain, fields }
+      : { domain, fields, sentences: this.sentences() };
   }
 
   protected getAnswer(): unknown {

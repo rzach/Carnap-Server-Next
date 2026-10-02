@@ -16,9 +16,9 @@ import {
   effectiveAnswer,
   isModelAnswerData,
   isModelPublicData,
-  resolveModel,
+  judgeAnswer,
+  resolveModelFor,
 } from "./grading";
-import { checkModel } from "./logic";
 import { renderModelReview } from "./read-only-view";
 import { buildModelStrings } from "./strings";
 import type { ModelAnswerData } from "./types";
@@ -96,7 +96,10 @@ export const MODEL_ASSESSMENT = {
     // locked given: a `strictGivens` given is a requirement, so an answer that
     // changed one is graded against the exercise as set rather than crashing
     // the widget the way the original does.
-    const resolved = resolveModel(declaration.publicData);
+    const { resolved } = resolveModelFor(
+      declaration.publicData,
+      envelope.data.sentences,
+    );
     const submitted = effectiveAnswer(
       declaration.publicData,
       envelope.data,
@@ -115,6 +118,9 @@ export const MODEL_ASSESSMENT = {
         data: {
           domain: submitted.domain,
           fields,
+          ...(declaration.publicData.playground === undefined
+            ? {}
+            : { sentences: envelope.data.sentences ?? "" }),
         } as unknown as JsonValue,
         kind: MODEL_ANSWER_KIND,
         schemaVersion: MODEL_SCHEMA_VERSION,
@@ -146,21 +152,14 @@ export const MODEL_ASSESSMENT = {
       };
     }
 
-    const resolved = resolveModel(declaration.publicData);
+    const { verdict } = judgeAnswer(
+      declaration.publicData,
+      modelAnswerData(answer),
+    );
 
-    if (resolved === null) {
+    if (verdict === null) {
       return { ...base, awardedScore: 0, status: "error" };
     }
-
-    const verdict = checkModel(
-      resolved.signature,
-      resolved.task,
-      effectiveAnswer(
-        declaration.publicData,
-        modelAnswerData(answer),
-        resolved.signature,
-      ),
-    );
 
     // A model either does what was asked or it does not; there is no fraction
     // of a countermodel, so this is always all-or-nothing.
@@ -183,18 +182,15 @@ export const MODEL_ASSESSMENT = {
       return { summary: i18n.t("Model") };
     }
 
-    const resolved = resolveModel(declaration.publicData);
+    const { graded, resolved, verdict } = judgeAnswer(
+      declaration.publicData,
+      data,
+    );
 
-    if (resolved === null) {
+    if (resolved === null || verdict === null) {
       return { summary: i18n.t("Model") };
     }
 
-    const graded = effectiveAnswer(
-      declaration.publicData,
-      data,
-      resolved.signature,
-    );
-    const verdict = checkModel(resolved.signature, resolved.task, graded);
     // The same sentences the widget's own Check shows, so a student who checked
     // before submitting reads the identical verdict back on the review page.
     const strings = stringsResolver(buildModelStrings(i18n));
