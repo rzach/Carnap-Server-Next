@@ -411,6 +411,23 @@ describe("truth-table compile", () => {
     expect(html).toContain("disabled");
   });
 
+  test("every row exposes as many cells as the header, brackets and all", async () => {
+    const artifact = await compileArtifact(
+      directive("#tt4", "- (P /\\ Q) -> R"),
+    );
+    const html = renderCompiledContent(artifact, i18nFor("en"));
+    // A screen reader sizes a table by the cells it can see: a bracket's
+    // column is hidden in the header, so it has to be hidden all the way down.
+    const exposed = (html.match(/<tr\b.*?<\/tr>/gs) ?? []).map(
+      (row) => (row.match(/<t[hd]\b(?![^>]*aria-hidden)/g) ?? []).length,
+    );
+
+    expect(html).toContain("tt-paren");
+    // The header and eight rows, each: the counterexample selector, the three
+    // atoms, and the five symbols of the formula that are not brackets.
+    expect(exposed).toEqual(Array.from({ length: 9 }, () => 9));
+  });
+
   const errorCases: ReadonlyArray<readonly [string, string, string]> = [
     ["rejects an unparseable formula", "#e1", "- P ->"],
     ["requires at least one formula", "#e2", "just a prompt"],

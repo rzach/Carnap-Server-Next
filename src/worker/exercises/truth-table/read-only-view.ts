@@ -87,6 +87,18 @@ function turnstileGlyphFor(options: TruthTableOptions): string {
   }
 }
 
+/**
+ * The body cell under a parenthesis: empty, and hidden from assistive
+ * technology like the heading above it. Hidden in every row, not just the
+ * header, because a reader counts a table by its cells: with the headings gone
+ * and these left in, the header row came out two cells short of every row
+ * beneath it, the table's size was reported as neither, and walking a row
+ * stopped on a blank cell at each bracket.
+ */
+function parenBodyCell(sep: string): string {
+  return `<td class="tt-paren${sep}" aria-hidden="true"></td>`;
+}
+
 /** The written-out header cells for one formula (no turnstile handling). */
 function formulaHead(formula: ResolvedTable["formulas"][number]): string {
   return formula.segments
@@ -288,7 +300,7 @@ function bodyRow(
             const sep = segmentIndex === 0 ? " tt-sep" : "";
 
             if (segment.kind === "paren") {
-              return `<td class="tt-paren${sep}"></td>`;
+              return parenBodyCell(sep);
             }
 
             cellIndex += 1;
@@ -399,7 +411,7 @@ function partialBodyRow(
           const sep = segmentIndex === 0 ? " tt-sep" : "";
 
           if (segment.kind === "paren") {
-            return `<td class="tt-paren${sep}"></td>`;
+            return parenBodyCell(sep);
           }
 
           cellIndex += 1;
@@ -452,7 +464,7 @@ function partialReviewRow(
           const sep = segmentIndex === 0 ? " tt-sep" : "";
 
           if (segment.kind === "paren") {
-            return `<td class="tt-paren${sep}"></td>`;
+            return parenBodyCell(sep);
           }
 
           cellIndex += 1;
@@ -730,7 +742,7 @@ function reviewRow(
             const sep = segmentIndex === 0 ? " tt-sep" : "";
 
             if (segment.kind === "paren") {
-              return `<td class="tt-paren${sep}"></td>`;
+              return parenBodyCell(sep);
             }
 
             cellIndex += 1;
