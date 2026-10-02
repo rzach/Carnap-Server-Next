@@ -30,6 +30,19 @@
   text-transform: uppercase;
 }
 
+/* The legend holds a heading (see `exerciseLegendHtml`) for the reader who
+   moves through a page by headings; to the eye it must stay the legend's small
+   caps. `all: unset` gives every inherited property back to the legend and
+   every other one its initial value, so neither the browser's own heading
+   size, weight and margins (all a shadow root has) nor `content.css`'s
+   `h2`/`h3` rules (in the light DOM) reach it, and it lays out inline, as
+   the legend's text did when it was a bare text node. Two classes, so that an
+   author's `.lesson h3` cannot outrank it either. A heading's role does not
+   depend on its display, so it stays a heading. */
+.exercise-legend > .exercise-heading {
+  all: unset;
+}
+
 /* A visible title runs in with the prompt's first line rather than sitting on a
    line of its own. `float` is what makes that possible at all: an unfloated
    `<legend>` is the fieldset's *rendered legend*, which the browser lifts out of

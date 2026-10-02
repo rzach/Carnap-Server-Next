@@ -8,6 +8,7 @@ import type { ContentNode } from "../../domain/content";
 import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
+  type ExerciseHeading,
   exerciseGroupLabel,
   exerciseLegendHtml,
 } from "../../exercise-kit/group";
@@ -47,6 +48,7 @@ function slottedOptionLabels(
 interface MultipleChoiceElementMeta extends ExerciseElementMeta {
   readonly i18n: Translator;
   /** The author's title, or null for the hidden generic group name. */
+  readonly heading: ExerciseHeading;
   readonly title: string | null;
 }
 
@@ -65,7 +67,7 @@ export function renderMultipleChoiceElement(
 ): string {
   const inputType = publicData.mode === "single" ? "radio" : "checkbox";
   const legend = exerciseLegendHtml(
-    exerciseGroupLabel(multipleChoiceName(meta.i18n), meta.title),
+    exerciseGroupLabel(multipleChoiceName(meta.i18n), meta),
   );
   // Associated by `for`/`id` with the input as the label's *sibling*, so the
   // option's accessible name is exactly the authored prose and the row's layout
@@ -222,6 +224,7 @@ export function renderMultipleChoice(
       exerciseId: node.exerciseId,
       exerciseKind: node.exerciseKind,
       i18n: context.i18n,
+      heading: context.heading,
       title: context.title ?? null,
     },
     // A preview has no attempt to submit to, but it gets the same closing row a

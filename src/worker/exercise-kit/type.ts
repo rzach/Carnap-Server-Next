@@ -15,6 +15,7 @@ import type {
 } from "../domain/content";
 import type { Translator } from "../i18n/translator";
 import type { CompiledExercise, DirectiveBlock } from "./authoring";
+import type { ExerciseHeading } from "./group";
 import type { SystemResolver } from "./systems/theory";
 
 /**
@@ -132,6 +133,14 @@ export interface ExerciseRenderContext {
    */
   readonly actions?: string;
   readonly contentRevisionId?: string;
+  /**
+   * The exercise's place in the document: its heading's rank, from the
+   * author's headings above it, and its number (`exerciseOutline`). Required
+   * for the reason `i18n` is: a default would put every exercise at one rank
+   * and one number, which renders fine and is wrong only for the reader who
+   * moves by headings.
+   */
+  readonly heading: ExerciseHeading;
   /**
    * The viewer's language, for the widget's own chrome — its group name, its
    * control labels. Required rather than optional: an omitted translator would

@@ -427,22 +427,77 @@ describe("every exercise names itself", () => {
     // a11y fixture lesson and `fitch-verify.test.ts` rather than repeated here.)
     expect((html.match(/class="exercise-group/g) ?? []).length).toBe(6);
 
+    // The legend holds a heading, so the one name is also a stop for a reader
+    // moving by headings. The lesson has no headings of its own, so each
+    // exercise is an h2, below the page's title.
     for (const title of ["Pick one", "Explain", "Prove top"]) {
       expect(html).toContain(
-        `<legend class="exercise-legend">${title}</legend>`,
+        `<legend class="exercise-legend"><h2 class="exercise-heading">${title}</h2></legend>`,
       );
     }
 
-    // The untitled ones are named too, just not on screen.
-    for (const kind of [
-      "Short-answer question",
-      "Truth table",
-      "Proof tree",
+    // The untitled ones are named too, just not on screen: by their kind, and
+    // by their place among all six, titled or not, so that ten untitled truth
+    // tables are not ten headings of one name.
+    for (const name of [
+      "Exercise 2: Short-answer question",
+      "Exercise 4: Truth table",
+      "Exercise 6: Proof tree",
     ]) {
       expect(html).toContain(
-        `<legend class="exercise-legend visually-hidden">${kind}</legend>`,
+        `<legend class="exercise-legend visually-hidden"><h2 class="exercise-heading">${name}</h2></legend>`,
       );
     }
+  });
+
+  test("each heading ranks one below the author's last heading above it", async () => {
+    const compiled = await compileCarnapMarkdown(
+      [
+        '::::short-answer{#before answer="a"}',
+        "Before any heading.",
+        "::::",
+        "",
+        "# Lesson",
+        "",
+        '::::short-answer{#lesson answer="a"}',
+        "Under the title.",
+        "::::",
+        "",
+        "## Part one",
+        "",
+        "A note.[^1]",
+        "",
+        "[^1]: Its section's heading is hidden, and is not a section.",
+        "",
+        '::::short-answer{#part answer="a"}',
+        "Under a part, after a footnote.",
+        "::::",
+        "",
+        "###### Deep",
+        "",
+        '::::short-answer{#deep answer="a"}',
+        "No rank below six.",
+        "::::",
+      ].join("\n"),
+    );
+
+    if (!compiled.ok) {
+      throw new Error("compile failed");
+    }
+
+    const headings = Array.from(
+      renderCompiledContent(compiled.artifact, i18nFor("en")).matchAll(
+        /<(h\d) class="exercise-heading">([^<]*)</g,
+      ),
+      ([, tag, name]) => `${tag} ${name}`,
+    );
+
+    expect(headings).toEqual([
+      "h2 Exercise 1: Short-answer question",
+      "h2 Exercise 2: Short-answer question",
+      "h3 Exercise 3: Short-answer question",
+      "h6 Exercise 4: Short-answer question",
+    ]);
   });
 
   test("no exercise shows its id to a reader", async () => {
@@ -639,7 +694,13 @@ describe("the interactive submission path", () => {
       covered.add(node.exerciseKind);
 
       const type = registry.typeFor(node.exerciseKind);
-      const html = type.render(node, { actions: probe, i18n }).trimEnd();
+      const html = type
+        .render(node, {
+          actions: probe,
+          heading: { level: 2, number: 1 },
+          i18n,
+        })
+        .trimEnd();
       // The root the type renders: its custom element, or the text kinds'
       // section. The bar has to sit inside it.
       const closing = type.component.clientModule
@@ -709,8 +770,15 @@ describe("the interactive submission path", () => {
         throw new Error(`the showcase lesson has no ${type.directiveName}`);
       }
 
-      const live = type.render(node, { actions: probe, i18n });
-      const inert = type.render(node, { i18n });
+      const live = type.render(node, {
+        actions: probe,
+        heading: { level: 2, number: 1 },
+        i18n,
+      });
+      const inert = type.render(node, {
+        heading: { level: 2, number: 1 },
+        i18n,
+      });
       const field = /<(?:textarea|input)\b[^>]*>/;
 
       expect(live.match(field)?.[0]).toContain('name="text"');

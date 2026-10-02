@@ -38,7 +38,7 @@ export function renderFreeResponse(
   // and never reach a catalog.
   const i18n = context.i18n;
   const legend = exerciseLegendHtml(
-    exerciseGroupLabel(freeResponseName(i18n), context.title),
+    exerciseGroupLabel(freeResponseName(i18n), context),
   );
   // Unique per document, and safe as an id: `EXERCISE_ID_PATTERN` admits
   // anything HTML admits as an id, which is what `for` matches against —

@@ -524,6 +524,7 @@ describe("the local Check", () => {
         componentVersion: "1",
         exerciseId: "m1",
         exerciseKind: "model@1",
+        heading: { level: 2, number: 1 },
         i18n,
         title: null,
       },

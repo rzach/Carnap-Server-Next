@@ -184,6 +184,7 @@ export function mountExercise(
   };
   const html = registry.renderExercise(node, {
     actions: `${exerciseActionsHtml(i18n, { slotted: true })}<script data-exercise-hydration type="application/json">${JSON.stringify(hydration)}</script>`,
+    heading: { level: 2, number: 1 },
     i18n,
     title: fixture.item.title ?? null,
   });

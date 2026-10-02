@@ -7,6 +7,7 @@ import type { ContentNode } from "../../domain/content";
 import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
+  type ExerciseHeading,
   exerciseGroupLabel,
   exerciseLegendHtml,
 } from "../../exercise-kit/group";
@@ -235,6 +236,7 @@ function renderField(field: ModelField, context: FieldRenderContext): string {
 interface ModelElementMeta extends ExerciseElementMeta {
   readonly i18n: Translator;
   /** The author's title, or null for the hidden generic group name. */
+  readonly heading: ExerciseHeading;
   readonly title: string | null;
 }
 
@@ -255,7 +257,7 @@ export function renderModelElement(
   const resolved = resolveModel(publicData);
   const strings = stringsResolver(buildModelStrings(meta.i18n));
   const legend = exerciseLegendHtml(
-    exerciseGroupLabel(modelName(meta.i18n), meta.title),
+    exerciseGroupLabel(modelName(meta.i18n), meta),
   );
   const context: FieldRenderContext = {
     disabled: true,
@@ -367,6 +369,7 @@ export function renderModel(
       exerciseId: node.exerciseId,
       exerciseKind: node.exerciseKind,
       i18n: context.i18n,
+      heading: context.heading,
       title: context.title ?? null,
     },
     // A preview has no attempt to submit to, but it gets the same closing row a

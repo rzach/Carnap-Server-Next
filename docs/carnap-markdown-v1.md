@@ -271,7 +271,13 @@ is an exercise.
   non-whitespace characters, including punctuation and Unicode, but excludes
   control and formatting characters. IDs are compared exactly, without
   Unicode normalization.
-- `title` is optional and names the exercise in the interface.
+- `title` is optional and names the exercise in the interface. It is also
+  the exercise's heading, which screen-reader users move between: one rank
+  below the last Markdown heading above the exercise (an exercise under
+  `## Part one` is an `h3`), or `h2` when there is none. An untitled
+  exercise's heading is its number and kind, such as "Exercise 3: Truth
+  table", heard but not shown. The number counts every exercise in the
+  document, titled or not.
 - `points` defaults to `1`. It must be greater than zero and at most `1000`.
 - `exam` and `feedback` control recording and displayed results, as below.
 

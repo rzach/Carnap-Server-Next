@@ -2166,6 +2166,10 @@ msgstr ""
 msgid "Exercise {id}"
 msgstr ""
 
+#: src/worker/exercise-kit/group.ts
+msgid "Exercise {number}: {kind}"
+msgstr ""
+
 #: src/worker/routes/assignments.ts
 msgid "Exercise excused."
 msgstr ""

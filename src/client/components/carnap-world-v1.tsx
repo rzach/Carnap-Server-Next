@@ -1163,6 +1163,12 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
   private active: Side = "a";
 
   private readonly words: Words = (id, values) => this.t(id, values);
+  /**
+   * The tag of the panels' own headings — "Sentences", "Laws", "The game" —
+   * one rank below the exercise's, which the server chose from the lesson's
+   * outline (`exerciseHeadingLevels`) and is read back here off its heading.
+   */
+  private panelHeading: "h3" | "h4" | "h5" | "h6" = "h3";
 
   protected enhance(): void {
     const root = this.shadowRoot;
@@ -1181,6 +1187,11 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     this.data = data;
     this.resolved = resolved;
     this.kind = asBlocks(resolved.kind);
+    const rank = Number(
+      root.querySelector(".exercise-heading")?.tagName.slice(1),
+    );
+    this.panelHeading =
+      `h${Math.min((rank || 2) + 1, 6)}` as typeof this.panelHeading;
     this.preview = isAuthorPreview(this);
     this.restore(data, resolved);
 
@@ -2103,6 +2114,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     values: ReturnType<typeof truthValues> | null,
   ) {
     const words = this.words;
+    const Heading = this.panelHeading;
     const evaluate = data.variant === "evaluate";
     const world = this.world ?? (resolved.start as BlocksState);
     const highlighting =
@@ -2110,7 +2122,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
 
     return (
       <>
-        <h3 class="world-panel-heading">{words("Sentences")}</h3>
+        <Heading class="world-panel-heading">{words("Sentences")}</Heading>
         <ol class="world-sentences">
           {resolved.sentences.map((sentence, index) => {
             const target =
@@ -2187,7 +2199,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
         </ol>
         {resolved.laws.length === 0 ? null : (
           <>
-            <h3 class="world-panel-heading">{words("Laws")}</h3>
+            <Heading class="world-panel-heading">{words("Laws")}</Heading>
             <ul class="world-laws">
               {resolved.laws.map((law, index) => (
                 <li class="world-sentence world-law" key={law.text}>
@@ -2577,13 +2589,14 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
 
   private gamePanel(resolved: ResolvedWorld) {
     const words = this.words;
+    const Heading = this.panelHeading;
     const index = this.activeGame;
     const sentence = index === null ? undefined : resolved.sentences[index];
     const played = this.activePlayed();
 
     return (
       <>
-        <h3 class="world-panel-heading">{words("Sentences")}</h3>
+        <Heading class="world-panel-heading">{words("Sentences")}</Heading>
         <ol class="world-sentences">
           {resolved.sentences.map((row, rowIndex) => {
             const claim = this.games[rowIndex]?.claim;
@@ -2629,7 +2642,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
           })}
         </ol>
         <section class="world-game">
-          <h3 class="world-panel-heading">{words("The game")}</h3>
+          <Heading class="world-panel-heading">{words("The game")}</Heading>
           {index === null || sentence === undefined || played === null ? (
             <p class="world-game-empty">
               {words("Claim a sentence true or false to start its game.")}

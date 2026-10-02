@@ -8,8 +8,11 @@ import type { ContentNode } from "../../domain/content";
 import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
+  type ExerciseHeading,
+  type ExerciseHeadingLevel,
   exerciseGroupLabel,
   exerciseLegendHtml,
+  exerciseSubheadingLevel,
 } from "../../exercise-kit/group";
 import { EXERCISE_TOKEN_STYLES } from "../../exercise-kit/tokens";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
@@ -143,6 +146,7 @@ function sentencesHtml(
   resolved: ResolvedWorld,
   words: WorldWords,
   marks: SentenceMarks,
+  level: ExerciseHeadingLevel,
 ): string {
   if (publicData.variant === "distinguish") {
     return "";
@@ -172,14 +176,14 @@ function sentencesHtml(
   const laws =
     resolved.laws.length === 0
       ? ""
-      : `<h3 class="world-panel-heading">${escapeHtml(words("Laws"))}</h3><ul class="world-laws">${resolved.laws
+      : `<h${level} class="world-panel-heading">${escapeHtml(words("Laws"))}</h${level}><ul class="world-laws">${resolved.laws
           .map(
             (law, index) =>
               `<li class="world-sentence world-law" data-index="${index}"><span class="world-formula">${escapeHtml(law.text)}</span>${truthMark(marks.values?.laws[index], words)}</li>`,
           )
           .join("")}</ul>`;
 
-  return `<h3 class="world-panel-heading">${escapeHtml(words("Sentences"))}</h3><ol class="world-sentences">${items}</ol>${laws}`;
+  return `<h${level} class="world-panel-heading">${escapeHtml(words("Sentences"))}</h${level}><ol class="world-sentences">${items}</ol>${laws}`;
 }
 
 function restrictionHtml(
@@ -207,6 +211,8 @@ function exerciseBodyHtml(
   options: {
     readonly answer?: WorldAnswerData;
     readonly disabled: boolean;
+    /** The rank of the panel headings ("Sentences", "Laws"). */
+    readonly headingLevel: ExerciseHeadingLevel;
     readonly reveal: boolean;
   },
 ): string {
@@ -266,11 +272,13 @@ function exerciseBodyHtml(
       ...(marks === undefined ? {} : { marks }),
       ...(values === undefined ? {} : { values }),
     },
+    options.headingLevel,
   )}</div></div>`;
 }
 
 interface WorldElementMeta extends ExerciseElementMeta {
   readonly i18n: Translator;
+  readonly heading: ExerciseHeading;
   readonly title: string | null;
 }
 
@@ -287,7 +295,7 @@ export function renderWorldElement(
   const resolved = resolveWorld(publicData);
   const words = stringsResolver(buildWorldStrings(meta.i18n));
   const legend = exerciseLegendHtml(
-    exerciseGroupLabel(worldName(meta.i18n), meta.title),
+    exerciseGroupLabel(worldName(meta.i18n), meta),
   );
 
   return `<carnap-world${exerciseRootAttributes(meta)}>
@@ -296,7 +304,7 @@ export function renderWorldElement(
           <fieldset aria-busy="true" class="exercise-group world" data-variant="${publicData.variant}">
             ${legend}
             <slot name="prompt"></slot>
-            <div class="world-body" data-role="body">${exerciseBodyHtml(publicData, resolved, words, { disabled: true, reveal: false })}</div>
+            <div class="world-body" data-role="body">${exerciseBodyHtml(publicData, resolved, words, { disabled: true, headingLevel: exerciseSubheadingLevel(meta.heading.level), reveal: false })}</div>
             <slot name="exercise-actions"></slot>
           </fieldset>
         </template>
@@ -338,7 +346,14 @@ export function renderWorldReview(
             publicData,
             resolved,
             words,
-            { answer: review.answer, disabled: true, reveal },
+            // A review sits in the review page's outline, not a lesson's, so
+            // its panels keep the rank they have always had there.
+            {
+              answer: review.answer,
+              disabled: true,
+              headingLevel: 3,
+              reveal,
+            },
           )}</div>
         </template>
       </carnap-world>`;
@@ -364,6 +379,7 @@ export function renderWorld(
       exerciseId: node.exerciseId,
       exerciseKind: node.exerciseKind,
       i18n: context.i18n,
+      heading: context.heading,
       title: context.title ?? null,
     },
     context.actions ?? previewExerciseActionsHtml(context.i18n, true),

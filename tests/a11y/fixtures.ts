@@ -92,6 +92,10 @@ Is this a tautology?
 - P -> P
 ::::
 
+## Proofs
+
+Under a section heading, so the exercises below rank one deeper.
+
 :::aufbau-mm0{name="prop" show}
 provable sort wff;
 sort ctx;

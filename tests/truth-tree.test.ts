@@ -403,7 +403,7 @@ describe("rendering", () => {
         ...node,
         publicData: withSystemText(node.publicData, result.artifact.systems),
       },
-      { i18n: passthroughTranslator },
+      { heading: { level: 2, number: 1 }, i18n: passthroughTranslator },
     );
 
     expect(html).toContain("<carnap-truth-tree");

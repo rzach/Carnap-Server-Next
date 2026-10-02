@@ -357,6 +357,7 @@ describe("a real widget", () => {
           componentVersion: "1",
           exerciseId: "mc1",
           exerciseKind: "multiple-choice@1",
+          heading: { level: 2, number: 1 },
           i18n: i18nFor("en"),
           title: null,
         });

@@ -97,7 +97,9 @@ Use Tab, Shift-Tab, arrows, Enter, Space, and Escape.
 - [ ] **3.3.2 Labels and instructions:** input purpose and required state are
       available without relying on visual placement or color.
 - [ ] **1.3.1 / 4.1.2 Exercise groups:** entering an exercise announces its
-      title, or its kind if untitled. Truth-table cells announce column, row,
+      title, or its number and kind if untitled ("Exercise 3: Truth table").
+      The heading key stops at every exercise by the same name, one level below the lesson heading above it, and a
+      world exercise's Sentences panel one level below that. Truth-table cells announce column, row,
       and value in words. Each proof workspace has a name. Enhanced widgets
       do not retain `aria-busy`.
 - [ ] **4.1.2 Name, role, value:** custom widgets expose current state,

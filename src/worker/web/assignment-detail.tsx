@@ -6,6 +6,7 @@ import { jsonScriptContent } from "../application/content/render-support";
 import {
   componentAssetsForArtifact,
   exerciseHydrationForArtifact,
+  exerciseOutline,
   renderCompiledContent,
 } from "../application/content/renderer";
 import { renderTheoryPanel } from "../application/content/theory-panel";
@@ -51,7 +52,10 @@ import {
   type ExerciseHydrationOptions,
   exerciseHydrationScript,
 } from "../exercise-kit/hydration";
-import type { ExerciseType } from "../exercise-kit/type";
+import type {
+  ExerciseRenderContext,
+  ExerciseType,
+} from "../exercise-kit/type";
 import type { AppBindings } from "../http";
 import { splitAtValue, type Translator, VALUE } from "../i18n/translator";
 import {
@@ -743,7 +747,7 @@ function exerciseSubmissionForm(
   type: ExerciseType,
   submission: InlineSubmissionContext,
   node: Extract<ContentNode, { readonly kind: "exercise" }>,
-  title: string | null,
+  naming: ExerciseNaming,
 ): Child {
   return (
     <ExerciseFormShell node={node} submission={submission}>
@@ -758,7 +762,7 @@ function exerciseSubmissionForm(
           ),
           contentRevisionId: submission.contentRevisionId,
           i18n: submission.context.get("i18n"),
-          title,
+          ...naming,
         }),
       )}
     </ExerciseFormShell>
@@ -773,14 +777,17 @@ function exerciseSubmissionForm(
 function submissionFormNode(
   submission: InlineSubmissionContext,
   node: Extract<ContentNode, { readonly kind: "exercise" }>,
-  title: string | null,
+  naming: ExerciseNaming,
 ): Child | null {
   const type = exercises.typeForAssetId(node.render.assetId);
 
   return type === null
     ? null
-    : exerciseSubmissionForm(type, submission, node, title);
+    : exerciseSubmissionForm(type, submission, node, naming);
 }
+
+/** What names an exercise's group and heading: its title and its place. */
+type ExerciseNaming = Pick<ExerciseRenderContext, "heading" | "title">;
 
 function renderAssignmentContent(
   detail: {
@@ -798,10 +805,13 @@ function renderAssignmentContent(
     );
   }
 
+  const outline = exerciseOutline();
+
   return (
     <>
       {detail.artifact.document.nodes.map((node) => {
         if (node.kind === "markdown") {
+          outline.read(node.html);
           return raw(node.html);
         }
 
@@ -812,14 +822,18 @@ function renderAssignmentContent(
         const manifestItem = detail.artifact.manifest.find(
           (item) => item.id === node.exerciseId,
         );
+        const naming: ExerciseNaming = {
+          heading: outline.next(),
+          title: manifestItem?.title ?? null,
+        };
 
         return (
-          submissionFormNode(submission, node, manifestItem?.title ?? null) ??
+          submissionFormNode(submission, node, naming) ??
           raw(
             exercises.renderExercise(node, {
               contentRevisionId: detail.contentRevision.id,
               i18n,
-              title: manifestItem?.title ?? null,
+              ...naming,
             }),
           )
         );

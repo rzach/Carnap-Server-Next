@@ -7,6 +7,7 @@ import type { ContentNode } from "../../domain/content";
 import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
+  type ExerciseHeading,
   exerciseGroupLabel,
   exerciseLegendHtml,
 } from "../../exercise-kit/group";
@@ -32,6 +33,7 @@ const TRANSLATION_SHADOW_STYLES = [
 interface TranslationElementMeta extends ExerciseElementMeta {
   readonly i18n: Translator;
   /** The author's title, or null for the hidden generic group name. */
+  readonly heading: ExerciseHeading;
   readonly title: string | null;
 }
 
@@ -49,7 +51,7 @@ export function renderTranslationElement(
 ): string {
   const strings = stringsResolver(buildTranslationStrings(meta.i18n));
   const legend = exerciseLegendHtml(
-    exerciseGroupLabel(translationName(meta.i18n), meta.title),
+    exerciseGroupLabel(translationName(meta.i18n), meta),
   );
   const inputId = "translation-input";
 
@@ -124,6 +126,7 @@ export function renderTranslation(
       exerciseId: node.exerciseId,
       exerciseKind: node.exerciseKind,
       i18n: context.i18n,
+      heading: context.heading,
       title: context.title ?? null,
     },
     // A preview has no attempt to submit to, but it gets the same closing row

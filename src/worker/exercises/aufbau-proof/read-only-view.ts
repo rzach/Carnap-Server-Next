@@ -7,6 +7,7 @@ import type { ContentNode } from "../../domain/content";
 import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
+  type ExerciseHeading,
   exerciseGroupLabel,
   exerciseLegendHtml,
 } from "../../exercise-kit/group";
@@ -31,6 +32,7 @@ const AUFBAU_PROOF_SHADOW_STYLES = [
 interface AufbauProofElementMeta extends ExerciseElementMeta {
   readonly i18n: Translator;
   /** The author's title, or null for the hidden generic group name. */
+  readonly heading: ExerciseHeading;
   readonly title: string | null;
 }
 
@@ -57,7 +59,7 @@ export function renderAufbauProofElement(
         <template shadowrootmode="open">
           <style>${AUFBAU_PROOF_SHADOW_STYLES}</style>
           <fieldset aria-busy="true" class="exercise-group proof">
-            ${exerciseLegendHtml(exerciseGroupLabel(aufbauProofName(meta.i18n), meta.title))}
+            ${exerciseLegendHtml(exerciseGroupLabel(aufbauProofName(meta.i18n), meta))}
             <slot name="prompt"></slot>
             <pre class="proof-source">${escapeHtml(starterProofText(publicData))}</pre>
             <slot name="exercise-actions"></slot>
@@ -115,6 +117,7 @@ export function renderAufbauProof(
       exerciseId: node.exerciseId,
       exerciseKind: node.exerciseKind,
       i18n: context.i18n,
+      heading: context.heading,
       title: context.title ?? null,
     },
     // A preview has no attempt to submit to, but it gets the same closing row a

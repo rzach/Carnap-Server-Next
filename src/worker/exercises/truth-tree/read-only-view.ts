@@ -14,6 +14,7 @@ import type { ContentNode } from "../../domain/content";
 import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
+  type ExerciseHeading,
   exerciseGroupLabel,
   exerciseLegendHtml,
 } from "../../exercise-kit/group";
@@ -84,6 +85,7 @@ export function treeHtml(
 
 interface TruthTreeElementMeta extends ExerciseElementMeta {
   readonly i18n: Translator;
+  readonly heading: ExerciseHeading;
   readonly title: string | null;
 }
 
@@ -99,7 +101,7 @@ export function renderTruthTreeElement(
   const resolved = resolveTruthTree(publicData);
   const words = stringsResolver(buildTruthTreeStrings(meta.i18n));
   const legend = exerciseLegendHtml(
-    exerciseGroupLabel(truthTreeName(meta.i18n), meta.title),
+    exerciseGroupLabel(truthTreeName(meta.i18n), meta),
   );
   const body =
     resolved === null
@@ -176,6 +178,7 @@ export function renderTruthTree(
       exerciseId: node.exerciseId,
       exerciseKind: node.exerciseKind,
       i18n: context.i18n,
+      heading: context.heading,
       title: context.title ?? null,
     },
     context.actions ?? previewExerciseActionsHtml(context.i18n, true),

@@ -2,6 +2,10 @@ import type {
   CompiledContentArtifact,
   ComponentRegistryMetadata,
 } from "../../domain/content";
+import type {
+  ExerciseHeading,
+  ExerciseHeadingLevel,
+} from "../../exercise-kit/group";
 import {
   EXERCISE_HYDRATION_VERSION,
   type ExerciseHydration,
@@ -28,10 +32,12 @@ export function renderCompiledContent(
   const titles = new Map(
     artifact.manifest.map((item) => [item.id, item.title ?? null]),
   );
+  const outline = exerciseOutline();
 
   return artifact.document.nodes
     .map((node) => {
       if (node.kind === "markdown") {
+        outline.read(node.html);
         return node.html;
       }
 
@@ -43,11 +49,58 @@ export function renderCompiledContent(
         ...(options.contentRevisionId === undefined
           ? {}
           : { contentRevisionId: options.contentRevisionId }),
+        heading: outline.next(),
         i18n,
         title: titles.get(node.exerciseId) ?? null,
       });
     })
     .join("\n");
+}
+
+/** An opening heading tag in rendered Markdown, with its rank and attributes. */
+const HEADING_TAG = /<h([1-6])\b([^>]*)>/g;
+
+/**
+ * The document's exercises in order, as headings: walked alongside the nodes,
+ * `read` takes each Markdown node's HTML and `next` hands each exercise its
+ * place.
+ *
+ * Its rank is one below the last heading the author wrote above it, so that
+ * an exercise under "## Conditionals" is an h3 and is read as part of that
+ * section; an h2 where the author wrote none, below the page's own title.
+ * Capped at h6, where an exercise is a sibling of the heading above it rather
+ * than its child. Its number counts every exercise, titled or not, from 1.
+ *
+ * Read off the rendered Markdown when the page is drawn rather than fixed when
+ * the lesson is saved, so that revisions saved before exercises had headings
+ * get them too. The sanitizer has escaped anything an author typed, so a tag
+ * here is a heading the Markdown made. A heading hidden from sight is the
+ * footnotes section's, which closes the notes rather than opening a section,
+ * and is passed over.
+ */
+export function exerciseOutline(): {
+  readonly next: () => ExerciseHeading;
+  readonly read: (html: string) => void;
+} {
+  let above = 1;
+  let count = 0;
+
+  return {
+    next: () => {
+      count += 1;
+      return {
+        level: Math.min(above + 1, 6) as ExerciseHeadingLevel,
+        number: count,
+      };
+    },
+    read: (html) => {
+      for (const [, rank, attributes] of html.matchAll(HEADING_TAG)) {
+        if (!attributes?.includes("visually-hidden")) {
+          above = Number(rank);
+        }
+      }
+    },
+  };
 }
 
 /**
