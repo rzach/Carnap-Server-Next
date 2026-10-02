@@ -1,12 +1,13 @@
+import { buildProofEditorStrings } from "../../exercise-kit/proof/editor-strings";
 import { buildProofEngineStrings } from "../../exercise-kit/proof/engine-strings";
 import { placeholders, type Translator } from "../../i18n/translator";
 import { buildFormulaParserStrings } from "../../logic/specs/strings";
 import type { FitchDiagnosticCode } from "./translate";
 
 /**
- * Interface text for the Fitch proof widget: the shared proof-engine set, plus
- * prose for every structural problem the indentation-to-context translator can
- * report.
+ * Interface text for the Fitch proof widget: the shared proof-engine set, the
+ * problem keys it shares with the linear editor, plus prose for every
+ * structural problem the indentation-to-context translator can report.
  *
  * The translator itself carries only a {@link FitchDiagnosticCode} and its
  * parameters — no prose — so the same diagnostic can be worded in the student's
@@ -20,6 +21,7 @@ import type { FitchDiagnosticCode } from "./translate";
 export function buildAufbauProofFitchStrings(i18n: Translator) {
   return {
     ...buildProofEngineStrings(i18n),
+    ...buildProofEditorStrings(i18n),
     ...buildFitchDiagnosticStrings(i18n),
     // A line's formula is read in the theory's language before it reaches the
     // compiler, so the parser's complaints are the widget's to say.
@@ -36,6 +38,18 @@ export function buildAufbauProofFitchStrings(i18n: Translator) {
      * this a reviewer meets an unlabelled text box.
      */
     "Submitted proof": i18n.t("Submitted proof"),
+    /** Help: the dialog's heading, and its accessible name. */
+    "Using the Fitch proof editor": i18n.t("Using the Fitch proof editor"),
+    /** Help: the first orientation paragraph — what a line looks like. */
+    "Write one step per line: the formula, a colon, then the rule and the lines it cites, as in Q :→E 1 2. Cite a subproof by its range of lines, as in 2-4.":
+      i18n.t(
+        "Write one step per line: the formula, a colon, then the rule and the lines it cites, as in Q :→E 1 2. Cite a subproof by its range of lines, as in 2-4.",
+      ),
+    /** Help: the second orientation paragraph — indentation is structure. */
+    "Indent an assumption to open a subproof. The lines indented with it are inside it; the first line further out closes it, and can cite it.":
+      i18n.t(
+        "Indent an assumption to open a subproof. The lines indented with it are inside it; the first line further out closes it, and can cite it.",
+      ),
   };
 }
 

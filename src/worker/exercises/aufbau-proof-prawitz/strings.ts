@@ -126,6 +126,8 @@ export function buildAufbauProofPrawitzStrings(i18n: Translator) {
     "Tick or untick the line": i18n.t("Tick or untick the line"),
     "Edit the line's formula": i18n.t("Edit the line's formula"),
     "Edit the line's rule": i18n.t("Edit the line's rule"),
+    "Go to the next problem": i18n.t("Go to the next problem"),
+    "Go to the previous problem": i18n.t("Go to the previous problem"),
     /** One row: `l` opens whichever of the two a line has (never both). */
     "Edit the line's label or discharge marks": i18n.t(
       "Edit the line's label or discharge marks",

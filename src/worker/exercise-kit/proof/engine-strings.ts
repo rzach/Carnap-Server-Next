@@ -58,6 +58,11 @@ export function buildProofEngineStrings(i18n: Translator) {
     "Could not work out what the last line states.": i18n.t(
       "Could not work out what the last line states.",
     ),
+    /**
+     * Said aloud when F8 or Shift-F8 finds no line with a problem to step to,
+     * and listed in the CodeMirror editors' problem panel when it is empty.
+     */
+    "No problems.": i18n.t("No problems."),
     /** Label on a playground's goal row, before the sequent the proof derives. */
     Proves: i18n.t("Proves"),
     "The proof engine couldn't read this proof — check for unexpected characters.":

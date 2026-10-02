@@ -60,6 +60,20 @@ export function buildAufbauProofTreeStrings(i18n: Translator) {
     ),
     /** Help: what Enter does. */
     "Edit the line's formula": i18n.t("Edit the line's formula"),
+    /** Accessible name of a line's formula field. */
+    Formula: i18n.t(
+      "Formula (proof line)",
+      {},
+      {
+        comment:
+          "Disambiguating id; only the word Formula is shown. Names the formula text field of a line in the proof tree.",
+        message: "Formula",
+      },
+    ),
+    /** Help: what F8 does. */
+    "Go to the next problem": i18n.t("Go to the next problem"),
+    /** Help: what Shift-F8 does. */
+    "Go to the previous problem": i18n.t("Go to the previous problem"),
     /** Help: what `r` does. */
     "Edit the line's rule": i18n.t("Edit the line's rule"),
     /** Help: what Esc does. */
@@ -79,10 +93,20 @@ export function buildAufbauProofTreeStrings(i18n: Translator) {
     "Proof tree": i18n.t("Proof tree"),
     Redo: i18n.t("Redo"),
     "Redo (Ctrl-Y)": i18n.t("Redo (Ctrl-Y)"),
+    /** Accessible name of a line's rule field. */
+    Rule: i18n.t(
+      "Rule (proof line)",
+      {},
+      {
+        comment:
+          "Disambiguating id; only the word Rule is shown. Names the inference-rule text field under a line in the proof tree.",
+        message: "Rule",
+      },
+    ),
     /** Help: the third orientation paragraph. */
-    "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it to read what is wrong.":
+    "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong.":
       i18n.t(
-        "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it to read what is wrong.",
+        "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong.",
       ),
     /** Help: the first orientation paragraph. */
     "The goal sits at the bottom. Click any line to select it, then Add premise to grow the proof upward.":

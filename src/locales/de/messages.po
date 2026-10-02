@@ -1305,6 +1305,7 @@ msgstr "Client-ID"
 msgid "Clone course"
 msgstr "Kurs duplizieren"
 
+#: src/worker/exercise-kit/proof/editor-strings.ts
 #: src/worker/exercises/truth-tree/strings.ts
 #: src/worker/web/components.tsx
 msgid "Close"
@@ -2313,7 +2314,9 @@ msgid "Fold this block"
 msgstr "Diesen Block einklappen"
 
 #. Disambiguating id; only the word Formula is shown. Names a proof line's formula text field.
+#. Disambiguating id; only the word Formula is shown. Names the formula text field of a line in the proof tree.
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
+#: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Formula (proof line)"
 msgstr "Formel"
 
@@ -2340,6 +2343,18 @@ msgstr "Geben Sie den Zeitpunkt an, ab dem die Noten sichtbar werden, oder wähl
 #: src/worker/web/errors.tsx
 msgid "Go to the login page"
 msgstr "Zur Anmeldeseite"
+
+#: src/worker/exercise-kit/proof/editor-strings.ts
+#: src/worker/exercises/aufbau-proof-prawitz/strings.ts
+#: src/worker/exercises/aufbau-proof-tree/strings.ts
+msgid "Go to the next problem"
+msgstr "Springt zum nächsten Problem"
+
+#: src/worker/exercise-kit/proof/editor-strings.ts
+#: src/worker/exercises/aufbau-proof-prawitz/strings.ts
+#: src/worker/exercises/aufbau-proof-tree/strings.ts
+msgid "Go to the previous problem"
+msgstr "Springt zum vorherigen Problem"
 
 #: src/worker/web/errors.tsx
 msgid "Go to your courses"
@@ -2515,6 +2530,10 @@ msgstr "Falsch — Ihre Antwort"
 msgid "Incorrect (truth-table cell)"
 msgstr "Nicht richtig"
 
+#: src/worker/exercises/aufbau-proof-fitch/strings.ts
+msgid "Indent an assumption to open a subproof. The lines indented with it are inside it; the first line further out closes it, and can cite it."
+msgstr "Rücken Sie eine Annahme ein, um einen Unterbeweis zu eröffnen. Die gleich weit eingerückten Zeilen gehören dazu; die erste weniger weit eingerückte Zeile schließt ihn und kann ihn zitieren."
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Initial revision"
 msgstr "Erste Revision"
@@ -2668,6 +2687,10 @@ msgstr "Verknüpft"
 #: src/worker/web/profile.tsx
 msgid "Linked LMS access"
 msgstr "Verknüpfter LMS-Zugang"
+
+#: src/worker/exercise-kit/proof/editor-strings.ts
+msgid "List every problem"
+msgstr "Listet alle Probleme auf"
 
 #: src/worker/web/profile.tsx
 msgid "LMS"
@@ -3085,6 +3108,10 @@ msgstr ""
 #: src/worker/exercises/multiple-choice/assessment.ts
 msgid "No option selected"
 msgstr "Keine Option ausgewählt"
+
+#: src/worker/exercise-kit/proof/engine-strings.ts
+msgid "No problems."
+msgstr "Keine Probleme."
 
 #: src/worker/web/content.tsx
 msgid "No revisions have been created yet."
@@ -3574,6 +3601,10 @@ msgstr "Hier liegt ein Problem."
 msgid "Problem in the proof."
 msgstr "Problem im Beweis."
 
+#: src/worker/exercise-kit/proof/editor-strings.ts
+msgid "Problems"
+msgstr "Probleme"
+
 #: src/worker/web/profile.tsx
 msgid "Profile"
 msgstr "Profil"
@@ -3713,6 +3744,7 @@ msgstr "Neueste Prüfereignisse"
 msgid "Redirection (launch) URL"
 msgstr "Weiterleitungs-URL (Start)"
 
+#: src/worker/exercise-kit/proof/editor-strings.ts
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 #: src/worker/exercises/truth-tree/strings.ts
@@ -4047,7 +4079,9 @@ msgid "Rubric"
 msgstr "Bewertungsraster"
 
 #. Disambiguating id; only the word Rule is shown. Names a proof line's inference-rule text field.
+#. Disambiguating id; only the word Rule is shown. Names the inference-rule text field under a line in the proof tree.
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
+#: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Rule (proof line)"
 msgstr "Regel"
 
@@ -4856,9 +4890,10 @@ msgstr "Das LTI-Deployment wurde nicht gefunden."
 msgid "The LTI platform was not found."
 msgstr "Die LTI-Plattform wurde nicht gefunden."
 
+#: src/worker/exercise-kit/proof/editor-strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
-msgid "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it to read what is wrong."
-msgstr "Die Markierung neben der Schaltfläche „Antwort abgeben“ zeigt, ob der Beweis aufgeht. Eine Zeile mit einem Problem ist unterstrichen; fahren Sie darüber, um zu lesen, was nicht stimmt."
+msgid "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong."
+msgstr "Die Markierung neben der Schaltfläche „Antwort abgeben“ zeigt, ob der Beweis aufgeht. Eine Zeile mit einem Problem ist unterstrichen; fahren Sie darüber oder springen Sie mit F8 dorthin, um zu lesen, was nicht stimmt."
 
 #: src/worker/web/admin.tsx
 msgid "The most recent administrative audit events."
@@ -5525,6 +5560,7 @@ msgstr "Kurs aus dem Archiv holen"
 msgid "Undid the last change."
 msgstr "Letzte Änderung rückgängig gemacht."
 
+#: src/worker/exercise-kit/proof/editor-strings.ts
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 #: src/worker/exercises/truth-tree/strings.ts
@@ -5667,9 +5703,17 @@ msgstr "Kontosuche"
 msgid "Users"
 msgstr "Konten"
 
+#: src/worker/exercises/aufbau-proof-fitch/strings.ts
+msgid "Using the Fitch proof editor"
+msgstr "Den Fitch-Beweiseditor benutzen"
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "Using the Prawitz proof editor"
 msgstr "Den Prawitz-Beweiseditor benutzen"
+
+#: src/worker/exercises/aufbau-proof/strings.ts
+msgid "Using the proof editor"
+msgstr "Den Beweiseditor benutzen"
 
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Using the proof tree editor"
@@ -5777,6 +5821,14 @@ msgstr "Schreiben Sie zuerst einen Satz."
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Write each step's rows, choosing whether they stack on the branch or split it, and type the row they develop in the margin."
 msgstr "Schreiben Sie die Zeilen jedes Schritts, wählen Sie, ob sie am Ast angefügt werden oder ihn verzweigen, und geben Sie am Rand die Zeile ein, die sie entwickeln."
+
+#: src/worker/exercises/aufbau-proof/strings.ts
+msgid "Write one step per line: a label, the formula between dollar signs, then by, the rule's name, and the lines it cites in brackets, as in l3: $ q $ by mp [l1, l2]. Cite the goal's hypotheses as #1, #2, and so on."
+msgstr "Schreiben Sie einen Schritt pro Zeile: eine Marke, die Formel zwischen Dollarzeichen, dann by, den Namen der Regel und die zitierten Zeilen in eckigen Klammern, etwa l3: $ q $ by mp [l1, l2]. Die Hypothesen des Ziels zitieren Sie als #1, #2 usw."
+
+#: src/worker/exercises/aufbau-proof-fitch/strings.ts
+msgid "Write one step per line: the formula, a colon, then the rule and the lines it cites, as in Q :→E 1 2. Cite a subproof by its range of lines, as in 2-4."
+msgstr "Schreiben Sie einen Schritt pro Zeile: die Formel, einen Doppelpunkt, dann die Regel und die zitierten Zeilen, etwa Q :→E 1 2. Einen Unterbeweis zitieren Sie über seinen Zeilenbereich, etwa 2-4."
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Write the root as one argument line or as a list of sentences, not both."

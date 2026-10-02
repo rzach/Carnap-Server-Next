@@ -88,6 +88,8 @@ import {
   clamp,
   goalDeclaration,
   mountProofEditor,
+  mountProofEditorHelp,
+  problemKeys,
   showCompileFailure,
   showDiagnostics,
 } from "./proof-editor";
@@ -444,6 +446,9 @@ class AufbauProofFitch extends ProofExerciseElement<AufbauProofFitchStringId> {
           EditorView.contentAttributes.of({
             "aria-label": this.t("Fitch proof editor"),
           }),
+          // Where feedback withholds the squiggles there is nothing to step
+          // to, and an F8 that said "No problems." would be a verdict.
+          this.showsDetail ? problemKeys((id) => this.t(id)) : [],
           assumptionRuleFacet.of(this.assumptionRule),
           ruleReaderFacet.of(this.readRule),
           scopeGuides,
@@ -458,6 +463,23 @@ class AufbauProofFitch extends ProofExerciseElement<AufbauProofFitchStringId> {
 
     this.fitchText = initialText;
     this.proofText = this.translateFitch(initialText).proofText;
+    mountProofEditorHelp(
+      this,
+      root,
+      (id) => this.t(id),
+      {
+        intro: [
+          this.t(
+            "Write one step per line: the formula, a colon, then the rule and the lines it cites, as in Q :→E 1 2. Cite a subproof by its range of lines, as in 2-4.",
+          ),
+          this.t(
+            "Indent an assumption to open a subproof. The lines indented with it are inside it; the first line further out closes it, and can cite it.",
+          ),
+        ],
+        title: this.t("Using the Fitch proof editor"),
+      },
+      this.showsDetail,
+    );
     this.gateSubmit((event) => this.gate(event));
     // JS owns the widget now; the SSR markup's "still loading" flag would
     // otherwise stand for the life of the page.

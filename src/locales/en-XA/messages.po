@@ -1305,6 +1305,7 @@ msgstr ""
 msgid "Clone course"
 msgstr ""
 
+#: src/worker/exercise-kit/proof/editor-strings.ts
 #: src/worker/exercises/truth-tree/strings.ts
 #: src/worker/web/components.tsx
 msgid "Close"
@@ -2313,7 +2314,9 @@ msgid "Fold this block"
 msgstr ""
 
 #. Disambiguating id; only the word Formula is shown. Names a proof line's formula text field.
+#. Disambiguating id; only the word Formula is shown. Names the formula text field of a line in the proof tree.
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
+#: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Formula (proof line)"
 msgstr ""
 
@@ -2339,6 +2342,18 @@ msgstr ""
 
 #: src/worker/web/errors.tsx
 msgid "Go to the login page"
+msgstr ""
+
+#: src/worker/exercise-kit/proof/editor-strings.ts
+#: src/worker/exercises/aufbau-proof-prawitz/strings.ts
+#: src/worker/exercises/aufbau-proof-tree/strings.ts
+msgid "Go to the next problem"
+msgstr ""
+
+#: src/worker/exercise-kit/proof/editor-strings.ts
+#: src/worker/exercises/aufbau-proof-prawitz/strings.ts
+#: src/worker/exercises/aufbau-proof-tree/strings.ts
+msgid "Go to the previous problem"
 msgstr ""
 
 #: src/worker/web/errors.tsx
@@ -2515,6 +2530,10 @@ msgstr ""
 msgid "Incorrect (truth-table cell)"
 msgstr ""
 
+#: src/worker/exercises/aufbau-proof-fitch/strings.ts
+msgid "Indent an assumption to open a subproof. The lines indented with it are inside it; the first line further out closes it, and can cite it."
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Initial revision"
 msgstr ""
@@ -2667,6 +2686,10 @@ msgstr ""
 
 #: src/worker/web/profile.tsx
 msgid "Linked LMS access"
+msgstr ""
+
+#: src/worker/exercise-kit/proof/editor-strings.ts
+msgid "List every problem"
 msgstr ""
 
 #: src/worker/web/profile.tsx
@@ -3084,6 +3107,10 @@ msgstr ""
 
 #: src/worker/exercises/multiple-choice/assessment.ts
 msgid "No option selected"
+msgstr ""
+
+#: src/worker/exercise-kit/proof/engine-strings.ts
+msgid "No problems."
 msgstr ""
 
 #: src/worker/web/content.tsx
@@ -3574,6 +3601,10 @@ msgstr ""
 msgid "Problem in the proof."
 msgstr ""
 
+#: src/worker/exercise-kit/proof/editor-strings.ts
+msgid "Problems"
+msgstr ""
+
 #: src/worker/web/profile.tsx
 msgid "Profile"
 msgstr ""
@@ -3713,6 +3744,7 @@ msgstr ""
 msgid "Redirection (launch) URL"
 msgstr ""
 
+#: src/worker/exercise-kit/proof/editor-strings.ts
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 #: src/worker/exercises/truth-tree/strings.ts
@@ -4047,7 +4079,9 @@ msgid "Rubric"
 msgstr ""
 
 #. Disambiguating id; only the word Rule is shown. Names a proof line's inference-rule text field.
+#. Disambiguating id; only the word Rule is shown. Names the inference-rule text field under a line in the proof tree.
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
+#: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Rule (proof line)"
 msgstr ""
 
@@ -4856,8 +4890,9 @@ msgstr ""
 msgid "The LTI platform was not found."
 msgstr ""
 
+#: src/worker/exercise-kit/proof/editor-strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
-msgid "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it to read what is wrong."
+msgid "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong."
 msgstr ""
 
 #: src/worker/web/admin.tsx
@@ -5525,6 +5560,7 @@ msgstr ""
 msgid "Undid the last change."
 msgstr ""
 
+#: src/worker/exercise-kit/proof/editor-strings.ts
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 #: src/worker/exercises/truth-tree/strings.ts
@@ -5667,8 +5703,16 @@ msgstr ""
 msgid "Users"
 msgstr ""
 
+#: src/worker/exercises/aufbau-proof-fitch/strings.ts
+msgid "Using the Fitch proof editor"
+msgstr ""
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "Using the Prawitz proof editor"
+msgstr ""
+
+#: src/worker/exercises/aufbau-proof/strings.ts
+msgid "Using the proof editor"
 msgstr ""
 
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
@@ -5776,6 +5820,14 @@ msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Write each step's rows, choosing whether they stack on the branch or split it, and type the row they develop in the margin."
+msgstr ""
+
+#: src/worker/exercises/aufbau-proof/strings.ts
+msgid "Write one step per line: a label, the formula between dollar signs, then by, the rule's name, and the lines it cites in brackets, as in l3: $ q $ by mp [l1, l2]. Cite the goal's hypotheses as #1, #2, and so on."
+msgstr ""
+
+#: src/worker/exercises/aufbau-proof-fitch/strings.ts
+msgid "Write one step per line: the formula, a colon, then the rule and the lines it cites, as in Q :→E 1 2. Cite a subproof by its range of lines, as in 2-4."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts

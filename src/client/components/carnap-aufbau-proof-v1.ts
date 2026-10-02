@@ -50,6 +50,8 @@ import {
   clamp,
   goalDeclaration,
   mountProofEditor,
+  mountProofEditorHelp,
+  problemKeys,
   showCompileFailure,
   showDiagnostics,
 } from "./proof-editor";
@@ -139,6 +141,9 @@ class AufbauProof extends ProofExerciseElement<AufbauProofStringId> {
           EditorView.contentAttributes.of({
             "aria-label": this.t("Proof editor"),
           }),
+          // Where feedback withholds the squiggles there is nothing to step
+          // to, and an F8 that said "No problems." would be a verdict.
+          this.showsDetail ? problemKeys((id) => this.t(id)) : [],
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
               this.onDocChanged();
@@ -149,6 +154,20 @@ class AufbauProof extends ProofExerciseElement<AufbauProofStringId> {
     });
 
     this.proofText = this.assemble(initialBody);
+    mountProofEditorHelp(
+      this,
+      root,
+      (id) => this.t(id),
+      {
+        intro: [
+          this.t(
+            "Write one step per line: a label, the formula between dollar signs, then by, the rule's name, and the lines it cites in brackets, as in l3: $ q $ by mp [l1, l2]. Cite the goal's hypotheses as #1, #2, and so on.",
+          ),
+        ],
+        title: this.t("Using the proof editor"),
+      },
+      this.showsDetail,
+    );
     this.gateSubmit((event) => this.gate(event));
     // JS owns the widget now; the SSR markup's "still loading" flag would
     // otherwise stand for the life of the page.

@@ -80,6 +80,12 @@ import {
   mountHelpTrigger,
   openHelpDialog,
 } from "./help-dialog";
+import {
+  mountAnnouncer,
+  problemNoteId,
+  problemStep,
+  stepToProblem,
+} from "./problem-keys";
 import { ProofExerciseElement } from "./proof-element";
 import goalStyles from "./proof-goal.css" with { type: "text" };
 import { ToolbarIcon } from "./toolbar-icon";
@@ -421,12 +427,14 @@ const SHADOW_STYLES = [
  *
  * The key glyphs are literals — `Enter` is what is printed on the key — while
  * the actions are string ids, so `tsc` rejects a row the server never sent text
- * for.
+ * for. The rows marked `problems` are left out where feedback withholds the
+ * problems they step between.
  */
 const SHORTCUTS: readonly {
   readonly action: AufbauProofTreeStringId;
   readonly icon?: ToolbarIconName;
   readonly keys: readonly string[];
+  readonly problems?: true;
 }[] = [
   { action: "Move between lines", keys: ["↑", "↓", "←", "→"] },
   { action: "Edit the line's formula", keys: ["Enter"] },
@@ -445,13 +453,19 @@ const SHORTCUTS: readonly {
   },
   { action: "Undo", icon: "undo", keys: ["Ctrl-Z"] },
   { action: "Redo", icon: "redo", keys: ["Ctrl-Y"] },
+  { action: "Go to the next problem", keys: ["F8"], problems: true },
+  {
+    action: "Go to the previous problem",
+    keys: ["Shift-F8"],
+    problems: true,
+  },
   { action: "Open this help", keys: ["?"] },
 ];
 
 const INTRO_IDS: readonly AufbauProofTreeStringId[] = [
   "The goal sits at the bottom. Click any line to select it, then Add premise to grow the proof upward.",
   "Type the rule that justifies each inference in the field beneath its line. Add hypothesis makes a leaf that cites one of the goal's hypotheses.",
-  "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it to read what is wrong.",
+  "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong.",
 ];
 
 /**
@@ -462,8 +476,13 @@ const INTRO_IDS: readonly AufbauProofTreeStringId[] = [
  */
 function EditableField(props: {
   readonly className: string;
+  /** The hidden note saying this field's problem, when it has one. */
+  readonly describedBy?: string | undefined;
   readonly editable: boolean;
   readonly error: string | undefined;
+  /** The field's name. Only an editable field is a textbox and has one: a
+   *  fixed one is just the line's text. */
+  readonly label: string;
   readonly warning?: string | undefined;
   readonly onInput?: (text: string) => void;
   readonly onSelect: () => void;
@@ -496,15 +515,24 @@ function EditableField(props: {
     .join(" ");
 
   const onInput = props.onInput;
+  const editable = props.editable;
   return (
-    // `contentEditable` makes an editable field of this span, which the rule
-    // cannot see. When it is *not* editable the handlers only mirror, for the
-    // mouse, what the enclosing treeitem already does from the keyboard.
+    // `contentEditable` makes an editable field of this span, and `textbox` is
+    // the role a contenteditable plays anyway; declaring it is what lets the
+    // field have a name. When it is *not* editable the handlers only mirror,
+    // for the mouse, what the enclosing treeitem already does from the
+    // keyboard. Inside the treeitem, the name does not displace the line's
+    // text from the treeitem's own: a textbox met while naming something else
+    // contributes its value, not its label.
     // biome-ignore lint/a11y/noStaticElementInteractions: see above.
+    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: the label is set only while the textbox role is — both hang on `editable`, which the rule cannot follow.
     <span
       ref={ref}
+      aria-describedby={editable ? props.describedBy : undefined}
+      aria-invalid={editable && props.error !== undefined ? true : undefined}
+      aria-label={editable ? props.label : undefined}
       class={classes}
-      contentEditable={props.editable ? true : undefined}
+      contentEditable={editable ? true : undefined}
       onFocus={props.onSelect}
       onInput={
         onInput === undefined
@@ -512,10 +540,13 @@ function EditableField(props: {
           : (event) => onInput(event.currentTarget.textContent ?? "")
       }
       onPointerDown={props.onSelect}
-      spellcheck={props.editable ? false : undefined}
+      role={editable ? "textbox" : undefined}
+      spellcheck={editable ? false : undefined}
       // Kept out of the tab order: the enclosing treeitem carries the roving
       // focus; a field is entered by click or by pressing Enter on its node.
       tabIndex={-1}
+      // For the mouse. A screen reader hears the same text through the line's
+      // note, which a title on a field the focus is rarely on never reached.
       title={props.error ?? props.warning}
     />
   );
@@ -617,6 +648,14 @@ function NodeView(props: {
   // stale and vanish. A hypothesis leaf is an assumption — no forest, no line.
   const showForest = !isHyp;
   const select = (): void => onSelect(node.id);
+  // Everything wrong with the line — its formula, and a rule admitted with
+  // `sorry!` — in the one note its treeitem is described by, since the
+  // treeitem is where the focus stands and the rule field is not even inside
+  // it.
+  const error = nodeErrors[node.id] ?? hypError;
+  const warning = nodeWarnings[node.id];
+  const problems = [error, warning].filter((text) => text !== undefined);
+  const noteId = problems.length > 0 ? problemNoteId(node.id) : undefined;
 
   return (
     <proof-tree>
@@ -643,6 +682,7 @@ function NodeView(props: {
       ) : null}
       <proof-proposition>
         <span
+          aria-describedby={noteId}
           aria-selected={node.id === selectedId}
           class="tree-node"
           onFocus={select}
@@ -665,8 +705,10 @@ function NodeView(props: {
             ]
               .filter((cls) => cls.length > 0)
               .join(" ")}
+            describedBy={error === undefined ? undefined : noteId}
             editable={!fixed}
-            error={nodeErrors[node.id] ?? hypError}
+            error={error}
+            label={t("Formula")}
             onInput={(text) =>
               dispatch({ id: node.id, text, type: "setFormula" })
             }
@@ -675,6 +717,13 @@ function NodeView(props: {
             value={node.formula}
           />
         </span>
+        {/* Beside the treeitem rather than in it, where it would be read
+            again as part of the line's name. */}
+        {noteId === undefined ? null : (
+          <span hidden id={noteId}>
+            {problems.join("\n")}
+          </span>
+        )}
       </proof-proposition>
       <proof-inference>
         {node.hyp !== null ? (
@@ -688,15 +737,17 @@ function NodeView(props: {
         ) : (
           <EditableField
             className="tree-edit tree-rule"
+            describedBy={warning === undefined ? undefined : noteId}
             editable={true}
             error={undefined}
+            label={t("Rule")}
             onInput={(text) =>
               dispatch({ id: node.id, text, type: "setRule" })
             }
             onSelect={select}
             selected={false}
             value={node.rule}
-            warning={nodeWarnings[node.id]}
+            warning={warning}
           />
         )}
       </proof-inference>
@@ -873,6 +924,9 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
   private mount: HTMLElement | null = null;
   /** Built once in {@link enhance}; see {@link showHelp} for where it lives. */
   private helpDialog: HTMLDialogElement | null = null;
+  /** What F8 says when moving focus cannot; `null` where feedback withholds
+   *  the problems, and F8 with them. */
+  private announce: ((text: string) => void) | null = null;
   private proofText = "";
   private lineSpans: readonly { from: number; nodeId: string; to: number }[] =
     [];
@@ -943,11 +997,15 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
     );
     this.mount = document.createElement("div");
     container.insertBefore(this.mount, actionsSlot);
+    if (this.showsDetail) {
+      this.announce = mountAnnouncer(container, actionsSlot);
+    }
     this.rerender();
 
     // Route Ctrl/Cmd-Z / -Y / -Shift-Z through our history rather than the
     // browser's per-field contenteditable undo, which would revert a field's
-    // text without reverting the model and desync the two.
+    // text without reverting the model and desync the two. F8 is here too, so
+    // it reaches the problems from inside a field.
     container.addEventListener("keydown", (event) => this.onKeyDown(event), {
       signal: this.listeners.signal,
     });
@@ -960,7 +1018,9 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
       close: this.t("Close help"),
       intro: INTRO_IDS.map((id) => this.t(id)),
       keyboard: this.t("Keyboard"),
-      shortcuts: SHORTCUTS.map((shortcut) => ({
+      shortcuts: SHORTCUTS.filter(
+        (shortcut) => shortcut.problems !== true || this.showsDetail,
+      ).map((shortcut) => ({
         action: this.t(shortcut.action),
         keys: shortcut.keys,
         ...(shortcut.icon === undefined ? {} : { icon: shortcut.icon }),
@@ -1010,6 +1070,21 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
   };
 
   private onKeyDown(event: KeyboardEvent): void {
+    // F8 works from a field as well as from a line: a reader who has just
+    // typed is the one most likely to want to know what is now wrong.
+    const step = problemStep(event);
+    if (step !== null && this.announce !== null && this.shadowRoot !== null) {
+      event.preventDefault();
+      const said = stepToProblem(
+        this.shadowRoot,
+        step,
+        this.t("No problems."),
+      );
+      if (said !== null) {
+        this.announce(said);
+      }
+      return;
+    }
     if (event.key === "Escape") {
       // Editing a field: step back out to its node (nav mode) on Escape. The
       // conclusion field sits inside the treeitem; the rule field is a sibling

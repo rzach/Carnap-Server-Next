@@ -92,6 +92,12 @@ describe("upgrading", () => {
     expect(
       mounted.root.querySelector(".cm-content")?.getAttribute("aria-label"),
     ).toBe("Fitch proof editor");
+    // A (?) for the usage instructions, as the tree editors have: what they
+    // list is shared with the linear editor and tested there
+    // (`problem-keys.test.ts`).
+    expect(
+      mounted.root.querySelector("dialog.help-dialog h2")?.textContent,
+    ).toBe("Using the Fitch proof editor");
 
     // Both texts are in the form before any compile: the Fitch source the
     // student wrote, and the `.auf` it translates to, one line per line.

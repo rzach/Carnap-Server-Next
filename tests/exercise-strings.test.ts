@@ -35,6 +35,8 @@ const WITH_STRINGS = createDefaultExerciseRegistry()
 
 /** The widgets that offer usage instructions behind a `(?)` in their toolbar. */
 const HELP_KINDS: readonly string[] = [
+  "aufbau-proof",
+  "aufbau-proof-fitch",
   "aufbau-proof-prawitz",
   "aufbau-proof-tree",
   "truth-tree",

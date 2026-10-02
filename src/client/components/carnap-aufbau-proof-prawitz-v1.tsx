@@ -83,6 +83,12 @@ import {
   mountHelpTrigger,
   openHelpDialog,
 } from "./help-dialog";
+import {
+  mountAnnouncer,
+  problemNoteId,
+  problemStep,
+  stepToProblem,
+} from "./problem-keys";
 import { ProofExerciseElement } from "./proof-element";
 import goalStyles from "./proof-goal.css" with { type: "text" };
 import { ToolbarIcon } from "./toolbar-icon";
@@ -520,12 +526,14 @@ const SHADOW_STYLES = [
  *
  * The key glyphs are literals — `Enter` is what is printed on the key — while
  * the actions are string ids, so `tsc` rejects a row the server never sent text
- * for.
+ * for. The rows marked `problems` are left out where feedback withholds the
+ * problems they step between.
  */
 const SHORTCUTS: readonly {
   readonly action: AufbauProofPrawitzStringId;
   readonly icon?: ToolbarIconName;
   readonly keys: readonly string[];
+  readonly problems?: true;
 }[] = [
   {
     action: "Move between lines, leaving the ticks alone",
@@ -553,6 +561,12 @@ const SHORTCUTS: readonly {
   },
   { action: "Undo", icon: "undo", keys: ["Ctrl-Z"] },
   { action: "Redo", icon: "redo", keys: ["Ctrl-Y"] },
+  { action: "Go to the next problem", keys: ["F8"], problems: true },
+  {
+    action: "Go to the previous problem",
+    keys: ["Shift-F8"],
+    problems: true,
+  },
   { action: "Open this help", keys: ["?"] },
 ];
 
@@ -571,6 +585,8 @@ const INTRO_IDS: readonly AufbauProofPrawitzStringId[] = [
 function EditableField(props: {
   readonly ariaLabel?: string;
   readonly className: string;
+  /** The hidden note saying this field's problem, when it has one. */
+  readonly describedBy?: string | undefined;
   readonly error?: string | undefined;
   readonly onInput: (text: string) => void;
   readonly onSelect: () => void;
@@ -612,6 +628,8 @@ function EditableField(props: {
     // biome-ignore lint/a11y/useSemanticElements: see above.
     <span
       ref={ref}
+      aria-describedby={props.describedBy}
+      aria-invalid={props.error !== undefined ? true : undefined}
       aria-label={props.ariaLabel}
       class={classes}
       // Plain text only: copying a node puts its full markup on the clipboard,
@@ -628,6 +646,8 @@ function EditableField(props: {
       // Kept out of the tab order: the enclosing treeitem carries the roving
       // focus; a field is entered by click or by a shortcut on its node.
       tabIndex={-1}
+      // For the mouse. A screen reader hears the same text through the line's
+      // note, which a title on a field the focus is rarely on never reached.
       title={props.error}
     />
   );
@@ -651,6 +671,10 @@ function NodeView(props: {
     props;
   const isSelected = selected.includes(node.id);
   const select = (): void => onSelect(node.id, false);
+  // The line's problem, in the note its treeitem is described by: the
+  // treeitem is where the focus stands, not the field the squiggle is on.
+  const error = nodeErrors[node.id];
+  const noteId = error === undefined ? undefined : problemNoteId(node.id);
   const bracketed = node.isAssumption && node.label.trim().length > 0;
 
   const treeClasses = [
@@ -696,6 +720,7 @@ function NodeView(props: {
       )}
       <proof-proposition role="presentation">
         <span
+          aria-describedby={noteId}
           aria-selected={isSelected}
           class="pz-node"
           // Focus alone never changes the ticks — it only adopts the roving
@@ -732,7 +757,8 @@ function NodeView(props: {
           <EditableField
             ariaLabel={t("Formula")}
             className="pz-edit"
-            error={nodeErrors[node.id]}
+            describedBy={noteId}
+            error={error}
             onInput={(text) =>
               dispatch({ id: node.id, text, type: "setFormula" })
             }
@@ -756,6 +782,13 @@ function NodeView(props: {
             </sup>
           ) : null}
         </span>
+        {/* Beside the treeitem rather than in it, where it would be read
+            again as part of the line's name. */}
+        {noteId === undefined ? null : (
+          <span hidden id={noteId}>
+            {error}
+          </span>
+        )}
       </proof-proposition>
       {node.isAssumption ? null : (
         <proof-inference>
@@ -1028,6 +1061,9 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
   private focusedId: string | null = null;
   private listeners = new AbortController();
   private mount: HTMLElement | null = null;
+  /** What F8 says when moving focus cannot; `null` where feedback withholds
+   *  the problems, and F8 with them. */
+  private announce: ((text: string) => void) | null = null;
   /** Built once in {@link enhance}; see {@link showHelp} for where it lives. */
   private helpDialog: HTMLDialogElement | null = null;
   private proofText = "";
@@ -1104,6 +1140,9 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
     );
     this.mount = document.createElement("div");
     container.insertBefore(this.mount, actionsSlot);
+    if (this.showsDetail) {
+      this.announce = mountAnnouncer(container, actionsSlot);
+    }
     this.rerender();
 
     container.addEventListener("keydown", (event) => this.onKeyDown(event), {
@@ -1118,7 +1157,9 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
       close: this.t("Close help"),
       intro: INTRO_IDS.map((id) => this.t(id)),
       keyboard: this.t("Keyboard"),
-      shortcuts: SHORTCUTS.map((shortcut) => ({
+      shortcuts: SHORTCUTS.filter(
+        (shortcut) => shortcut.problems !== true || this.showsDetail,
+      ).map((shortcut) => ({
         action: this.t(shortcut.action),
         keys: shortcut.keys,
         ...(shortcut.icon === undefined ? {} : { icon: shortcut.icon }),
@@ -1161,6 +1202,21 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
   };
 
   private onKeyDown(event: KeyboardEvent): void {
+    // F8 works from a field as well as from a line: a reader who has just
+    // typed is the one most likely to want to know what is now wrong.
+    const step = problemStep(event);
+    if (step !== null && this.announce !== null && this.shadowRoot !== null) {
+      event.preventDefault();
+      const said = stepToProblem(
+        this.shadowRoot,
+        step,
+        this.t("No problems."),
+      );
+      if (said !== null) {
+        this.announce(said);
+      }
+      return;
+    }
     if (event.key === "Escape") {
       // Editing a field: step back out to its node (nav mode) on Escape. The
       // formula/label fields sit inside the treeitem; the rule/discharge

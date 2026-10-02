@@ -37,6 +37,12 @@ Use Tab, Shift-Tab, arrows, Enter, Space, and Escape.
         buttons below roots are reachable. Enter/r/l/d edit line fields;
         a/b/p/h/Delete match the toolbar actions. An unselected focused line
         has a focus ring distinct from the selection highlight.
+  - [ ] Proof problems, in all four proof widgets: with a problem in the
+        proof, F8 and Shift-F8 go to the next and previous problem from
+        anywhere in the widget, wrapping at the ends. In the linear and Fitch
+        editors, Ctrl+Shift+M (Cmd+Shift+M on a Mac) opens the problem list;
+        check the browser does not take the key first. Under terse or no
+        feedback, F8 does nothing.
   - [ ] Model: reach and edit the domain, predicates, constants, and function
         values, then Check and Submit.
   - [ ] Translation: edit the formula, check with Enter, and reach Submit.
@@ -69,9 +75,10 @@ Use Tab, Shift-Tab, arrows, Enter, Space, and Escape.
 - [ ] **2.4.3 / 2.1.2:** opening moves focus inside. Escape and a backdrop
       click close the dialog, and focus returns to the trigger. Drag-selecting
       from a field past the panel edge does not close it.
-- [ ] Widget Help opens from `(?)` or `?` on a focused proof line. It appears
-      near its trigger without scrolling the page. The heading names the
-      dialog, and key tables read as key/action pairs.
+- [ ] Widget Help opens from `(?)`, or `?` on a focused tree or Prawitz
+      line. The linear and Fitch editors open it from `(?)` only, since `?`
+      types there. It appears near its trigger without scrolling the page.
+      The heading names the dialog, and key tables read as key/action pairs.
 - [ ] Test Help in a long embedded lesson, not just fullscreen. The iframe
       spans the whole lesson, so positioning at the frame's center could put
       the dialog outside the visible page area.
@@ -103,6 +110,11 @@ Use Tab, Shift-Tab, arrows, Enter, Space, and Escape.
 
 - [ ] **3.3.1 Error identification:** errors are announced and identify the
       relevant field in text.
+  - [ ] Proof problems: F8 says each problem. In the tree and Prawitz
+        editors it is read as the line's description when focus arrives, and
+        the field at fault reads as invalid. In the linear and Fitch editors
+        it is announced after the selected text. With no problems, F8 says
+        "No problems."
 - [ ] **3.3.3 Error suggestion:** messages explain how to fix a problem when
       a correction is known.
 - [ ] **1.4.1 Use of color:** required, incorrect, and correct states have a

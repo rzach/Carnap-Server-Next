@@ -21,7 +21,9 @@ lookups over it, and nothing else enumerates them.
   certificate and its verifier (`certificate.ts`, `verifier.ts`), the shared
   authoring helpers (`authoring.ts`: theorem header, starters, `options=`,
   playground body), the linear-body tree parser (`tree-parse.ts`, used by the
-  tree and Prawitz types), and the engine's diagnostic strings.
+  tree and Prawitz types), the engine's diagnostic strings, and the text the
+  two CodeMirror proof editors use for their help and problem keys
+  (`editor-strings.ts`).
 - `formula/` — the formula tree the model, translation and (as a mirror)
   truth-table types read: `parseFormula` over a language spec, the tree
   shapes, and the language lookup.
