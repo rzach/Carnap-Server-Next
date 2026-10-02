@@ -1767,6 +1767,120 @@ describe("a student the instructor has overridden", () => {
       expect(html).not.toContain("Start attempt");
       expect(html).toContain("You have used all of your attempts");
       expect(denied.status).toBe(403);
+
+      // Clearing the override hands the student the assignment's own three
+      // back. Only an instructor may, and a second clear finds nothing.
+      const clearPath = `/courses/${courseId}/instructor/assignments/${draft.assignment.id}/overrides/clear`;
+      const byStudent = await appRequest(
+        createTestApp(),
+        clearPath,
+        jsonRequest({ userId: student.actorId }, student),
+        env,
+      );
+      const cleared = await appRequest(
+        createTestApp(),
+        clearPath,
+        jsonRequest({ userId: student.actorId }, instructor),
+        env,
+      );
+      const again = await appRequest(
+        createTestApp(),
+        clearPath,
+        jsonRequest({ userId: student.actorId }, instructor),
+        env,
+      );
+      const restored = await (
+        await appRequest(
+          createTestApp(),
+          base,
+          { headers: { Accept: "text/html", Cookie: student.cookieHeader } },
+          env,
+        )
+      ).text();
+      const roster = await (
+        await appRequest(
+          createTestApp(),
+          `/courses/${courseId}/instructor/assignments/${draft.assignment.id}`,
+          {
+            headers: { Accept: "text/html", Cookie: instructor.cookieHeader },
+          },
+          env,
+        )
+      ).text();
+
+      expect(byStudent.status).toBe(403);
+      expect(cleared.status).toBe(200);
+      expect((await cleared.json()) as unknown).toEqual({ cleared: true });
+      expect((await again.json()) as unknown).toEqual({ cleared: false });
+      expect(restored).toContain("<dt>Attempts</dt><dd>1 of 3</dd>");
+      expect(restored).toContain("Start attempt");
+      expect(roster).toContain("Course default");
+      expect(roster).not.toContain("/overrides/clear");
+    });
+  });
+
+  test("an instructor clears an accommodation from the course page", async () => {
+    await withStorage(async (_storage, env) => {
+      const instructor = await login(env, "acc-teacher@example.test");
+      const student = await login(env, "acc-student@example.test");
+      const courseId = await createCourse(env, instructor);
+
+      await enrollStudent(env, instructor, student, courseId);
+      await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/accommodations`,
+        jsonRequest(
+          { dueAtExtensionMinutes: 60, userId: student.actorId },
+          instructor,
+        ),
+        env,
+      );
+
+      const coursePage = async () =>
+        (
+          await appRequest(
+            createTestApp(),
+            `/courses/${courseId}`,
+            {
+              headers: {
+                Accept: "text/html",
+                Cookie: instructor.cookieHeader,
+              },
+            },
+            env,
+          )
+        ).text();
+      const badge = 'status-badge-ok">Accommodations</span>';
+      const recorded = await coursePage();
+      // The browser path: a form post that lands back on the course page.
+      const cleared = await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/accommodations/clear`,
+        {
+          body: new URLSearchParams({
+            csrfToken: instructor.csrfToken,
+            userId: student.actorId,
+          }),
+          headers: {
+            Accept: "text/html",
+            "Content-Type": "application/x-www-form-urlencoded",
+            Cookie: instructor.cookieHeader,
+          },
+          method: "POST",
+        },
+        env,
+      );
+      const after = await coursePage();
+
+      expect(recorded).toContain(badge);
+      expect(recorded).toContain("/accommodations/clear");
+      expect(cleared.status).toBe(303);
+      expect(cleared.headers.get("Location")).toBe(
+        `/courses/${courseId}?accommodationCleared=1`,
+      );
+      // A cleared member reads as one who never had any.
+      expect(after).not.toContain(badge);
+      expect(after).not.toContain("/accommodations/clear");
     });
   });
 });

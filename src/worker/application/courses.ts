@@ -745,6 +745,38 @@ export class CourseService {
     return accommodation;
   }
 
+  /**
+   * Puts a member back on the course defaults. Zeroing every field of an
+   * accommodation does the same to their deadlines, but leaves a record that
+   * still reads as an accommodation on the roster; this removes it.
+   *
+   * Idempotent: clearing a member who has none changes nothing and reports
+   * false, so a second click on a stale page is not an error.
+   */
+  async clearAccommodation(
+    actor: AuthenticatedActor,
+    courseId: AppId,
+    userId: AppId,
+  ): Promise<boolean> {
+    await requireInstructor(this.options.stores, actor, courseId);
+
+    const cleared = await this.options.stores.courses.deleteAccommodation(
+      courseId,
+      userId,
+    );
+
+    // The extensions it granted are gone from every graded assignment in
+    // the course, so the ledger is recomputed as it is when one is saved.
+    if (cleared) {
+      await new GradebookService({
+        now: this.options.now,
+        stores: this.options.stores,
+      }).refreshCourseScoresForUser(courseId, userId);
+    }
+
+    return cleared;
+  }
+
   async cloneCourse(
     actor: AuthenticatedActor,
     courseId: AppId,

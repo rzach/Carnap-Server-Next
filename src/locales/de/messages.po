@@ -577,6 +577,14 @@ msgid "Access token URL"
 msgstr "URL für Zugriffstoken"
 
 #: src/worker/routes/courses.ts
+msgid "Accommodation cleared."
+msgstr "Anpassung entfernt."
+
+#: src/worker/routes/courses.ts
+msgid "Accommodation not cleared"
+msgstr "Anpassung nicht entfernt"
+
+#: src/worker/routes/courses.ts
 msgid "Accommodation not saved"
 msgstr "Anpassung nicht gespeichert"
 
@@ -944,6 +952,10 @@ msgid "Assignment not updated"
 msgstr "Aufgabe nicht aktualisiert"
 
 #: src/worker/routes/assignments.ts
+msgid "Assignment override cleared."
+msgstr "Abweichung der Aufgabe entfernt."
+
+#: src/worker/routes/assignments.ts
 msgid "Assignment override saved."
 msgstr "Abweichung der Aufgabe gespeichert."
 
@@ -1291,6 +1303,11 @@ msgstr "Behaupten Sie, ein Satz sei wahr oder falsch, um sein Spiel zu beginnen.
 #: src/worker/exercises/world/strings.ts
 msgid "Claim each sentence true or false, then defend your claim against the computer, one part at a time."
 msgstr "Behaupten Sie von jedem Satz, er sei wahr oder falsch, und verteidigen Sie die Behauptung dann Teil für Teil gegen den Computer."
+
+#: src/worker/web/assignment-detail.tsx
+#: src/worker/web/courses.tsx
+msgid "Clear"
+msgstr "Entfernen"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Click a board, or move into it with Tab, to make it the one the palette edits."
@@ -2647,6 +2664,10 @@ msgstr "Gesetze"
 msgid "Leave a field blank to keep the assignment default for this student."
 msgstr "Lassen Sie ein Feld leer, um für diese Person den Standardwert der Aufgabe beizubehalten."
 
+#: src/worker/web/assignment-detail.tsx
+msgid "Leave a field blank to keep the assignment default for this student. Clearing the override returns the student to the assignment's own schedule."
+msgstr "Lassen Sie ein Feld leer, um für diese Person den Standardwert der Aufgabe beizubehalten. Durch das Entfernen der Abweichung gilt für diese Person wieder der Zeitplan der Aufgabe."
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Leave the field and go back to the line"
@@ -3427,6 +3448,10 @@ msgid "Override for {name}"
 msgstr "Abweichung für {name}"
 
 #: src/worker/routes/assignments.ts
+msgid "Override not cleared"
+msgstr "Abweichung nicht entfernt"
+
+#: src/worker/routes/assignments.ts
 msgid "Override not saved"
 msgstr "Abweichung nicht gespeichert"
 
@@ -4098,12 +4123,10 @@ msgid "Rules a proof can cite: {names}."
 msgstr ""
 
 #: src/worker/web/admin.tsx
+#: src/worker/web/assignment-detail.tsx
+#: src/worker/web/courses.tsx
 msgid "Save"
 msgstr "Speichern"
-
-#: src/worker/web/courses.tsx
-msgid "Save accommodation"
-msgstr "Anpassung speichern"
 
 #: src/worker/routes/assignments.ts
 #: src/worker/web/assignment-detail.tsx
@@ -4118,10 +4141,6 @@ msgstr "Änderungen speichern"
 #: src/worker/web/assignment-detail.tsx
 msgid "Save late policy"
 msgstr "Verspätungsregel speichern"
-
-#: src/worker/web/assignment-detail.tsx
-msgid "Save override"
-msgstr "Abweichung speichern"
 
 #: src/worker/routes/assignments.ts
 #: src/worker/web/assignment-detail.tsx
@@ -5123,8 +5142,8 @@ msgid "These trees have no rules for identity."
 msgstr "Diese Bäume haben keine Regeln für die Identität."
 
 #: src/worker/web/courses.tsx
-msgid "These values are currently recorded for this member."
-msgstr "Diese Werte sind derzeit für dieses Mitglied hinterlegt."
+msgid "These values are currently recorded for this member. Clearing them returns the member to the course defaults."
+msgstr "Diese Werte sind derzeit für dieses Mitglied hinterlegt. Durch das Entfernen gelten für dieses Mitglied wieder die Kursvorgaben."
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "This “-- label:” comment names no label."

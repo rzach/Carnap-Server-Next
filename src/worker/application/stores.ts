@@ -351,6 +351,11 @@ export interface CourseStore {
   updateInfo(input: UpdateCourseInfoInput): Promise<Course | null>;
   setArchived(input: SetCourseArchivedInput): Promise<Course | null>;
   addMembership(input: AddCourseMembershipInput): Promise<CourseMembership>;
+  /**
+   * Removes a member's accommodation, putting them back on the course
+   * defaults. False when there was none to remove.
+   */
+  deleteAccommodation(courseId: AppId, userId: AppId): Promise<boolean>;
   getAccommodation(
     courseId: AppId,
     userId: AppId,
@@ -675,6 +680,11 @@ export interface AssignmentStore {
   listContentVersions(
     assignmentId: AppId,
   ): Promise<AssignmentContentVersion[]>;
+  /**
+   * Removes a student's override, putting them back on the assignment's own
+   * schedule. False when there was none to remove.
+   */
+  deleteOverride(assignmentId: AppId, userId: AppId): Promise<boolean>;
   getLatePolicy(assignmentId: AppId): Promise<AssignmentLatePolicy | null>;
   getOverrideForAssignmentUser(
     assignmentId: AppId,

@@ -750,7 +750,7 @@ describe("native web workflow", () => {
       expect(html).toContain("Course owner");
       expect(html).toContain("Accommodations for");
       expect(html).toContain('data-dialog-target="accommodations-');
-      expect(html).toContain("Save accommodation");
+      expect(html).toContain('/accommodations" method="post"');
       expect(html).toContain('data-dialog-target="membership-');
       expect(html).toContain("Update membership");
       expect(html).toContain("<dialog");

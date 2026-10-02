@@ -1117,6 +1117,19 @@ th > .column-sort:hover {
   align-self: flex-end;
 }
 
+/* A form that exists only to own a button elsewhere (`form=`), such as the
+   Clear beside an override's Save. The flex rule above would otherwise
+   outrank the browser's own `[hidden]`. */
+.modal-dialog .dialog-body form[hidden] {
+  display: none;
+}
+
+/* That Clear, at the left edge of the action row: a destructive action kept
+   apart from the save in the corner, so it never reads as half of it. */
+.modal-dialog .dialog-body .sheet-actions > .danger {
+  margin-inline-end: auto;
+}
+
 /* A second form (the course editor's archive) is a separate action, not
    more fields: a hairline says so. */
 .modal-dialog .dialog-body form + form {

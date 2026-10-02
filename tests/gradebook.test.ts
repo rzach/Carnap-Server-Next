@@ -1572,6 +1572,19 @@ Choose yes.
       await expect(
         stores.scores.getAssignmentScore(assignmentId, student.actorId),
       ).resolves.toMatchObject({ maxScore: 2, score: 2 });
+
+      // Clearing it takes the extension away again, and the ledger with it.
+      const clearResponse = await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/accommodations/clear`,
+        jsonRequest({ userId: student.actorId }, instructor),
+        env,
+      );
+
+      expect(clearResponse.status).toBe(200);
+      await expect(
+        stores.scores.getAssignmentScore(assignmentId, student.actorId),
+      ).resolves.toMatchObject({ maxScore: 2, score: 1 });
     });
   });
 

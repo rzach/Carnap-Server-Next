@@ -311,7 +311,9 @@ const AccommodationDialog: FC<{
   const description =
     accommodation === null
       ? i18n.t("No accommodation is recorded for this member.")
-      : i18n.t("These values are currently recorded for this member.");
+      : i18n.t(
+          "These values are currently recorded for this member. Clearing them returns the member to the course defaults.",
+        );
 
   return (
     <ModalDialog
@@ -371,8 +373,30 @@ const AccommodationDialog: FC<{
             />
           </label>
         </div>
-        <button type="submit">{i18n.t("Save accommodation")}</button>
+        {/* Clear sits at the far left, apart from Save in the corner, but
+            belongs to the hidden form below: a button owned by another form
+            is never this one's default, so Enter in a field still saves
+            and the tab order can follow the eye. */}
+        <div class="sheet-actions">
+          {accommodation === null ? null : (
+            <button class="danger" form={`${dialogId}-clear`} type="submit">
+              {i18n.t("Clear")}
+            </button>
+          )}
+          <button type="submit">{i18n.t("Save")}</button>
+        </div>
       </form>
+      {accommodation === null ? null : (
+        <form
+          action={`/courses/${courseId}/accommodations/clear`}
+          hidden
+          id={`${dialogId}-clear`}
+          method="post"
+        >
+          <CsrfInput context={context} />
+          <input name="userId" type="hidden" value={membership.userId} />
+        </form>
+      )}
     </ModalDialog>
   );
 };

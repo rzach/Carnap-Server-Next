@@ -85,6 +85,7 @@ import {
   courseTitleFor,
   type FormErrorChrome,
   readJsonObject,
+  readUserId,
   requiredParam,
   staffTierFor,
   webActorOrLogin,
@@ -1609,6 +1610,10 @@ function instructorNotices(
     { message: i18n.t("Late policy saved."), param: "latePolicy" },
     { message: i18n.t("Assignment override saved."), param: "override" },
     {
+      message: i18n.t("Assignment override cleared."),
+      param: "overrideCleared",
+    },
+    {
       message: i18n.t("Grades released to students."),
       param: "gradesReleased",
     },
@@ -2213,6 +2218,36 @@ assignmentRoutes.post(
   "/:courseId/instructor/assignments/:assignmentId/overrides",
   withFormErrorPage(upsertAssignmentOverride, COURSES_CHROME, (i18n) =>
     i18n.t("Override not saved"),
+  ),
+);
+
+assignmentRoutes.post(
+  "/:courseId/instructor/assignments/:assignmentId/overrides/clear",
+  withFormErrorPage(
+    async (context) => {
+      const actor = requireAuthenticated(context);
+      const courseId = requiredParam(context, "courseId");
+      const assignmentId = requiredParam(context, "assignmentId");
+      const cleared = await assignmentService(context).clearOverride(
+        actor,
+        courseId,
+        assignmentId,
+        await readUserId(context),
+      );
+
+      kickGradePassback(context);
+
+      if (isFormSubmission(context)) {
+        return redirect(
+          `/courses/${courseId}/instructor/assignments/${assignmentId}` +
+            "?overrideCleared=1",
+        );
+      }
+
+      return context.json({ cleared });
+    },
+    COURSES_CHROME,
+    (i18n) => i18n.t("Override not cleared"),
   ),
 );
 

@@ -963,6 +963,77 @@ export function describeStorageContract(
       });
     });
 
+    test("an accommodation and an override delete one student's row alone", async () => {
+      await withStorage(async ({ stores }) => {
+        const { assignment, instructor, student } =
+          await createAssignmentSlice(stores);
+        const perStudent = (userId: string) => ({
+          courseId: assignment.courseId,
+          createdById: instructor.id,
+          now: NOW,
+          userId,
+        });
+
+        // The instructor's rows are the neighbours a delete keyed on the
+        // wrong column would take with it.
+        for (const userId of [student.id, instructor.id]) {
+          await stores.courses.upsertAccommodation({
+            ...perStudent(userId),
+            availableUntilExtensionMinutes: 0,
+            dueAtExtensionMinutes: 60,
+            extraAttempts: 1,
+            id: `accommodation-${userId}`,
+            timeLimitMultiplier: 1.5,
+          });
+          await stores.assignments.upsertOverride({
+            assignmentId: assignment.id,
+            availableFrom: null,
+            availableUntil: null,
+            createdById: instructor.id,
+            dueAt: null,
+            id: `override-${userId}`,
+            maxAttempts: 4,
+            now: NOW,
+            timeLimitMinutes: null,
+            userId,
+          });
+        }
+
+        await expect(
+          stores.courses.deleteAccommodation(assignment.courseId, student.id),
+        ).resolves.toBe(true);
+        await expect(
+          stores.assignments.deleteOverride(assignment.id, student.id),
+        ).resolves.toBe(true);
+        // A second delete finds nothing, and says so.
+        await expect(
+          stores.courses.deleteAccommodation(assignment.courseId, student.id),
+        ).resolves.toBe(false);
+        await expect(
+          stores.assignments.deleteOverride(assignment.id, student.id),
+        ).resolves.toBe(false);
+
+        await expect(
+          stores.courses.getAccommodation(assignment.courseId, student.id),
+        ).resolves.toBeNull();
+        await expect(
+          stores.assignments.getOverrideForAssignmentUser(
+            assignment.id,
+            student.id,
+          ),
+        ).resolves.toBeNull();
+        await expect(
+          stores.courses.getAccommodation(assignment.courseId, instructor.id),
+        ).resolves.not.toBeNull();
+        await expect(
+          stores.assignments.getOverrideForAssignmentUser(
+            assignment.id,
+            instructor.id,
+          ),
+        ).resolves.not.toBeNull();
+      });
+    });
+
     test("scoring reads return a scope's rows in bulk, as sets", async () => {
       await withStorage(async ({ stores }) => {
         const { attempt, student } = await createAttemptSlice(stores);

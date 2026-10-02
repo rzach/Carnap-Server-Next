@@ -8,7 +8,7 @@ import type { AppBindings } from "../http";
 import type { Translator } from "../i18n/translator";
 import { storesForContext } from "../stores";
 import { renderFormError } from "../web/errors";
-import { isFormSubmission, redirect } from "../web/html";
+import { fieldValue, isFormSubmission, redirect } from "../web/html";
 import type { Crumb } from "../web/layout";
 
 /**
@@ -37,6 +37,26 @@ export async function readJsonObject(
 
     throw badRequest("invalid_json", "A JSON object is required.");
   }
+}
+
+/**
+ * The `userId` a request names, from a browser form or a JSON body: the
+ * member a per-student record (an accommodation, an override) is about. A
+ * form posts it as a hidden field, which arrives as "" when missing; an empty
+ * id is refused the same way a JSON non-string is.
+ */
+export async function readUserId(
+  context: Context<AppBindings>,
+): Promise<string> {
+  const userId = isFormSubmission(context)
+    ? fieldValue((await context.req.raw.formData()).get("userId"))
+    : (await readJsonObject(context)).userId;
+
+  if (typeof userId !== "string" || userId.length === 0) {
+    throw badRequest("invalid_user_id", "User ID must be a string.");
+  }
+
+  return userId;
 }
 
 /**

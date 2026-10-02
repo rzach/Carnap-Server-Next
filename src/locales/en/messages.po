@@ -577,6 +577,14 @@ msgid "Access token URL"
 msgstr "Access token URL"
 
 #: src/worker/routes/courses.ts
+msgid "Accommodation cleared."
+msgstr "Accommodation cleared."
+
+#: src/worker/routes/courses.ts
+msgid "Accommodation not cleared"
+msgstr "Accommodation not cleared"
+
+#: src/worker/routes/courses.ts
 msgid "Accommodation not saved"
 msgstr "Accommodation not saved"
 
@@ -944,6 +952,10 @@ msgid "Assignment not updated"
 msgstr "Assignment not updated"
 
 #: src/worker/routes/assignments.ts
+msgid "Assignment override cleared."
+msgstr "Assignment override cleared."
+
+#: src/worker/routes/assignments.ts
 msgid "Assignment override saved."
 msgstr "Assignment override saved."
 
@@ -1291,6 +1303,11 @@ msgstr "Claim a sentence true or false to start its game."
 #: src/worker/exercises/world/strings.ts
 msgid "Claim each sentence true or false, then defend your claim against the computer, one part at a time."
 msgstr "Claim each sentence true or false, then defend your claim against the computer, one part at a time."
+
+#: src/worker/web/assignment-detail.tsx
+#: src/worker/web/courses.tsx
+msgid "Clear"
+msgstr "Clear"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Click a board, or move into it with Tab, to make it the one the palette edits."
@@ -2647,6 +2664,10 @@ msgstr "Laws"
 msgid "Leave a field blank to keep the assignment default for this student."
 msgstr "Leave a field blank to keep the assignment default for this student."
 
+#: src/worker/web/assignment-detail.tsx
+msgid "Leave a field blank to keep the assignment default for this student. Clearing the override returns the student to the assignment's own schedule."
+msgstr "Leave a field blank to keep the assignment default for this student. Clearing the override returns the student to the assignment's own schedule."
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Leave the field and go back to the line"
@@ -3427,6 +3448,10 @@ msgid "Override for {name}"
 msgstr "Override for {name}"
 
 #: src/worker/routes/assignments.ts
+msgid "Override not cleared"
+msgstr "Override not cleared"
+
+#: src/worker/routes/assignments.ts
 msgid "Override not saved"
 msgstr "Override not saved"
 
@@ -4098,12 +4123,10 @@ msgid "Rules a proof can cite: {names}."
 msgstr "Rules a proof can cite: {names}."
 
 #: src/worker/web/admin.tsx
+#: src/worker/web/assignment-detail.tsx
+#: src/worker/web/courses.tsx
 msgid "Save"
 msgstr "Save"
-
-#: src/worker/web/courses.tsx
-msgid "Save accommodation"
-msgstr "Save accommodation"
 
 #: src/worker/routes/assignments.ts
 #: src/worker/web/assignment-detail.tsx
@@ -4118,10 +4141,6 @@ msgstr "Save changes"
 #: src/worker/web/assignment-detail.tsx
 msgid "Save late policy"
 msgstr "Save late policy"
-
-#: src/worker/web/assignment-detail.tsx
-msgid "Save override"
-msgstr "Save override"
 
 #: src/worker/routes/assignments.ts
 #: src/worker/web/assignment-detail.tsx
@@ -5123,8 +5142,8 @@ msgid "These trees have no rules for identity."
 msgstr "These trees have no rules for identity."
 
 #: src/worker/web/courses.tsx
-msgid "These values are currently recorded for this member."
-msgstr "These values are currently recorded for this member."
+msgid "These values are currently recorded for this member. Clearing them returns the member to the course defaults."
+msgstr "These values are currently recorded for this member. Clearing them returns the member to the course defaults."
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "This “-- label:” comment names no label."

@@ -1563,9 +1563,13 @@ const OverrideDialog: FC<{
       >
         <CsrfInput context={context} />
         <p class="small">
-          {i18n.t(
-            "Leave a field blank to keep the assignment default for this student.",
-          )}
+          {override === undefined
+            ? i18n.t(
+                "Leave a field blank to keep the assignment default for this student.",
+              )
+            : i18n.t(
+                "Leave a field blank to keep the assignment default for this student. Clearing the override returns the student to the assignment's own schedule.",
+              )}
         </p>
         <input name="userId" type="hidden" value={membership.userId} />
         <div class="field-grid time-fields">
@@ -1605,8 +1609,34 @@ const OverrideDialog: FC<{
             />
           </label>
         </div>
-        <button type="submit">{i18n.t("Save override")}</button>
+        {/* Clear sits at the far left, apart from Save in the corner, but
+            belongs to the hidden form below: a button owned by another form
+            is never this one's default, so Enter in a field still saves
+            and the tab order can follow the eye. */}
+        <div class="sheet-actions">
+          {override === undefined ? null : (
+            <button
+              class="danger"
+              form={`override-${membership.id}-clear`}
+              type="submit"
+            >
+              {i18n.t("Clear")}
+            </button>
+          )}
+          <button type="submit">{i18n.t("Save")}</button>
+        </div>
       </form>
+      {override === undefined ? null : (
+        <form
+          action={`/courses/${courseId}/instructor/assignments/${assignmentId}/overrides/clear`}
+          hidden
+          id={`override-${membership.id}-clear`}
+          method="post"
+        >
+          <CsrfInput context={context} />
+          <input name="userId" type="hidden" value={membership.userId} />
+        </form>
+      )}
     </ModalDialog>
   );
 };

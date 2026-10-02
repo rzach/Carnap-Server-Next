@@ -632,6 +632,14 @@ export async function collectFixtures(
     { maxAttempts: "3", userId: student.actorId },
     instructor,
   );
+  // And a course accommodation, so the member's dialog carries its second
+  // form, the one that clears it.
+  await formPost(
+    env,
+    `/courses/${courseId}/accommodations`,
+    { dueAtExtensionMinutes: "60", userId: student.actorId },
+    instructor,
+  );
   // Released grades: the student results page has two mutually exclusive
   // shapes, and the withheld one is captured before this runs.
   const withheldResults = await page(
@@ -712,6 +720,7 @@ export async function collectFixtures(
       "unarchived",
       "enrolled",
       "accommodationSaved",
+      "accommodationCleared",
       "revoked",
       "membershipUpdated",
       "staffAdded",
@@ -826,6 +835,7 @@ export async function collectFixtures(
       "excused",
       "latePolicy",
       "override",
+      "overrideCleared",
       "gradesReleased",
       "gradesHidden",
       "unpublished",

@@ -1056,6 +1056,23 @@ class SqliteCourseStore implements CourseStore {
     );
   }
 
+  async deleteAccommodation(
+    courseId: AppId,
+    userId: AppId,
+  ): Promise<boolean> {
+    const deleted = await this.db
+      .delete(courseAccommodations)
+      .where(
+        and(
+          eq(courseAccommodations.courseId, courseId),
+          eq(courseAccommodations.userId, userId),
+        ),
+      )
+      .returning();
+
+    return deleted.length > 0;
+  }
+
   async getAccommodation(
     courseId: AppId,
     userId: AppId,
@@ -1633,6 +1650,20 @@ class SqliteAssignmentStore implements AssignmentStore {
     );
 
     return row === null ? null : mapAssignmentLatePolicy(row);
+  }
+
+  async deleteOverride(assignmentId: AppId, userId: AppId): Promise<boolean> {
+    const deleted = await this.db
+      .delete(assignmentOverrides)
+      .where(
+        and(
+          eq(assignmentOverrides.assignmentId, assignmentId),
+          eq(assignmentOverrides.userId, userId),
+        ),
+      )
+      .returning();
+
+    return deleted.length > 0;
   }
 
   async getOverrideForAssignmentUser(

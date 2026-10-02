@@ -1397,6 +1397,40 @@ export class AssignmentService {
   }
 
   /**
+   * Puts a student back on the assignment's own schedule. Blanking every
+   * field of an override does the same, but leaves a record the roster still
+   * lists as an override; this removes it. Not limited to graded assignments
+   * as setting one is: a record that exists should always be removable.
+   *
+   * Idempotent: clearing a student who has none changes nothing and reports
+   * false, so a second click on a stale page is not an error.
+   */
+  async clearOverride(
+    actor: AuthenticatedActor,
+    courseId: AppId,
+    assignmentId: AppId,
+    userId: AppId,
+  ): Promise<boolean> {
+    await requireInstructor(this.options.stores, actor, courseId);
+
+    const assignment = await assignmentInCourse(
+      this.options.stores,
+      courseId,
+      assignmentId,
+    );
+    const cleared = await this.options.stores.assignments.deleteOverride(
+      assignment.id,
+      userId,
+    );
+
+    if (cleared) {
+      await this.gradebook().refreshAfterInstructorChange(assignment, userId);
+    }
+
+    return cleared;
+  }
+
+  /**
    * The checks every path that points an assignment at a revision makes: the
    * item exists, the actor owns it, and it is a lesson.
    *

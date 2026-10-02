@@ -43,8 +43,10 @@ import {
   type FormErrorChrome,
   formErrorOrThrow,
   readJsonObject,
+  readUserId,
   requiredParam,
   webActorOrLogin,
+  withFormErrorPage,
 } from "./support";
 
 interface CreateCourseBody {
@@ -182,6 +184,10 @@ function detailNotices(
     {
       message: i18n.t("Accommodation saved."),
       param: "accommodationSaved",
+    },
+    {
+      message: i18n.t("Accommodation cleared."),
+      param: "accommodationCleared",
     },
     { message: i18n.t("Enrollment link revoked."), param: "revoked" },
     { message: i18n.t("Membership updated."), param: "membershipUpdated" },
@@ -836,6 +842,31 @@ async function upsertAccommodationFromForm(
     );
   }
 }
+
+courseRoutes.post(
+  "/:courseId/accommodations/clear",
+  withFormErrorPage(
+    async (context) => {
+      const actor = requireAuthenticated(context);
+      const courseId = requiredParam(context, "courseId");
+      const cleared = await courseService(context).clearAccommodation(
+        actor,
+        courseId,
+        await readUserId(context),
+      );
+
+      kickGradePassback(context);
+
+      if (isFormSubmission(context)) {
+        return redirect(`/courses/${courseId}?accommodationCleared=1`);
+      }
+
+      return context.json({ cleared });
+    },
+    COURSES_CHROME,
+    (i18n) => i18n.t("Accommodation not cleared"),
+  ),
+);
 
 courseRoutes.post("/:courseId/accommodations", async (context) => {
   if (isFormSubmission(context)) {

@@ -138,7 +138,8 @@ deliveries by data recency. Page views do not write this table.
 
 Score-changing operations refresh the ledger: submissions, manual grades,
 excuses, overrides, content corrections, attempt resets, late policies, and
-accommodations. The service method that makes the change performs the refresh
+accommodations, including clearing an override or an accommodation. The
+service method that makes the change performs the refresh
 before it returns, so a caller with no HTTP request — a script, a backfill —
 keeps the ledger as a route would; the route's only part is to start a
 delivery run afterwards. A missing refresh can delay an LMS update even when
