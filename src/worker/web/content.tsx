@@ -10,7 +10,10 @@ import type {
   ContentSharing,
   ContentSourceFormat,
 } from "../domain/content";
-import { CONTENT_SHARING_VALUES } from "../domain/content";
+import {
+  CONTENT_DETAILS_MAX_LENGTH,
+  CONTENT_SHARING_VALUES,
+} from "../domain/content";
 import { type AppBindings, publicRequestUrl } from "../http";
 import {
   splitAtValue,
@@ -42,6 +45,7 @@ import { renderContentDocument } from "./content-document";
 import {
   ArchiveIcon,
   DownloadIcon,
+  PenIcon,
   PeopleIcon,
   UnarchiveIcon,
 } from "./icons";
@@ -766,10 +770,66 @@ const RevisionSharing: FC<{
   );
 };
 
+/**
+ * The control that rewords a revision's note: the icon in the row's actions,
+ * and the dialog it opens. The note is the one thing about a saved revision
+ * that can change — it describes the revision and is no part of it — so this
+ * sits beside sharing, the other setting an author keeps on a revision, rather
+ * than in the editor, which only ever makes new ones.
+ */
+const RevisionDetailsEdit: FC<{
+  readonly context: Context<AppBindings>;
+  readonly revision: ContentRevisionSummary;
+}> = ({ context, revision }) => {
+  const i18n = useI18n();
+  const dialogId = `details-${revision.id}`;
+  const fieldId = `${dialogId}-field`;
+  const label = i18n.t("Edit the details of {name}", {
+    name: revisionDetailsText(i18n, revision.details),
+  });
+
+  return (
+    <>
+      <button
+        aria-label={label}
+        class="icon-button"
+        data-dialog-target={dialogId}
+        title={label}
+        type="button"
+      >
+        <PenIcon />
+      </button>
+      <ModalDialog id={dialogId} title={i18n.t("Edit revision details")}>
+        <form
+          action={`/content/revisions/${revision.id}/details`}
+          method="post"
+        >
+          <CsrfInput context={context} />
+          <label for={fieldId}>
+            {i18n.t("Details")}
+            <br />
+            <input
+              id={fieldId}
+              maxlength={CONTENT_DETAILS_MAX_LENGTH}
+              name="details"
+              placeholder={i18n.t("What changed, optional")}
+              value={revision.details}
+            />
+          </label>
+          <button class="secondary" type="submit">
+            {i18n.t("Save changes")}
+          </button>
+        </form>
+      </ModalDialog>
+    </>
+  );
+};
+
 const RevisionsTable: FC<{
-  /** Whether to draw the per-row sharing control: this is the owner's page,
-   * but saving a scope needs the content-author permission the item was made
-   * under, and an author who has lost it should not be offered the dialog. */
+  /** Whether to draw the per-row details and sharing controls: this is the
+   * owner's page, but saving either needs the content-author permission the
+   * item was made under, and an author who has lost it should not be offered
+   * the dialogs. */
   readonly canAuthor: boolean;
   readonly context: Context<AppBindings>;
   readonly revisions: readonly ContentRevisionSummary[];
@@ -824,7 +884,13 @@ const RevisionsTable: FC<{
                 they are about to save. */}
             <td>
               {canAuthor ? (
-                <RevisionSharing context={context} revision={revision} />
+                <>
+                  <RevisionDetailsEdit
+                    context={context}
+                    revision={revision}
+                  />
+                  <RevisionSharing context={context} revision={revision} />
+                </>
               ) : null}
               <SourceDownload
                 href={`/content/revisions/${revision.id}/source`}

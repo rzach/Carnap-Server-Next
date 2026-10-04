@@ -82,6 +82,10 @@ interface SetSharingBody {
   readonly sharing?: unknown;
 }
 
+interface SetDetailsBody {
+  readonly details?: unknown;
+}
+
 interface CreateRevisionBody {
   readonly details?: unknown;
   readonly sourceText?: unknown;
@@ -215,6 +219,10 @@ function itemNotices(
     { message: i18n.t("Content item created."), param: "created" },
     { message: i18n.t("Revision created."), param: "revisionCreated" },
     { message: i18n.t("Sharing updated."), param: "sharingUpdated" },
+    {
+      message: i18n.t("Revision details updated."),
+      param: "detailsUpdated",
+    },
   ];
 }
 
@@ -397,6 +405,26 @@ async function setSharingFromForm(
     );
 
     return redirect(`/content/${revision.itemId}?sharingUpdated=1`);
+  } catch (error) {
+    return contentReadFailure(context, error);
+  }
+}
+
+async function setDetailsFromForm(
+  context: Context<AppBindings>,
+): Promise<Response> {
+  const actor = requireAuthenticated(context);
+  const revisionId = requiredParam(context, "revisionId");
+  const form = await context.req.raw.formData();
+
+  try {
+    const revision = await contentService(context).setRevisionDetails(
+      actor,
+      revisionId,
+      fieldValue(form.get("details")),
+    );
+
+    return redirect(`/content/${revision.itemId}?detailsUpdated=1`);
   } catch (error) {
     return contentReadFailure(context, error);
   }
@@ -862,6 +890,30 @@ contentRoutes.post("/revisions/:revisionId/sharing", async (context) => {
     actor,
     requiredParam(context, "revisionId"),
     { shareSource: body.shareSource === true, sharing: body.sharing },
+  );
+
+  return context.json({ revision: publicRevision(revision) });
+});
+
+contentRoutes.post("/revisions/:revisionId/details", async (context) => {
+  if (isFormSubmission(context)) {
+    return setDetailsFromForm(context);
+  }
+
+  const actor = requireAuthenticated(context);
+  const body = (await readJsonObject(context)) as SetDetailsBody;
+
+  if (typeof body.details !== "string") {
+    throw badRequest(
+      "invalid_content_details",
+      "Revision details must be a string.",
+    );
+  }
+
+  const revision = await contentService(context).setRevisionDetails(
+    actor,
+    requiredParam(context, "revisionId"),
+    body.details,
   );
 
   return context.json({ revision: publicRevision(revision) });

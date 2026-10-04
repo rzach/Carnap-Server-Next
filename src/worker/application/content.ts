@@ -6,7 +6,10 @@ import type {
   ContentSharing,
   ContentSourceFormat,
 } from "../domain/content";
-import { isContentSharing } from "../domain/content";
+import {
+  CONTENT_DETAILS_MAX_LENGTH,
+  isContentSharing,
+} from "../domain/content";
 import type { AppId } from "../domain/ids";
 import { createAppId } from "../domain/ids";
 import type { JsonValue } from "../domain/json";
@@ -60,7 +63,6 @@ export interface CreateContentRevisionCommand {
 
 const CONTENT_TITLE_MAX_LENGTH = 200;
 const CONTENT_SOURCE_MAX_LENGTH = 200_000;
-const CONTENT_DETAILS_MAX_LENGTH = 500;
 
 function normalizeTitle(title: string): string {
   return title.trim();
@@ -348,6 +350,52 @@ export class ContentService {
     revisionId: AppId,
     command: SetRevisionSharingCommand,
   ): Promise<ContentRevision> {
+    const revision = await this.ownRevision(actor, revisionId);
+    const sharing = resolveSharing(command.sharing);
+
+    return this.options.stores.content.updateRevisionSharing({
+      id: revision.id,
+      shareSource:
+        sharing !== "private" &&
+        revision.sourceFormat !== "mm0" &&
+        command.shareSource,
+      sharing,
+    });
+  }
+
+  /**
+   * Reword a revision's note. The note says why the revision was made and is
+   * not part of what it says, so changing it leaves the revision as immutable
+   * as it was; pickers and the library read the new words at once. Checked
+   * and trimmed as `createRevision` checks a note, and refused to anyone but
+   * the owner as sharing is.
+   */
+  async setRevisionDetails(
+    actor: AuthenticatedActor,
+    revisionId: AppId,
+    details: string,
+  ): Promise<ContentRevision> {
+    const revision = await this.ownRevision(actor, revisionId);
+    const trimmed = details.trim();
+
+    assertDetails(trimmed);
+
+    return this.options.stores.content.updateRevisionDetails({
+      details: trimmed,
+      id: revision.id,
+    });
+  }
+
+  /**
+   * A revision its caller may change: theirs, under the content-author
+   * permission, which a revision outlives (see `createRevision`). A stranger's
+   * id answers as `readRevision` does, so a write cannot be used to tell an id
+   * that exists from one that does not.
+   */
+  private async ownRevision(
+    actor: AuthenticatedActor,
+    revisionId: AppId,
+  ): Promise<ContentRevision> {
     requireContentAuthor(actor);
 
     const revision =
@@ -363,16 +411,7 @@ export class ContentService {
       throw revisionNotFound();
     }
 
-    const sharing = resolveSharing(command.sharing);
-
-    return this.options.stores.content.updateRevisionSharing({
-      id: revision.id,
-      shareSource:
-        sharing !== "private" &&
-        revision.sourceFormat !== "mm0" &&
-        command.shareSource,
-      sharing,
-    });
+    return revision;
   }
 
   /**

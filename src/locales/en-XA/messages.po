@@ -2041,8 +2041,16 @@ msgstr ""
 msgid "Edit override"
 msgstr ""
 
+#: src/worker/web/content.tsx
+msgid "Edit revision details"
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Edit settings"
+msgstr ""
+
+#: src/worker/web/content.tsx
+msgid "Edit the details of {name}"
 msgstr ""
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
@@ -3968,6 +3976,10 @@ msgstr ""
 msgid "Revision details must be 500 characters or fewer."
 msgstr ""
 
+#: src/worker/routes/content.ts
+msgid "Revision details updated."
+msgstr ""
+
 #: src/worker/web/content.tsx
 msgid "Revision not created"
 msgstr ""
@@ -4168,6 +4180,7 @@ msgstr ""
 msgid "Save assignment"
 msgstr ""
 
+#: src/worker/web/content.tsx
 #: src/worker/web/courses.tsx
 #: src/worker/web/profile.tsx
 msgid "Save changes"

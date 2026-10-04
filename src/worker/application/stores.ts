@@ -444,6 +444,11 @@ export interface UpdateContentRevisionSharingInput {
   readonly shareSource: boolean;
 }
 
+export interface UpdateContentRevisionDetailsInput {
+  readonly id: AppId;
+  readonly details: string;
+}
+
 /**
  * Where an item's next revision goes: the number it takes, and whether the
  * source about to be saved is already there under this item.
@@ -534,6 +539,16 @@ export interface ContentStore {
    */
   updateRevisionSharing(
     input: UpdateContentRevisionSharingInput,
+  ): Promise<ContentRevision>;
+  /**
+   * Rewrite a revision's note. The note describes the revision rather than
+   * being part of it — it is not in the source, the artifact or the hash, and
+   * no student reads it — so it is the one thing about a saved revision that
+   * can change. Like `updateRevisionSharing`, this leaves the item's
+   * `updatedAt` alone: rewording a note is not writing content.
+   */
+  updateRevisionDetails(
+    input: UpdateContentRevisionDetailsInput,
   ): Promise<ContentRevision>;
   /**
    * Newest first. A revision list is a history, and the revision anyone is

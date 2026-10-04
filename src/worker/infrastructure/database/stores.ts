@@ -71,6 +71,7 @@ import type {
   SetGradesVisibleAtInput,
   UnpublishAssignmentInput,
   UpdateAssignmentInput,
+  UpdateContentRevisionDetailsInput,
   UpdateContentRevisionSharingInput,
   UpdateCourseInfoInput,
   UpdateCourseMembershipRoleInput,
@@ -1508,6 +1509,20 @@ class SqliteContentStore implements ContentStore {
         await this.db
           .update(contentRevisions)
           .set({ sharing: input.sharing, shareSource: input.shareSource })
+          .where(eq(contentRevisions.id, input.id))
+          .returning(),
+      ),
+    );
+  }
+
+  async updateRevisionDetails(
+    input: UpdateContentRevisionDetailsInput,
+  ): Promise<ContentRevision> {
+    return mapContentRevision(
+      single(
+        await this.db
+          .update(contentRevisions)
+          .set({ details: input.details })
           .where(eq(contentRevisions.id, input.id))
           .returning(),
       ),

@@ -43,6 +43,12 @@ export type {
 export type ContentSourceFormat = "markdown" | "mm0";
 
 /**
+ * The longest note a revision may carry, in UTF-16 code units — what both the
+ * service's check and a form field's `maxlength` count.
+ */
+export const CONTENT_DETAILS_MAX_LENGTH = 500;
+
+/**
  * Who may read a saved revision besides the author who owns it.
  *
  * `private` is what every revision was before there was a choice, and what

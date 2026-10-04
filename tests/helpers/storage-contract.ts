@@ -739,6 +739,28 @@ export function describeStorageContract(
       });
     });
 
+    test("a revision's note is rewritten without touching what it says", async () => {
+      await withStorage(async ({ stores }) => {
+        const { item, revision } = await createContentRevision(stores);
+        const updated = await stores.content.updateRevisionDetails({
+          id: revision.id,
+          details: "Fixed a typo in the prompt.",
+        });
+
+        // Only the note moves: the source, the artifact, the hash and the
+        // sharing are the revision's own, and the item's `updatedAt` orders the
+        // library by content changes, which this is not.
+        expect(updated).toEqual({
+          ...revision,
+          details: "Fixed a typo in the prompt.",
+        });
+        await expect(
+          stores.content.getRevision(revision.id),
+        ).resolves.toEqual(updated);
+        await expect(stores.content.getItem(item.id)).resolves.toEqual(item);
+      });
+    });
+
     test("the next revision's slot is one aggregate, not the history", async () => {
       await withStorage(async ({ stores }) => {
         const { instructor } = await createCourseSlice(stores);

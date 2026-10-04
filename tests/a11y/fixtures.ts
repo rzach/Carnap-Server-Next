@@ -771,7 +771,12 @@ export async function collectFixtures(
   await add("content-library", "/content", instructor);
   await add(
     "content-item",
-    `/content/${itemId}${noticeQuery("created", "revisionCreated")}`,
+    `/content/${itemId}${noticeQuery(
+      "created",
+      "revisionCreated",
+      "sharingUpdated",
+      "detailsUpdated",
+    )}`,
     instructor,
   );
   await add(

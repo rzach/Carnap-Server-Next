@@ -2041,9 +2041,17 @@ msgstr "Kurs bearbeiten"
 msgid "Edit override"
 msgstr "Abweichung bearbeiten"
 
+#: src/worker/web/content.tsx
+msgid "Edit revision details"
+msgstr "Details der Revision bearbeiten"
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Edit settings"
 msgstr "Einstellungen bearbeiten"
+
+#: src/worker/web/content.tsx
+msgid "Edit the details of {name}"
+msgstr "Details von {name} bearbeiten"
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
@@ -3968,6 +3976,10 @@ msgstr "Details der Revision"
 msgid "Revision details must be 500 characters or fewer."
 msgstr "Details der Revision dürfen höchstens 500 Zeichen lang sein."
 
+#: src/worker/routes/content.ts
+msgid "Revision details updated."
+msgstr "Details der Revision aktualisiert."
+
 #: src/worker/web/content.tsx
 msgid "Revision not created"
 msgstr "Revision nicht angelegt"
@@ -4168,6 +4180,7 @@ msgstr "Speichern"
 msgid "Save assignment"
 msgstr "Aufgabe speichern"
 
+#: src/worker/web/content.tsx
 #: src/worker/web/courses.tsx
 #: src/worker/web/profile.tsx
 msgid "Save changes"

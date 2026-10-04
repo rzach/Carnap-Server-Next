@@ -1794,6 +1794,132 @@ Which sentence is a tautology?
     });
   });
 
+  test("a revision's note can be reworded from its row", async () => {
+    await withStorage(async (_storage, env) => {
+      const author = await login(env, "rewording-author@example.test");
+      const item = await createContent(env, author);
+      const created = await appRequest(
+        createTestApp(),
+        `/content/${item.item.id}/revisions`,
+        jsonRequest(
+          { details: "Frist draft.", sourceText: sampleSource("reworded_q") },
+          author,
+        ),
+        env,
+      );
+      const revision = ((await created.json()) as ContentRevisionResponse)
+        .revision;
+      const before = await appRequest(
+        createTestApp(),
+        `/content/${item.item.id}`,
+        { headers: { Accept: "text/html", Cookie: author.cookieHeader } },
+        env,
+      );
+      const beforeHtml = await before.text();
+
+      // The row's edit control opens a dialog that posts the note back,
+      // prefilled with what is there now.
+      expect(beforeHtml).toContain(
+        `data-dialog-target="details-${revision.id}"`,
+      );
+      expect(beforeHtml).toContain(
+        `action="/content/revisions/${revision.id}/details"`,
+      );
+      expect(beforeHtml).toContain('value="Frist draft."');
+
+      const form = new FormData();
+
+      form.set("csrfToken", author.csrfToken);
+      form.set("details", "  First draft.  ");
+
+      const response = await appRequest(
+        createTestApp(),
+        `/content/revisions/${revision.id}/details`,
+        {
+          body: form,
+          headers: { Cookie: author.cookieHeader },
+          method: "POST",
+        },
+        env,
+      );
+
+      expect(response.status).toBe(303);
+      expect(response.headers.get("Location")).toBe(
+        `/content/${item.item.id}?detailsUpdated=1`,
+      );
+
+      const after = await appRequest(
+        createTestApp(),
+        `/content/revisions/${revision.id}`,
+        { headers: { Cookie: author.cookieHeader } },
+        env,
+      );
+      const afterBody = (await after.json()) as ContentRevisionResponse;
+
+      // Trimmed as a new revision's note is, and nothing else moves: the
+      // revision is the same text under the same hash.
+      expect(afterBody.revision.details).toBe("First draft.");
+      expect(afterBody.revision.contentHash).toBe(revision.contentHash);
+      expect(afterBody.revision.sourceText).toBe(revision.sourceText);
+    });
+  });
+
+  test("a reworded note is checked as a new one is", async () => {
+    await withStorage(async (_storage, env) => {
+      const author = await login(env, "long-rewording@example.test");
+      const item = await createContent(env, author);
+      const created = await appRequest(
+        createTestApp(),
+        `/content/${item.item.id}/revisions`,
+        jsonRequest({ sourceText: sampleSource("long_reword_q") }, author),
+        env,
+      );
+      const { revision } = (await created.json()) as ContentRevisionResponse;
+
+      for (const details of ["x".repeat(501), 42]) {
+        const response = await appRequest(
+          createTestApp(),
+          `/content/revisions/${revision.id}/details`,
+          jsonRequest({ details }, author),
+          env,
+        );
+        const body = (await response.json()) as ErrorEnvelope;
+
+        expect(response.status).toBe(400);
+        expect(body.error.code).toBe("invalid_content_details");
+      }
+    });
+  });
+
+  test("a revision's note is its owner's alone to reword", async () => {
+    await withStorage(async (_storage, env) => {
+      const author = await login(env, "note-owner@example.test");
+      const other = await login(env, "note-stranger@example.test");
+      const item = await createContent(env, author);
+      const created = await appRequest(
+        createTestApp(),
+        `/content/${item.item.id}/revisions`,
+        jsonRequest(
+          { details: "Mine.", sourceText: sampleSource("owned_note_q") },
+          author,
+        ),
+        env,
+      );
+      const { revision } = (await created.json()) as ContentRevisionResponse;
+      const response = await appRequest(
+        createTestApp(),
+        `/content/revisions/${revision.id}/details`,
+        jsonRequest({ details: "Yours now." }, other),
+        env,
+      );
+      const body = (await response.json()) as ErrorEnvelope;
+
+      // The miss an id that names nothing gets, as for sharing.
+      expect(response.status).toBe(404);
+      expect(body.error.code).toBe("content_revision_not_found");
+    });
+  });
+
   test("the same source cannot be saved a second time under one item", async () => {
     await withStorage(async (_storage, env) => {
       const author = await login(env, "repeat-author@example.test");
