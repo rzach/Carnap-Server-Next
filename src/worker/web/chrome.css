@@ -167,6 +167,7 @@ table button:not(:where(.modal-dialog button)) {
   align-items: center;
   display: flex;
   flex: 1 1 auto;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: clamp(1rem, 3vw, 2.4rem);
   min-width: 0;
@@ -2096,10 +2097,9 @@ th > .column-sort:hover {
 /* The account name gives way to a monogram in a ring. An admin's three nav
    items plus an ordinary first name overflow a 390px phone and wrap the bar to
    two rows; the German nav (Kurse · Inhalte · Verwaltung) does it with a
-   shorter name still. 700px and not 640px, where the wordmark returns: the bar
-   measures narrowest at exactly 641px, wordmark back and no room yet for it,
-   and an email-fallback label wraps there and nowhere else above the phone
-   range. Letting the monogram overlap the wordmark by 60px closes that pocket.
+   shorter name still. The monogram holds the bar to one line from 700px down
+   to 481px, the narrowest width that still shows the wordmark — measured with
+   both of those navs and an admin's three items, with room to spare.
 
    The ring's 2rem clears the 24px target minimum (WCAG 2.5.8) with room to
    spare, which the bare text link only cleared by the width of a long name. */
@@ -2126,15 +2126,7 @@ th > .column-sort:hover {
   }
 }
 
-/* On a phone the brand wordmark + nav links + monogram overflow one line and
-   wrap the navbar to two rows. Dropping the "Carnap" wordmark to just the ⊨
-   turnstile mark reclaims the width so the header stays on a single line; the
-   footer keeps the full wordmark (it stacks vertically, with room). */
 @media (max-width: 640px) {
-  .app-header .brand-word {
-    display: none;
-  }
-
   /* On a phone the course-record footer stacks the clone title field, its
      "Clone course" button, and "Edit" onto three lines. Dropping the clone
      form's own box (display: contents) floats its input and submit button
@@ -2182,8 +2174,17 @@ th > .column-sort:hover {
    The navbar and app footer carry their own gutter and do not move. 480px
    and not the 640px phone block above: between the two the gutter is wider
    and the screen wider still, and full-width bands there read as a tablet
-   that has lost its margins. */
+   that has lost its margins.
+
+   The "Carnap" wordmark gives way to the ⊨ mark at the same width, so the
+   page turns into its phone layout at one point rather than two: below it the
+   wordmark, nav links and monogram would wrap the navbar to two rows. The
+   footer keeps the full wordmark (it stacks vertically, with room). */
 @media (max-width: 480px) {
+  .app-header .brand-word {
+    display: none;
+  }
+
   .page-shell {
     padding-inline: 0;
   }
