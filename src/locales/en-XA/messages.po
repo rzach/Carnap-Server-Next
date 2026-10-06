@@ -1360,6 +1360,10 @@ msgstr ""
 msgid "Close the branch on row {row}"
 msgstr ""
 
+#: src/worker/exercise-kit/proof/editor-strings.ts
+msgid "Close the problem message"
+msgstr ""
+
 #. Disambiguating id; only the word Closed is shown. A badge beside an assignment past its closing date.
 #: src/worker/web/assignments.tsx
 msgid "Closed (assignment availability)"

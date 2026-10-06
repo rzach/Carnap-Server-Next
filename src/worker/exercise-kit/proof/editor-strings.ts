@@ -19,6 +19,8 @@ export function buildProofEditorStrings(i18n: Translator) {
     "Go to the next problem": i18n.t("Go to the next problem"),
     /** Help: what Shift-F8 does. */
     "Go to the previous problem": i18n.t("Go to the previous problem"),
+    /** Help: what Escape does to a problem's message floated over the proof. */
+    "Close the problem message": i18n.t("Close the problem message"),
     /** Help: what Ctrl-Shift-M (Cmd on a Mac) does. */
     "List every problem": i18n.t("List every problem"),
     /** Help: the closing orientation paragraph. */

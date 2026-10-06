@@ -1360,6 +1360,10 @@ msgstr "Den Ast schließen"
 msgid "Close the branch on row {row}"
 msgstr "Den Ast auf Zeile {row} schließen"
 
+#: src/worker/exercise-kit/proof/editor-strings.ts
+msgid "Close the problem message"
+msgstr "Schließt die Problemmeldung"
+
 #. Disambiguating id; only the word Closed is shown. A badge beside an assignment past its closing date.
 #: src/worker/web/assignments.tsx
 msgid "Closed (assignment availability)"

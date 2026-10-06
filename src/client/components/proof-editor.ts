@@ -7,7 +7,14 @@ import {
   setDiagnostics,
 } from "@codemirror/lint";
 import { EditorState, type Extension } from "@codemirror/state";
-import { type Command, EditorView, keymap } from "@codemirror/view";
+import {
+  type Command,
+  closeHoverTooltips,
+  EditorView,
+  hasHoverTooltips,
+  keymap,
+  ViewPlugin,
+} from "@codemirror/view";
 import type { ProofEditorStringId } from "../../worker/exercise-kit/proof/editor-strings";
 import type { ProofEngineStringId } from "../../worker/exercise-kit/proof/engine-strings";
 import {
@@ -138,13 +145,15 @@ type ProofEditorText = (
  * editors (`./problem-keys.ts`), and say each one aloud: CodeMirror's own
  * commands select the problem's text and float its tooltip, but announce
  * nothing. Mod-Shift-M opens CodeMirror's problem panel, a list of them all.
- * The help dialog ({@link mountProofEditorHelp}) is where a reader learns of
+ * Escape puts a problem's tooltip away ({@link escapeClosesTooltip}). The
+ * help dialog ({@link mountProofEditorHelp}) is where a reader learns of
  * them.
  */
 export function problemKeys(t: ProofEditorText): Extension {
   const none = t("No problems.");
 
   return [
+    escapeClosesTooltip,
     EditorState.phrases.of({
       close: t("Close"),
       Diagnostics: t("Problems"),
@@ -157,6 +166,38 @@ export function problemKeys(t: ProofEditorText): Extension {
     ]),
   ];
 }
+
+/**
+ * Escape closes a problem's tooltip, wherever focus is. A tooltip can cover the
+ * lines above or below it, and one floated by hovering stays until the pointer
+ * moves; content that appears on hover has to be dismissible without moving
+ * the pointer (WCAG 1.4.13), and CodeMirror binds no key to do it.
+ *
+ * So the listener is on the document, not the editor's keymap: a pointer can
+ * float a tooltip while focus is anywhere on the page. It acts only while this
+ * editor has one open, and lets the key go on, so Escape still does whatever
+ * else it does where focus is.
+ */
+const escapeClosesTooltip = ViewPlugin.fromClass(
+  class {
+    private readonly document: Document;
+
+    constructor(private readonly view: EditorView) {
+      this.document = view.dom.ownerDocument;
+      this.document.addEventListener("keydown", this.onKeydown);
+    }
+
+    destroy(): void {
+      this.document.removeEventListener("keydown", this.onKeydown);
+    }
+
+    private readonly onKeydown = (event: KeyboardEvent): void => {
+      if (event.key === "Escape" && hasHoverTooltips(this.view.state)) {
+        this.view.dispatch({ effects: closeHoverTooltips });
+      }
+    };
+  },
+);
 
 /**
  * The `(?)` in the action bar and the instructions behind it, as the tree and
@@ -197,6 +238,7 @@ export function mountProofEditorHelp(
             { action: t("Go to the next problem"), keys: ["F8"] },
             { action: t("Go to the previous problem"), keys: ["Shift-F8"] },
             { action: t("List every problem"), keys: [`${mod}-Shift-M`] },
+            { action: t("Close the problem message"), keys: ["Esc"] },
           ]
         : []),
     ],

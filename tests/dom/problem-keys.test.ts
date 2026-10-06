@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { diagnosticCount } from "@codemirror/lint";
-import { EditorView, runScopeHandlers } from "@codemirror/view";
+import {
+  EditorView,
+  hasHoverTooltips,
+  runScopeHandlers,
+} from "@codemirror/view";
 import { dom } from "../helpers/dom";
 import {
   compileExercise,
@@ -275,6 +279,7 @@ describe("the linear editor", () => {
       "F8",
       "Shift-F8",
       "Ctrl-Shift-M",
+      "Esc",
     ]);
 
     const view = editorOf(mounted);
@@ -293,6 +298,28 @@ describe("the linear editor", () => {
     await until(() => diagnosticCount(view.state) === 0);
     key(view, "F8");
     expect(announced(mounted)).toBe("No problems.");
+  });
+
+  test("Escape puts away a problem's message, wherever focus is, and only while one is open", async () => {
+    const mounted = mountExercise(
+      await compileExercise(linear("l1: $ p $ by nope [#1]")),
+    );
+    const view = editorOf(mounted);
+    await until(() => diagnosticCount(view.state) > 0);
+
+    key(view, "F8");
+    await until(() => hasHoverTooltips(view.state));
+
+    // Pressed outside the editor, as it is after hovering a squiggle with
+    // focus elsewhere on the page; the key goes on to whatever else it does.
+    const pressed = new dom.window.KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Escape",
+    });
+    dom.window.document.body.dispatchEvent(pressed);
+    expect(hasHoverTooltips(view.state)).toBe(false);
+    expect(pressed.defaultPrevented).toBe(false);
   });
 
   test("terse feedback has the help, but neither the problem keys nor their rows", async () => {
