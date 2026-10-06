@@ -2725,6 +2725,11 @@ msgstr ""
 msgid "Line “{label}” is not connected to the root of the proof; every line must feed into the conclusion."
 msgstr ""
 
+#. Before a problem shown below a proof: the problem is on line {line} of the proof editor.
+#: src/worker/exercise-kit/proof/editor-strings.ts
+msgid "Line {line}"
+msgstr ""
+
 #: src/worker/web/courses.tsx
 msgid "Link"
 msgstr ""
@@ -3658,6 +3663,15 @@ msgstr ""
 
 #: src/worker/web/courses.tsx
 msgid "Problem"
+msgstr ""
+
+#. Beside a problem shown below a proof: it is problem {index} of the {count} problems in the proof, counted in the order F8 visits them.
+#. Beside a problem shown below a proof: it is problem {index} of the {count} problems in the proof, counted in the order F8 visits them.
+#. Beside a problem shown below a proof: it is problem {index} of the {count} problems in the proof, counted in the order F8 visits them.
+#: src/worker/exercise-kit/proof/editor-strings.ts
+#: src/worker/exercises/aufbau-proof-prawitz/strings.ts
+#: src/worker/exercises/aufbau-proof-tree/strings.ts
+msgid "Problem {index} of {count}"
 msgstr ""
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
@@ -4984,7 +4998,7 @@ msgstr ""
 
 #: src/worker/exercise-kit/proof/editor-strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
-msgid "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong."
+msgid "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined. Hover it to read what is wrong, or press F8 to go to it: the problem then stays below the proof while you fix it."
 msgstr ""
 
 #: src/worker/web/admin.tsx

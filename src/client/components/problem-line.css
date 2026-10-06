@@ -1,0 +1,58 @@
+/*
+ * The line under a proof that holds the problem F8 last went to, and the
+ * tint that marks where that problem is. Served into the shadow root of
+ * each of the four proof widgets by `mountProblemLine`.
+ */
+
+.problem-line {
+  align-items: baseline;
+  background: var(--_inset-bg);
+  border-left: 3px solid var(--_incorrect);
+  color: var(--_text);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  gap: 0.15rem 0.6rem;
+  line-height: 1.4;
+  margin: 0.5rem 0 0;
+  padding: 0.35rem 0.7rem;
+}
+/* Its own display would otherwise outrank the attribute's. */
+.problem-line[hidden] {
+  display: none;
+}
+.problem-line[data-severity="warning"] {
+  border-left-color: var(--_warning);
+}
+.problem-line-where {
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* Several problems on one place are joined by newlines, as the CodeMirror
+   tooltip shows them. */
+.problem-line-message {
+  flex: 1 1 16rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+.problem-line-position {
+  font-size: 0.85em;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* Where the problem in the line is: the problem's text in the CodeMirror
+   editors, the line's formula in the tree and Prawitz editors. A wash, not a
+   heavier squiggle, because a fill is found at a glance where a difference in
+   stroke weight has to be looked for. Mixed from the verdict's hue at the use
+   site, as the truth table's highlight is, so an author's --exercise-incorrect
+   moves the squiggle, the line's bar and this together. The tree and Prawitz
+   selectors outrank a selected field's accent wash: F8 selects the line it
+   goes to, and the tint is the one that has to stay. */
+.cm-problem-pinned,
+.tree-node.is-pinned > .tree-edit,
+.pz-node.is-pinned > .pz-edit {
+  background: color-mix(in srgb, var(--_incorrect) 16%, transparent);
+  border-radius: 0.2rem;
+}

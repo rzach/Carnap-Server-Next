@@ -424,7 +424,9 @@ class AufbauProofFitch extends ProofExerciseElement<AufbauProofFitchStringId> {
           }),
           // Where feedback withholds the squiggles there is nothing to step
           // to, and an F8 that said "No problems." would be a verdict.
-          this.showsDetail ? problemKeys((id) => this.t(id)) : [],
+          this.showsDetail
+            ? problemKeys((id, values) => this.t(id, values), chrome.problems)
+            : [],
           assumptionRuleFacet.of(this.assumptionRule),
           ruleReaderFacet.of(this.readRule),
           scopeGuides,

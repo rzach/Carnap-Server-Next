@@ -88,10 +88,12 @@ import {
 } from "./help-dialog";
 import {
   mountAnnouncer,
+  PinnedProblem,
   problemNoteId,
   problemStep,
   stepToProblem,
 } from "./problem-keys";
+import { mountProblemLine } from "./problem-line";
 import { ProofExerciseElement } from "./proof-element";
 import { ToolbarIcon } from "./toolbar-icon";
 import { TOOLBAR_STYLES, type ToolbarIconName } from "./toolbar-icons";
@@ -1066,6 +1068,8 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
   /** What F8 says when moving focus cannot; `null` where feedback withholds
    *  the problems, and F8 with them. */
   private announce: ((text: string) => void) | null = null;
+  /** Where F8 leaves the problem it went to; `null` on the same terms. */
+  private pinned: PinnedProblem | null = null;
   /** Built once in {@link enhance}; see {@link showHelp} for where it lives. */
   private helpDialog: HTMLDialogElement | null = null;
   private proofText = "";
@@ -1144,6 +1148,12 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
     container.insertBefore(this.mount, actionsSlot);
     if (this.showsDetail) {
       this.announce = mountAnnouncer(container, actionsSlot);
+      this.pinned = new PinnedProblem(
+        root,
+        mountProblemLine(root, container, actionsSlot),
+        (index, count) =>
+          this.t("Problem {index} of {count}", { count, index }),
+      );
     }
     this.rerender();
 
@@ -1217,6 +1227,7 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
       if (said !== null) {
         this.announce(said);
       }
+      this.pinned?.pinFocused();
       return;
     }
     if (event.key === "Escape") {
@@ -1622,6 +1633,9 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
       />,
       this.mount,
     );
+    // After the render: the pinned line may have been rebuilt, or lost its
+    // problem.
+    this.pinned?.sync();
   }
 
   private onModelChanged(): void {

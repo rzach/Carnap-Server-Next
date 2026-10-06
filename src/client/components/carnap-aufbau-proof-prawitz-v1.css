@@ -33,6 +33,8 @@
 }
 .pz-edit.is-error {
   text-decoration: underline wavy var(--_incorrect);
+  /* A skipped descender leaves a gap in the wave under every Q. */
+  text-decoration-skip-ink: none;
 }
 .pz-edit:not(.is-selected):not(.is-empty):hover {
   background: var(--_inset-bg);

@@ -13,10 +13,13 @@
 }
 .tree-edit.is-error {
   text-decoration: underline wavy var(--_incorrect);
+  /* A skipped descender leaves a gap in the wave under every Q. */
+  text-decoration-skip-ink: none;
 }
 /* A rule admitted with sorry!, where the exercise allows it. */
 .tree-edit.is-warning {
   text-decoration: underline wavy var(--_warning);
+  text-decoration-skip-ink: none;
 }
 .tree-edit:not(.is-selected):not(.is-empty):hover {
   background: var(--_inset-bg);

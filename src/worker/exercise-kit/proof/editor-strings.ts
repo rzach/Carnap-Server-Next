@@ -1,4 +1,4 @@
-import type { Translator } from "../../i18n/translator";
+import { placeholders, type Translator } from "../../i18n/translator";
 import { buildExerciseHelpStrings } from "../help-strings";
 
 /**
@@ -24,10 +24,24 @@ export function buildProofEditorStrings(i18n: Translator) {
     /** Help: what Ctrl-Shift-M (Cmd on a Mac) does. */
     "List every problem": i18n.t("List every problem"),
     /** Help: the closing orientation paragraph. */
-    "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong.":
+    "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined. Hover it to read what is wrong, or press F8 to go to it: the problem then stays below the proof while you fix it.":
       i18n.t(
-        "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong.",
+        "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined. Hover it to read what is wrong, or press F8 to go to it: the problem then stays below the proof while you fix it.",
       ),
+    /** Problem line: where in the editor its problem is. */
+    "Line {line}": i18n.t("Line {line}", placeholders("line"), {
+      comment:
+        "Before a problem shown below a proof: the problem is on line {line} of the proof editor.",
+    }),
+    /** Problem line: which of the proof's problems it holds. Both values are numbers. */
+    "Problem {index} of {count}": i18n.t(
+      "Problem {index} of {count}",
+      placeholders("index", "count"),
+      {
+        comment:
+          "Beside a problem shown below a proof: it is problem {index} of the {count} problems in the proof, counted in the order F8 visits them.",
+      },
+    ),
     Redo: i18n.t("Redo"),
     Undo: i18n.t("Undo"),
     /** Accessible name of the problem panel's list. */

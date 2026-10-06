@@ -16,7 +16,11 @@
 .proof-editor .cm-editor.cm-focused {
   outline: none;
 }
-.proof-editor .cm-gutters {
+/* The extra .cm-editor is load-bearing, as on the caret below: CodeMirror's
+   light theme paints the gutter #f5f5f5 from a two-class rule its adopted
+   stylesheet applies after this one, so without it the gutter stayed a pale
+   strip down the side of the editor under dark mode. */
+.proof-editor .cm-editor .cm-gutters {
   background: transparent;
   border: none;
   opacity: 0.5;
@@ -68,8 +72,22 @@
 .proof-editor .cm-editor .cm-diagnostic-warning {
   border-left-color: var(--_warning);
 }
-/* The compiler separates a diagnostic's context lines (theorem, line, rule,
-   inference path) with newlines; without this they collapse into one run-on. */
+/* A message can run to more than one line — the Fitch editor's own, or two
+   problems on one line — and without this they collapse into one run-on. */
 .proof-editor .cm-editor .cm-diagnostic {
   white-space: pre-line;
+}
+/* The squiggle under a problem, drawn as the tree and Prawitz editors draw
+   theirs. The base theme paints it as a background image in a raw #f11 — an
+   SVG in a data URL, which no custom property reaches, so neither the palette
+   nor dark mode ever touched it. Ink is not skipped: a skipped descender
+   leaves a gap in the wave under every Q. */
+.proof-editor .cm-editor .cm-lintRange-error,
+.proof-editor .cm-editor .cm-lintRange-warning {
+  background-image: none;
+  text-decoration: underline wavy var(--_incorrect);
+  text-decoration-skip-ink: none;
+}
+.proof-editor .cm-editor .cm-lintRange-warning {
+  text-decoration-color: var(--_warning);
 }

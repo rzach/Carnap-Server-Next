@@ -127,6 +127,15 @@ export function buildAufbauProofPrawitzStrings(i18n: Translator) {
     "Edit the line's formula": i18n.t("Edit the line's formula"),
     "Edit the line's rule": i18n.t("Edit the line's rule"),
     "Go to the next problem": i18n.t("Go to the next problem"),
+    /** Problem line: which of the proof's problems it holds. Both values are numbers. */
+    "Problem {index} of {count}": i18n.t(
+      "Problem {index} of {count}",
+      placeholders("index", "count"),
+      {
+        comment:
+          "Beside a problem shown below a proof: it is problem {index} of the {count} problems in the proof, counted in the order F8 visits them.",
+      },
+    ),
     "Go to the previous problem": i18n.t("Go to the previous problem"),
     /** One row: `l` opens whichever of the two a line has (never both). */
     "Edit the line's label or discharge marks": i18n.t(

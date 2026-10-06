@@ -85,10 +85,12 @@ import {
 } from "./help-dialog";
 import {
   mountAnnouncer,
+  PinnedProblem,
   problemNoteId,
   problemStep,
   stepToProblem,
 } from "./problem-keys";
+import { mountProblemLine } from "./problem-line";
 import { ProofExerciseElement } from "./proof-element";
 import { ToolbarIcon } from "./toolbar-icon";
 import { TOOLBAR_STYLES, type ToolbarIconName } from "./toolbar-icons";
@@ -467,7 +469,7 @@ const SHORTCUTS: readonly {
 const INTRO_IDS: readonly AufbauProofTreeStringId[] = [
   "The goal sits at the bottom. Click any line to select it, then Add premise to grow the proof upward.",
   "Type the rule that justifies each inference in the field beneath its line. Add hypothesis makes a leaf that cites one of the goal's hypotheses.",
-  "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong.",
+  "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined. Hover it to read what is wrong, or press F8 to go to it: the problem then stays below the proof while you fix it.",
 ];
 
 /**
@@ -929,6 +931,8 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
   /** What F8 says when moving focus cannot; `null` where feedback withholds
    *  the problems, and F8 with them. */
   private announce: ((text: string) => void) | null = null;
+  /** Where F8 leaves the problem it went to; `null` on the same terms. */
+  private pinned: PinnedProblem | null = null;
   private proofText = "";
   private lineSpans: readonly { from: number; nodeId: string; to: number }[] =
     [];
@@ -1001,6 +1005,12 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
     container.insertBefore(this.mount, actionsSlot);
     if (this.showsDetail) {
       this.announce = mountAnnouncer(container, actionsSlot);
+      this.pinned = new PinnedProblem(
+        root,
+        mountProblemLine(root, container, actionsSlot),
+        (index, count) =>
+          this.t("Problem {index} of {count}", { count, index }),
+      );
     }
     this.rerender();
 
@@ -1085,6 +1095,7 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
       if (said !== null) {
         this.announce(said);
       }
+      this.pinned?.pinFocused();
       return;
     }
     if (event.key === "Escape") {
@@ -1407,6 +1418,9 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
       />,
       this.mount,
     );
+    // After the render: the pinned line may have been rebuilt, or lost its
+    // problem.
+    this.pinned?.sync();
   }
 
   /**

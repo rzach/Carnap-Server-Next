@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { diagnosticCount } from "@codemirror/lint";
+import { diagnosticCount, nextDiagnostic } from "@codemirror/lint";
 import {
   EditorView,
   hasHoverTooltips,
@@ -32,6 +32,10 @@ import { toolbarButton, treeExercise } from "./tree-widget";
  * message. Where there is none to step to, they say so — unless feedback
  * withholds the problems, where that would be a verdict, and the keys are not
  * there at all.
+ *
+ * The problem F8 went to also stays in sight: in the problem line under the
+ * proof, with its place tinted, through edits elsewhere, until it is fixed or
+ * F8 goes to another.
  *
  * The compiler is mocked at the module seam, failing any proof that cites a
  * rule named `nope`, on that word, as the real engine fails a rule it does
@@ -102,6 +106,15 @@ function helpKeys(mounted: MountedExercise): string[] {
     mounted.root.querySelectorAll("dialog.help-dialog kbd"),
     (key) => key.textContent ?? "",
   );
+}
+
+/** The line under the proof where F8 leaves its problem, as a reader sees
+ *  it: `null` while it is hidden or absent. */
+function problemLine(mounted: MountedExercise): string | null {
+  const line = mounted.root.querySelector<HTMLElement>(".problem-line");
+  return line === null || line.hidden
+    ? null
+    : Array.from(line.children, (part) => part.textContent).join(" | ");
 }
 
 /** The hidden note an element is described by. */
@@ -190,6 +203,28 @@ describe("the tree editor", () => {
     expect(spoken(mounted)).toBe("No problems.");
   });
 
+  test("the line F8 went to is pinned: its problem below the proof, its formula tinted, until it is fixed", async () => {
+    const { mounted, premise, root, ruleField } = await withPremise("nope");
+    await until(() => premise.hasAttribute("aria-describedby"));
+    expect(problemLine(mounted)).toBeNull();
+
+    root.focus();
+    press(mounted, "F8");
+    // A tree's lines have no numbers to name; the tint is where.
+    expect(problemLine(mounted)).toBe(`${MESSAGE} | Problem 1 of 1`);
+    expect(premise.classList.contains("is-pinned")).toBe(true);
+
+    // Moving on — to fix it, say — leaves it where it is.
+    root.focus();
+    expect(problemLine(mounted)).toBe(`${MESSAGE} | Problem 1 of 1`);
+    expect(premise.classList.contains("is-pinned")).toBe(true);
+
+    typeInto(ruleField, "mp");
+    await until(() => !premise.hasAttribute("aria-describedby"));
+    expect(problemLine(mounted)).toBeNull();
+    expect(premise.classList.contains("is-pinned")).toBe(false);
+  });
+
   test("terse feedback has no problems to step to, and no F8", async () => {
     const { mounted, premise, root } = await withPremise("nope", "terse");
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -198,6 +233,7 @@ describe("the tree editor", () => {
     root.focus();
     expect(press(mounted, "F8").defaultPrevented).toBe(false);
     expect(mounted.root.querySelector("[aria-live]")).toBeNull();
+    expect(mounted.root.querySelector(".problem-line")).toBeNull();
   });
 });
 
@@ -239,6 +275,11 @@ describe("the Prawitz editor", () => {
     expect(mounted.root.activeElement).toBe(first);
     press(mounted, "F8", true);
     expect(mounted.root.activeElement).toBe(second);
+
+    // One line pinned at a time: the one F8 last went to.
+    expect(problemLine(mounted)).toBe("Expected a formula. | Problem 2 of 2");
+    expect(second.classList.contains("is-pinned")).toBe(true);
+    expect(first.classList.contains("is-pinned")).toBe(false);
   });
 });
 
@@ -307,7 +348,8 @@ describe("the linear editor", () => {
     const view = editorOf(mounted);
     await until(() => diagnosticCount(view.state) > 0);
 
-    key(view, "F8");
+    // As hovering the squiggle would: F8 floats no tooltip of its own.
+    nextDiagnostic(view);
     await until(() => hasHoverTooltips(view.state));
 
     // Pressed outside the editor, as it is after hovering a squiggle with
@@ -322,6 +364,34 @@ describe("the linear editor", () => {
     expect(pressed.defaultPrevented).toBe(false);
   });
 
+  test("F8 leaves its problem below the proof and tinted, floats no tooltip, and keeps it through edits until it is fixed", async () => {
+    const mounted = mountExercise(
+      await compileExercise(linear("l1: $ p $ by nope [#1]")),
+    );
+    const view = editorOf(mounted);
+    await until(() => diagnosticCount(view.state) > 0);
+    expect(problemLine(mounted)).toBeNull();
+
+    key(view, "F8");
+    expect(problemLine(mounted)).toBe(`Line 1 | ${MESSAGE} | Problem 1 of 1`);
+    expect(hasHoverTooltips(view.state)).toBe(false);
+    expect(
+      mounted.root.querySelector(".cm-problem-pinned")?.textContent,
+    ).toBe("nope");
+
+    // An edit that leaves the problem standing — a line added above it —
+    // carries it along, and the next compile reports it again.
+    view.dispatch({ changes: { from: 0, insert: "\n" } });
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    expect(problemLine(mounted)).toBe(`Line 2 | ${MESSAGE} | Problem 1 of 1`);
+
+    const at = view.state.doc.toString().indexOf("nope");
+    view.dispatch({ changes: { from: at, insert: "mp", to: at + 4 } });
+    await until(() => diagnosticCount(view.state) === 0);
+    expect(problemLine(mounted)).toBeNull();
+    expect(mounted.root.querySelector(".cm-problem-pinned")).toBeNull();
+  });
+
   test("terse feedback has the help, but neither the problem keys nor their rows", async () => {
     const mounted = mountExercise(
       await compileExercise(linear("l1: $ p $ by nope [#1]")),
@@ -330,5 +400,6 @@ describe("the linear editor", () => {
 
     expect(helpKeys(mounted)).toEqual(["Ctrl-Z", "Ctrl-Y"]);
     expect(key(editorOf(mounted), "F8")).toBe(false);
+    expect(problemLine(mounted)).toBeNull();
   });
 });

@@ -43,6 +43,11 @@ Use Tab, Shift-Tab, arrows, Enter, Space, and Escape.
         editors, Ctrl+Shift+M (Cmd+Shift+M on a Mac) opens the problem list;
         check the browser does not take the key first. Under terse or no
         feedback, F8 does nothing.
+  - [ ] Proof problems stay in sight: the problem F8 went to is shown below
+        the proof, its line number named in the linear and Fitch editors and
+        its place tinted in all four, with no tooltip covering the proof. It
+        stays while focus moves to another line, and clears when the problem
+        is fixed. The tint reads at a glance in both colour schemes.
   - [ ] Model: reach and edit the domain, predicates, constants, and function
         values, then Check and Submit.
   - [ ] Translation: edit the formula, check with Enter, and reach Submit.

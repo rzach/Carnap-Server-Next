@@ -2725,6 +2725,11 @@ msgstr "Zeile „{label}“ wird mehr als einmal zitiert, dieser Beweis ist also
 msgid "Line “{label}” is not connected to the root of the proof; every line must feed into the conclusion."
 msgstr "Zeile „{label}“ ist nicht mit der Wurzel des Beweises verbunden; jede Zeile muss in die Konklusion einfließen."
 
+#. Before a problem shown below a proof: the problem is on line {line} of the proof editor.
+#: src/worker/exercise-kit/proof/editor-strings.ts
+msgid "Line {line}"
+msgstr "Zeile {line}"
+
 #: src/worker/web/courses.tsx
 msgid "Link"
 msgstr "Verknüpfen"
@@ -3659,6 +3664,15 @@ msgstr "Vorschau"
 #: src/worker/web/courses.tsx
 msgid "Problem"
 msgstr "Problem"
+
+#. Beside a problem shown below a proof: it is problem {index} of the {count} problems in the proof, counted in the order F8 visits them.
+#. Beside a problem shown below a proof: it is problem {index} of the {count} problems in the proof, counted in the order F8 visits them.
+#. Beside a problem shown below a proof: it is problem {index} of the {count} problems in the proof, counted in the order F8 visits them.
+#: src/worker/exercise-kit/proof/editor-strings.ts
+#: src/worker/exercises/aufbau-proof-prawitz/strings.ts
+#: src/worker/exercises/aufbau-proof-tree/strings.ts
+msgid "Problem {index} of {count}"
+msgstr "Problem {index} von {count}"
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
@@ -4984,8 +4998,8 @@ msgstr "Die LTI-Plattform wurde nicht gefunden."
 
 #: src/worker/exercise-kit/proof/editor-strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
-msgid "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong."
-msgstr "Die Markierung neben der Schaltfläche „Antwort abgeben“ zeigt, ob der Beweis aufgeht. Eine Zeile mit einem Problem ist unterstrichen; fahren Sie darüber oder springen Sie mit F8 dorthin, um zu lesen, was nicht stimmt."
+msgid "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined. Hover it to read what is wrong, or press F8 to go to it: the problem then stays below the proof while you fix it."
+msgstr "Die Markierung neben der Schaltfläche „Antwort abgeben“ zeigt, ob der Beweis aufgeht. Eine Zeile mit einem Problem ist unterstrichen. Fahren Sie darüber, um zu lesen, was nicht stimmt, oder springen Sie mit F8 dorthin: Das Problem bleibt dann unter dem Beweis stehen, während Sie es beheben."
 
 #: src/worker/web/admin.tsx
 msgid "The most recent administrative audit events."

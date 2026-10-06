@@ -86,6 +86,15 @@ export function buildAufbauProofTreeStrings(i18n: Translator) {
     "Open this help": i18n.t("Open this help"),
     /** Fallback on a node whose compiler diagnostic has no readable message. */
     "Problem here.": i18n.t("Problem here."),
+    /** Problem line: which of the proof's problems it holds. Both values are numbers. */
+    "Problem {index} of {count}": i18n.t(
+      "Problem {index} of {count}",
+      placeholders("index", "count"),
+      {
+        comment:
+          "Beside a problem shown below a proof: it is problem {index} of the {count} problems in the proof, counted in the order F8 visits them.",
+      },
+    ),
     /**
      * Accessible name of the tree itself. The canvas is a `role="tree"`, and a
      * tree with no name tells a reader nothing about what it holds.
@@ -104,9 +113,9 @@ export function buildAufbauProofTreeStrings(i18n: Translator) {
       },
     ),
     /** Help: the third orientation paragraph. */
-    "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong.":
+    "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined. Hover it to read what is wrong, or press F8 to go to it: the problem then stays below the proof while you fix it.":
       i18n.t(
-        "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong.",
+        "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined. Hover it to read what is wrong, or press F8 to go to it: the problem then stays below the proof while you fix it.",
       ),
     /** Help: the first orientation paragraph. */
     "The goal sits at the bottom. Click any line to select it, then Add premise to grow the proof upward.":

@@ -2725,6 +2725,11 @@ msgstr "Line “{label}” is cited more than once, so this proof is a graph, no
 msgid "Line “{label}” is not connected to the root of the proof; every line must feed into the conclusion."
 msgstr "Line “{label}” is not connected to the root of the proof; every line must feed into the conclusion."
 
+#. Before a problem shown below a proof: the problem is on line {line} of the proof editor.
+#: src/worker/exercise-kit/proof/editor-strings.ts
+msgid "Line {line}"
+msgstr "Line {line}"
+
 #: src/worker/web/courses.tsx
 msgid "Link"
 msgstr "Link"
@@ -3659,6 +3664,15 @@ msgstr "Preview"
 #: src/worker/web/courses.tsx
 msgid "Problem"
 msgstr "Problem"
+
+#. Beside a problem shown below a proof: it is problem {index} of the {count} problems in the proof, counted in the order F8 visits them.
+#. Beside a problem shown below a proof: it is problem {index} of the {count} problems in the proof, counted in the order F8 visits them.
+#. Beside a problem shown below a proof: it is problem {index} of the {count} problems in the proof, counted in the order F8 visits them.
+#: src/worker/exercise-kit/proof/editor-strings.ts
+#: src/worker/exercises/aufbau-proof-prawitz/strings.ts
+#: src/worker/exercises/aufbau-proof-tree/strings.ts
+msgid "Problem {index} of {count}"
+msgstr "Problem {index} of {count}"
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
@@ -4984,8 +4998,8 @@ msgstr "The LTI platform was not found."
 
 #: src/worker/exercise-kit/proof/editor-strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
-msgid "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong."
-msgstr "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined; hover it, or go to it with F8, to read what is wrong."
+msgid "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined. Hover it to read what is wrong, or press F8 to go to it: the problem then stays below the proof while you fix it."
+msgstr "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined. Hover it to read what is wrong, or press F8 to go to it: the problem then stays below the proof while you fix it."
 
 #: src/worker/web/admin.tsx
 msgid "The most recent administrative audit events."

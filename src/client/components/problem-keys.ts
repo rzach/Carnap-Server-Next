@@ -11,7 +11,13 @@
  * because a description is read from a hidden element all the same, and a
  * reader walking the page in browse mode should not meet every message a
  * second time, out of place.
+ *
+ * The line F8 goes to is also pinned ({@link PinnedProblem}): its problem is
+ * shown in the problem line under the proof and its formula tinted, and both
+ * stay while the reader works elsewhere.
  */
+
+import type { ProblemLine } from "./problem-line";
 
 /** The id of the hidden note holding a line's problems, in its shadow root. */
 export function problemNoteId(lineId: string): string {
@@ -94,4 +100,75 @@ export function mountAnnouncer(
     // apart by a trailing space.
     region.textContent = region.textContent === text ? `${text} ` : text;
   };
+}
+
+/** The lines with a problem, in document order — the order F8 visits them. */
+function problemLines(root: ShadowRoot): HTMLElement[] {
+  return Array.from(
+    root.querySelectorAll<HTMLElement>('[role="treeitem"][aria-describedby]'),
+  );
+}
+
+/**
+ * The problem F8 last went to, in a tree or Prawitz editor: shown in the
+ * problem line, and its line marked `is-pinned` (tinted, by
+ * `./problem-line.css`), until F8 goes to another or the line's problem is
+ * gone.
+ *
+ * Held as the line's note id, which names its node and so outlives the
+ * rerenders an edit causes, and read back out of the rendered tree after each
+ * of them ({@link sync}): the note is what the problem *is*, as far as F8 is
+ * concerned, so a line without one has nothing to pin. The class is set on
+ * the treeitem directly rather than through the island's props, which Preact
+ * leaves alone while the `class` it rendered there does not change; a node
+ * it rebuilds simply gets it again on the next sync.
+ */
+export class PinnedProblem {
+  private noteId: string | null = null;
+
+  constructor(
+    private readonly root: ShadowRoot,
+    private readonly line: ProblemLine,
+    private readonly position: (index: number, count: number) => string,
+  ) {}
+
+  /** Pin the problem of the line focus is on — where F8 just left it. */
+  pinFocused(): void {
+    const here = this.root.activeElement?.closest('[role="treeitem"]');
+    this.noteId = here?.getAttribute("aria-describedby") ?? null;
+    this.sync();
+  }
+
+  /** Bring the line and the tint up to date with the tree as rendered. */
+  sync(): void {
+    const lines = problemLines(this.root);
+    const index = lines.findIndex(
+      (line) => line.getAttribute("aria-describedby") === this.noteId,
+    );
+    for (const pinned of this.root.querySelectorAll(".is-pinned")) {
+      if (pinned !== lines[index]) {
+        pinned.classList.remove("is-pinned");
+      }
+    }
+
+    const pinned = lines[index];
+    const note =
+      this.noteId === null ? null : this.root.getElementById(this.noteId);
+    if (pinned === undefined || note === null) {
+      this.noteId = null;
+      this.line.clear();
+      return;
+    }
+
+    pinned.classList.add("is-pinned");
+    this.line.show({
+      message: note.textContent ?? "",
+      position: this.position(index + 1, lines.length),
+      // A line can hold an error and a sorry! warning at once; the error is
+      // the one that matters. Only an error squiggles the formula.
+      severity:
+        pinned.querySelector(".is-error") === null ? "warning" : "error",
+      where: null,
+    });
+  }
 }
