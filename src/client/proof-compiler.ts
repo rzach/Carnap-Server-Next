@@ -83,6 +83,7 @@ export function loadProofCompiler(): Promise<LoadedCompiler> {
 export interface CompileDiagnostic {
   /** The engine's own code for the diagnostic (`SorryLine`, `MissingBinder`…). */
   readonly error?: string;
+  /** The engine's headline for it, and only that: see {@link headline}. */
   readonly message?: string;
   readonly severity: "error" | "info" | "warning";
   /** UTF-8 byte offsets into the proof text the engine was handed. */
@@ -176,6 +177,20 @@ export function byteToCharIndex(text: string, byteOffset: number): number {
   return index;
 }
 
+/**
+ * The first line of an engine message. The engine prints its diagnostic's
+ * context under the headline — `theorem: g`, `line: l4`, `rule: and_intro`,
+ * `phase: …`, and for a failed match the solver's path and its first unsolved
+ * binder — each a copy of a structured field on the same record, and each in
+ * the engine's own terms: the goal's internal name, a label the tree and Fitch
+ * translators invented, the axiom behind the student's `∧I`. None of it is a
+ * student's to read, so none of it reaches a widget.
+ */
+function headline(message: string): string {
+  const end = message.indexOf("\n");
+  return end === -1 ? message : message.slice(0, end);
+}
+
 export function readCompileResult(
   result: CompileResult,
   options: CompileReadOptions = {},
@@ -211,7 +226,7 @@ export function readCompileResult(
       problems.push({
         ...(typeof record.error === "string" ? { error: record.error } : {}),
         ...(typeof record.message === "string"
-          ? { message: record.message }
+          ? { message: headline(record.message) }
           : {}),
         severity,
         ...(typeof record.spanEnd === "number"

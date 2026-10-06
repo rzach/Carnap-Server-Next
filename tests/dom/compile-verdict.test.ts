@@ -130,6 +130,30 @@ describe("readCompileResult", () => {
     ]);
   });
 
+  test("keeps the engine's headline and drops the context it prints under it", () => {
+    const verdict = readCompileResult({
+      diagnostics: [
+        {
+          error: "RefCountMismatch",
+          lineLabel: "l4",
+          message:
+            "wrong number of references for rule application\ntheorem: g\nline: l4\nrule: and_intro\nphase: theorem application",
+          rule: "and_intro",
+          severity: "error",
+        },
+      ],
+      ok: false,
+    });
+
+    expect(verdict.problems).toEqual([
+      {
+        error: "RefCountMismatch",
+        message: "wrong number of references for rule application",
+        severity: "error",
+      },
+    ]);
+  });
+
   test("a clean compile with only warnings keeps its certificate", () => {
     const verdict = readCompileResult({
       diagnostics: [

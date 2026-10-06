@@ -71,10 +71,9 @@ const DEBOUNCE_MS = 250;
 // benign at authoring time (the student supplies the proof), so a tree exercise
 // whose only complaint is this counts as "declares cleanly".
 /**
- * The engine's complaint about a proof with no lines — the first line of it.
- * Since 0.0.10 the message goes on to name the theorem and the phase, so it
- * is matched by its head rather than whole; matched whole, every goal check
- * reported the benign case as a failure.
+ * The engine's complaint about a proof with no lines. Since 0.0.10 the engine
+ * goes on to name the theorem and the phase; `readCompileResult` keeps only
+ * the headline, and this is it.
  */
 const EMPTY_PROOF_MESSAGE = "proof block is empty";
 
@@ -225,7 +224,7 @@ async function goalChecksFor(
       const declaresCleanly =
         result.ok === true ||
         message === null ||
-        message.split("\n")[0] === EMPTY_PROOF_MESSAGE;
+        message === EMPTY_PROOF_MESSAGE;
       return {
         id: goal.id,
         message: declaresCleanly ? null : message,
