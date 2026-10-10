@@ -4997,6 +4997,7 @@ msgid "The LTI platform was not found."
 msgstr "Die LTI-Plattform wurde nicht gefunden."
 
 #: src/worker/exercise-kit/proof/editor-strings.ts
+#: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined. Hover it to read what is wrong, or press F8 to go to it: the problem then stays below the proof while you fix it."
 msgstr "Die Markierung neben der Schaltfläche „Antwort abgeben“ zeigt, ob der Beweis aufgeht. Eine Zeile mit einem Problem ist unterstrichen. Fahren Sie darüber, um zu lesen, was nicht stimmt, oder springen Sie mit F8 dorthin: Das Problem bleibt dann unter dem Beweis stehen, während Sie es beheben."

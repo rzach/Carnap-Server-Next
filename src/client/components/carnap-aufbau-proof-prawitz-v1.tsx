@@ -579,6 +579,7 @@ const INTRO_IDS: readonly AufbauProofPrawitzStringId[] = [
   "To apply a rule, tick the dot under each premise in the order the rule takes them, then Apply rule below. The ticked trees become the premises of one new line.",
   "To discharge an assumption, give it a label and write the same label on the rule that discharges it. Both boxes appear on a line once it is selected.",
   "Add premise above grows a line upward instead. On an assumption it makes the assumption a derived line; a labelled assumption stays as it is, since its label names a discharge.",
+  "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined. Hover it to read what is wrong, or press F8 to go to it: the problem then stays below the proof while you fix it.",
 ];
 
 /**

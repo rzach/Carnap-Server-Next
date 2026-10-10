@@ -98,6 +98,11 @@ export function buildAufbauProofPrawitzStrings(i18n: Translator) {
         message: "Select",
       },
     ),
+    /** Help: the closing orientation paragraph, shared with the other proof editors. */
+    "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined. Hover it to read what is wrong, or press F8 to go to it: the problem then stays below the proof while you fix it.":
+      i18n.t(
+        "The mark beside the Submit button shows whether the proof checks. A line with a problem is underlined. Hover it to read what is wrong, or press F8 to go to it: the problem then stays below the proof while you fix it.",
+      ),
     /** Help: the first orientation paragraph. */
     "Every proof starts from assumptions. New assumption puts one in the workspace; the goal is a single tree whose bottom line is what you were asked to prove.":
       i18n.t(
