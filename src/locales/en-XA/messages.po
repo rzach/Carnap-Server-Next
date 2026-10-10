@@ -895,12 +895,8 @@ msgstr ""
 msgid "Approve the autograded score as final"
 msgstr ""
 
-#: src/worker/web/content.tsx
+#: src/worker/web/components.tsx
 msgid "Archive {name}"
-msgstr ""
-
-#: src/worker/web/courses.tsx
-msgid "Archive course"
 msgstr ""
 
 #: src/worker/web/content.tsx
@@ -914,10 +910,6 @@ msgstr ""
 
 #: src/worker/web/courses.tsx
 msgid "Archived courses ({count})"
-msgstr ""
-
-#: src/worker/web/courses.tsx
-msgid "Archiving moves this course out of the active list without deleting anything. You can unarchive it later."
 msgstr ""
 
 #: src/worker/web/donate.tsx
@@ -1369,6 +1361,10 @@ msgstr ""
 #: src/worker/application/lti-admin.ts
 #: src/worker/web/admin-lti.tsx
 msgid "Client ID"
+msgstr ""
+
+#: src/worker/web/courses.tsx
+msgid "Clone {title}"
 msgstr ""
 
 #: src/worker/web/courses.tsx
@@ -2080,7 +2076,7 @@ msgid "Due time cannot be after available-until."
 msgstr ""
 
 #: src/worker/web/courses.tsx
-msgid "Edit"
+msgid "Edit {title}"
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -5194,6 +5190,10 @@ msgstr ""
 msgid "The most recent administrative audit events."
 msgstr ""
 
+#: src/worker/web/courses.tsx
+msgid "The new course copies this course's assignments and their settings, dates included. Members, enrollment links and student work are not copied."
+msgstr ""
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The PNF test applies only to first-order translations."
 msgstr ""
@@ -5476,10 +5476,6 @@ msgstr ""
 
 #: src/worker/application/lti.ts
 msgid "This course has not been set up in Carnap yet. Ask your instructor to open it from the LMS first."
-msgstr ""
-
-#: src/worker/web/courses.tsx
-msgid "This course is archived. Unarchive it to return it to the active list."
 msgstr ""
 
 #: src/worker/application/lti-admin.ts
@@ -5859,16 +5855,8 @@ msgstr ""
 msgid "Type the rule that justifies each inference in the field beneath its line. Add hypothesis makes a leaf that cites one of the goal's hypotheses."
 msgstr ""
 
-#: src/worker/web/courses.tsx
-msgid "Unarchive"
-msgstr ""
-
-#: src/worker/web/content.tsx
+#: src/worker/web/components.tsx
 msgid "Unarchive {name}"
-msgstr ""
-
-#: src/worker/web/courses.tsx
-msgid "Unarchive course"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts

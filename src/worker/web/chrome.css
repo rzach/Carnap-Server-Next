@@ -1006,9 +1006,10 @@ th > .column-sort:hover {
   order: 1;
 }
 
-/* A footer laying a standalone action button (course edit) on the same row as
-   an add-bar (clone), to the right of the add-bar's submit button. The add-bar
-   grows to fill the row; the button holds its natural width at the end. */
+/* A footer laying a standalone action button (an LTI platform's Disable) on
+   the same row as an add-bar (its Add deployment), to the right of the
+   add-bar's submit button. The add-bar grows to fill the row; the button holds
+   its natural width at the end. */
 .footer-row {
   align-items: center;
   display: flex;
@@ -2185,12 +2186,12 @@ th > .column-sort:hover {
 }
 
 @media (max-width: 640px) {
-  /* On a phone the course-record footer stacks the clone title field, its
-     "Clone course" button, and "Edit" onto three lines. Dropping the clone
-     form's own box (display: contents) floats its input and submit button
-     into the footer-row flex flow beside "Edit": the wide title field takes
-     its own line and the two buttons — Clone course and Edit — then share
-     the next. Same technique as .correction-bars. */
+  /* On a phone a footer row would stack the add-bar's fields, its submit
+     button, and the standalone button each onto a line. Dropping the add-bar
+     form's own box (display: contents) floats its inputs and submit button
+     into the footer-row flex flow beside the other button: the wide fields
+     take their own lines and the two buttons then share the last. Same
+     technique as .correction-bars. */
   .footer-row > .create-bar {
     display: contents;
   }

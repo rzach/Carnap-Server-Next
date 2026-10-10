@@ -405,6 +405,10 @@ describe("native web workflow", () => {
 
       expect(archive.status).toBe(303);
       expect(unarchive.status).toBe(303);
+      // Both controls are on the list — archive on the row, unarchive in the
+      // drawer — so both return there, with a notice.
+      expect(expectLocation(archive)).toBe("/courses?archived=1");
+      expect(expectLocation(unarchive)).toBe("/courses?unarchived=1");
 
       // The status is the course's, named as such. The reader's membership
       // status is not shown: only an active member reaches the page.
@@ -419,12 +423,14 @@ describe("native web workflow", () => {
 
       // The list has no status column to be misread that way: an active
       // membership goes unsaid, and only an exception is badged beside the
-      // role. The archived drawer only exists once something is in it — with
-      // the count on the summary, so a closed drawer still says where the
-      // course went.
+      // role. Nor a timezone column, which told nobody which course was
+      // which; the course's actions follow the role. The archived drawer only
+      // exists once something is in it — with the count on the summary, so a
+      // closed drawer still says where the course went.
       expect(beforeListHtml).toContain(
-        '<th data-sort="" scope="col">Role</th></tr>',
+        '<th data-sort="" scope="col">Role</th><th scope="col">Actions</th></tr>',
       );
+      expect(beforeListHtml).not.toContain("America/New_York</td>");
       expect(beforeListHtml).not.toContain('<span class="status-badge');
       // The element, not the class: the page's inlined stylesheet names the
       // class whether or not anything wears it.
@@ -437,7 +443,9 @@ describe("native web workflow", () => {
       expect(archivedListHtml).toContain("Modal Logic");
       // Staff can act on their own archived course, so the column is there.
       expect(archivedListHtml).toContain('<th scope="col">Actions</th>');
-      expect(archivedListHtml).toContain("Unarchive");
+      expect(archivedListHtml).toContain(
+        'aria-label="Unarchive Modal Logic"',
+      );
     });
   });
 
@@ -663,6 +671,14 @@ describe("native web workflow", () => {
         formRequest({ csrfToken: student.csrfToken }, student.cookieHeader),
         env,
       );
+      const activeListHtml = await (
+        await appRequest(
+          createTestApp(),
+          "/courses",
+          { headers: htmlHeaders(student.cookieHeader) },
+          env,
+        )
+      ).text();
       const archive = await appRequest(
         createTestApp(),
         `${coursePath}/archive`,
@@ -682,6 +698,11 @@ describe("native web workflow", () => {
 
       expect(accepted.status).toBe(303);
       expect(archive.status).toBe(303);
+
+      // A student can neither edit nor clone, so the active table has no
+      // actions column either.
+      expect(activeListHtml).toContain("Set Theory");
+      expect(activeListHtml).not.toContain('<th scope="col">Actions</th>');
 
       // The archived course is still theirs, in the same drawer staff get —
       // it is the only route back to the work they did in it.
@@ -755,7 +776,27 @@ describe("native web workflow", () => {
       expect(html).toContain('data-dialog-target="membership-');
       expect(html).toContain("Update membership");
       expect(html).toContain("<dialog");
-      expect(html).toContain("Clone course");
+      // Editing and cloning the course are the list's, not the course page's.
+      expect(html).not.toContain("Clone course");
+      expect(html).not.toContain("Edit course");
+
+      const listHtml = await (
+        await appRequest(
+          createTestApp(),
+          "/courses",
+          { headers: htmlHeaders(instructor.cookieHeader) },
+          env,
+        )
+      ).text();
+
+      expect(listHtml).toContain(
+        `data-dialog-target="course-edit-${coursePath.split("/").pop()}"`,
+      );
+      expect(listHtml).toContain('aria-label="Clone Parity Course"');
+      expect(listHtml).toContain(`action="${coursePath}/clone"`);
+      expect(listHtml).toContain('placeholder="Parity Course copy"');
+      expect(listHtml).toContain(`action="${coursePath}/archive"`);
+      expect(listHtml).toContain('aria-label="Archive Parity Course"');
 
       const accommodationResponse = await appRequest(
         createTestApp(),

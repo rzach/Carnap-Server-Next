@@ -13,6 +13,7 @@ import type { StatusTone } from "./html";
 // the layout can import from here (`LocaleSwitcher` reuses `CsrfInput`) without
 // the two forming a cycle.
 import { useI18n } from "./i18n-context";
+import { ArchiveIcon, UnarchiveIcon } from "./icons";
 
 export interface SummaryItem {
   readonly label: string;
@@ -573,6 +574,44 @@ export const CreateBar: FC<{
  * natural group) and shares a form with these, since that is where the script
  * looks — so a page with one such form per row needs no ids.
  */
+/**
+ * The archive or unarchive control on a row of a list that has an archived
+ * drawer — the content library's, the course list's: an icon in a form,
+ * because it changes something and so has to POST to `path` + `/archive` or
+ * `/unarchive`. Named for its row, since a column of identical icons tells a
+ * reader listening to the page nothing about which row they are on.
+ */
+export const ArchiveToggle: FC<{
+  readonly archived: boolean;
+  readonly context: Context<AppBindings>;
+  /** What the row is called, for the control's name. */
+  readonly name: string;
+  readonly path: string;
+}> = ({ archived, context, name, path }) => {
+  const i18n = useI18n();
+  const label = archived
+    ? i18n.t("Unarchive {name}", { name })
+    : i18n.t("Archive {name}", { name });
+
+  return (
+    <form
+      action={`${path}/${archived ? "unarchive" : "archive"}`}
+      class="icon-form"
+      method="post"
+    >
+      <CsrfInput context={context} />
+      <button
+        aria-label={label}
+        class="icon-button"
+        title={label}
+        type="submit"
+      >
+        {archived ? <UnarchiveIcon /> : <ArchiveIcon />}
+      </button>
+    </form>
+  );
+};
+
 /**
  * A page modal: the shared dialog frame (`web/dialog.css`, which the
  * exercises' help panel wears too) with a titled header strip, a close

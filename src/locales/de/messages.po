@@ -895,13 +895,9 @@ msgstr "Punktzahl bestätigen"
 msgid "Approve the autograded score as final"
 msgstr "Die automatisch ermittelte Punktzahl als endgültig bestätigen"
 
-#: src/worker/web/content.tsx
+#: src/worker/web/components.tsx
 msgid "Archive {name}"
 msgstr "{name} archivieren"
-
-#: src/worker/web/courses.tsx
-msgid "Archive course"
-msgstr "Kurs archivieren"
 
 #: src/worker/web/content.tsx
 #: src/worker/web/courses.tsx
@@ -915,10 +911,6 @@ msgstr "Archivierte Inhalte ({count})"
 #: src/worker/web/courses.tsx
 msgid "Archived courses ({count})"
 msgstr "Archivierte Kurse ({count})"
-
-#: src/worker/web/courses.tsx
-msgid "Archiving moves this course out of the active list without deleting anything. You can unarchive it later."
-msgstr "Das Archivieren nimmt diesen Kurs aus der aktiven Liste, ohne etwas zu löschen. Sie können ihn später wieder aktivieren."
 
 #: src/worker/web/donate.tsx
 msgid "Arranges and funds fellowships for threatened and displaced scholars at host universities around the world, so they can keep researching and teaching in safety."
@@ -1370,6 +1362,10 @@ msgstr "Klicken Sie auf ein Brett oder wechseln Sie mit Tab hinein, damit die Pa
 #: src/worker/web/admin-lti.tsx
 msgid "Client ID"
 msgstr "Client-ID"
+
+#: src/worker/web/courses.tsx
+msgid "Clone {title}"
+msgstr "{title} duplizieren"
 
 #: src/worker/web/courses.tsx
 msgid "Clone course"
@@ -2080,8 +2076,8 @@ msgid "Due time cannot be after available-until."
 msgstr "Der Fälligkeitszeitpunkt darf nicht nach „Verfügbar bis“ liegen."
 
 #: src/worker/web/courses.tsx
-msgid "Edit"
-msgstr "Bearbeiten"
+msgid "Edit {title}"
+msgstr "{title} bearbeiten"
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Edit assignment"
@@ -5194,6 +5190,10 @@ msgstr "Die Markierung neben der Schaltfläche „Antwort abgeben“ zeigt, ob d
 msgid "The most recent administrative audit events."
 msgstr "Die neuesten administrativen Prüfereignisse."
 
+#: src/worker/web/courses.tsx
+msgid "The new course copies this course's assignments and their settings, dates included. Members, enrollment links and student work are not copied."
+msgstr "Der neue Kurs übernimmt die Aufgaben dieses Kurses mit ihren Einstellungen, einschließlich der Termine. Mitglieder, Einschreibelinks und studentische Arbeiten werden nicht übernommen."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The PNF test applies only to first-order translations."
 msgstr "Der PNF-Test gilt nur für prädikatenlogische Übersetzungen."
@@ -5477,10 +5477,6 @@ msgstr "Dieser Kurs hat noch keine Aufgaben. Legen Sie zuerst in Carnap eine an 
 #: src/worker/application/lti.ts
 msgid "This course has not been set up in Carnap yet. Ask your instructor to open it from the LMS first."
 msgstr "Dieser Kurs ist in Carnap noch nicht eingerichtet. Bitten Sie Ihre Lehrperson, ihn zuerst aus dem LMS zu öffnen."
-
-#: src/worker/web/courses.tsx
-msgid "This course is archived. Unarchive it to return it to the active list."
-msgstr "Dieser Kurs ist archiviert. Holen Sie ihn zurück, um ihn wieder in die aktive Liste aufzunehmen."
 
 #: src/worker/application/lti-admin.ts
 msgid "This deployment is already registered for the platform."
@@ -5859,17 +5855,9 @@ msgstr "Die Zeile eingeben, die sie entwickelt; Alt-C funktioniert auch, währen
 msgid "Type the rule that justifies each inference in the field beneath its line. Add hypothesis makes a leaf that cites one of the goal's hypotheses."
 msgstr "Tragen Sie die Regel, die den jeweiligen Schluss rechtfertigt, in das Feld unter der Zeile ein. „Hypothese hinzufügen“ erzeugt ein Blatt, das eine der Hypothesen des Ziels zitiert."
 
-#: src/worker/web/courses.tsx
-msgid "Unarchive"
-msgstr "Aus dem Archiv holen"
-
-#: src/worker/web/content.tsx
+#: src/worker/web/components.tsx
 msgid "Unarchive {name}"
 msgstr "{name} aus dem Archiv holen"
-
-#: src/worker/web/courses.tsx
-msgid "Unarchive course"
-msgstr "Kurs aus dem Archiv holen"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Undid the last change."

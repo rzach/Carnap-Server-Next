@@ -24,6 +24,7 @@ import {
 } from "./assignments";
 import { coursesCrumb } from "./breadcrumbs";
 import {
+  ArchiveToggle,
   BrowserTimezoneInput,
   ChoiceNotes,
   ContentSplit,
@@ -43,7 +44,13 @@ import {
   Time,
   TimestampInput,
 } from "./components";
-import { AccessibilityIcon, CrownIcon, ShieldUserIcon } from "./icons";
+import {
+  AccessibilityIcon,
+  CopyIcon,
+  CrownIcon,
+  PenIcon,
+  ShieldUserIcon,
+} from "./icons";
 import {
   COURSE_ROLE_ORDER,
   courseRoleLabel,
@@ -193,11 +200,13 @@ export const CreateCourseForm: FC<{
 };
 
 const CourseRow: FC<{
+  readonly context: Context<AppBindings>;
   readonly entry: {
     readonly course: Course;
     readonly membership: CourseMembership;
   };
-}> = ({ entry }) => {
+  readonly showActions: boolean;
+}> = ({ context, entry, showActions }) => {
   const i18n = useI18n();
 
   return (
@@ -205,11 +214,29 @@ const CourseRow: FC<{
       <td>
         <a href={`/courses/${entry.course.id}`}>{entry.course.title}</a>
       </td>
-      <td>{entry.course.timezone}</td>
       <td data-sort-value={membershipSortValue(entry.membership)}>
         {courseRoleLabel(i18n, entry.membership.role)}
         <MembershipStatusBadge status={entry.membership.status} />
       </td>
+      {showActions ? (
+        <td>
+          {managesCourse(entry.membership) ? (
+            <>
+              <CourseEditControl context={context} course={entry.course} />
+              <CourseCloneControl context={context} course={entry.course} />
+              {/* One click, no confirmation, as in the content library: the
+                  course keeps everything, and the drawer below takes it back
+                  out in another. */}
+              <ArchiveToggle
+                archived={false}
+                context={context}
+                name={entry.course.title}
+                path={`/courses/${entry.course.id}`}
+              />
+            </>
+          ) : null}
+        </td>
+      ) : null}
     </tr>
   );
 };
@@ -240,13 +267,14 @@ const CoursesCreateBar: FC<{ readonly context: Context<AppBindings> }> = ({
 
 const CoursesTable: FC<{
   readonly canCreate: boolean;
+  readonly context: Context<AppBindings>;
   readonly courses: readonly {
     readonly course: Course;
     readonly membership: CourseMembership;
   }[];
   /** Whether the drawer below holds anything, which changes what empty means. */
   readonly hasArchived: boolean;
-}> = ({ canCreate, courses, hasArchived }) => {
+}> = ({ canCreate, context, courses, hasArchived }) => {
   const i18n = useI18n();
 
   if (courses.length === 0) {
@@ -274,18 +302,28 @@ const CoursesTable: FC<{
     );
   }
 
+  // As in the archived drawer: no column at all for a reader who teaches none
+  // of these, rather than one standing empty beside every row.
+  const showActions = courses.some((entry) =>
+    managesCourse(entry.membership),
+  );
+
   return (
     <TableScroll>
       <thead>
         <tr>
           <SortHeader label={i18n.t("Course")} />
-          <SortHeader label={i18n.t("Timezone")} />
           <SortHeader label={i18n.t("Role")} />
+          {showActions ? <th scope="col">{i18n.t("Actions")}</th> : null}
         </tr>
       </thead>
       <tbody>
         {courses.map((entry) => (
-          <CourseRow entry={entry} />
+          <CourseRow
+            context={context}
+            entry={entry}
+            showActions={showActions}
+          />
         ))}
       </tbody>
     </TableScroll>
@@ -1042,10 +1080,18 @@ const GradeSyncSheet: FC<{
 };
 
 /**
- * The course editor: a modal letting an instructor rename the course or change
- * its timezone, plus archive/unarchive it. Archiving keeps the record and all
- * its data but moves it out of the active course list. It posts to the course
- * update route, which redirects back with a notice.
+ * Whether the reader may edit, archive, unarchive or clone a course: its
+ * instructors, whom the service checks for each of those. It decides both the
+ * row's controls and whether a list draws its actions column at all.
+ */
+function managesCourse(membership: CourseMembership): boolean {
+  return membership.role === "instructor";
+}
+
+/**
+ * The course editor: a modal letting an instructor rename an active course or
+ * change its timezone. It returns to the course list with a notice. Archiving
+ * is the row's own control, beside this one's.
  */
 const CourseEditDialog: FC<{
   readonly context: Context<AppBindings>;
@@ -1063,40 +1109,15 @@ const CourseEditDialog: FC<{
           <br />
           <input name="title" required value={course.title} />
         </label>
-        <label for={`course-edit-timezone-${course.id}`}>
+        <label for={`${dialogId}-timezone`}>
           {i18n.t("Timezone")}
           <br />
           <TimezoneSelect
-            id={`course-edit-timezone-${course.id}`}
+            id={`${dialogId}-timezone`}
             selected={course.timezone}
           />
         </label>
         <button type="submit">{i18n.t("Save changes")}</button>
-      </form>
-      <form
-        action={`/courses/${course.id}/${
-          course.archivedAt === null ? "archive" : "unarchive"
-        }`}
-        method="post"
-      >
-        <CsrfInput context={context} />
-        <p class="small">
-          {course.archivedAt === null
-            ? i18n.t(
-                "Archiving moves this course out of the active list without deleting anything. You can unarchive it later.",
-              )
-            : i18n.t(
-                "This course is archived. Unarchive it to return it to the active list.",
-              )}
-        </p>
-        <button
-          class={course.archivedAt === null ? "danger" : "secondary"}
-          type="submit"
-        >
-          {course.archivedAt === null
-            ? i18n.t("Archive course")
-            : i18n.t("Unarchive course")}
-        </button>
       </form>
     </ModalDialog>
   );
@@ -1108,11 +1129,18 @@ const CourseEditControl: FC<{
 }> = ({ context, course }) => {
   const i18n = useI18n();
   const dialogId = `course-edit-${course.id}`;
+  const label = i18n.t("Edit {title}", { title: course.title });
 
   return (
     <>
-      <button class="secondary" data-dialog-target={dialogId} type="button">
-        {i18n.t("Edit")}
+      <button
+        aria-label={label}
+        class="icon-button"
+        data-dialog-target={dialogId}
+        title={label}
+        type="button"
+      >
+        <PenIcon />
       </button>
       <CourseEditDialog
         context={context}
@@ -1123,9 +1151,59 @@ const CourseEditControl: FC<{
   );
 };
 
-function canUnarchive(membership: CourseMembership): boolean {
-  return membership.role === "instructor";
-}
+/**
+ * Clone a course: a new course, with the reader as its only instructor, holding
+ * copies of this one's assignments. It lands on the new course, since the next
+ * thing done with a clone is setting it up for its term.
+ */
+const CourseCloneControl: FC<{
+  readonly context: Context<AppBindings>;
+  readonly course: Course;
+}> = ({ context, course }) => {
+  const i18n = useI18n();
+  const dialogId = `course-clone-${course.id}`;
+  const fieldId = `${dialogId}-title`;
+  const label = i18n.t("Clone {title}", { title: course.title });
+
+  return (
+    <>
+      <button
+        aria-label={label}
+        class="icon-button"
+        data-dialog-target={dialogId}
+        title={label}
+        type="button"
+      >
+        <CopyIcon />
+      </button>
+      <ModalDialog id={dialogId} title={i18n.t("Clone course")}>
+        <form action={`/courses/${course.id}/clone`} method="post">
+          <CsrfInput context={context} />
+          <p class="small">
+            {i18n.t(
+              "The new course copies this course's assignments and their settings, dates included. Members, enrollment links and student work are not copied.",
+            )}
+          </p>
+          <label for={fieldId}>
+            {i18n.t("New course title")}
+            <br />
+            {/* A hint rather than a value: a prefilled input has to be
+                cleared before it can be typed over. It is only a hint —
+                `required`, and no server-side default, so the name a clone
+                gets is always one somebody chose. */}
+            <input
+              id={fieldId}
+              name="title"
+              placeholder={i18n.t("{title} copy", { title: course.title })}
+              required
+            />
+          </label>
+          <button type="submit">{i18n.t("Clone course")}</button>
+        </form>
+      </ModalDialog>
+    </>
+  );
+};
 
 /**
  * Archived courses, listed inside the drawer below the active ones. A student
@@ -1142,7 +1220,9 @@ const ArchivedCoursesTable: FC<{
   }[];
 }> = ({ context, courses }) => {
   const i18n = useI18n();
-  const showActions = courses.some((entry) => canUnarchive(entry.membership));
+  const showActions = courses.some((entry) =>
+    managesCourse(entry.membership),
+  );
   return (
     <TableScroll>
       <thead>
@@ -1168,16 +1248,13 @@ const ArchivedCoursesTable: FC<{
             </td>
             {showActions ? (
               <td>
-                {canUnarchive(entry.membership) ? (
-                  <form
-                    action={`/courses/${entry.course.id}/unarchive`}
-                    method="post"
-                  >
-                    <CsrfInput context={context} />
-                    <button class="secondary" type="submit">
-                      {i18n.t("Unarchive")}
-                    </button>
-                  </form>
+                {managesCourse(entry.membership) ? (
+                  <ArchiveToggle
+                    archived
+                    context={context}
+                    name={entry.course.title}
+                    path={`/courses/${entry.course.id}`}
+                  />
                 ) : null}
               </td>
             ) : null}
@@ -1188,38 +1265,13 @@ const ArchivedCoursesTable: FC<{
   );
 };
 
-const CloneCourseBar: FC<{
-  readonly context: Context<AppBindings>;
-  readonly course: Course;
-}> = ({ context, course }) => {
-  const i18n = useI18n();
-
-  return (
-    <CreateBar
-      action={`/courses/${course.id}/clone`}
-      context={context}
-      submitLabel={i18n.t("Clone course")}
-    >
-      {/* A hint rather than a value, like every other field on this page: a
-          prefilled input has to be cleared before it can be typed over. It is
-          only a hint — `required`, and no server-side default, so the name a
-          clone gets is always one somebody chose. */}
-      <input
-        aria-label={i18n.t("New course title")}
-        name="title"
-        placeholder={i18n.t("{title} copy", { title: course.title })}
-        required
-      />
-    </CreateBar>
-  );
-};
-
 export interface CourseListViewModel {
   readonly canCreate: boolean;
   readonly courses: readonly {
     readonly course: Course;
     readonly membership: CourseMembership;
   }[];
+  readonly notices: readonly string[];
 }
 
 export interface CourseDetailViewModel {
@@ -1281,6 +1333,9 @@ export function renderCourseList(
     context,
     { title: i18n.t("Courses") },
     <>
+      {model.notices.map((message) => (
+        <Notice>{message}</Notice>
+      ))}
       <Sheet
         description={description}
         footer={
@@ -1290,6 +1345,7 @@ export function renderCourseList(
       >
         <CoursesTable
           canCreate={model.canCreate}
+          context={context}
           courses={activeCourses}
           hasArchived={archivedCourses.length > 0}
         />
@@ -1315,7 +1371,9 @@ export function renderCourseList(
                   ended. A reader who is staff on even one of them gets the
                   staff sentence; the table's actions column follows the same
                   rule. */}
-              {archivedCourses.some((entry) => canUnarchive(entry.membership))
+              {archivedCourses.some((entry) =>
+                managesCourse(entry.membership),
+              )
                 ? i18n.t(
                     "Courses you have archived. They keep all their data and can be returned to the active list at any time.",
                   )
@@ -1402,14 +1460,6 @@ export function renderCourseDetail(
   const courseRecord = (
     <Sheet
       description={i18n.t("Course status, membership, and timezone.")}
-      footer={
-        model.page === "instructor" ? (
-          <div class="footer-row">
-            <CloneCourseBar context={context} course={model.course} />
-            <CourseEditControl context={context} course={model.course} />
-          </div>
-        ) : undefined
-      }
       summary={
         // The course's status exists in both states: it is what an instructor
         // checks after archiving, and a cell that appeared only once a course

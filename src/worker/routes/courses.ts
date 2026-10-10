@@ -177,9 +177,6 @@ function detailNotices(
   return [
     { message: i18n.t("Course created."), param: "created" },
     { message: i18n.t("Course cloned."), param: "cloned" },
-    { message: i18n.t("Course updated."), param: "courseUpdated" },
-    { message: i18n.t("Course archived."), param: "archived" },
-    { message: i18n.t("Course unarchived."), param: "unarchived" },
     { message: i18n.t("You have joined the course."), param: "enrolled" },
     {
       message: i18n.t("Accommodation saved."),
@@ -207,8 +204,26 @@ function detailNotices(
   ];
 }
 
-function collectDetailNotices(url: URL, i18n: Translator): readonly string[] {
-  return detailNotices(i18n)
+/**
+ * The course list's own: a course's edit and archive controls are on its row,
+ * and the drawer's unarchive on its, and all of them return here. Cloning does
+ * not; it lands on the new course.
+ */
+function listNotices(
+  i18n: Translator,
+): readonly { readonly message: string; readonly param: string }[] {
+  return [
+    { message: i18n.t("Course updated."), param: "courseUpdated" },
+    { message: i18n.t("Course archived."), param: "archived" },
+    { message: i18n.t("Course unarchived."), param: "unarchived" },
+  ];
+}
+
+function collectNotices(
+  notices: readonly { readonly message: string; readonly param: string }[],
+  url: URL,
+): readonly string[] {
+  return notices
     .filter((entry) => url.searchParams.has(entry.param))
     .map((entry) => entry.message);
 }
@@ -228,6 +243,10 @@ async function courseListPage(
   return renderCourseList(context, {
     canCreate: canCreateCourse(actor),
     courses,
+    notices: collectNotices(
+      listNotices(context.get("i18n")),
+      new URL(context.req.url),
+    ),
   });
 }
 
@@ -274,7 +293,7 @@ async function updateCourseFromForm(
       title,
     });
 
-    return redirect(`/courses/${courseId}?courseUpdated=1`);
+    return redirect("/courses?courseUpdated=1");
   } catch (error) {
     const i18n = context.get("i18n");
 
@@ -297,9 +316,7 @@ async function setCourseArchivedFromForm(
   try {
     await courseService(context).setCourseArchived(actor, courseId, archived);
 
-    return redirect(
-      `/courses/${courseId}?${archived ? "archived" : "unarchived"}=1`,
-    );
+    return redirect(`/courses?${archived ? "archived" : "unarchived"}=1`);
   } catch (error) {
     const i18n = context.get("i18n");
 
@@ -401,7 +418,7 @@ async function courseDetailPage(
       membership: detail.membership,
       memberships: detail.memberships,
       newEnrollmentLinkUrl,
-      notices: collectDetailNotices(url, context.get("i18n")),
+      notices: collectNotices(detailNotices(context.get("i18n")), url),
       now: timestampNow(),
       page,
       scorecard,

@@ -789,6 +789,12 @@ export async function collectFixtures(
   await add("login", "/login");
   await add("donate", "/donate");
   await add("courses-index", "/courses", instructor);
+  // The list's own notices: its rows edit and archive, its drawer unarchives.
+  await add(
+    "courses-index-notices",
+    `/courses${noticeQuery("courseUpdated", "archived", "unarchived")}`,
+    instructor,
+  );
   await add("course-detail-instructor", `/courses/${courseId}`, instructor);
   await add("course-detail-student", `/courses/${courseId}`, student);
   await add("course-detail-assistant", `/courses/${courseId}`, assistant);
@@ -806,9 +812,6 @@ export async function collectFixtures(
     `/courses/${courseId}${noticeQuery(
       "created",
       "cloned",
-      "courseUpdated",
-      "archived",
-      "unarchived",
       "enrolled",
       "accommodationSaved",
       "accommodationCleared",

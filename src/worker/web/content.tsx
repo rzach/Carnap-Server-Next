@@ -25,6 +25,7 @@ import {
 import { hostedTheoryPath } from "../logic/theories";
 import { contentCrumb, contentItemCrumb } from "./breadcrumbs";
 import {
+  ArchiveToggle,
   ChoiceNotes,
   ContentFrame,
   CopyField,
@@ -42,13 +43,7 @@ import {
 } from "./components";
 import type { ContentDocumentModel } from "./content-document";
 import { renderContentDocument } from "./content-document";
-import {
-  ArchiveIcon,
-  DownloadIcon,
-  PenIcon,
-  PeopleIcon,
-  UnarchiveIcon,
-} from "./icons";
+import { DownloadIcon, PenIcon, PeopleIcon } from "./icons";
 import { type PageStatus, renderShell, useI18n } from "./layout";
 import { revisionDetailsText } from "./revisions";
 import { SortHeader } from "./table-sort";
@@ -149,41 +144,6 @@ const SourceDownload: FC<{
 );
 
 /**
- * The archive or unarchive control on a library row: an icon in a form,
- * because it changes something and so has to POST. Named for the row the
- * way the download is, since a column of identical icons tells a reader
- * listening to the page nothing about which item they are on.
- */
-const ArchiveToggle: FC<{
-  readonly context: Context<AppBindings>;
-  readonly item: ContentItem;
-}> = ({ context, item }) => {
-  const i18n = useI18n();
-  const archived = item.archivedAt !== null;
-  const label = archived
-    ? i18n.t("Unarchive {name}", { name: item.title })
-    : i18n.t("Archive {name}", { name: item.title });
-
-  return (
-    <form
-      action={`/content/${item.id}/${archived ? "unarchive" : "archive"}`}
-      class="icon-form"
-      method="post"
-    >
-      <CsrfInput context={context} />
-      <button
-        aria-label={label}
-        class="icon-button"
-        title={label}
-        type="submit"
-      >
-        {archived ? <UnarchiveIcon /> : <ArchiveIcon />}
-      </button>
-    </form>
-  );
-};
-
-/**
  * The library's rows, active or archived: the same table either way, with
  * the date column saying when the item was last written or when it was put
  * away, and the actions column offering the way across. Downloads are on the
@@ -249,7 +209,12 @@ const ItemsTable: FC<{
               </td>
               {canAuthor ? (
                 <td>
-                  <ArchiveToggle context={context} item={item} />
+                  <ArchiveToggle
+                    archived={item.archivedAt !== null}
+                    context={context}
+                    name={item.title}
+                    path={`/content/${item.id}`}
+                  />
                 </td>
               ) : null}
             </tr>
