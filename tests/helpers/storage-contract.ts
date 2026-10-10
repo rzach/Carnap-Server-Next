@@ -418,7 +418,7 @@ export function describeStorageContract(
       });
     });
 
-    test("login rate limit hits count per bucket and prune by age", async () => {
+    test("login rate limit hits count per bucket, with the oldest, and prune by age", async () => {
       await withStorage(async ({ stores }) => {
         const older = "2026-01-02T03:00:00.000Z";
 
@@ -433,16 +433,20 @@ export function describeStorageContract(
 
         // A grouped count, which is the one query shape in here that a driver
         // could plausibly disagree about: buckets with no hits are absent
-        // rather than zero, and hits before `since` do not count.
+        // rather than zero, hits before `since` do not count, and the oldest
+        // is the oldest of those that do.
         await expect(
           stores.auth.countLoginRateLimitHits(
             ["email:a", "ip:x", "ip:y"],
             NOW,
           ),
-        ).resolves.toEqual({ "email:a": 1, "ip:x": 1 });
+        ).resolves.toEqual({
+          "email:a": { hits: 1, oldest: NOW },
+          "ip:x": { hits: 1, oldest: NOW },
+        });
         await expect(
           stores.auth.countLoginRateLimitHits(["email:a"], older),
-        ).resolves.toEqual({ "email:a": 2 });
+        ).resolves.toEqual({ "email:a": { hits: 2, oldest: older } });
         await expect(
           stores.auth.countLoginRateLimitHits([], older),
         ).resolves.toEqual({});
@@ -455,7 +459,7 @@ export function describeStorageContract(
 
         await expect(
           stores.auth.countLoginRateLimitHits(["email:a"], older),
-        ).resolves.toEqual({ "email:a": 2 });
+        ).resolves.toEqual({ "email:a": { hits: 2, oldest: NOW } });
       });
     });
 

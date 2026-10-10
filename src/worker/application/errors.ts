@@ -22,6 +22,12 @@ export class AppHttpError extends Error {
    */
   readonly translatable: TranslatableMessage | undefined;
 
+  /**
+   * How long the caller should wait before asking again, sent as `Retry-After`
+   * on whichever response answers the error. Only a 429 that knows has one.
+   */
+  readonly retryAfterSeconds: number | undefined;
+
   constructor(
     readonly status: AppErrorStatus,
     readonly code: string,
@@ -33,10 +39,12 @@ export class AppHttpError extends Error {
      * anything will render them.
      */
     message: string | TranslatableMessage,
+    options: { readonly retryAfterSeconds?: number } = {},
   ) {
     super(typeof message === "string" ? message : resolveMessage(message));
     this.name = "AppHttpError";
     this.translatable = typeof message === "string" ? undefined : message;
+    this.retryAfterSeconds = options.retryAfterSeconds;
   }
 
   /**

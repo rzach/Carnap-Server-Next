@@ -221,6 +221,11 @@ export interface RecordLoginRateLimitHitInput {
   readonly createdAt: Timestamp;
 }
 
+export interface LoginRateLimitBucketCount {
+  readonly hits: number;
+  readonly oldest: Timestamp;
+}
+
 export interface AuthStore {
   createNativeLoginChallenge(
     input: CreateNativeLoginChallengeInput,
@@ -239,13 +244,14 @@ export interface AuthStore {
     revokedAt: Timestamp,
   ): Promise<AuthSession | null>;
   /**
-   * How many hits each of `buckets` has taken at or after `since`. Buckets with
-   * none are absent from the result rather than present at zero.
+   * How many hits each of `buckets` has taken at or after `since`, and when the
+   * oldest of them was — the hit whose ageing out frees the next slot. Buckets
+   * with none are absent from the result rather than present at zero.
    */
   countLoginRateLimitHits(
     buckets: readonly string[],
     since: Timestamp,
-  ): Promise<Record<string, number>>;
+  ): Promise<Record<string, LoginRateLimitBucketCount>>;
   /**
    * Charge one hit to each bucket, and drop every hit that fell out of the
    * window. The prune rides along with the write because this is the only

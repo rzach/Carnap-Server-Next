@@ -115,6 +115,10 @@ export const errorHandler: ErrorHandler<AppBindings> = (error, context) => {
       logServerError(context, error.code, error);
     }
 
+    if (error.retryAfterSeconds !== undefined) {
+      context.header("Retry-After", String(error.retryAfterSeconds));
+    }
+
     return errorResponse(
       context,
       error.status,

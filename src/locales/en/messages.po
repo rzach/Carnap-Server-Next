@@ -5590,8 +5590,12 @@ msgid "Too many requests"
 msgstr "Too many requests"
 
 #: src/worker/application/login-rate-limit.ts
-msgid "Too many sign-in links have been requested. Check your inbox — a link sent in the last few minutes still works — or try again shortly."
-msgstr "Too many sign-in links have been requested. Check your inbox — a link sent in the last few minutes still works — or try again shortly."
+msgid "Too many sign-in links have been requested. Check your inbox — a link sent in the last few minutes still works — or try again in {minutes} minutes."
+msgstr "Too many sign-in links have been requested. Check your inbox — a link sent in the last few minutes still works — or try again in {minutes} minutes."
+
+#: src/worker/application/login-rate-limit.ts
+msgid "Too many sign-in links have been requested. Check your inbox — a link sent in the last few minutes still works — or try again in a minute."
+msgstr "Too many sign-in links have been requested. Check your inbox — a link sent in the last few minutes still works — or try again in a minute."
 
 #: src/worker/exercises/world/strings.ts
 msgid "Took back your last move."

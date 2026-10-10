@@ -92,13 +92,29 @@ async function bucketKey(scope: string, value: string): Promise<string> {
   return `${scope}:${await hashAuthToken(value)}`;
 }
 
-function tooManyLoginRequests(): AppHttpError {
+/**
+ * Refuse a request, saying how long until the next link can be sent.
+ *
+ * Whole minutes, rounded up, and never fewer than one: a reader told "0
+ * minutes" tries at once and is refused again. The sentence is chosen here
+ * rather than asked to agree with its number, because a deferred message is
+ * filled without ICU (see `deferred`).
+ */
+function tooManyLoginRequests(waitSeconds: number): AppHttpError {
+  const minutes = Math.max(1, Math.ceil(waitSeconds / 60));
+
   return new AppHttpError(
     429,
     "login_rate_limited",
-    deferred.i18n.t(
-      "Too many sign-in links have been requested. Check your inbox — a link sent in the last few minutes still works — or try again shortly.",
-    ),
+    minutes === 1
+      ? deferred.i18n.t(
+          "Too many sign-in links have been requested. Check your inbox — a link sent in the last few minutes still works — or try again in a minute.",
+        )
+      : deferred.i18n.t(
+          "Too many sign-in links have been requested. Check your inbox — a link sent in the last few minutes still works — or try again in {minutes} minutes.",
+          { minutes },
+        ),
+    { retryAfterSeconds: Math.max(1, Math.ceil(waitSeconds)) },
   );
 }
 
@@ -160,10 +176,21 @@ export function createStoredLoginRateLimiter(
         windowStart,
       );
 
-      if (
-        limits.some((entry) => (counts[entry.bucket] ?? 0) >= entry.limit)
-      ) {
-        throw tooManyLoginRequests();
+      // A full bucket frees a slot when its oldest hit leaves the window. Refused
+      // requests are never charged, so a full bucket holds exactly its limit
+      // and the oldest hit is the one to wait for — except after the race
+      // described above, when it holds a few more and this says a little too
+      // soon. The longer wait wins when both are full.
+      const waits = limits.flatMap((entry) => {
+        const bucket = counts[entry.bucket];
+
+        return bucket === undefined || bucket.hits < entry.limit
+          ? []
+          : [(Date.parse(bucket.oldest) - Date.parse(windowStart)) / 1000];
+      });
+
+      if (waits.length > 0) {
+        throw tooManyLoginRequests(Math.max(...waits));
       }
 
       const createdAt = timestampNow(nowDate);

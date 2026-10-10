@@ -1,5 +1,6 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
 import { LOGIN_TTL_SECONDS } from "../src/worker/application/auth";
+import { LOGIN_RATE_LIMIT_PER_EMAIL } from "../src/worker/application/login-rate-limit";
 import { LTI_LINK_TTL_SECONDS } from "../src/worker/application/lti";
 import type { Env } from "../src/worker/env";
 import { i18nFor } from "../src/worker/i18n";
@@ -1203,6 +1204,29 @@ describe("native web workflow", () => {
 
       expect(user).not.toBeNull();
       expect(user?.name).toBeNull();
+    });
+  });
+
+  test("a throttled login form says how long to wait, and sends Retry-After", async () => {
+    await withStorage(async (_storage, env) => {
+      const post = () =>
+        appRequest(
+          createTestApp(),
+          "/login",
+          formRequest({ email: "ada@example.test" }),
+          env,
+        );
+
+      for (let attempt = 0; attempt < LOGIN_RATE_LIMIT_PER_EMAIL; attempt++) {
+        await post();
+      }
+
+      const refused = await post();
+      const html = await refused.text();
+
+      expect(refused.status).toBe(429);
+      expect(Number(refused.headers.get("Retry-After"))).toBeGreaterThan(0);
+      expect(html).toMatch(/try again in (\d+ minutes|a minute)\./);
     });
   });
 

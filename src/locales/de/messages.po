@@ -5590,8 +5590,12 @@ msgid "Too many requests"
 msgstr "Zu viele Anfragen"
 
 #: src/worker/application/login-rate-limit.ts
-msgid "Too many sign-in links have been requested. Check your inbox — a link sent in the last few minutes still works — or try again shortly."
-msgstr "Es wurden zu viele Anmeldelinks angefordert. Sehen Sie in Ihrem Posteingang nach – ein in den letzten Minuten gesendeter Link funktioniert noch – oder versuchen Sie es in Kürze erneut."
+msgid "Too many sign-in links have been requested. Check your inbox — a link sent in the last few minutes still works — or try again in {minutes} minutes."
+msgstr "Es wurden zu viele Anmeldelinks angefordert. Sehen Sie in Ihrem Posteingang nach – ein in den letzten Minuten gesendeter Link funktioniert noch – oder versuchen Sie es in {minutes} Minuten erneut."
+
+#: src/worker/application/login-rate-limit.ts
+msgid "Too many sign-in links have been requested. Check your inbox — a link sent in the last few minutes still works — or try again in a minute."
+msgstr "Es wurden zu viele Anmeldelinks angefordert. Sehen Sie in Ihrem Posteingang nach – ein in den letzten Minuten gesendeter Link funktioniert noch – oder versuchen Sie es in einer Minute erneut."
 
 #: src/worker/exercises/world/strings.ts
 msgid "Took back your last move."

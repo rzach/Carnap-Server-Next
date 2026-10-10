@@ -12,6 +12,7 @@ import {
   like,
   lt,
   lte,
+  min,
   ne,
   or,
   sql,
@@ -54,6 +55,7 @@ import type {
   ExcuseAssignmentExerciseInput,
   FailLtiGradeJobInput,
   GrantPlatformCapabilityInput,
+  LoginRateLimitBucketCount,
   LtiStore,
   ManifestPointsRow,
   NextRevisionSlot,
@@ -940,13 +942,17 @@ class SqliteAuthStore implements AuthStore {
   async countLoginRateLimitHits(
     buckets: readonly string[],
     since: string,
-  ): Promise<Record<string, number>> {
+  ): Promise<Record<string, LoginRateLimitBucketCount>> {
     if (buckets.length === 0) {
       return {};
     }
 
     const rows = await this.db
-      .select({ bucket: loginRateLimitHits.bucket, hits: count() })
+      .select({
+        bucket: loginRateLimitHits.bucket,
+        hits: count(),
+        oldest: min(loginRateLimitHits.createdAt),
+      })
       .from(loginRateLimitHits)
       .where(
         and(
@@ -956,7 +962,13 @@ class SqliteAuthStore implements AuthStore {
       )
       .groupBy(loginRateLimitHits.bucket);
 
-    return Object.fromEntries(rows.map((row) => [row.bucket, row.hits]));
+    // A group exists only because it has a row, so its minimum is never null.
+    return Object.fromEntries(
+      rows.map((row) => [
+        row.bucket,
+        { hits: row.hits, oldest: row.oldest ?? since },
+      ]),
+    );
   }
 
   async recordLoginRateLimitHits(

@@ -1,10 +1,12 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
 
 import { requireInstructor } from "../src/worker/application/authorization";
+import type { AppHttpError } from "../src/worker/application/errors";
 import {
   createStoredLoginRateLimiter,
   LOGIN_RATE_LIMIT_PER_EMAIL,
   LOGIN_RATE_LIMIT_PER_IP,
+  LOGIN_RATE_LIMIT_WINDOW_SECONDS,
 } from "../src/worker/application/login-rate-limit";
 import type { AppStores } from "../src/worker/application/stores";
 import type { Env } from "../src/worker/env";
@@ -397,6 +399,64 @@ describe("login rate limiting", () => {
         .first<{ hits: number }>();
 
       expect(remaining?.hits).toBe(1);
+    });
+  });
+
+  test("the refusal says how long until the oldest hit leaves the window", async () => {
+    await withStorage(async (storage) => {
+      const clock = { now: new Date("2026-01-02T03:00:00.000Z") };
+      const limiter = createStoredLoginRateLimiter({
+        auth: storage.stores.auth,
+        now: () => clock.now,
+      });
+      const input = {
+        email: "ada@example.test",
+        ipAddress: null,
+        turnstileVerified: false,
+      };
+
+      for (let attempt = 0; attempt < LOGIN_RATE_LIMIT_PER_EMAIL; attempt++) {
+        clock.now = new Date(clock.now.getTime() + 60_000);
+        await limiter.check(input);
+      }
+
+      const refusal = (at: string) => {
+        clock.now = new Date(at);
+
+        return limiter.check(input).then(
+          () => {
+            throw new Error("expected a refusal");
+          },
+          (error: unknown) => error as AppHttpError,
+        );
+      };
+
+      // The first hit was at 03:01, so it leaves the window at 03:16: from
+      // 03:05:30 that is ten and a half minutes, said as eleven.
+      const early = await refusal("2026-01-02T03:05:30.000Z");
+
+      expect(early.retryAfterSeconds).toBe(630);
+      expect(early.message).toContain("try again in 11 minutes.");
+
+      const late = await refusal("2026-01-02T03:15:40.000Z");
+
+      expect(late.retryAfterSeconds).toBe(20);
+      expect(late.message).toContain("try again in a minute.");
+    });
+  });
+
+  test("a refused request is told when to retry, in the header as well", async () => {
+    await withStorage(async (_storage, env) => {
+      for (let attempt = 0; attempt < LOGIN_RATE_LIMIT_PER_EMAIL; attempt++) {
+        await startLogin(env, "ada@example.test");
+      }
+
+      const response = await startLogin(env, "ada@example.test");
+      const retryAfter = Number(response.headers.get("Retry-After"));
+
+      expect(response.status).toBe(429);
+      expect(retryAfter).toBeGreaterThan(0);
+      expect(retryAfter).toBeLessThanOrEqual(LOGIN_RATE_LIMIT_WINDOW_SECONDS);
     });
   });
 

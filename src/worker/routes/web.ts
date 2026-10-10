@@ -171,6 +171,10 @@ webRoutes.post("/login", async (context) => {
     );
   } catch (error) {
     if (error instanceof AppHttpError) {
+      if (error.retryAfterSeconds !== undefined) {
+        context.header("Retry-After", String(error.retryAfterSeconds));
+      }
+
       return renderLoginError(context, {
         email,
         message: error.localize(context.get("i18n")),
