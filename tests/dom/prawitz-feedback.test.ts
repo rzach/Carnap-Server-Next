@@ -59,7 +59,7 @@ describe("Prawitz feedback", () => {
     const field = await typedLine("full", "top →");
 
     await until(() => field.classList.contains("is-error"));
-    expect(field.getAttribute("title")).toBe("Expected a formula.");
+    expect(field.getAttribute("data-problem")).toBe("Expected a formula.");
   });
 
   test("terse feedback withholds the refusal too", async () => {
@@ -69,7 +69,7 @@ describe("Prawitz feedback", () => {
     // there is nothing to wait for but the render; a tick is enough.
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(field.classList.contains("is-error")).toBe(false);
-    expect(field.getAttribute("title")).toBeNull();
+    expect(field.getAttribute("data-problem")).toBeNull();
   });
 
   test("a compiler that throws is reported on the root line", async () => {
@@ -80,7 +80,7 @@ describe("Prawitz feedback", () => {
 
     // The empty assumption was refused before `top` was typed, so the
     // underline is there already; what changes is the sentence.
-    await until(() => field.getAttribute("title") === ENGINE_FAILURE);
+    await until(() => field.getAttribute("data-problem") === ENGINE_FAILURE);
     expect(field.classList.contains("is-error")).toBe(true);
   });
 

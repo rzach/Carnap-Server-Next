@@ -94,6 +94,7 @@ import {
   stepToProblem,
 } from "./problem-keys";
 import { mountProblemLine } from "./problem-line";
+import { mountProblemPopup } from "./problem-popup";
 import { ProofExerciseElement } from "./proof-element";
 import { ToolbarIcon } from "./toolbar-icon";
 import { TOOLBAR_STYLES, type ToolbarIconName } from "./toolbar-icons";
@@ -651,9 +652,9 @@ function EditableField(props: {
       // Kept out of the tab order: the enclosing treeitem carries the roving
       // focus; a field is entered by click or by a shortcut on its node.
       tabIndex={-1}
-      // For the mouse. A screen reader hears the same text through the line's
-      // note, which a title on a field the focus is rarely on never reached.
-      title={props.error}
+      // For the mouse: the problem popup floats it on hover. A screen reader
+      // hears the same text through the line's note.
+      data-problem={props.error}
     />
   );
 }
@@ -1156,6 +1157,7 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
           this.t("Problem {index} of {count}", { count, index }),
       );
     }
+    mountProblemPopup(root, container, this.listeners.signal);
     this.rerender();
 
     container.addEventListener("keydown", (event) => this.onKeyDown(event), {

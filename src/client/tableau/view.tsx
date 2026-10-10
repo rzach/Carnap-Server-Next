@@ -329,7 +329,7 @@ export function TableauView(props: TableauViewProps) {
           tabIndex={
             props.picking !== undefined ? undefined : selected ? 0 : -1
           }
-          title={note}
+          data-problem={note}
         >
           {editing ? (
             <input
@@ -447,7 +447,7 @@ function endItem(
         gridRow: String(contentRow(placed.line)),
       }}
       tabIndex={props.picking !== undefined ? undefined : selected ? 0 : -1}
-      title={note}
+      data-problem={note}
     >
       <span aria-hidden="true" class="tableau-end-mark">
         {END_SYMBOLS[end.type]}

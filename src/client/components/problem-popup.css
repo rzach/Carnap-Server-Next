@@ -1,0 +1,41 @@
+/*
+ * The bubble a field's problem floats in on hover, in the tree, Prawitz and
+ * truth-tree widgets. Drawn as the CodeMirror editors draw theirs (the
+ * `.cm-tooltip` and `.cm-diagnostic` rules in `./proof-editor.css`, over
+ * CodeMirror's lint theme): the same inset fill, border and radius, the same
+ * type, and the same severity bar down the left of the message, so a problem
+ * reads alike in all four proof widgets. Served into each widget's shadow root
+ * by `mountProblemPopup`.
+ */
+
+.problem-popup {
+  background: var(--_inset-bg);
+  border: 1px solid var(--_border);
+  border-radius: 0.3rem;
+  box-sizing: border-box;
+  color: var(--_text);
+  font-family: system-ui, sans-serif;
+  font-size: 0.82rem;
+  font-weight: normal;
+  line-height: 1.5;
+  max-width: min(32rem, calc(100vw - 8px));
+  position: fixed;
+  z-index: 500;
+}
+/* Its own display would otherwise outrank the attribute's. */
+.problem-popup[hidden] {
+  display: none;
+}
+/* The bar overlaps the bubble's own left border, as CodeMirror's does. A
+   message can run to more than one line — two problems on one field are
+   joined by a newline — and without pre-line they collapse into one run-on. */
+.problem-popup-message {
+  border-left: 5px solid var(--_incorrect);
+  margin-left: -1px;
+  overflow-wrap: anywhere;
+  padding: 3px 6px 3px 8px;
+  white-space: pre-line;
+}
+.problem-popup[data-severity="warning"] .problem-popup-message {
+  border-left-color: var(--_warning);
+}

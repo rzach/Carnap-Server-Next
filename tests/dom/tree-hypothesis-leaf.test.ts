@@ -165,7 +165,9 @@ describe("a hypothesis leaf", () => {
     const [leaf] = leaves(mounted);
     expect(leaf?.textContent).toBe("");
     expect(leaf?.classList.contains("is-error")).toBe(true);
-    expect(leaf?.getAttribute("title")).toBe("The goal has no hypothesis #3");
+    expect(leaf?.getAttribute("data-problem")).toBe(
+      "The goal has no hypothesis #3",
+    );
     // The select still offers the goal's own, with the stale citation held
     // until one is chosen.
     const select = choice(mounted) as HTMLSelectElement;

@@ -96,6 +96,7 @@ import {
   mountHelpTrigger,
   openHelpDialog,
 } from "./help-dialog";
+import { mountProblemPopup } from "./problem-popup";
 import { ToolbarIcon } from "./toolbar-icon";
 import { TOOLBAR_STYLES, type ToolbarIconName } from "./toolbar-icons";
 
@@ -322,6 +323,7 @@ class CarnapTruthTree extends CarnapExerciseElement<TruthTreeStringId> {
 
     body.replaceChildren();
     this.mount = body;
+    mountProblemPopup(root, body, this.listeners.signal);
     this.rerender();
 
     const fill = data.develop === "fill";

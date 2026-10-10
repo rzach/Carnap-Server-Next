@@ -91,6 +91,7 @@ import {
   stepToProblem,
 } from "./problem-keys";
 import { mountProblemLine } from "./problem-line";
+import { mountProblemPopup } from "./problem-popup";
 import { ProofExerciseElement } from "./proof-element";
 import { ToolbarIcon } from "./toolbar-icon";
 import { TOOLBAR_STYLES, type ToolbarIconName } from "./toolbar-icons";
@@ -549,9 +550,14 @@ function EditableField(props: {
       // Kept out of the tab order: the enclosing treeitem carries the roving
       // focus; a field is entered by click or by pressing Enter on its node.
       tabIndex={-1}
-      // For the mouse. A screen reader hears the same text through the line's
-      // note, which a title on a field the focus is rarely on never reached.
-      title={props.error ?? props.warning}
+      // For the mouse: the problem popup floats it on hover. A screen reader
+      // hears the same text through the line's note.
+      data-problem={props.error ?? props.warning}
+      data-problem-severity={
+        props.error === undefined && props.warning !== undefined
+          ? "warning"
+          : undefined
+      }
     />
   );
 }
@@ -1012,6 +1018,7 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
           this.t("Problem {index} of {count}", { count, index }),
       );
     }
+    mountProblemPopup(root, container, this.listeners.signal);
     this.rerender();
 
     // Route Ctrl/Cmd-Z / -Y / -Shift-Z through our history rather than the

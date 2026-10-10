@@ -39,7 +39,9 @@ describe("a compiler that throws", () => {
     await until(() => compile.mock.calls.length > 0);
     await until(() => treeRootField(mounted).classList.contains("is-error"));
 
-    expect(treeRootField(mounted).getAttribute("title")).toBe(ENGINE_FAILURE);
+    expect(treeRootField(mounted).getAttribute("data-problem")).toBe(
+      ENGINE_FAILURE,
+    );
   });
 
   test("says nothing under terse feedback, like any other reason", async () => {

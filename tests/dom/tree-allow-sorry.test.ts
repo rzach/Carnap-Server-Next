@@ -87,7 +87,9 @@ describe("allow-sorry on the tree widget", () => {
     typeInto(treeRootRule(mounted), "sorry!");
     await until(() => treeRootRule(mounted).classList.contains("is-warning"));
 
-    expect(treeRootRule(mounted).getAttribute("title")).toContain("admitted");
+    expect(treeRootRule(mounted).getAttribute("data-problem")).toContain(
+      "admitted",
+    );
     // Not an error anywhere: the line itself is clean.
     expect(treeRootField(mounted).classList.contains("is-error")).toBe(false);
     expect(markState(mounted)).toBe("idle");

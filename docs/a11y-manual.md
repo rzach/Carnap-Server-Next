@@ -48,6 +48,11 @@ Use Tab, Shift-Tab, arrows, Enter, Space, and Escape.
         its place tinted in all four, with no tooltip covering the proof. It
         stays while focus moves to another line, and clears when the problem
         is fixed. The tint reads at a glance in both colour schemes.
+  - [ ] Problem bubbles, in all four proof widgets and the truth tree:
+        resting the pointer on an underlined problem floats its message in
+        the same bubble in every widget. The pointer can move onto the
+        bubble without it closing; it stays until the pointer leaves both,
+        and Escape closes it wherever focus is.
   - [ ] Model: reach and edit the domain, predicates, constants, and function
         values, then Check and Submit.
   - [ ] Translation: edit the formula, check with Enter, and reach Submit.
