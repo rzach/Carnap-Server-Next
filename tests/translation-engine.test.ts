@@ -170,9 +170,16 @@ function findCertificate(
     | null
     | undefined;
 
-  const edits = (actions ?? []).flatMap((action) =>
-    action.edit?.changes ? Object.values(action.edit.changes).flat() : [],
-  );
+  // A miss cut short by a search limit offers a "Retry with …" action, whose
+  // edit is the placeholder again with larger limits — not a proof.
+  const edits = (actions ?? []).flatMap((action) => {
+    const changes = action.edit?.changes
+      ? Object.values(action.edit.changes).flat()
+      : [];
+    return changes.some((edit) => edit.newText.includes("auto?"))
+      ? []
+      : changes;
+  });
   if (edits.length === 0) {
     return null;
   }

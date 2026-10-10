@@ -224,6 +224,21 @@ function applyEdits(text: string, edits: readonly LspTextEdit[]): string {
 }
 
 /**
+ * The edits of the actions that replace the placeholder with a proof. A miss
+ * cut short by a search limit comes back as a "Retry with …" action instead,
+ * whose edit is the placeholder again with larger limits: not a proof, so it
+ * is no edit of ours.
+ */
+function proofEdits(actions: readonly LspCodeAction[]): LspTextEdit[] {
+  return actions.flatMap((action) => {
+    const edits = action.edit?.changes
+      ? Object.values(action.edit.changes).flat()
+      : [];
+    return edits.some((edit) => edit.newText.includes("auto?")) ? [] : edits;
+  });
+}
+
+/**
  * Search for the `auto?` proof the sources ask for.
  *
  * Resolves to the *expanded proof text* — the one-line `by auto?` proof with
@@ -245,9 +260,7 @@ export async function findEquivalenceProof(
       textDocument: { uri: AUF_URI },
     })) as readonly LspCodeAction[] | null | undefined;
 
-    const edits = (actions ?? []).flatMap((action) =>
-      action.edit?.changes ? Object.values(action.edit.changes).flat() : [],
-    );
+    const edits = proofEdits(actions ?? []);
 
     return edits.length === 0 ? null : applyEdits(sources.auf, edits);
   });
