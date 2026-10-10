@@ -1,4 +1,5 @@
 import { expect, setDefaultTimeout, test } from "bun:test";
+import { JSDOM } from "jsdom";
 
 import { collectFindings } from "../../scripts/a11y-report";
 import { type Finding, runAxe } from "./axe-runner";
@@ -108,6 +109,73 @@ test("the audited fixtures include the incomplete-profile prompt", async () => {
   );
 
   expect(withPrompt.length).toBeGreaterThan(0);
+});
+
+/**
+ * Every page is named by one h1, and it is the page's title. The AA ruleset
+ * above does not ask for an h1 at all (axe files that under best practice),
+ * so this is the check that keeps one there: on a page with a trail it is the
+ * trail's last step, outside the nav landmark; on a page without one it is
+ * visually hidden. Content documents are their author's, and skipped.
+ */
+test("every page has one h1, naming the page as its title does", async () => {
+  const pages = (await fixtures()).filter((fixture) =>
+    fixture.html.includes('class="page-shell"'),
+  );
+  const wrong: string[] = [];
+
+  for (const fixture of pages) {
+    const { document } = new JSDOM(fixture.html).window;
+    const headings = [...document.querySelectorAll("h1")];
+    const title = document.title.replace(/ · Carnap$/u, "");
+    const heading = headings[0];
+
+    if (headings.length !== 1 || heading === undefined) {
+      wrong.push(`${fixture.name}: ${headings.length} h1 elements`);
+    } else if (heading.textContent !== title) {
+      wrong.push(
+        `${fixture.name}: h1 "${heading.textContent}", title "${title}"`,
+      );
+    } else if (heading.closest("nav") !== null) {
+      wrong.push(`${fixture.name}: h1 inside a nav landmark`);
+    }
+  }
+
+  expect(pages.length).toBeGreaterThan(0);
+  expect(wrong).toEqual([]);
+});
+
+/**
+ * And under it the outline descends one level at a time: a heading may go
+ * back up to any level, but never down past the one below its predecessor —
+ * an h3 straight under the h1 reads to a screen reader as a section with a
+ * part missing. Also best practice rather than AA (axe's heading-order).
+ */
+test("no page's headings skip a level on the way down", async () => {
+  const pages = (await fixtures()).filter((fixture) =>
+    fixture.html.includes('class="page-shell"'),
+  );
+  const wrong: string[] = [];
+
+  for (const fixture of pages) {
+    const { document } = new JSDOM(fixture.html).window;
+    let previous = 0;
+
+    for (const heading of document.querySelectorAll(
+      "h1, h2, h3, h4, h5, h6",
+    )) {
+      const level = Number(heading.tagName.slice(1));
+
+      if (level > previous + 1) {
+        wrong.push(
+          `${fixture.name}: h${level} "${heading.textContent?.trim()}" after h${previous}`,
+        );
+      }
+      previous = level;
+    }
+  }
+
+  expect(wrong).toEqual([]);
 });
 
 test("baseline has no stale entries (fixed issues still listed)", async () => {

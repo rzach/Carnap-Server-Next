@@ -1147,10 +1147,18 @@ describe("native web workflow", () => {
 
       // A trail of one crumb would only be the page title over again: the
       // list of courses is where the trail starts, not somewhere on it.
-      for (const html of [await courses.text(), await profile.text()]) {
+      // Its h1 is still there, for assistive technology alone.
+      const [coursesHtml, profileHtml] = [
+        await courses.text(),
+        await profile.text(),
+      ];
+      for (const html of [coursesHtml, profileHtml]) {
         expect(html).not.toContain("page-header");
         expect(html).not.toContain('class="breadcrumb"');
       }
+      expect(coursesHtml).toContain(
+        '<h1 class="page-title visually-hidden">Courses</h1>',
+      );
 
       // A page under one of them has somewhere to go back to, and says so.
       await grantTestCourseCreator(env, login.actorId);
@@ -1174,7 +1182,11 @@ describe("native web workflow", () => {
 
       expect(courseHtml).toContain('class="breadcrumb"');
       expect(courseHtml).toContain('class="breadcrumb-link" href="/courses"');
-      expect(courseHtml).toContain('aria-current="page"');
+      // The trail's last step is the page's h1, after the nav landmark
+      // rather than inside it.
+      expect(courseHtml).toContain(
+        '</nav><h1 class="page-title breadcrumb-current">Trail 101</h1>',
+      );
     });
   });
 

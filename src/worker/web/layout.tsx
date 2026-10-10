@@ -22,8 +22,8 @@ type Actor = NonNullable<AppBindings["Variables"]["actor"]>;
 
 /**
  * One step in the breadcrumb trail rendered under the navbar. The trail holds
- * only ancestors; the current page is the shell `title`, rendered as the final
- * non-linked crumb.
+ * only ancestors; the current page is the shell `title`, rendered after the
+ * trail as the page's h1, styled as its final non-linked step.
  *
  * `href` is optional because a reader can be somewhere whose ancestor is not
  * theirs to open — a shared content revision, whose item page belongs to its
@@ -154,8 +154,8 @@ const Layout: FC<LayoutProps> = ({
   // the heading these pages don't have. The row still appears for an aside
   // on its own, since the aside needs a row to sit in whatever the trail
   // does.
-  const showHeaderRow =
-    !chromeless && (breadcrumb.length > 0 || headerAside !== null);
+  const showTrail = !chromeless && breadcrumb.length > 0;
+  const showHeaderRow = showTrail || (!chromeless && headerAside !== null);
 
   return (
     <html lang={i18n.locale}>
@@ -235,30 +235,42 @@ const Layout: FC<LayoutProps> = ({
           {/* Inside the landmark rather than above it: a strip between the
               header and `main` is content belonging to no region, which is
               both an axe finding and a genuine navigation dead spot. */}
+          {/* Every page's h1 is its title. Where there is a trail, the
+              title is the trail's last step, so that step is the heading;
+              it sits after the nav rather than in it, because a heading
+              inside the navigation landmark is one a reader skipping
+              navigation skips too. A page with no trail — the top-level
+              pages, and every chromeless one — has nowhere visible to put
+              it, so it is there for assistive technology alone. */}
+          {showTrail ? null : (
+            <h1 class="page-title visually-hidden">{title}</h1>
+          )}
           {prompt}
           {showHeaderRow ? (
             <div class="page-header">
-              {breadcrumb.length === 0 ? null : (
-                <nav aria-label={i18n.t("Breadcrumb")} class="breadcrumb">
-                  {breadcrumb.map((crumb) => (
-                    <>
-                      {crumb.href === undefined ? (
-                        <span class="breadcrumb-current">{crumb.label}</span>
-                      ) : (
-                        <a class="breadcrumb-link" href={crumb.href}>
-                          {crumb.label}
-                        </a>
-                      )}
-                      <span aria-hidden="true" class="breadcrumb-sep">
-                        ›
-                      </span>
-                    </>
-                  ))}
-                  <span aria-current="page" class="breadcrumb-current">
-                    {title}
-                  </span>
-                </nav>
-              )}
+              {showTrail ? (
+                <div class="page-trail">
+                  <nav aria-label={i18n.t("Breadcrumb")} class="breadcrumb">
+                    {breadcrumb.map((crumb) => (
+                      <>
+                        {crumb.href === undefined ? (
+                          <span class="breadcrumb-current">
+                            {crumb.label}
+                          </span>
+                        ) : (
+                          <a class="breadcrumb-link" href={crumb.href}>
+                            {crumb.label}
+                          </a>
+                        )}
+                        <span aria-hidden="true" class="breadcrumb-sep">
+                          ›
+                        </span>
+                      </>
+                    ))}
+                  </nav>
+                  <h1 class="page-title breadcrumb-current">{title}</h1>
+                </div>
+              ) : null}
               {headerAside}
             </div>
           ) : null}

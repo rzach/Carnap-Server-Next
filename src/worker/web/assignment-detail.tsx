@@ -2012,7 +2012,7 @@ const SubmissionReviewCard: FC<{
     <Sheet className="submission-review-card">
       <header class="submission-review-header">
         <div>
-          <h3>{userDisplayName(i18n, entry.user, submission.userId)}</h3>
+          <h2>{userDisplayName(i18n, entry.user, submission.userId)}</h2>
           <p class="small">
             {userDisplayMeta(i18n, entry.user, submission.userId)}
           </p>

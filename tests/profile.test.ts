@@ -551,9 +551,10 @@ describe("incomplete profile prompt", () => {
 
       expect(html).toContain(PROMPT);
       expect(html).toContain('action="/profile/prompt/dismiss"');
-      // Inside the main landmark rather than loose between the header and it.
+      // Inside the main landmark rather than loose between the header and it,
+      // after only the page's h1.
       expect(html).toContain(
-        '<main class="page-shell"><div class="profile-prompt">',
+        '<main class="page-shell"><h1 class="page-title visually-hidden">Courses</h1><div class="profile-prompt">',
       );
 
       expect(
