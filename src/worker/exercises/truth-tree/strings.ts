@@ -31,7 +31,15 @@ export function buildTruthTreeStrings(i18n: Translator) {
     "Truth tree": i18n.t("Truth tree"),
     Check: i18n.t("Check"),
     Stack: i18n.t("Stack"),
-    Split: i18n.t("Split"),
+    Split: i18n.t(
+      "Split (truth-tree rows)",
+      {},
+      {
+        comment:
+          "Disambiguating id; only the word Split is shown. Beside Stack: the step's rows branch the tree rather than extend the branch. Not the editor's split view.",
+        message: "Split",
+      },
+    ),
     "Add row": i18n.t("Add row"),
     Develop: i18n.t("Develop"),
     Close: i18n.t("Close"),

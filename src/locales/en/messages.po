@@ -4423,9 +4423,13 @@ msgstr "Sorts"
 msgid "Source"
 msgstr "Source"
 
-#: src/worker/exercises/truth-tree/strings.ts
 #: src/worker/web/content.tsx
 msgid "Split"
+msgstr "Split"
+
+#. Disambiguating id; only the word Split is shown. Beside Stack: the step's rows branch the tree rather than extend the branch. Not the editor's split view.
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Split (truth-tree rows)"
 msgstr "Split"
 
 #: src/worker/exercises/truth-tree/strings.ts

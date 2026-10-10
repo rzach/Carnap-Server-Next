@@ -151,6 +151,26 @@ describe("i18n catalogs", () => {
     }
   });
 
+  test("every translated locale translates every message", async () => {
+    // An untranslated entry is not an error anywhere else — it renders its
+    // English source, which reads fine — so the count of them only ever grew:
+    // each feature added a few, none took any away. Read from the PO files,
+    // because the compiled catalog fills an empty entry with the English and
+    // so cannot tell a gap from a translation that happens to match.
+    for (const locale of SUPPORTED_LOCALES) {
+      if (locale === DEFAULT_LOCALE || locale === PSEUDO_LOCALE) {
+        continue;
+      }
+
+      const po = await Bun.file(`src/locales/${locale}/messages.po`).text();
+      const untranslated = [
+        ...po.matchAll(/^msgid "((?:[^"\\]|\\.)+)"\nmsgstr ""$/gm),
+      ].map((match) => match[1]);
+
+      expect({ locale, untranslated }).toEqual({ locale, untranslated: [] });
+    }
+  });
+
   test("no translation drops a placeholder its id declares", () => {
     // A translation that loses a `{count}` renders it as nothing — no error, no
     // fallback, and only in that one language. The usual cause is ICU's
