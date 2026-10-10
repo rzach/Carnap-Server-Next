@@ -1,7 +1,10 @@
 import { type Context, Hono } from "hono";
 import { getCookie } from "hono/cookie";
 
-import type { StartedNativeLogin } from "../application/auth";
+import type {
+  AuthenticatedActor,
+  StartedNativeLogin,
+} from "../application/auth";
 import {
   AuthService,
   LOGIN_TTL_SECONDS,
@@ -23,6 +26,7 @@ import {
 // same module rather than half from here and half from the leaf.
 import { i18nFor, isSelectableLocale, isSupportedLocale } from "../i18n";
 import { deferred } from "../i18n/deferred";
+import type { Translator } from "../i18n/translator";
 import { loginEmailSenderFromEnv } from "../infrastructure/email/resend";
 import { turnstileForContext } from "../infrastructure/turnstile";
 import { storesForContext } from "../stores";
@@ -32,9 +36,18 @@ import {
   renderLoginSent,
 } from "../web/auth";
 import { renderDonatePage } from "../web/donate";
+import {
+  renderEmailChangeConfirm,
+  renderEmailLinkFailure,
+  renderEmailUndo,
+} from "../web/email-change";
 import { FAVICON_CACHE_CONTROL, FAVICON_SVG } from "../web/favicon";
 import { fieldValue, redirect, safeNext } from "../web/html";
 import { renderProfile } from "../web/profile";
+import {
+  deliverEmailChangeRequest,
+  emailChangeServiceForContext,
+} from "./email-change";
 import { clearSessionCookies, setSessionCookies } from "./session-cookies";
 import { webActorOrLogin } from "./support";
 
@@ -213,6 +226,12 @@ webRoutes.get("/login/confirm", async (context) => {
 
     const confirmed = await authService(context).confirmNativeLogin(token);
 
+    // An address a recent change moved its account away from opens only that
+    // change's undo, which the page behind this link offers.
+    if (confirmed.kind === "undo") {
+      return redirect(emailUndoPath(confirmed.undoToken), 303);
+    }
+
     setSessionCookies(context, confirmed.sessionToken, confirmed.csrfToken);
 
     return context.redirect(next ?? "/courses", 303);
@@ -248,19 +267,27 @@ webRoutes.get("/profile", async (context) => {
   }
 
   const actor = requireAuthenticated(context);
-  const identities = await authService(context).listOwnIdentities(actor);
+  const account = await authService(context).describeOwnAccount(actor);
   const url = new URL(context.req.url);
   const i18n = context.get("i18n");
   const notice = url.searchParams.has("saved")
     ? i18n.t("Your profile has been saved.")
     : url.searchParams.has("unlinked")
       ? i18n.t("The LMS link was removed.")
-      : undefined;
+      : url.searchParams.has("email")
+        ? i18n.t("Your email address has been changed.")
+        : url.searchParams.has("sent")
+          ? emailSentNotice(i18n)
+          : url.searchParams.has("restored")
+            ? i18n.t(
+                "Your old email address is back, and every other session on your account has been signed out.",
+              )
+            : undefined;
 
   return renderProfile(
     context,
     actor,
-    identities,
+    account,
     notice === undefined ? {} : { notice },
   );
 });
@@ -299,12 +326,13 @@ webRoutes.post("/profile", async (context) => {
     return context.redirect("/profile?saved=1", 303);
   } catch (error) {
     if (error instanceof AppHttpError) {
-      const identities = await authService(context).listOwnIdentities(actor);
+      const account = await authService(context).describeOwnAccount(actor);
 
-      return renderProfile(context, actor, identities, {
+      return renderProfile(context, actor, account, {
         error: error.localize(context.get("i18n")),
         localeValue: locale,
         nameValue: name,
+        status: error.status,
       });
     }
 
@@ -342,17 +370,175 @@ webRoutes.post("/profile/identities/remove", async (context) => {
 
     return redirect("/profile?unlinked=1", 303);
   } catch (error) {
-    if (error instanceof AppHttpError) {
-      const identities = await authService(context).listOwnIdentities(actor);
-
-      return renderProfile(context, actor, identities, {
-        error: error.localize(context.get("i18n")),
-      });
-    }
-
-    throw error;
+    return profileErrorOrThrow(context, actor, error);
   }
 });
+
+/**
+ * "Use that instead": take the address one of the actor's LMSs now asserts,
+ * and hand the address back to their LMSs. See `EmailChangeService`.
+ */
+webRoutes.post("/profile/email/lms", async (context) => {
+  const actor = requireAuthenticated(context);
+  const form = await context.req.raw.formData();
+  const identityId = fieldValue(form.get("identityId"));
+
+  try {
+    await emailChangeServiceForContext(context).useLmsEmail(
+      actor,
+      identityId,
+    );
+
+    return redirect("/profile?email=1", 303);
+  } catch (error) {
+    return profileErrorOrThrow(context, actor, error);
+  }
+});
+
+/**
+ * Ask to move to a new address. The reply is the same whether a confirmation
+ * link went or a note that the address is taken did: which of the two is for
+ * the address's holder to read, not for whoever typed it.
+ */
+webRoutes.post("/profile/email", async (context) => {
+  const actor = requireAuthenticated(context);
+  const form = await context.req.raw.formData();
+  const email = fieldValue(form.get("email"));
+
+  try {
+    const requested = await emailChangeServiceForContext(context).request(
+      actor,
+      { email, ipAddress: clientIpAddress(context) },
+    );
+    const localLink = await deliverEmailChangeRequest(context, requested);
+
+    if (localLink === null) {
+      return redirect("/profile?sent=1", 303);
+    }
+
+    const account = await authService(context).describeOwnAccount(actor);
+
+    return renderProfile(context, actor, account, {
+      localEmailLink: localLink,
+      notice: emailSentNotice(context.get("i18n")),
+    });
+  } catch (error) {
+    if (
+      error instanceof AppHttpError &&
+      error.retryAfterSeconds !== undefined
+    ) {
+      context.header("Retry-After", String(error.retryAfterSeconds));
+    }
+
+    return profileErrorOrThrow(context, actor, error, { emailValue: email });
+  }
+});
+
+/**
+ * Follow a confirmation link. The GET only describes the change: mail
+ * scanners fetch links, and a fetch that completed it would confirm an
+ * address nobody looked at. The button's POST makes it.
+ */
+webRoutes.get("/profile/email/confirm", async (context) => {
+  const token = new URL(context.req.url).searchParams.get("token") ?? "";
+
+  try {
+    const pending =
+      await emailChangeServiceForContext(context).describeConfirmation(token);
+
+    return renderEmailChangeConfirm(context, { ...pending, token });
+  } catch (error) {
+    return emailLinkFailureOrThrow(context, error);
+  }
+});
+
+webRoutes.post("/profile/email/confirm", async (context) => {
+  const token = fieldValue((await context.req.raw.formData()).get("token"));
+
+  try {
+    const confirmed =
+      await emailChangeServiceForContext(context).confirm(token);
+
+    setSessionCookies(context, confirmed.sessionToken, confirmed.csrfToken);
+
+    return context.redirect("/profile?email=1", 303);
+  } catch (error) {
+    return emailLinkFailureOrThrow(context, error);
+  }
+});
+
+/** Follow an undo link: the GET describes, the POST undoes, as above. */
+webRoutes.get("/profile/email/undo", async (context) => {
+  const token = new URL(context.req.url).searchParams.get("token") ?? "";
+
+  try {
+    const pending =
+      await emailChangeServiceForContext(context).describeUndo(token);
+
+    return renderEmailUndo(context, { ...pending, token });
+  } catch (error) {
+    return emailLinkFailureOrThrow(context, error);
+  }
+});
+
+webRoutes.post("/profile/email/undo", async (context) => {
+  const token = fieldValue((await context.req.raw.formData()).get("token"));
+
+  try {
+    const restored = await emailChangeServiceForContext(context).undo(token);
+
+    setSessionCookies(context, restored.sessionToken, restored.csrfToken);
+
+    return context.redirect("/profile?restored=1", 303);
+  } catch (error) {
+    return emailLinkFailureOrThrow(context, error);
+  }
+});
+
+function emailSentNotice(i18n: Translator): string {
+  return i18n.t(
+    "We sent a link to the new address. Open it to finish the change.",
+  );
+}
+
+function emailUndoPath(token: string): string {
+  return `/profile/email/undo?token=${encodeURIComponent(token)}`;
+}
+
+/** An emailed link that cannot be used, answered with a page saying so. */
+function emailLinkFailureOrThrow(
+  context: Context<AppBindings>,
+  error: unknown,
+): Response {
+  if (!(error instanceof AppHttpError)) {
+    throw error;
+  }
+
+  return renderEmailLinkFailure(context, {
+    message: error.localize(context.get("i18n")),
+    status: error.status,
+  });
+}
+
+/** The profile page again, with a refused action's reason on it. */
+async function profileErrorOrThrow(
+  context: Context<AppBindings>,
+  actor: AuthenticatedActor,
+  error: unknown,
+  values: { readonly emailValue?: string } = {},
+): Promise<Response> {
+  if (!(error instanceof AppHttpError)) {
+    throw error;
+  }
+
+  const account = await authService(context).describeOwnAccount(actor);
+
+  return renderProfile(context, actor, account, {
+    ...values,
+    error: error.localize(context.get("i18n")),
+    status: error.status,
+  });
+}
 
 webRoutes.post("/logout", async (context) => {
   const sessionToken = getCookie(context, SESSION_COOKIE_NAME);

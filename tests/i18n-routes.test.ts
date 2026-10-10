@@ -6,6 +6,7 @@ import type { Env } from "../src/worker/env";
 import type { WorkerApp } from "../src/worker/http";
 import { grantTestCourseCreator } from "./helpers/admin";
 import { appRequest, createTestApp } from "./helpers/app";
+import { capturingEmail, EMAIL_ENV } from "./helpers/email";
 import { jsonRequest, login, withStorage } from "./helpers/http";
 import {
   beginTestLogin,
@@ -17,23 +18,6 @@ import {
 import type { TestStorage } from "./helpers/storage";
 
 setDefaultTimeout(30_000);
-
-/**
- * Enough of a Resend account for `loginEmailSenderFromEnv` and
- * `ltiLinkEmailSenderFromEnv` to build a real sender; the fetch it posts to is
- * captured rather than made.
- */
-const EMAIL_ENV = {
-  AUTH_LOGIN_EMAIL_FROM: "Carnap <login@example.test>",
-  RESEND_API_KEY: "test-api-key",
-} as const;
-
-interface SentEmail {
-  readonly html: string;
-  readonly subject: string;
-  readonly text: string;
-  readonly to: readonly string[];
-}
 
 interface CourseResponse {
   readonly course: { readonly id: string };
@@ -49,41 +33,6 @@ interface ContentRevisionResponse {
 
 interface AssignmentResponse {
   readonly assignment: { readonly id: string };
-}
-
-/**
- * Run `body` with the transactional emails captured instead of delivered.
- *
- * The sender reads the global `fetch` at call time, so replacing it here is
- * what makes the *language a recipient actually receives* observable — the
- * property under test lives in the message body, not in the response.
- */
-async function capturingEmail<T>(
-  body: (sent: SentEmail[]) => Promise<T>,
-): Promise<T> {
-  const sent: SentEmail[] = [];
-  const realFetch = globalThis.fetch;
-
-  globalThis.fetch = (async (
-    input: RequestInfo | URL,
-    init?: RequestInit,
-  ) => {
-    const request = new Request(input, init);
-
-    if (new URL(request.url).host === "api.resend.com") {
-      sent.push((await request.json()) as SentEmail);
-
-      return Response.json({ id: `email-${sent.length}` });
-    }
-
-    return realFetch(input as RequestInfo, init);
-  }) as typeof globalThis.fetch;
-
-  try {
-    return await body(sent);
-  } finally {
-    globalThis.fetch = realFetch;
-  }
 }
 
 /** Everything a requester can see on a response bar the correlation id. */

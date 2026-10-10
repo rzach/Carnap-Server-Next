@@ -1,9 +1,9 @@
 import type { PlatformCapabilityGrant } from "../domain/admin";
 import type { AuthSession } from "../domain/auth";
 import { createAppId } from "../domain/ids";
-import { parseLtiProviderSubject } from "../domain/lti";
 import { addSeconds, type Timestamp, timestampNow } from "../domain/time";
 import {
+  type EmailAuthority,
   type ExternalIdentity,
   NAME_MAX_LENGTH,
   normalizeName,
@@ -12,6 +12,11 @@ import {
 import { deferred } from "../i18n/deferred";
 import { isSelectableLocale } from "../i18n/locales";
 import type { Translator } from "../i18n/translator";
+import {
+  emailAuthority,
+  identityPlatformId,
+  platformNames,
+} from "./email-authority";
 import { AppHttpError, badRequest, forbidden } from "./errors";
 import {
   createStoredLoginRateLimiter,
@@ -135,9 +140,22 @@ export interface MintedSession {
   readonly sessionToken: string;
 }
 
-export type ConfirmedNativeLogin = MintedSession;
+/**
+ * What a consumed login link leads to: a session, or — for an address a
+ * recent change moved an account away from — that change's undo, which is the
+ * one thing the address still opens. Signing in with it would otherwise make a
+ * new, empty account, and take the address the undo needs to give back.
+ */
+export type ConfirmedNativeLogin =
+  | ({ readonly kind: "session" } & MintedSession)
+  | { readonly kind: "undo"; readonly undoToken: string };
 
 /** One of the actor's own identities, an LTI one named by its platform. */
+export interface OwnAccount {
+  readonly email: EmailAuthority;
+  readonly identities: readonly OwnIdentity[];
+}
+
 export interface OwnIdentity extends ExternalIdentity {
   /** The LMS platform's registered name; null for native identities, and
    *  for an LTI identity whose platform has since been deleted. */
@@ -172,11 +190,12 @@ export interface AuthServiceOptions {
   readonly now?: () => Date;
 }
 
-function normalizeEmail(email: string): string {
+/** An address as stored and compared: trimmed and lower-cased. */
+export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-function assertEmail(email: string): void {
+export function assertEmail(email: string): void {
   if (
     email.length === 0 ||
     email.length > EMAIL_MAX_LENGTH ||
@@ -288,9 +307,46 @@ export class AuthService {
       );
     }
 
+    const held = await this.reissueHeldAddressUndo(challenge.email, nowDate);
+
+    if (held !== null) {
+      return { kind: "undo", undoToken: held };
+    }
+
     const user = await this.resolveNativeUser(challenge.email, nowDate);
 
-    return this.mintSession(user);
+    return { kind: "session", ...(await this.mintSession(user)) };
+  }
+
+  /**
+   * A fresh undo token for the change that moved an account off `email`, when
+   * that change can still be undone and nobody holds the address meanwhile;
+   * null otherwise. The token is new because only its hash is stored: the
+   * pending link is re-keyed, keeping its expiry, so the old mailbox's holder
+   * gains no time by signing in.
+   */
+  private async reissueHeldAddressUndo(
+    email: string,
+    nowDate: Date,
+  ): Promise<string | null> {
+    const { emailChanges, users } = this.options.stores;
+    const now = timestampNow(nowDate);
+
+    if (
+      (await emailChanges.findPendingUndo(email, now)) === null ||
+      (await users.getByEmail(email)) !== null
+    ) {
+      return null;
+    }
+
+    const undoToken = createAuthToken("aemu");
+    const reissued = await emailChanges.reissueUndo(
+      email,
+      await hashAuthToken(undoToken),
+      now,
+    );
+
+    return reissued === null ? null : undoToken;
   }
 
   /**
@@ -375,33 +431,35 @@ export class AuthService {
   }
 
   /**
-   * The sign-in methods linked to the actor's own account (a native email
-   * login, plus any LMS/LTI links), each LTI one named by its platform. No
-   * capability check: an actor may always read their own identities.
+   * What the profile page shows about the actor's account beyond the user row:
+   * the identities that sign in to it (a native email login, plus any LMS
+   * links, each named by its platform), and who owns its address. No
+   * capability check: an actor may always read their own account.
    */
-  async listOwnIdentities(actor: AuthenticatedActor): Promise<OwnIdentity[]> {
+  async describeOwnAccount(actor: AuthenticatedActor): Promise<OwnAccount> {
     const identities =
       await this.options.stores.users.listExternalIdentitiesForUser(
         actor.user.id,
       );
-
-    // One platform read per LTI identity: an account holds one or two. A
-    // platform deleted since linking names nothing; the identity is still
+    // A platform deleted since linking names nothing; the identity is still
     // listed, and still removable.
-    return Promise.all(
-      identities.map(async (identity) => {
-        const platformId =
-          identity.provider === "lti"
-            ? parseLtiProviderSubject(identity.providerSubject)?.platformId
-            : undefined;
-        const platform =
-          platformId === undefined
-            ? null
-            : await this.options.stores.lti.getPlatformById(platformId);
+    const names = await platformNames(this.options.stores, [
+      actor.user.emailSourcePlatformId,
+      ...identities.map(identityPlatformId),
+    ]);
 
-        return { ...identity, platformName: platform?.name ?? null };
+    return {
+      email: emailAuthority(actor.user, identities, names),
+      identities: identities.map((identity) => {
+        const platformId = identityPlatformId(identity);
+
+        return {
+          ...identity,
+          platformName:
+            platformId === null ? null : (names.get(platformId) ?? null),
+        };
       }),
-    );
+    };
   }
 
   /**

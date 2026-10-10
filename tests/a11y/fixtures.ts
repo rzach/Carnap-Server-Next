@@ -354,6 +354,91 @@ async function formPost(
   );
 }
 
+/**
+ * The pages an address change leads through, on an account of their own so
+ * that moving its address disturbs no other fixture: the profile once a link
+ * is out (with the local link a mail-less instance shows), the confirmation,
+ * the undo — reached as the old address's holder reaches it by signing in —
+ * and a link that no longer works.
+ */
+async function emailChangeFixtures(
+  env: Env,
+  headers: Readonly<Record<string, string>>,
+  fixtures: Fixture[],
+): Promise<void> {
+  const mover = await login(env, "a11y-mover@example.test");
+  const requested = await formPost(
+    env,
+    "/profile/email",
+    { email: "a11y-moved@example.test" },
+    mover,
+    headers,
+  );
+  const sentHtml = await requested.text();
+  const token = /\/profile\/email\/confirm\?token=([^"&]+)/.exec(
+    sentHtml,
+  )?.[1];
+
+  if (requested.status !== 200 || token === undefined) {
+    throw new Error(`fixture email change → ${requested.status}`);
+  }
+
+  fixtures.push({ html: sentHtml, name: "profile-email-sent" });
+  fixtures.push({
+    html: await page(
+      env,
+      `/profile/email/confirm?token=${token}`,
+      undefined,
+      headers,
+    ),
+    name: "email-change-confirm",
+  });
+  fixtures.push({
+    html: await page(
+      env,
+      "/profile/email/confirm?token=spent",
+      undefined,
+      headers,
+      400,
+    ),
+    name: "email-link-failure",
+  });
+  await formPost(
+    env,
+    "/profile/email/confirm",
+    { token },
+    undefined,
+    headers,
+  );
+
+  // Signing in with the address the account left leads to the undo.
+  const start = await appRequest(
+    createTestApp(),
+    "/auth/login/start",
+    jsonRequest({ email: "a11y-mover@example.test" }),
+    env,
+  );
+  const { login: challenge } = (await start.json()) as {
+    readonly login: { readonly loginToken: string };
+  };
+  const confirmed = await appRequest(
+    createTestApp(),
+    `/login/confirm?token=${challenge.loginToken}`,
+    {},
+    env,
+  );
+  const undoPath = confirmed.headers.get("Location");
+
+  if (undoPath === null || !undoPath.startsWith("/profile/email/undo")) {
+    throw new Error(`fixture email undo → ${confirmed.status}`);
+  }
+
+  fixtures.push({
+    html: await page(env, undoPath, undefined, headers),
+    name: "email-undo",
+  });
+}
+
 /** `?a=1&b=1&…` for every flash-notice parameter a page understands. */
 function noticeQuery(...params: readonly string[]): string {
   return `?${params.map((param) => `${param}=1`).join("&")}`;
@@ -807,6 +892,7 @@ export async function collectFixtures(
     400,
   );
   await add("profile", "/profile", instructor);
+  await emailChangeFixtures(env, headers, fixtures);
 
   await add("assignment-instructor", assignmentPath, instructor);
   await add("assignment-student", assignmentPath, student);

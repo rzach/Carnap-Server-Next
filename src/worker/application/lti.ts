@@ -12,12 +12,16 @@ import {
   type LtiPlatform,
   type LtiResourceLink,
   ltiProviderSubject,
+  parseLtiProviderSubject,
 } from "../domain/lti";
 import { addSeconds, type Timestamp, timestampNow } from "../domain/time";
 import {
+  type ExternalIdentity,
+  isPlaceholderEmail,
   normalizeAssertedName,
   normalizeName,
   normalizeStudentId,
+  placeholderEmail,
   type User,
 } from "../domain/users";
 import { deferred } from "../i18n/deferred";
@@ -32,6 +36,10 @@ import {
 import type { AuthenticatedActor, AuthService, MintedSession } from "./auth";
 import { requireInstructor } from "./authorization";
 import { contentArtifactFromRevision } from "./content/artifact";
+import {
+  announceEmailChange,
+  type EmailChangeNotifier,
+} from "./email-change";
 import { badRequest, forbidden } from "./errors";
 import { planGradeJob, planGradeJobForSubject } from "./grade-passback";
 import type { AppStores } from "./stores";
@@ -75,13 +83,6 @@ const MEMBERSHIP_ROLE_PREFIX =
   "http://purl.imsglobal.org/vocab/lis/v2/membership#";
 const TEACHING_ASSISTANT_ROLE =
   "http://purl.imsglobal.org/vocab/lis/v2/membership/Instructor#TeachingAssistant";
-
-/**
- * The reserved domain for accounts created from launches that assert no
- * email. `.invalid` is RFC 2606-reserved, so the address can never be routed
- * or claimed, and the user id makes it unique.
- */
-const PLACEHOLDER_EMAIL_DOMAIN = "lti.invalid";
 
 /**
  * A launch failure with a message safe to show the person mid-launch and a
@@ -215,6 +216,12 @@ export interface LtiServiceOptions {
   readonly auth: AuthService;
   /** Injected, never defaulted: the network lives in `infrastructure/`. */
   readonly keyResolver: LtiPlatformKeyResolver;
+  /**
+   * Tells an address a launch moved an account away from. Absent where no
+   * mail can be sent, and then such a change goes untold and undoable only by
+   * an administrator.
+   */
+  readonly emailNotifier?: EmailChangeNotifier | null;
   readonly now?: () => Date;
   readonly requestId?: string;
 }
@@ -731,9 +738,12 @@ export class LtiService {
       );
     }
 
+    // Recorded as the platform's assertion so that the next launch, which
+    // carries the same address, is not taken for the platform changing it.
     await this.createIdentity(
       challenge.userId,
       ltiProviderSubject(challenge.platformId, challenge.subject),
+      challenge.email,
       nowDate,
     );
 
@@ -749,6 +759,7 @@ export class LtiService {
     // either: the account was found by its address, so it already has one.
     await this.adoptAssertedProfile(
       user,
+      null,
       { email: null, name: challenge.name, studentId: null },
       nowDate,
     );
@@ -1298,7 +1309,12 @@ export class LtiService {
 
       return {
         kind: "user",
-        user: await this.adoptAssertedProfile(user, launch, nowDate),
+        user: await this.adoptAssertedProfile(
+          user,
+          identity,
+          launch,
+          nowDate,
+        ),
       };
     }
 
@@ -1319,16 +1335,33 @@ export class LtiService {
     // later signs in natively still proves the mailbox via the login link.
     const now = timestampNow(nowDate);
     const userId = createAppId(nowDate.getTime());
+    // An address a recent change moved another account away from is held for
+    // that account while the change can be undone, and a new account must not
+    // take it from under the undo. The account starts with the placeholder,
+    // and the address goes unrecorded on its identity, so a later launch still
+    // counts it as new and carries it over once the hold has lapsed.
+    const email =
+      launch.email !== null &&
+      (await this.options.stores.emailChanges.findPendingUndo(
+        launch.email,
+        now,
+      )) !== null
+        ? null
+        : launch.email;
 
     let user: User;
 
     try {
       user = await this.options.stores.users.create({
         id: userId,
-        email: launch.email ?? `lti-${userId}@${PLACEHOLDER_EMAIL_DOMAIN}`,
+        email: email ?? placeholderEmail(userId),
         // Asserted, not proven: verification happens when the person first
         // signs in natively (or approves a link) via that mailbox.
         emailVerifiedAt: null,
+        // The platform's to change, placeholder and all: an email-less launch
+        // left a stand-in that the platform's first real address replaces.
+        emailSource: "lti",
+        emailSourcePlatformId: platform.id,
         name: launch.name,
         studentId: launch.studentId,
         createdAt: now,
@@ -1352,7 +1385,12 @@ export class LtiService {
 
         return {
           kind: "user",
-          user: await this.adoptAssertedProfile(racedUser, launch, nowDate),
+          user: await this.adoptAssertedProfile(
+            racedUser,
+            racedIdentity,
+            launch,
+            nowDate,
+          ),
         };
       }
 
@@ -1368,7 +1406,7 @@ export class LtiService {
       return this.beginLinkChallenge(launch, platform, racedByEmail, nowDate);
     }
 
-    await this.createIdentity(user.id, subject, nowDate);
+    await this.createIdentity(user.id, subject, email, nowDate);
 
     return { kind: "user", user };
   }
@@ -1407,11 +1445,17 @@ export class LtiService {
    * launch wins, because the platform speaking for the institution is the
    * fresher source, and — with no form for the value anywhere — "correct it
    * in the LMS and relaunch" is the only repair a wrong ID can have. An email
-   * follows the student ID's rule, since the platform owns it as well; the
-   * difference is that it is a credential (see `adoptAssertedEmail`).
+   * is owned by whichever source the account records, and is a credential
+   * besides (see `adoptAssertedEmail`).
+   *
+   * `identity` is the LTI identity the launch arrived through, which an email
+   * needs and the other fields do not: what a launch may carry over depends on
+   * what that platform asserted last. Null where there is no launch to speak
+   * of, as on link approval, which has no email to offer.
    */
   private async adoptAssertedProfile(
     user: User,
+    identity: ExternalIdentity | null,
     asserted: {
       readonly email: string | null;
       readonly name: string | null;
@@ -1419,11 +1463,15 @@ export class LtiService {
     },
     nowDate: Date,
   ): Promise<User> {
-    const withEmail = await this.adoptAssertedEmail(
-      user,
-      asserted.email,
-      nowDate,
-    );
+    const withEmail =
+      identity === null
+        ? user
+        : await this.adoptAssertedEmail(
+            user,
+            identity,
+            asserted.email,
+            nowDate,
+          );
 
     return this.adoptAssertedStudentId(
       await this.adoptAssertedName(withEmail, asserted.name, nowDate),
@@ -1433,23 +1481,31 @@ export class LtiService {
   }
 
   /**
-   * Record the address the platform asserts, over whatever the account holds.
+   * Record the address the platform asserts, and carry it over to the account
+   * when the platform has just changed it and the address is the LMS's to
+   * change.
    *
-   * The platform owns the address, as it owns the student ID: a student who
-   * changes their email in the LMS should see the change reach Carnap on
-   * their next launch, and an account made by a launch that carried no email
-   * — which holds an `.invalid` placeholder, and so could never sign in
-   * natively or be reached by mail — gets a real one as soon as its platform
-   * starts sharing the claim.
+   * Every launch records what its platform sent on the identity it came
+   * through, adopted or not: that is how the next launch tells the platform's
+   * own change (a new address) from a platform repeating an address the
+   * account has since moved away from. Only a change is carried over, which
+   * is what keeps two linked platforms from flipping an account between them
+   * on alternate launches; of two platforms that disagree, the latest change
+   * wins.
    *
-   * This is the creation path's trust extended to every launch: a registered
-   * platform vouching for its users' addresses. It is a real grant, because
-   * login links are the only native credential, so whoever the platform names
-   * can sign in. The address lands unverified for the creation path's reason
-   * too: asserted, not proven, until someone proves the mailbox by using it.
-   * And the old address stops signing in: the store retires the native
-   * identity keyed on it, so a change the platform makes to cut off a mailbox
-   * does cut it off.
+   * A change is carried over only to an account whose address the LMS owns —
+   * one a launch created, or whose holder handed the address back to their
+   * LMS — or that still holds the placeholder an email-less launch left. An
+   * address its holder or an administrator chose stays, and the profile page
+   * shows what the LMS now says beside it, with a way to take that instead.
+   *
+   * Carrying an address over is a real grant, because login links are the
+   * only native credential, so whoever the platform names can sign in. It is
+   * the creation path's trust extended to later launches: a registered
+   * platform vouching for its users' addresses. The address lands unverified,
+   * asserted rather than proven, and the old one stops signing in: the store
+   * retires the native identity keyed on it, so a change the platform makes to
+   * cut off a mailbox does cut it off.
    *
    * An address another account already holds is left alone, and the account
    * keeps what it had. The link challenge is not the answer to that
@@ -1459,21 +1515,72 @@ export class LtiService {
    */
   private async adoptAssertedEmail(
     user: User,
+    identity: ExternalIdentity,
     asserted: string | null,
     nowDate: Date,
   ): Promise<User> {
-    if (asserted === null || user.email === asserted) {
+    if (asserted === null) {
       return user;
     }
 
-    const updated = await this.options.stores.users.adoptEmail(
-      user.id,
-      user.email,
+    const changed = await this.options.stores.users.recordAssertedEmail(
+      identity.id,
       asserted,
-      timestampNow(nowDate),
     );
 
-    return updated ?? user;
+    if (
+      !changed ||
+      user.email === asserted ||
+      (user.emailSource !== "lti" && !isPlaceholderEmail(user.email))
+    ) {
+      return user;
+    }
+
+    const now = timestampNow(nowDate);
+    const updated = await this.options.stores.users.changeEmail(user.id, {
+      from: user.email,
+      to: asserted,
+      source: "lti",
+      sourcePlatformId:
+        parseLtiProviderSubject(identity.providerSubject)?.platformId ?? null,
+      verifiedAt: null,
+      updatedAt: now,
+      pendingUndo: "carry",
+    });
+
+    if (updated === null) {
+      // A hold lapses within the week, unlike another account's use of the
+      // address, so the assertion is forgotten again and a later launch
+      // carries it over, as the creation path's placeholder is replaced.
+      const held = await this.options.stores.emailChanges.findPendingUndo(
+        asserted,
+        now,
+      );
+
+      if (held !== null && held.userId !== user.id) {
+        await this.options.stores.users.forgetAssertedEmail(
+          identity.id,
+          asserted,
+        );
+      }
+
+      return user;
+    }
+
+    // Told only when the old address was proven a mailbox its holder reads: an
+    // address the LMS asserted and nobody ever signed in with is the LMS's own
+    // record, and the platform correcting it is no news to anyone.
+    if (user.emailVerifiedAt !== null) {
+      await announceEmailChange(
+        {
+          notifier: this.options.emailNotifier ?? null,
+          stores: this.options.stores,
+        },
+        { after: updated, at: nowDate, before: user, undoable: true },
+      );
+    }
+
+    return updated;
   }
 
   private async adoptAssertedName(
@@ -1605,6 +1712,7 @@ export class LtiService {
   private async createIdentity(
     userId: string,
     subject: string,
+    assertedEmail: string | null,
     nowDate: Date,
   ): Promise<void> {
     try {
@@ -1613,6 +1721,7 @@ export class LtiService {
         userId,
         provider: "lti",
         providerSubject: subject,
+        assertedEmail,
         createdAt: timestampNow(nowDate),
       });
     } catch (error) {

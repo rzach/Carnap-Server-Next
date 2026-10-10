@@ -8,7 +8,7 @@ import {
 } from "../application/auth";
 import { AppHttpError } from "../application/errors";
 import { hashAuthToken } from "../application/tokens";
-import type { AppBindings } from "../http";
+import { type AppBindings, publicRequestUrl } from "../http";
 import { deferred } from "../i18n/deferred";
 import { optionalStoresForContext } from "../stores";
 
@@ -25,12 +25,46 @@ const CSRF_EXEMPT_PATHS = new Set([
   // The emailed single-use token is the proof here, and the person often
   // holds no Carnap session yet when they click it.
   "/lti/link/confirm",
+  // The same for an address change's links: the confirmation is opened from
+  // the new mailbox and the undo from the old one, often on a device with no
+  // session, or with someone else's. Both sign the clicker in, so they also
+  // take a same-origin check (`SAME_ORIGIN_PATHS`) instead.
+  "/profile/email/confirm",
+  "/profile/email/undo",
   // The picker's single-use selection token — short-lived and bound to the
   // launching instructor's user — is the proof. Tying it to a session's
   // CSRF token instead would 403 whenever the session rotates between the
   // launch that rendered the picker and the selection POST.
   "/lti/deep-link/respond",
 ]);
+
+/**
+ * Exempt paths whose POST signs the browser in, and so must come from our own
+ * page: otherwise another site could post a token for an account of its own
+ * and sign a visitor into it — login CSRF — so that their work lands there.
+ * The emailed link opens the page with a GET; only its button posts.
+ */
+const SAME_ORIGIN_PATHS = new Set([
+  "/profile/email/confirm",
+  "/profile/email/undo",
+]);
+
+/**
+ * Whether a request plainly came from another site. `Sec-Fetch-Site` where
+ * the browser sends it, else `Origin`; a request with neither is not a
+ * browser's cross-site form post, so it passes.
+ */
+function crossSite(context: Parameters<MiddlewareHandler<AppBindings>>[0]) {
+  const site = context.req.header("Sec-Fetch-Site");
+
+  if (site !== undefined) {
+    return site !== "same-origin";
+  }
+
+  const origin = context.req.header("Origin");
+
+  return origin !== undefined && origin !== publicRequestUrl(context).origin;
+}
 
 export function actorMiddleware(): MiddlewareHandler<AppBindings> {
   return async (context, next) => {
@@ -87,10 +121,22 @@ async function submittedCsrfToken(
 
 export function csrfMiddleware(): MiddlewareHandler<AppBindings> {
   return async (context, next) => {
-    if (
-      SAFE_METHODS.has(context.req.method) ||
-      CSRF_EXEMPT_PATHS.has(new URL(context.req.url).pathname)
-    ) {
+    if (SAFE_METHODS.has(context.req.method)) {
+      await next();
+      return;
+    }
+
+    const { pathname } = new URL(context.req.url);
+
+    if (SAME_ORIGIN_PATHS.has(pathname) && crossSite(context)) {
+      throw new AppHttpError(
+        403,
+        "cross_site_request",
+        deferred.i18n.t("Open the link from your email and use its button."),
+      );
+    }
+
+    if (CSRF_EXEMPT_PATHS.has(pathname)) {
       await next();
       return;
     }

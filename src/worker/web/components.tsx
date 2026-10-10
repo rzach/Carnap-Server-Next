@@ -268,19 +268,42 @@ export const TableScroll: FC<{ readonly children?: Child }> = ({
   </div>
 );
 
+/** Whether a child would render anything: absent, false and `[]` would not. */
+function hasContent(child: Child): boolean {
+  return (
+    child !== undefined &&
+    child !== null &&
+    child !== false &&
+    !(Array.isArray(child) && child.length === 0)
+  );
+}
+
+/**
+ * A card: a header, an optional summary strip under it, a body, and a footer.
+ *
+ * `sections` is for a sheet that holds several distinct things — each one a
+ * body section of its own, divided from the next by a full-width rule, rather
+ * than one body with the parts run together. An empty entry is skipped, so a
+ * section that has nothing to show this time can be passed as `null`.
+ */
 export const Sheet: FC<{
   readonly children?: Child;
   readonly className?: string;
   readonly description?: Child;
   readonly footer?: Child;
+  readonly sections?: readonly Child[];
   readonly summary?: Child;
   readonly title?: string;
-}> = ({ children, className, description, footer, summary, title }) => {
-  const hasBody =
-    children !== undefined &&
-    children !== null &&
-    children !== false &&
-    !(Array.isArray(children) && children.length === 0);
+}> = ({
+  children,
+  className,
+  description,
+  footer,
+  sections = [],
+  summary,
+  title,
+}) => {
+  const hasBody = hasContent(children);
 
   return (
     <section class={className === undefined ? "sheet" : `sheet ${className}`}>
@@ -294,6 +317,9 @@ export const Sheet: FC<{
       )}
       {summary}
       {hasBody ? <div class="sheet-section">{children}</div> : null}
+      {sections.filter(hasContent).map((section) => (
+        <div class="sheet-section">{section}</div>
+      ))}
       {footer === undefined ? null : (
         <footer class="sheet-footer">{footer}</footer>
       )}

@@ -709,7 +709,7 @@ const AddStaffBar: FC<{
         name="email"
         placeholder={i18n.t("person@example.edu", undefined, {
           comment:
-            "Example address in the add-staff field. Translate the local " +
+            "Example address in an email field. Translate the local " +
             "part; the example.edu domain is reserved for documentation.",
         })}
         required

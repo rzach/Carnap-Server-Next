@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   type AnySQLiteColumn,
   index,
@@ -18,6 +19,15 @@ export const users = sqliteTable(
     id: text("id").primaryKey(),
     email: text("email").notNull(),
     emailVerifiedAt: text("email_verified_at"),
+    /** Who owns the address; see `0033_email_source.sql`. */
+    emailSource: text("email_source", { enum: ["lti", "user", "admin"] })
+      .notNull()
+      .default("user"),
+    /** The platform an `lti` address came from; null for any other source. */
+    emailSourcePlatformId: text("email_source_platform_id").references(
+      (): AnySQLiteColumn => ltiPlatforms.id,
+      { onDelete: "set null" },
+    ),
     name: text("name"),
     locale: text("locale"),
     studentId: text("student_id"),
@@ -99,6 +109,11 @@ export const externalIdentities = sqliteTable(
       .references(() => users.id, { onDelete: "cascade" }),
     provider: text("provider", { enum: ["native", "lti"] }).notNull(),
     providerSubject: text("provider_subject").notNull(),
+    /**
+     * The last address an LTI platform asserted for this person, whether or not
+     * the account adopted it; null until a launch has recorded one.
+     */
+    assertedEmail: text("asserted_email"),
     createdAt: text("created_at").notNull(),
   },
   (table) => [
@@ -107,6 +122,40 @@ export const externalIdentities = sqliteTable(
       table.provider,
       table.providerSubject,
     ),
+  ],
+);
+
+/** The links behind an address change; see `0034_email_change_tokens.sql`. */
+export const emailChangeTokens = sqliteTable(
+  "email_change_tokens",
+  {
+    tokenHash: text("token_hash").primaryKey(),
+    kind: text("kind", { enum: ["confirm", "undo"] }).notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    fromEmail: text("from_email").notNull(),
+    toEmail: text("to_email").notNull(),
+    restoreSource: text("restore_source", {
+      enum: ["lti", "user", "admin"],
+    }),
+    restorePlatformId: text("restore_platform_id").references(
+      (): AnySQLiteColumn => ltiPlatforms.id,
+      { onDelete: "set null" },
+    ),
+    createdAt: text("created_at").notNull(),
+    expiresAt: text("expires_at").notNull(),
+    consumedAt: text("consumed_at"),
+  },
+  (table) => [
+    index("email_change_tokens_user_idx").on(table.userId, table.kind),
+    index("email_change_tokens_from_email_idx").on(
+      table.fromEmail,
+      table.kind,
+    ),
+    uniqueIndex("email_change_tokens_pending_undo_unique")
+      .on(table.userId)
+      .where(sql`${table.kind} = 'undo' and ${table.consumedAt} is null`),
   ],
 );
 

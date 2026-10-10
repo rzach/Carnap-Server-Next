@@ -9,9 +9,9 @@ import type {
 } from "../domain/admin";
 import type { Course } from "../domain/courses";
 import type { JsonValue } from "../domain/json";
-import type { User } from "../domain/users";
+import type { EmailAuthority, User } from "../domain/users";
 import type { AppBindings } from "../http";
-import { splitAtValue, VALUE } from "../i18n/translator";
+import { splitAtValue, type Translator, VALUE } from "../i18n/translator";
 import { adminCrumb } from "./breadcrumbs";
 import {
   CreateBar,
@@ -226,6 +226,39 @@ const SuspensionForm: FC<{
   );
 };
 
+/**
+ * Move the account to a new address: the way back in for someone who lost
+ * the old mailbox. A footer bar like the sheets' others; the change takes
+ * effect at once, and the old address is told.
+ */
+const AdminEmailBar: FC<{
+  readonly context: Context<AppBindings>;
+  readonly userId: string;
+}> = ({ context, userId }) => {
+  const i18n = useI18n();
+
+  return (
+    <CreateBar
+      action={`/admin/users/${userId}/email`}
+      context={context}
+      submitLabel={i18n.t("Change email address")}
+    >
+      <input
+        aria-label={i18n.t("New email address")}
+        maxlength={254}
+        name="email"
+        placeholder={i18n.t("person@example.edu", undefined, {
+          comment:
+            "Example address in an email field. Translate the local " +
+            "part; the example.edu domain is reserved for documentation.",
+        })}
+        required
+        type="email"
+      />
+    </CreateBar>
+  );
+};
+
 const IdentitiesTable: FC<{ readonly profile: AdminUserProfile }> = ({
   profile,
 }) => {
@@ -241,6 +274,7 @@ const IdentitiesTable: FC<{ readonly profile: AdminUserProfile }> = ({
         <tr>
           <th>{i18n.t("Provider")}</th>
           <th>{i18n.t("Subject")}</th>
+          <th>{i18n.t("Address it last sent")}</th>
         </tr>
       </thead>
       <tbody>
@@ -248,12 +282,28 @@ const IdentitiesTable: FC<{ readonly profile: AdminUserProfile }> = ({
           <tr>
             <td>{identityProviderLabel(i18n, identity.provider)}</td>
             <td>{identity.providerSubject}</td>
+            {/* What the platform says, adopted or not: where it differs from
+                the account's address, this is the column that shows why. A
+                native identity's subject already is its address. */}
+            <td>{identity.assertedEmail ?? ""}</td>
           </tr>
         ))}
       </tbody>
     </TableScroll>
   );
 };
+
+/** Who owns an account's address, in the admin record's terms. */
+function emailSourceLabel(i18n: Translator, email: EmailAuthority): string {
+  switch (email.source) {
+    case "lti":
+      return email.platformName ?? i18n.t("LMS (LTI)");
+    case "user":
+      return i18n.t("The user");
+    case "admin":
+      return i18n.t("An administrator");
+  }
+}
 
 /** "Verified <date>", split so the date element lands where the translator put it. */
 const VerifiedAt: FC<{ readonly at: string }> = ({ at }) => {
@@ -655,7 +705,15 @@ export function renderAdminUserProfile(
           <div class="record-headline">
             <SummaryStrip
               items={[
-                { label: i18n.t("Email"), value: profile.user.email },
+                {
+                  label: i18n.t("Email"),
+                  value:
+                    profile.email.email ?? i18n.t("No email address yet"),
+                },
+                {
+                  label: i18n.t("Email set by"),
+                  value: emailSourceLabel(i18n, profile.email),
+                },
                 {
                   label: i18n.t("Email status"),
                   value:
@@ -687,7 +745,12 @@ export function renderAdminUserProfile(
         <h3>{i18n.t("Platform capabilities")}</h3>
         <CapabilitiesTable context={context} grants={profile.capabilities} />
       </Sheet>
-      <Sheet title={i18n.t("Identities")}>
+      {/* The address change sits with the sign-ins, which it changes: the
+          native one keyed on the old address goes with it. */}
+      <Sheet
+        footer={<AdminEmailBar context={context} userId={profile.user.id} />}
+        title={i18n.t("Identities")}
+      >
         <IdentitiesTable profile={profile} />
       </Sheet>
       <Sheet

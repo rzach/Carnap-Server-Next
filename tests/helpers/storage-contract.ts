@@ -329,32 +329,37 @@ export function describeStorageContract(
 
         // The email swap is a compare-and-swap on the address the caller
         // read, and a taken address makes it a no-op rather than a unique
-        // failure. What lands is unverified.
+        // failure.
         const placeholder = await stores.users.create({
           id: "user-placeholder",
           email: "lti-user-placeholder@lti.invalid",
           name: null,
           createdAt: NOW,
         });
+        const change = (
+          id: string,
+          from: string,
+          to: string,
+          updatedAt = NOW,
+        ) =>
+          stores.users.changeEmail(id, {
+            from,
+            to,
+            source: "user",
+            sourcePlatformId: null,
+            verifiedAt: null,
+            updatedAt,
+            pendingUndo: "carry",
+          });
 
         await expect(
-          stores.users.adoptEmail(
-            placeholder.id,
-            placeholder.email,
-            user.email,
-            NOW,
-          ),
+          change(placeholder.id, placeholder.email, user.email),
         ).resolves.toBeNull();
         await expect(
-          stores.users.adoptEmail(
-            placeholder.id,
-            "stale@lti.invalid",
-            "fresh@example.test",
-            NOW,
-          ),
+          change(placeholder.id, "stale@lti.invalid", "fresh@example.test"),
         ).resolves.toBeNull();
         await expect(
-          stores.users.adoptEmail(
+          change(
             placeholder.id,
             placeholder.email,
             "fresh@example.test",
@@ -366,12 +371,7 @@ export function describeStorageContract(
           updatedAt: "2026-01-07T00:00:00.000Z",
         });
         await expect(
-          stores.users.adoptEmail(
-            "missing-user",
-            placeholder.email,
-            "other@example.test",
-            NOW,
-          ),
+          change("missing-user", placeholder.email, "other@example.test"),
         ).resolves.toBeNull();
 
         // Native sign-in is keyed by address, so the swap retires the old
@@ -384,23 +384,13 @@ export function describeStorageContract(
           createdAt: NOW,
         });
         await expect(
-          stores.users.adoptEmail(
-            placeholder.id,
-            "fresh@example.test",
-            user.email,
-            NOW,
-          ),
+          change(placeholder.id, "fresh@example.test", user.email),
         ).resolves.toBeNull();
         await expect(
           stores.users.getExternalIdentity("native", "fresh@example.test"),
         ).resolves.toMatchObject({ userId: placeholder.id });
         await expect(
-          stores.users.adoptEmail(
-            placeholder.id,
-            "fresh@example.test",
-            "newer@example.test",
-            NOW,
-          ),
+          change(placeholder.id, "fresh@example.test", "newer@example.test"),
         ).resolves.toMatchObject({ email: "newer@example.test" });
         await expect(
           stores.users.getExternalIdentity("native", "fresh@example.test"),
@@ -415,6 +405,504 @@ export function describeStorageContract(
         await expect(
           stores.users.deleteExternalIdentity(identity.id),
         ).resolves.toBe(false);
+      });
+    });
+
+    test("an email change records its source and retires what the old address held", async () => {
+      await withStorage(async ({ stores }) => {
+        const platform = await stores.lti.createPlatform({
+          id: "lti-platform-email",
+          name: "Local Moodle",
+          issuer: "https://lms.example.test",
+          clientId: "client-email",
+          authorizationEndpoint: "https://lms.example.test/auth",
+          tokenEndpoint: "https://lms.example.test/token",
+          jwksUri: "https://lms.example.test/jwks",
+          createdAt: NOW,
+        });
+        const user = await stores.users.create({
+          id: "user-email",
+          email: "ada@example.test",
+          emailSource: "lti",
+          emailSourcePlatformId: platform.id,
+          name: null,
+          createdAt: NOW,
+        });
+
+        expect(user).toMatchObject({
+          emailSource: "lti",
+          emailSourcePlatformId: platform.id,
+        });
+        // A native sign-in's account is its holder's by default.
+        await expect(
+          stores.users.create({
+            id: "user-native",
+            email: "native@example.test",
+            name: null,
+            createdAt: NOW,
+          }),
+        ).resolves.toMatchObject({
+          emailSource: "user",
+          emailSourcePlatformId: null,
+        });
+
+        // A login link still out for the old address would otherwise make the
+        // old mailbox a fresh account; one for another address is untouched.
+        await stores.auth.createNativeLoginChallenge({
+          id: "challenge-old",
+          email: "ada@example.test",
+          tokenHash: "hash-old",
+          createdAt: NOW,
+          expiresAt: "2026-01-09T00:00:00.000Z",
+        });
+        await stores.auth.createNativeLoginChallenge({
+          id: "challenge-other",
+          email: "native@example.test",
+          tokenHash: "hash-other",
+          createdAt: NOW,
+          expiresAt: "2026-01-09T00:00:00.000Z",
+        });
+
+        // A refused swap cancels nothing.
+        await expect(
+          stores.users.changeEmail(user.id, {
+            from: "ada@example.test",
+            to: "native@example.test",
+            source: "user",
+            sourcePlatformId: null,
+            verifiedAt: NOW,
+            updatedAt: NOW,
+            pendingUndo: "carry",
+          }),
+        ).resolves.toBeNull();
+        await expect(stores.users.getById(user.id)).resolves.toMatchObject({
+          emailSource: "lti",
+        });
+
+        await expect(
+          stores.users.changeEmail(user.id, {
+            from: "ada@example.test",
+            to: "ada@new.example.test",
+            source: "user",
+            sourcePlatformId: null,
+            verifiedAt: "2026-01-08T00:00:00.000Z",
+            updatedAt: "2026-01-08T00:00:00.000Z",
+            pendingUndo: "carry",
+          }),
+        ).resolves.toMatchObject({
+          email: "ada@new.example.test",
+          emailSource: "user",
+          emailSourcePlatformId: null,
+          emailVerifiedAt: "2026-01-08T00:00:00.000Z",
+        });
+        await expect(
+          stores.auth.consumeNativeLoginChallenge("hash-old", NOW),
+        ).resolves.toBeNull();
+        await expect(
+          stores.auth.consumeNativeLoginChallenge("hash-other", NOW),
+        ).resolves.toMatchObject({ id: "challenge-other" });
+      });
+    });
+
+    test("an identity's asserted email is a compare-and-set", async () => {
+      await withStorage(async ({ stores }) => {
+        const user = await stores.users.create({
+          id: "user-asserted",
+          email: "ada@example.test",
+          name: null,
+          createdAt: NOW,
+        });
+        const identity = await stores.users.createExternalIdentity({
+          id: "identity-asserted",
+          userId: user.id,
+          provider: "lti",
+          providerSubject: "platform:subject",
+          createdAt: NOW,
+        });
+
+        expect(identity.assertedEmail).toBeNull();
+        // The first recording, over nothing, counts as a change.
+        await expect(
+          stores.users.recordAssertedEmail(identity.id, "ada@example.test"),
+        ).resolves.toBe(true);
+        await expect(
+          stores.users.recordAssertedEmail(identity.id, "ada@example.test"),
+        ).resolves.toBe(false);
+        await expect(
+          stores.users.recordAssertedEmail(
+            identity.id,
+            "ada@new.example.test",
+          ),
+        ).resolves.toBe(true);
+        await expect(
+          stores.users.getExternalIdentity("lti", "platform:subject"),
+        ).resolves.toMatchObject({ assertedEmail: "ada@new.example.test" });
+        await expect(
+          stores.users.recordAssertedEmail(
+            "identity-missing",
+            "x@example.test",
+          ),
+        ).resolves.toBe(false);
+
+        // Created with one, the same address is no change.
+        const seeded = await stores.users.createExternalIdentity({
+          id: "identity-seeded",
+          userId: user.id,
+          provider: "lti",
+          providerSubject: "platform:other",
+          assertedEmail: "ada@example.test",
+          createdAt: NOW,
+        });
+
+        await expect(
+          stores.users.recordAssertedEmail(seeded.id, "ada@example.test"),
+        ).resolves.toBe(false);
+
+        // Forgetting is a compare-and-set too: a newer assertion stays.
+        await stores.users.forgetAssertedEmail(
+          seeded.id,
+          "stale@example.test",
+        );
+        await expect(
+          stores.users.recordAssertedEmail(seeded.id, "ada@example.test"),
+        ).resolves.toBe(false);
+        await stores.users.forgetAssertedEmail(seeded.id, "ada@example.test");
+        await expect(
+          stores.users.recordAssertedEmail(seeded.id, "ada@example.test"),
+        ).resolves.toBe(true);
+      });
+    });
+
+    test("email change links: the latest confirmation is live, used once, swept when expired", async () => {
+      await withStorage(async ({ stores }) => {
+        const user = await createUser(stores, "user-links");
+        const link = {
+          kind: "confirm" as const,
+          userId: user.id,
+          fromEmail: user.email,
+          toEmail: "new@example.test",
+          restoreSource: null,
+          restorePlatformId: null,
+          createdAt: NOW,
+          expiresAt: "2026-01-03T00:00:00.000Z",
+        };
+
+        await stores.emailChanges.create({ ...link, tokenHash: "confirm-1" });
+        // A second request supersedes the first.
+        await stores.emailChanges.create({
+          ...link,
+          toEmail: "newer@example.test",
+          tokenHash: "confirm-2",
+        });
+
+        await expect(
+          stores.emailChanges.get("confirm-1", "confirm", NOW),
+        ).resolves.toBeNull();
+        // Asked for as the wrong kind, a link is no link.
+        await expect(
+          stores.emailChanges.get("confirm-2", "undo", NOW),
+        ).resolves.toBeNull();
+        await expect(
+          stores.emailChanges.get("confirm-2", "confirm", NOW),
+        ).resolves.toMatchObject({ toEmail: "newer@example.test" });
+        await expect(
+          stores.emailChanges.consume("confirm-2", "confirm", NOW),
+        ).resolves.toMatchObject({ toEmail: "newer@example.test" });
+        await expect(
+          stores.emailChanges.consume("confirm-2", "confirm", NOW),
+        ).resolves.toBeNull();
+
+        // Past its expiry a link neither reads nor holds an address, and the
+        // next insert sweeps it.
+        await stores.emailChanges.create({
+          ...link,
+          kind: "undo",
+          fromEmail: "held@example.test",
+          restoreSource: "user",
+          tokenHash: "undo-1",
+        });
+        await expect(
+          stores.emailChanges.findPendingUndo("held@example.test", NOW),
+        ).resolves.toMatchObject({ userId: user.id });
+
+        const later = "2026-01-04T00:00:00.000Z";
+
+        await expect(
+          stores.emailChanges.findPendingUndo("held@example.test", later),
+        ).resolves.toBeNull();
+        await expect(
+          stores.emailChanges.consume("undo-1", "undo", later),
+        ).resolves.toBeNull();
+      });
+    });
+
+    test("a reissued undo link keeps its expiry, and the old token stops working", async () => {
+      await withStorage(async ({ stores }) => {
+        const user = await createUser(stores, "user-reissue");
+
+        await stores.emailChanges.create({
+          kind: "undo",
+          userId: user.id,
+          fromEmail: "old@example.test",
+          toEmail: user.email,
+          restoreSource: "lti",
+          restorePlatformId: null,
+          createdAt: NOW,
+          expiresAt: "2026-01-09T00:00:00.000Z",
+          tokenHash: "undo-old",
+        });
+
+        await expect(
+          stores.emailChanges.reissueUndo(
+            "old@example.test",
+            "undo-new",
+            NOW,
+          ),
+        ).resolves.toMatchObject({
+          expiresAt: "2026-01-09T00:00:00.000Z",
+          restoreSource: "lti",
+        });
+        await expect(
+          stores.emailChanges.get("undo-old", "undo", NOW),
+        ).resolves.toBeNull();
+        await expect(
+          stores.emailChanges.get("undo-new", "undo", NOW),
+        ).resolves.toMatchObject({ fromEmail: "old@example.test" });
+        await expect(
+          stores.emailChanges.reissueUndo("none@example.test", "x", NOW),
+        ).resolves.toBeNull();
+      });
+    });
+
+    test("an address held by a pending undo is kept for its account, and moving back to it uses the undo up", async () => {
+      await withStorage(async ({ stores }) => {
+        const holder = await createUser(stores, "user-holder");
+        const other = await createUser(stores, "user-other");
+        const held = {
+          kind: "undo" as const,
+          userId: holder.id,
+          fromEmail: "held@example.test",
+          toEmail: holder.email,
+          restoreSource: "user" as const,
+          restorePlatformId: null,
+          createdAt: NOW,
+          expiresAt: "2026-01-09T00:00:00.000Z",
+        };
+
+        await stores.emailChanges.create({ ...held, tokenHash: "undo-held" });
+
+        const change = {
+          to: "held@example.test",
+          source: "user" as const,
+          sourcePlatformId: null,
+          verifiedAt: null,
+          updatedAt: NOW,
+        };
+
+        // Not for another account…
+        await expect(
+          stores.users.changeEmail(other.id, {
+            ...change,
+            from: other.email,
+            pendingUndo: "carry",
+          }),
+        ).resolves.toBeNull();
+        // …but for the account it is held for, which is what an undo does.
+        await expect(
+          stores.users.changeEmail(holder.id, {
+            ...change,
+            from: holder.email,
+            pendingUndo: "carry",
+          }),
+        ).resolves.toMatchObject({ email: "held@example.test" });
+        // Back at the address the undo would restore, the undo is used up,
+        // and the hold with it.
+        await expect(
+          stores.emailChanges.get("undo-held", "undo", NOW),
+        ).resolves.toBeNull();
+
+        // A hold that has lapsed keeps nobody out.
+        await stores.emailChanges.create({
+          ...held,
+          fromEmail: "lapsed@example.test",
+          expiresAt: NOW,
+          tokenHash: "undo-lapsed",
+        });
+        await expect(
+          stores.users.changeEmail(other.id, {
+            ...change,
+            from: other.email,
+            to: "lapsed@example.test",
+            updatedAt: "2026-01-02T03:04:06.000Z",
+            pendingUndo: "carry",
+          }),
+        ).resolves.toMatchObject({ email: "lapsed@example.test" });
+      });
+    });
+
+    test("a later change carries the account's undo forward, and an administrator's cancels it", async () => {
+      await withStorage(async ({ stores }) => {
+        const user = await createUser(stores, "user-carry");
+        const undo = {
+          kind: "undo" as const,
+          userId: user.id,
+          fromEmail: "first@example.test",
+          toEmail: user.email,
+          restoreSource: "lti" as const,
+          restorePlatformId: null,
+          createdAt: NOW,
+          expiresAt: "2026-01-09T00:00:00.000Z",
+        };
+        const confirm = {
+          ...undo,
+          kind: "confirm" as const,
+          fromEmail: user.email,
+          toEmail: "asked@example.test",
+          restoreSource: null,
+        };
+
+        await stores.emailChanges.create({
+          ...undo,
+          tokenHash: "undo-first",
+        });
+        await stores.emailChanges.create({
+          ...confirm,
+          tokenHash: "confirm-pending",
+        });
+        // The account has an undo pending, so a second is not stored.
+        await expect(
+          stores.emailChanges.create({
+            ...undo,
+            fromEmail: user.email,
+            toEmail: "second@example.test",
+            tokenHash: "undo-second",
+          }),
+        ).resolves.toBeNull();
+
+        const change = {
+          source: "user" as const,
+          sourcePlatformId: null,
+          verifiedAt: null,
+          updatedAt: NOW,
+          pendingUndo: "carry" as const,
+        };
+
+        await expect(
+          stores.users.changeEmail(user.id, {
+            ...change,
+            from: user.email,
+            to: "second@example.test",
+          }),
+        ).resolves.toMatchObject({ email: "second@example.test" });
+        // Still the earliest address, and now from where the account is.
+        await expect(
+          stores.emailChanges.get("undo-first", "undo", NOW),
+        ).resolves.toMatchObject({
+          fromEmail: "first@example.test",
+          restoreSource: "lti",
+          toEmail: "second@example.test",
+        });
+        // A confirmation from the old address does not outlive the change.
+        await expect(
+          stores.emailChanges.get("confirm-pending", "confirm", NOW),
+        ).resolves.toBeNull();
+
+        // A refused change — here, a repeat of the one just made — leaves
+        // everything as it was.
+        await expect(
+          stores.users.changeEmail(user.id, {
+            ...change,
+            from: user.email,
+            to: "second@example.test",
+            pendingUndo: "cancel",
+          }),
+        ).resolves.toBeNull();
+        await expect(
+          stores.emailChanges.get("undo-first", "undo", NOW),
+        ).resolves.toMatchObject({ toEmail: "second@example.test" });
+
+        await expect(
+          stores.users.changeEmail(user.id, {
+            ...change,
+            source: "admin",
+            from: "second@example.test",
+            to: "recovered@example.test",
+            pendingUndo: "cancel",
+          }),
+        ).resolves.toMatchObject({ email: "recovered@example.test" });
+        await expect(
+          stores.emailChanges.get("undo-first", "undo", NOW),
+        ).resolves.toBeNull();
+      });
+    });
+
+    test("a reissue re-keys only the newest undo holding an address", async () => {
+      await withStorage(async ({ stores }) => {
+        const first = await createUser(stores, "user-first");
+        const second = await createUser(stores, "user-second");
+        const undo = {
+          kind: "undo" as const,
+          fromEmail: "shared@example.test",
+          restoreSource: "user" as const,
+          restorePlatformId: null,
+          expiresAt: "2026-01-09T00:00:00.000Z",
+        };
+
+        await stores.emailChanges.create({
+          ...undo,
+          userId: first.id,
+          toEmail: first.email,
+          createdAt: NOW,
+          tokenHash: "undo-older",
+        });
+        await stores.emailChanges.create({
+          ...undo,
+          userId: second.id,
+          toEmail: second.email,
+          createdAt: "2026-01-02T03:04:06.000Z",
+          tokenHash: "undo-newer",
+        });
+
+        await expect(
+          stores.emailChanges.reissueUndo(
+            "shared@example.test",
+            "undo-reissued",
+            "2026-01-02T03:04:06.000Z",
+          ),
+        ).resolves.toMatchObject({ userId: second.id });
+        await expect(
+          stores.emailChanges.get("undo-older", "undo", NOW),
+        ).resolves.toMatchObject({ userId: first.id });
+      });
+    });
+
+    test("an account can be signed out everywhere", async () => {
+      await withStorage(async ({ stores }) => {
+        const user = await createUser(stores, "user-sessions");
+        const other = await createUser(stores, "user-kept");
+        const session = (tokenHash: string, userId: string) =>
+          stores.auth.createSession({
+            tokenHash,
+            userId,
+            csrfTokenHash: `${tokenHash}-csrf`,
+            createdAt: NOW,
+            expiresAt: "2026-02-01T00:00:00.000Z",
+          });
+
+        await session("session-a", user.id);
+        await session("session-b", user.id);
+        await session("session-c", other.id);
+        await stores.auth.revokeSessionsForUser(user.id, NOW);
+
+        await expect(
+          stores.auth.getValidSession("session-a", NOW),
+        ).resolves.toBeNull();
+        await expect(
+          stores.auth.getValidSession("session-b", NOW),
+        ).resolves.toBeNull();
+        await expect(
+          stores.auth.getValidSession("session-c", NOW),
+        ).resolves.toMatchObject({ userId: other.id });
       });
     });
 

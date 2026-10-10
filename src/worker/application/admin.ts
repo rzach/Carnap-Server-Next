@@ -11,9 +11,14 @@ import { createAppId } from "../domain/ids";
 import type { User } from "../domain/users";
 import { deferred } from "../i18n/deferred";
 import { appendAdminAudit, auditMoment } from "./admin-audit";
-import type { AuthenticatedActor } from "./auth";
+import { type AuthenticatedActor, assertEmail, normalizeEmail } from "./auth";
 import { requirePlatformCapability } from "./authorization";
 import { assertCourseRole, assertMembershipStatus } from "./courses";
+import { emailChangeRefusal, loadEmailAuthority } from "./email-authority";
+import {
+  announceEmailChange,
+  type EmailChangeNotifier,
+} from "./email-change";
 import {
   AppHttpError,
   badRequest,
@@ -23,6 +28,8 @@ import {
 import type { AppStores } from "./stores";
 
 export interface AdminServiceOptions {
+  /** Tells an address an administrator moved an account away from. */
+  readonly emailNotifier?: EmailChangeNotifier | null;
   readonly now?: () => Date;
   readonly requestId: string;
   readonly stores: AppStores;
@@ -39,6 +46,10 @@ export interface PlatformCapabilityCommand {
 export interface UserSearchCommand {
   readonly limit?: number | null;
   readonly query?: string | null;
+}
+
+export interface ChangeUserEmailCommand {
+  readonly email: string;
 }
 
 export interface SupportMembershipCommand {
@@ -163,7 +174,13 @@ export class AdminService {
       this.options.stores.users.listExternalIdentitiesForUser(user.id),
     ]);
 
-    return { capabilities, courses, identities, user };
+    return {
+      capabilities,
+      courses,
+      email: await loadEmailAuthority(this.options.stores, user, identities),
+      identities,
+      user,
+    };
   }
 
   async grantCapability(
@@ -277,6 +294,83 @@ export class AdminService {
     });
 
     return user;
+  }
+
+  /**
+   * Move an account to a new address: the recovery path for someone who has
+   * lost the old mailbox, and so cannot reach their profile to change it
+   * themselves — login links are the only native credential.
+   *
+   * The address becomes the administrator's choice, which no launch changes,
+   * and starts unverified: nothing here proved the mailbox, and the holder's
+   * first sign-in with it will. The old address is told, without the undo a
+   * holder's own change carries, since the old mailbox may be exactly what is
+   * being taken away from someone.
+   */
+  async changeUserEmail(
+    actor: AuthenticatedActor,
+    userId: AppId,
+    command: ChangeUserEmailCommand,
+  ): Promise<User> {
+    requirePlatformCapability(actor, ["site_admin"]);
+
+    const email = normalizeEmail(command.email);
+
+    assertEmail(email);
+
+    const user = await this.options.stores.users.getById(userId);
+
+    if (user === null) {
+      throw userNotFound();
+    }
+
+    if (email === user.email) {
+      throw badRequest(
+        "email_unchanged",
+        deferred.i18n.t("That is already the account's address."),
+      );
+    }
+
+    const now = auditMoment(this.options.now);
+    const changed = await this.options.stores.users.changeEmail(user.id, {
+      from: user.email,
+      to: email,
+      source: "admin",
+      sourcePlatformId: null,
+      verifiedAt: null,
+      updatedAt: now.timestamp,
+      pendingUndo: "cancel",
+    });
+
+    if (changed === null) {
+      throw await emailChangeRefusal(
+        this.options.stores,
+        user.id,
+        email,
+        now.timestamp,
+      );
+    }
+
+    await appendAdminAudit(this.options, {
+      action: "admin.change_user_email",
+      actorUserId: actor.user.id,
+      // Both addresses, because this is the record someone reads when an
+      // account turns out to have been handed to the wrong mailbox.
+      metadata: { from: user.email, to: email },
+      targetCourseId: null,
+      targetUserId: user.id,
+      timestamp: now.timestamp,
+    });
+
+    await announceEmailChange(
+      {
+        notifier: this.options.emailNotifier ?? null,
+        stores: this.options.stores,
+      },
+      { after: changed, at: now.date, before: user, undoable: false },
+    );
+
+    return changed;
   }
 
   async changeMembership(

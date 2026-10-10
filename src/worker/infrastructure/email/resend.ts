@@ -3,6 +3,10 @@ import type {
   SendLoginEmailInput,
 } from "../../application/auth";
 import { escapeHtml } from "../../application/content/render-support";
+import type {
+  SendEmailChangeNoticeInput,
+  SendEmailTakenInput,
+} from "../../application/email-change";
 import { AppHttpError } from "../../application/errors";
 import type { Env } from "../../env";
 import { withUserAgent } from "../../user-agent";
@@ -20,35 +24,35 @@ interface ResendEmailResponse {
  * an email is composed once and read once, in whatever language the person
  * asking for it was using.
  */
-export interface EmailCopy {
-  readonly html: (input: SendLoginEmailInput) => string;
-  readonly subject: (input: SendLoginEmailInput) => string;
-  readonly text: (input: SendLoginEmailInput) => string;
+export interface EmailCopy<Input = SendLoginEmailInput> {
+  readonly html: (input: Input) => string;
+  readonly subject: (input: Input) => string;
+  readonly text: (input: Input) => string;
 }
 
-export interface ResendLoginEmailSenderOptions {
+export interface ResendEmailSenderOptions<Input> {
   readonly apiKey: string;
-  readonly copy?: EmailCopy;
+  readonly copy: EmailCopy<Input>;
   readonly fetcher?: Fetcher;
   readonly from: string;
 }
 
-export class ResendLoginEmailSender implements LoginEmailSender {
-  private readonly copy: EmailCopy;
+/** One kind of email, delivered through Resend to `input.email`. */
+export class ResendEmailSender<Input extends { readonly email: string }> {
   private readonly fetcher: Fetcher;
 
-  constructor(private readonly options: ResendLoginEmailSenderOptions) {
-    this.copy = options.copy ?? loginEmailCopy;
+  constructor(private readonly options: ResendEmailSenderOptions<Input>) {
     this.fetcher = options.fetcher ?? platformFetcher;
   }
 
-  async send(input: SendLoginEmailInput): Promise<void> {
+  async send(input: Input): Promise<void> {
+    const { copy } = this.options;
     const response = await this.fetcher("https://api.resend.com/emails", {
       body: JSON.stringify({
         from: this.options.from,
-        html: this.copy.html(input),
-        subject: this.copy.subject(input),
-        text: this.copy.text(input),
+        html: copy.html(input),
+        subject: copy.subject(input),
+        text: copy.text(input),
         to: [input.email],
       }),
       headers: withUserAgent({
@@ -82,7 +86,30 @@ export class ResendLoginEmailSender implements LoginEmailSender {
   }
 }
 
-export function loginEmailSenderFromEnv(env: Env): LoginEmailSender | null {
+export interface ResendLoginEmailSenderOptions {
+  readonly apiKey: string;
+  readonly copy?: EmailCopy;
+  readonly fetcher?: Fetcher;
+  readonly from: string;
+}
+
+export class ResendLoginEmailSender
+  extends ResendEmailSender<SendLoginEmailInput>
+  implements LoginEmailSender
+{
+  constructor(options: ResendLoginEmailSenderOptions) {
+    super({ ...options, copy: options.copy ?? loginEmailCopy });
+  }
+}
+
+/**
+ * A sender for one kind of email, or null where this deployment has no mail
+ * delivery configured.
+ */
+function resendSenderFromEnv<Input extends { readonly email: string }>(
+  env: Env,
+  copy: EmailCopy<Input>,
+): ResendEmailSender<Input> | null {
   if (
     env.RESEND_API_KEY === undefined ||
     env.AUTH_LOGIN_EMAIL_FROM === undefined
@@ -90,10 +117,36 @@ export function loginEmailSenderFromEnv(env: Env): LoginEmailSender | null {
     return null;
   }
 
-  return new ResendLoginEmailSender({
+  return new ResendEmailSender({
     apiKey: env.RESEND_API_KEY,
+    copy,
     from: env.AUTH_LOGIN_EMAIL_FROM,
   });
+}
+
+/** The link that confirms a new address, sent to that address. */
+export function emailChangeConfirmSenderFromEnv(
+  env: Env,
+): ResendEmailSender<SendLoginEmailInput> | null {
+  return resendSenderFromEnv(env, emailChangeConfirmCopy);
+}
+
+/** The reply to a request to move to an address another account uses. */
+export function emailTakenSenderFromEnv(
+  env: Env,
+): ResendEmailSender<SendEmailTakenInput> | null {
+  return resendSenderFromEnv(env, emailTakenCopy);
+}
+
+/** The notice to an address an account was moved away from. */
+export function emailChangeNoticeSenderFromEnv(
+  env: Env,
+): ResendEmailSender<SendEmailChangeNoticeInput> | null {
+  return resendSenderFromEnv(env, emailChangeNoticeCopy);
+}
+
+export function loginEmailSenderFromEnv(env: Env): LoginEmailSender | null {
+  return resendSenderFromEnv(env, loginEmailCopy);
 }
 
 /**
@@ -102,18 +155,7 @@ export function loginEmailSenderFromEnv(env: Env): LoginEmailSender | null {
  * Same delivery machinery as login links, different copy.
  */
 export function ltiLinkEmailSenderFromEnv(env: Env): LoginEmailSender | null {
-  if (
-    env.RESEND_API_KEY === undefined ||
-    env.AUTH_LOGIN_EMAIL_FROM === undefined
-  ) {
-    return null;
-  }
-
-  return new ResendLoginEmailSender({
-    apiKey: env.RESEND_API_KEY,
-    copy: ltiLinkEmailCopy,
-    from: env.AUTH_LOGIN_EMAIL_FROM,
-  });
+  return resendSenderFromEnv(env, ltiLinkEmailCopy);
 }
 
 const loginEmailCopy: EmailCopy = {
@@ -177,6 +219,127 @@ const ltiLinkEmailCopy: EmailCopy = {
     ].join("\n"),
 };
 
+const emailChangeConfirmCopy: EmailCopy = {
+  html: ({ confirmationUrl, expiresInSeconds, i18n, locale }) =>
+    [
+      `<p>${escapeHtml(
+        i18n.t(
+          "Someone signed in to Carnap asked to use this address for their account. If this was you, use this link to confirm it:",
+        ),
+      )}</p>`,
+      `<p><a href="${escapeHtml(confirmationUrl)}">${escapeHtml(i18n.t("Confirm new address"))}</a></p>`,
+      `<p>${escapeHtml(
+        i18n.t("This link expires {duration} after it was sent.", {
+          duration: formatLifetime(expiresInSeconds, locale),
+        }),
+      )} ${escapeHtml(
+        i18n.t(
+          "If you did not ask for this, ignore this email and nothing will change.",
+        ),
+      )}</p>`,
+    ].join(""),
+  subject: ({ i18n }) => i18n.t("Confirm your new Carnap email address"),
+  text: ({ confirmationUrl, expiresInSeconds, i18n, locale }) =>
+    [
+      i18n.t(
+        "Someone signed in to Carnap asked to use this address for their account. If this was you, use this link to confirm it:",
+      ),
+      "",
+      confirmationUrl,
+      "",
+      i18n.t("This link expires {duration} after it was sent.", {
+        duration: formatLifetime(expiresInSeconds, locale),
+      }),
+      i18n.t(
+        "If you did not ask for this, ignore this email and nothing will change.",
+      ),
+    ].join("\n"),
+};
+
+const emailTakenCopy: EmailCopy<SendEmailTakenInput> = {
+  html: ({ i18n }) =>
+    [
+      `<p>${escapeHtml(
+        i18n.t(
+          "Someone signed in to Carnap asked to use this address for their account, but another Carnap account already uses it, so nothing has changed.",
+        ),
+      )}</p>`,
+      `<p>${escapeHtml(
+        i18n.t(
+          "If this was you, sign in with this address to reach the account that has it. If not, you can ignore this email.",
+        ),
+      )}</p>`,
+    ].join(""),
+  subject: ({ i18n }) => i18n.t("Your Carnap email address was not changed"),
+  text: ({ i18n }) =>
+    [
+      i18n.t(
+        "Someone signed in to Carnap asked to use this address for their account, but another Carnap account already uses it, so nothing has changed.",
+      ),
+      "",
+      i18n.t(
+        "If this was you, sign in with this address to reach the account that has it. If not, you can ignore this email.",
+      ),
+    ].join("\n"),
+};
+
+/** The notice's opening sentence, which says who made the change. */
+function noticeLead(input: SendEmailChangeNoticeInput): string {
+  const { i18n, newEmail } = input;
+
+  return input.byAdmin
+    ? i18n.t(
+        "A Carnap administrator changed the email address of your Carnap account to {address}. This address no longer signs in to it.",
+        { address: newEmail },
+      )
+    : i18n.t(
+        "The email address of your Carnap account was changed to {address}. This address no longer signs in to it.",
+        { address: newEmail },
+      );
+}
+
+/**
+ * What to do if the change was unwanted: the undo, the earlier change's undo
+ * that still covers this one, or whom to ask.
+ */
+function noticeRemedy(input: SendEmailChangeNoticeInput): string {
+  const { expiresInSeconds, i18n, locale } = input;
+
+  if (input.undoUrl !== null) {
+    return i18n.t(
+      "If you did not make this change, use the link below to undo it and sign in. It works for {duration}.",
+      { duration: formatLifetime(expiresInSeconds, locale) },
+    );
+  }
+
+  return input.byAdmin
+    ? i18n.t(
+        "If you did not expect this, contact the administrator of your Carnap site.",
+      )
+    : i18n.t(
+        "The address had been changed shortly before this as well. The link to undo that earlier change went to the address the account had then, and it puts that address back. If you did not expect this, contact the administrator of your Carnap site.",
+      );
+}
+
+const emailChangeNoticeCopy: EmailCopy<SendEmailChangeNoticeInput> = {
+  html: (input) =>
+    [
+      `<p>${escapeHtml(noticeLead(input))}</p>`,
+      `<p>${escapeHtml(noticeRemedy(input))}</p>`,
+      input.undoUrl === null
+        ? ""
+        : `<p><a href="${escapeHtml(input.undoUrl)}">${escapeHtml(input.i18n.t("Undo the change"))}</a></p>`,
+    ].join(""),
+  subject: ({ i18n }) => i18n.t("Your Carnap email address was changed"),
+  text: (input) =>
+    [
+      noticeLead(input),
+      "",
+      noticeRemedy(input),
+      ...(input.undoUrl === null ? [] : ["", input.undoUrl]),
+    ].join("\n"),
+};
+
 /**
  * How long the link lives, as a phrase in the reader's language: "10 minutes",
  * "24 hours", "10 Minuten". `Intl` rather than a hand-built string because it
@@ -185,10 +348,20 @@ const ltiLinkEmailCopy: EmailCopy = {
  *
  * Whole hours are said in hours; everything else in minutes. A day is left as
  * "24 hours" on purpose — for something that expires, hours are the unit the
- * reader is actually counting in.
+ * reader is actually counting in — but a week of them is said in days.
  */
 function formatLifetime(expiresInSeconds: number, locale: string): string {
   const minutes = Math.max(1, Math.round(expiresInSeconds / 60));
+  const days = minutes / (60 * 24);
+
+  if (Number.isInteger(days) && days >= 2) {
+    return new Intl.NumberFormat(locale, {
+      style: "unit",
+      unit: "day",
+      unitDisplay: "long",
+    }).format(days);
+  }
+
   const useHours = minutes >= 60 && minutes % 60 === 0;
 
   return new Intl.NumberFormat(locale, {

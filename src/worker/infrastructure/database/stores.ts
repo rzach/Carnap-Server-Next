@@ -40,6 +40,7 @@ import type {
   CreateContentItemInput,
   CreateContentRevisionInput,
   CreateCourseInput,
+  CreateEmailChangeTokenInput,
   CreateEnrollmentLinkInput,
   CreateExternalIdentityInput,
   CreateLtiContextInput,
@@ -51,6 +52,8 @@ import type {
   CreateNativeLoginChallengeInput,
   CreateUserInput,
   DeleteAssignmentInput,
+  EmailChange,
+  EmailChangeStore,
   EnqueueLtiGradeJobInput,
   ExcuseAssignmentExerciseInput,
   FailLtiGradeJobInput,
@@ -133,7 +136,11 @@ import {
   type LtiResourceLink,
   ltiProviderSubject,
 } from "../../domain/lti";
-import type { ExternalIdentity, User } from "../../domain/users";
+import type {
+  EmailChangeToken,
+  ExternalIdentity,
+  User,
+} from "../../domain/users";
 import type { AppDatabase } from "./database";
 import {
   adminAuditEvents,
@@ -151,6 +158,7 @@ import {
   courseEnrollmentLinks,
   courseMemberships,
   courses,
+  emailChangeTokens,
   evaluations,
   externalIdentities,
   loginRateLimitHits,
@@ -553,6 +561,8 @@ class SqliteUserStore implements UserStore {
           id: input.id,
           email: input.email,
           emailVerifiedAt: input.emailVerifiedAt ?? null,
+          emailSource: input.emailSource ?? "user",
+          emailSourcePlatformId: input.emailSourcePlatformId ?? null,
           name: input.name,
           studentId: input.studentId ?? null,
           createdAt: input.createdAt,
@@ -611,25 +621,21 @@ class SqliteUserStore implements UserStore {
     );
   }
 
-  async adoptEmail(
-    id: AppId,
-    from: string,
-    to: string,
-    updatedAt: string,
-  ): Promise<User | null> {
-    const swap = this.db
-      .update(users)
-      .set({ email: to, emailVerifiedAt: null, updatedAt })
-      .where(
-        and(
-          eq(users.id, id),
-          eq(users.email, from),
-          sql`not exists (select 1 from users as other where other.email = ${to})`,
-        ),
-      )
-      .returning();
-    // Conditioned on the account now holding `to`, so the old address's
-    // sign-in goes only when the swap above took, never on its own.
+  async changeEmail(id: AppId, change: EmailChange): Promise<User | null> {
+    const { from, to, updatedAt } = change;
+    const free = and(
+      sql`not exists (select 1 from users as other where other.email = ${to})`,
+      // Held for the account a pending undo would return it to.
+      sql`not exists (select 1 from email_change_tokens as held where held.kind = 'undo' and held.from_email = ${to} and held.user_id <> ${id} and held.consumed_at is null and held.expires_at > ${updatedAt})`,
+    );
+    // The swap's own condition, for the statements that go with it. None of
+    // them touches what it reads — the account's address, other accounts'
+    // addresses, other accounts' undo links — so it reads the same in each,
+    // and they all happen or none does.
+    const swaps = and(
+      sql`exists (select 1 from users as owner where owner.id = ${id} and owner.email = ${from})`,
+      free,
+    );
     const retire = this.db
       .delete(externalIdentities)
       .where(
@@ -637,12 +643,102 @@ class SqliteUserStore implements UserStore {
           eq(externalIdentities.userId, id),
           eq(externalIdentities.provider, "native"),
           eq(externalIdentities.providerSubject, from),
-          sql`exists (select 1 from users as owner where owner.id = ${id} and owner.email = ${to})`,
+          swaps,
         ),
       );
-    const [swapped] = await this.db.batch([swap, retire]);
+    const cancelLogins = this.db
+      .update(nativeLoginChallenges)
+      .set({ consumedAt: updatedAt })
+      .where(
+        and(
+          eq(nativeLoginChallenges.email, from),
+          isNull(nativeLoginChallenges.consumedAt),
+          swaps,
+        ),
+      );
+    const cancelConfirms = this.db
+      .update(emailChangeTokens)
+      .set({ consumedAt: updatedAt })
+      .where(
+        and(
+          eq(emailChangeTokens.userId, id),
+          eq(emailChangeTokens.kind, "confirm"),
+          isNull(emailChangeTokens.consumedAt),
+          swaps,
+        ),
+      );
+    // Used up when cancelling, or when the change itself goes back to the
+    // address the undo would restore; otherwise carried to the new address.
+    const pendingUndo = and(
+      eq(emailChangeTokens.userId, id),
+      eq(emailChangeTokens.kind, "undo"),
+      isNull(emailChangeTokens.consumedAt),
+      swaps,
+    );
+    const spendUndo = this.db
+      .update(emailChangeTokens)
+      .set({ consumedAt: updatedAt })
+      .where(
+        change.pendingUndo === "cancel"
+          ? pendingUndo
+          : and(pendingUndo, eq(emailChangeTokens.fromEmail, to)),
+      );
+    const carryUndo = this.db
+      .update(emailChangeTokens)
+      .set({ toEmail: to })
+      .where(pendingUndo);
+    const swap = this.db
+      .update(users)
+      .set({
+        email: to,
+        emailSource: change.source,
+        emailSourcePlatformId: change.sourcePlatformId,
+        emailVerifiedAt: change.verifiedAt,
+        updatedAt,
+      })
+      .where(and(eq(users.id, id), eq(users.email, from), free))
+      .returning();
+    const [, , , , , changed] = await this.db.batch([
+      retire,
+      cancelLogins,
+      cancelConfirms,
+      spendUndo,
+      carryUndo,
+      swap,
+    ]);
 
-    return nullableSingle(swapped);
+    return nullableSingle(changed);
+  }
+
+  async recordAssertedEmail(
+    identityId: AppId,
+    email: string,
+  ): Promise<boolean> {
+    const recorded = await this.db
+      .update(externalIdentities)
+      .set({ assertedEmail: email })
+      // `IS NOT`, not `!=`: the first recording, over a null, must match too.
+      .where(
+        and(
+          eq(externalIdentities.id, identityId),
+          sql`${externalIdentities.assertedEmail} is not ${email}`,
+        ),
+      )
+      .returning({ id: externalIdentities.id });
+
+    return recorded.length > 0;
+  }
+
+  async forgetAssertedEmail(identityId: AppId, email: string): Promise<void> {
+    await this.db
+      .update(externalIdentities)
+      .set({ assertedEmail: null })
+      .where(
+        and(
+          eq(externalIdentities.id, identityId),
+          eq(externalIdentities.assertedEmail, email),
+        ),
+      );
   }
 
   async disable(id: AppId, disabledAt: string): Promise<User | null> {
@@ -939,6 +1035,18 @@ class SqliteAuthStore implements AuthStore {
     );
   }
 
+  async revokeSessionsForUser(
+    userId: AppId,
+    revokedAt: string,
+  ): Promise<void> {
+    await this.db
+      .update(authSessions)
+      .set({ revokedAt })
+      .where(
+        and(eq(authSessions.userId, userId), isNull(authSessions.revokedAt)),
+      );
+  }
+
   async countLoginRateLimitHits(
     buckets: readonly string[],
     since: string,
@@ -991,6 +1099,163 @@ class SqliteAuthStore implements AuthStore {
       this.db.insert(loginRateLimitHits).values([...hits]),
       prune,
     ]);
+  }
+}
+
+function mapEmailChangeToken(
+  row: typeof emailChangeTokens.$inferSelect,
+): EmailChangeToken {
+  return {
+    createdAt: row.createdAt,
+    expiresAt: row.expiresAt,
+    fromEmail: row.fromEmail,
+    kind: row.kind,
+    restorePlatformId: row.restorePlatformId,
+    restoreSource: row.restoreSource,
+    toEmail: row.toEmail,
+    userId: row.userId,
+  };
+}
+
+class SqliteEmailChangeStore implements EmailChangeStore {
+  constructor(private readonly db: AppDatabase) {}
+
+  /** The conditions every live link meets. */
+  private pending(kind: EmailChangeToken["kind"], now: string) {
+    return and(
+      eq(emailChangeTokens.kind, kind),
+      isNull(emailChangeTokens.consumedAt),
+      gt(emailChangeTokens.expiresAt, now),
+    );
+  }
+
+  async create(
+    input: CreateEmailChangeTokenInput,
+  ): Promise<EmailChangeToken | null> {
+    const [, , inserted] = await this.db.batch([
+      this.db
+        .delete(emailChangeTokens)
+        .where(lte(emailChangeTokens.expiresAt, input.createdAt)),
+      // Only a confirmation replaces its predecessor. A pending undo stays,
+      // and the pending-undo unique index turns the insert into a no-op.
+      this.db
+        .update(emailChangeTokens)
+        .set({ consumedAt: input.createdAt })
+        .where(
+          and(
+            eq(emailChangeTokens.userId, input.userId),
+            eq(emailChangeTokens.kind, "confirm"),
+            isNull(emailChangeTokens.consumedAt),
+            sql`${input.kind} = 'confirm'`,
+          ),
+        ),
+      this.db
+        .insert(emailChangeTokens)
+        .values(input)
+        .onConflictDoNothing()
+        .returning(),
+    ]);
+    const row = nullableSingle(inserted);
+
+    return row === null ? null : mapEmailChangeToken(row);
+  }
+
+  async get(
+    tokenHash: string,
+    kind: EmailChangeToken["kind"],
+    now: string,
+  ): Promise<EmailChangeToken | null> {
+    const row = nullableSingle(
+      await this.db
+        .select()
+        .from(emailChangeTokens)
+        .where(
+          and(
+            eq(emailChangeTokens.tokenHash, tokenHash),
+            this.pending(kind, now),
+          ),
+        )
+        .limit(1),
+    );
+
+    return row === null ? null : mapEmailChangeToken(row);
+  }
+
+  async consume(
+    tokenHash: string,
+    kind: EmailChangeToken["kind"],
+    now: string,
+  ): Promise<EmailChangeToken | null> {
+    const row = nullableSingle(
+      await this.db
+        .update(emailChangeTokens)
+        .set({ consumedAt: now })
+        .where(
+          and(
+            eq(emailChangeTokens.tokenHash, tokenHash),
+            this.pending(kind, now),
+          ),
+        )
+        .returning(),
+    );
+
+    return row === null ? null : mapEmailChangeToken(row);
+  }
+
+  async delete(tokenHash: string): Promise<void> {
+    await this.db
+      .delete(emailChangeTokens)
+      .where(eq(emailChangeTokens.tokenHash, tokenHash));
+  }
+
+  async findPendingUndo(
+    email: string,
+    now: string,
+  ): Promise<EmailChangeToken | null> {
+    const row = nullableSingle(
+      await this.db
+        .select()
+        .from(emailChangeTokens)
+        .where(
+          and(
+            eq(emailChangeTokens.fromEmail, email),
+            this.pending("undo", now),
+          ),
+        )
+        .orderBy(desc(emailChangeTokens.createdAt))
+        .limit(1),
+    );
+
+    return row === null ? null : mapEmailChangeToken(row);
+  }
+
+  async reissueUndo(
+    email: string,
+    tokenHash: string,
+    now: string,
+  ): Promise<EmailChangeToken | null> {
+    // One row, the one `findPendingUndo` names: the new hash is a primary key,
+    // and setting it on two rows would fail the sign-in it is part of.
+    const newest = this.db
+      .select({ tokenHash: emailChangeTokens.tokenHash })
+      .from(emailChangeTokens)
+      .where(
+        and(
+          eq(emailChangeTokens.fromEmail, email),
+          this.pending("undo", now),
+        ),
+      )
+      .orderBy(desc(emailChangeTokens.createdAt))
+      .limit(1);
+    const row = nullableSingle(
+      await this.db
+        .update(emailChangeTokens)
+        .set({ tokenHash })
+        .where(inArray(emailChangeTokens.tokenHash, newest))
+        .returning(),
+    );
+
+    return row === null ? null : mapEmailChangeToken(row);
   }
 }
 
@@ -3485,6 +3750,7 @@ export function createStores(db: AppDatabase): AppStores {
     auth: new SqliteAuthStore(db),
     content: new SqliteContentStore(db),
     courses: new SqliteCourseStore(db),
+    emailChanges: new SqliteEmailChangeStore(db),
     lti: new SqliteLtiStore(db),
     platformCapabilities: new SqlitePlatformCapabilityStore(db),
     scores: new SqliteScoreStore(db),

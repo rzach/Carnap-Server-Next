@@ -38,6 +38,7 @@ import {
   renderLtiLinkConfirmed,
   renderLtiLinkPending,
 } from "../web/lti";
+import { emailChangeNotifierForContext } from "./email-change";
 import { setSessionCookies } from "./session-cookies";
 
 export function ltiServiceForContext(
@@ -47,6 +48,7 @@ export function ltiServiceForContext(
 
   return new LtiService({
     auth: new AuthService({ stores }),
+    emailNotifier: emailChangeNotifierForContext(context),
     keyResolver: context.get("ltiKeyResolver") ?? remoteLtiKeyResolver,
     requestId: context.get("requestId"),
     stores,

@@ -21,6 +21,7 @@ import type { Env } from "../src/worker/env";
 import type { WorkerApp } from "../src/worker/http";
 import { remoteLtiKeyResolver } from "../src/worker/infrastructure/lti/platform-keys";
 import { OUTBOUND_USER_AGENT } from "../src/worker/user-agent";
+import { capturingEmail, EMAIL_ENV } from "./helpers/email";
 import { setCookieHeaders } from "./helpers/http";
 import {
   beginTestLogin,
@@ -55,11 +56,12 @@ async function withLtiApp(
     stores: AppStores,
     fixture: TestPlatformFixture,
   ) => Promise<void>,
+  overrides: Partial<Omit<Env, "DB">> = {},
 ): Promise<void> {
   const storage: TestStorage = await createTestStorage();
 
   const app = await createLtiTestApp();
-  const env: Env = { CARNAP_ENV: "local", DB: storage.db };
+  const env: Env = { CARNAP_ENV: "local", DB: storage.db, ...overrides };
   const fixture = await registerTestPlatform(storage.stores);
 
   await run(app, env, storage.stores, fixture);
@@ -439,6 +441,266 @@ describe("LTI 1.3 core launches", () => {
       expect((await stores.users.getById("user-holder"))?.email).toBe(
         "ida@example.test",
       );
+    });
+  });
+
+  // The address a launch made is the platform's, and the platform's assertion
+  // is recorded on the identity, so the next launch can tell a change from a
+  // repeat.
+  test("a launch-made account's address belongs to its platform", async () => {
+    await withLtiApp(async (app, env, stores, fixture) => {
+      await instructorLaunch(app, env, { email: "ida@example.test" });
+
+      const userId = await launchedUserId(
+        stores,
+        fixture,
+        "lms-instructor-1",
+      );
+
+      await expect(stores.users.getById(userId)).resolves.toMatchObject({
+        emailSource: "lti",
+        emailSourcePlatformId: fixture.platform.id,
+      });
+      await expect(
+        stores.users.getExternalIdentity(
+          "lti",
+          `${fixture.platform.id}:lms-instructor-1`,
+        ),
+      ).resolves.toMatchObject({ assertedEmail: "ida@example.test" });
+    });
+  });
+
+  // A platform changing an address someone signs in with cuts that mailbox
+  // off, so its holder is told and can take it back. An address nobody ever
+  // proved is the LMS's own record, and correcting it is nobody's news.
+  test("a launch that moves a verified address tells the old one, with the undo", async () => {
+    await capturingEmail(async (sent) => {
+      await withLtiApp(async (app, env, stores, fixture) => {
+        await instructorLaunch(app, env, { email: "ida@example.test" });
+
+        const userId = await launchedUserId(
+          stores,
+          fixture,
+          "lms-instructor-1",
+        );
+
+        // Unproven: the platform corrects its record silently.
+        await instructorLaunch(app, env, {
+          email: "ida@second.example.test",
+        });
+        expect(sent).toHaveLength(0);
+
+        await stores.users.markEmailVerified(userId, NOW);
+        await instructorLaunch(app, env, { email: "ida@third.example.test" });
+
+        expect(sent).toHaveLength(1);
+        expect(sent[0]?.to).toEqual(["ida@second.example.test"]);
+        expect(sent[0]?.text).toContain("/profile/email/undo?token=");
+        await expect(
+          stores.emailChanges.findPendingUndo(
+            "ida@second.example.test",
+            timestampNow(new Date()),
+          ),
+        ).resolves.toMatchObject({
+          restorePlatformId: fixture.platform.id,
+          restoreSource: "lti",
+          userId,
+        });
+      }, EMAIL_ENV);
+    });
+  });
+
+  // While an undo can still give an address back, a launch for someone new
+  // must not take it: the new account starts without one, and the address is
+  // not recorded, so a later launch still carries it over once it is free.
+  test("a launch does not make a new account on an address held for another", async () => {
+    await withLtiApp(async (app, env, stores, fixture) => {
+      const holder = await stores.users.create({
+        id: "user-holder",
+        email: "ida@new.example.test",
+        name: null,
+        createdAt: NOW,
+      });
+
+      await stores.emailChanges.create({
+        kind: "undo",
+        userId: holder.id,
+        fromEmail: "ida@example.test",
+        toEmail: holder.email,
+        restoreSource: "user",
+        restorePlatformId: null,
+        createdAt: timestampNow(new Date()),
+        expiresAt: "2100-01-01T00:00:00.000Z",
+        tokenHash: "undo-held",
+      });
+
+      await instructorLaunch(app, env, { email: "ida@example.test" });
+
+      const userId = await launchedUserId(
+        stores,
+        fixture,
+        "lms-instructor-1",
+      );
+
+      expect((await stores.users.getById(userId))?.email).toMatch(
+        /^lti-.+@lti\.invalid$/,
+      );
+      await expect(
+        stores.users.getExternalIdentity(
+          "lti",
+          `${fixture.platform.id}:lms-instructor-1`,
+        ),
+      ).resolves.toMatchObject({ assertedEmail: null });
+
+      // A second launch during the hold is refused the same way, and leaves
+      // the address unrecorded again…
+      await instructorLaunch(app, env, { email: "ida@example.test" });
+      await expect(
+        stores.users.getExternalIdentity(
+          "lti",
+          `${fixture.platform.id}:lms-instructor-1`,
+        ),
+      ).resolves.toMatchObject({ assertedEmail: null });
+
+      // …so the first launch after it lapses carries the address over.
+      await stores.emailChanges.consume(
+        "undo-held",
+        "undo",
+        timestampNow(new Date()),
+      );
+      await instructorLaunch(app, env, { email: "ida@example.test" });
+      expect((await stores.users.getById(userId))?.email).toBe(
+        "ida@example.test",
+      );
+    });
+  });
+
+  // Once the holder has chosen an address, a launch records what its LMS
+  // says and changes nothing: the profile offers the LMS's address instead.
+  test("a launch leaves an address its holder chose", async () => {
+    await withLtiApp(async (app, env, stores, fixture) => {
+      await instructorLaunch(app, env, { email: "ida@example.test" });
+
+      const userId = await launchedUserId(
+        stores,
+        fixture,
+        "lms-instructor-1",
+      );
+
+      await stores.users.changeEmail(userId, {
+        from: "ida@example.test",
+        to: "ida@home.example.test",
+        source: "user",
+        sourcePlatformId: null,
+        verifiedAt: NOW,
+        updatedAt: NOW,
+        pendingUndo: "carry",
+      });
+
+      // Neither the platform repeating itself nor changing its own record
+      // moves the address.
+      await instructorLaunch(app, env, { email: "ida@example.test" });
+      await instructorLaunch(app, env, { email: "ida@new.example.test" });
+
+      await expect(stores.users.getById(userId)).resolves.toMatchObject({
+        email: "ida@home.example.test",
+        emailSource: "user",
+      });
+      await expect(
+        stores.users.getExternalIdentity(
+          "lti",
+          `${fixture.platform.id}:lms-instructor-1`,
+        ),
+      ).resolves.toMatchObject({ assertedEmail: "ida@new.example.test" });
+    });
+  });
+
+  // Two linked platforms that disagree used to flip the address on alternate
+  // launches. Now only a platform's own change is carried over, so a platform
+  // repeating the address it always sent does not undo the other's change —
+  // and the latest real change wins.
+  test("a platform repeating its old address does not undo another platform's change", async () => {
+    await withLtiApp(async (app, env, stores, fixture) => {
+      await instructorLaunch(app, env, { email: "ida@example.test" });
+
+      const userId = await launchedUserId(
+        stores,
+        fixture,
+        "lms-instructor-1",
+      );
+      const other = await registerTestPlatform(stores, {
+        clientId: "other-client",
+        issuer: "https://other-lms.example.test",
+      });
+
+      // As if a launch from the other platform had changed the address.
+      await stores.users.changeEmail(userId, {
+        from: "ida@example.test",
+        to: "ida@other.example.test",
+        source: "lti",
+        sourcePlatformId: other.platform.id,
+        verifiedAt: null,
+        updatedAt: NOW,
+        pendingUndo: "carry",
+      });
+      await instructorLaunch(app, env, { email: "ida@example.test" });
+
+      await expect(stores.users.getById(userId)).resolves.toMatchObject({
+        email: "ida@other.example.test",
+        emailSourcePlatformId: other.platform.id,
+      });
+
+      await instructorLaunch(app, env, { email: "ida@latest.example.test" });
+
+      await expect(stores.users.getById(userId)).resolves.toMatchObject({
+        email: "ida@latest.example.test",
+        emailSource: "lti",
+        emailSourcePlatformId: fixture.platform.id,
+      });
+    });
+  });
+
+  // An account that reached Carnap by email keeps its holder's address after
+  // an LMS is linked to it: approving the link did not hand the address over.
+  test("linking an LMS to an account does not hand it the address", async () => {
+    await withLtiApp(async (app, env, stores, fixture) => {
+      const existing = await stores.users.create({
+        id: "user-existing",
+        email: "instructor@example.test",
+        name: "Ida Instructor",
+        createdAt: NOW,
+      });
+      const first = await instructorLaunch(app, env);
+      const confirmMatch = (await first.response.text()).match(
+        /href="([^"]*\/lti\/link\/confirm\?token=[^"]+)"/,
+      );
+
+      if (confirmMatch === null || confirmMatch[1] === undefined) {
+        throw new Error("Expected a local confirmation link on the page.");
+      }
+
+      const token =
+        new URL(confirmMatch[1].replaceAll("&amp;", "&")).searchParams.get(
+          "token",
+        ) ?? "";
+
+      await app.request("/lti/link/confirm", formRequest({ token }), env);
+
+      // The approval recorded the platform's address, so the relaunch that
+      // follows is no change at all.
+      await expect(
+        stores.users.getExternalIdentity(
+          "lti",
+          `${fixture.platform.id}:lms-instructor-1`,
+        ),
+      ).resolves.toMatchObject({ assertedEmail: "instructor@example.test" });
+
+      await instructorLaunch(app, env, { email: "ida@new.example.test" });
+
+      await expect(stores.users.getById(existing.id)).resolves.toMatchObject({
+        email: "instructor@example.test",
+        emailSource: "user",
+      });
     });
   });
 

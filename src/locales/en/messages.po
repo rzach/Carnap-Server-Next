@@ -298,6 +298,10 @@ msgstr "{name} is already on this branch, and row {cited} needs a new name."
 msgid "{name} names both {block} and {other}."
 msgstr "{name} names both {block} and {other}."
 
+#: src/worker/web/profile.tsx
+msgid "{platform} has a different address for you: {address}"
+msgstr "{platform} has a different address for you: {address}"
+
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/ui-strings.ts
 msgid "{score}/{maxScore} · {evaluator}"
@@ -347,6 +351,10 @@ msgstr "A branch closes on one row only if that row says something is not identi
 #: src/worker/web/lti.tsx
 msgid "A Carnap account already exists for {email}. We sent a confirmation link to that address — open it to connect your LMS identity to the account, then launch again from your LMS."
 msgstr "A Carnap account already exists for {email}. We sent a confirmation link to that address — open it to connect your LMS identity to the account, then launch again from your LMS."
+
+#: src/worker/infrastructure/email/resend.ts
+msgid "A Carnap administrator changed the email address of your Carnap account to {address}. This address no longer signs in to it."
+msgstr "A Carnap administrator changed the email address of your Carnap account to {address}. This address no longer signs in to it."
 
 #: src/worker/exercises/aufbau-proof-fitch/strings.ts
 msgid "A cited subproof must begin and end at the same indentation level."
@@ -688,6 +696,10 @@ msgstr "Add a row at the end of the branch"
 msgid "Add a row to this step"
 msgstr "Add a row to this step"
 
+#: src/worker/web/profile.tsx
+msgid "Add an address"
+msgstr "Add an address"
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "Add assumption above"
 msgstr "Add assumption above"
@@ -756,6 +768,10 @@ msgstr "Added"
 msgid "Added a {block} at column {col}, row {row}."
 msgstr "Added a {block} at column {col}, row {row}."
 
+#: src/worker/web/admin.tsx
+msgid "Address it last sent"
+msgstr "Address it last sent"
+
 #: src/worker/web/content.tsx
 msgid "Address to name in an aufbau-mm0 src"
 msgstr "Address to name in an aufbau-mm0 src"
@@ -797,6 +813,10 @@ msgstr "Allowed symbols: {symbols}"
 msgid "Also a language: formulas are read at the sort {sort}, so exercises can be set in it too."
 msgstr "Also a language: formulas are read at the sort {sort}, so exercises can be set in it too."
 
+#: src/worker/web/admin.tsx
+msgid "An administrator"
+msgstr "An administrator"
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "An assumption can't have premises."
 msgstr "An assumption can't have premises."
@@ -824,6 +844,10 @@ msgstr "An LMS launch from {platform} wants to connect to the Carnap account for
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "An MM0 file must declare something."
 msgstr "An MM0 file must declare something."
+
+#: src/worker/application/email-authority.ts
+msgid "Another Carnap account already uses that address."
+msgstr "Another Carnap account already uses that address."
 
 #: src/worker/exercises/free-response/read-only-view.ts
 #: src/worker/exercises/short-answer/read-only-view.ts
@@ -1237,9 +1261,22 @@ msgstr "Carnap tool endpoints"
 msgid "Change"
 msgstr "Change"
 
+#: src/worker/web/profile.tsx
+msgid "Change address"
+msgstr "Change address"
+
+#: src/worker/web/admin.tsx
+#: src/worker/web/profile.tsx
+msgid "Change email address"
+msgstr "Change email address"
+
 #: src/worker/web/admin.tsx
 msgid "Change saved."
 msgstr "Change saved."
+
+#: src/worker/web/email-change.tsx
+msgid "Change the email address of the Carnap account that uses {old} to {new}?"
+msgstr "Change the email address of the Carnap account that uses {old} to {new}?"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Changes: {used} of {limit}"
@@ -1426,8 +1463,20 @@ msgid "Confirm account link"
 msgstr "Confirm account link"
 
 #: src/worker/infrastructure/email/resend.ts
+msgid "Confirm new address"
+msgstr "Confirm new address"
+
+#: src/worker/web/email-change.tsx
+msgid "Confirm new email address"
+msgstr "Confirm new email address"
+
+#: src/worker/infrastructure/email/resend.ts
 msgid "Confirm your Carnap account link"
 msgstr "Confirm your Carnap account link"
+
+#: src/worker/infrastructure/email/resend.ts
+msgid "Confirm your new Carnap email address"
+msgstr "Confirm your new Carnap email address"
 
 #: src/worker/infrastructure/email/resend.ts
 msgid "Connect LMS identity"
@@ -1504,6 +1553,7 @@ msgid "Continue to your LMS"
 msgstr "Continue to your LMS"
 
 #: src/worker/web/lti.tsx
+#: src/worker/web/profile.tsx
 msgid "Continue with this local confirmation link"
 msgstr "Continue with this local confirmation link"
 
@@ -2090,6 +2140,22 @@ msgstr "Editor view"
 msgid "Email"
 msgstr "Email"
 
+#: src/worker/web/labels.ts
+msgid "Email address changed"
+msgstr "Email address changed"
+
+#: src/worker/routes/admin.ts
+msgid "Email address not changed"
+msgstr "Email address not changed"
+
+#: src/worker/routes/email-change.ts
+msgid "Email delivery is not configured for this environment."
+msgstr "Email delivery is not configured for this environment."
+
+#: src/worker/web/admin.tsx
+msgid "Email set by"
+msgstr "Email set by"
+
 #: src/worker/application/auth.ts
 msgid "Email sign-in cannot be removed from an account."
 msgstr "Email sign-in cannot be removed from an account."
@@ -2381,9 +2447,21 @@ msgstr "Formula {index} needs {expected} cell tokens; found {found}."
 msgid "Free-response question"
 msgstr "Free-response question"
 
+#: src/worker/web/profile.tsx
+msgid "From {platform}."
+msgstr "From {platform}."
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "From the end of a line, go on to its citation; Delete clears it"
 msgstr "From the end of a line, go on to its citation; Delete clears it"
+
+#: src/worker/web/email-change.tsx
+msgid "From then on, sign in with the new address. If you did not ask for this, close this page and nothing will change."
+msgstr "From then on, sign in with the new address. If you did not ask for this, close this page and nothing will change."
+
+#: src/worker/web/profile.tsx
+msgid "From your LMS."
+msgstr "From your LMS."
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Give symbols or without, not both."
@@ -2396,6 +2474,14 @@ msgstr "Give the time when grades become visible, or choose another option."
 #: src/worker/application/assignments.ts
 msgid "Give the time when submitted work becomes visible, or choose another option."
 msgstr "Give the time when submitted work becomes visible, or choose another option."
+
+#: src/worker/web/email-change.tsx
+msgid "Give your Carnap account the address {new}?"
+msgstr "Give your Carnap account the address {new}?"
+
+#: src/worker/web/email-change.tsx
+msgid "Go to sign-in"
+msgstr "Go to sign-in"
 
 #: src/worker/web/errors.tsx
 msgid "Go to the login page"
@@ -2546,8 +2632,24 @@ msgid "If no site administrator exists, you can bootstrap this account."
 msgstr "If no site administrator exists, you can bootstrap this account."
 
 #: src/worker/infrastructure/email/resend.ts
+msgid "If this was you, sign in with this address to reach the account that has it. If not, you can ignore this email."
+msgstr "If this was you, sign in with this address to reach the account that has it. If not, you can ignore this email."
+
+#: src/worker/infrastructure/email/resend.ts
+msgid "If you did not ask for this, ignore this email and nothing will change."
+msgstr "If you did not ask for this, ignore this email and nothing will change."
+
+#: src/worker/infrastructure/email/resend.ts
+msgid "If you did not expect this, contact the administrator of your Carnap site."
+msgstr "If you did not expect this, contact the administrator of your Carnap site."
+
+#: src/worker/infrastructure/email/resend.ts
 msgid "If you did not expect this, ignore this email and nothing will be linked."
 msgstr "If you did not expect this, ignore this email and nothing will be linked."
+
+#: src/worker/infrastructure/email/resend.ts
+msgid "If you did not make this change, use the link below to undo it and sign in. It works for {duration}."
+msgstr "If you did not make this change, use the link below to undo it and sign in. It works for {duration}."
 
 #: src/worker/web/content.tsx
 msgid "Immutable snapshots that published assignments point to. Each is shared, or not, on its own."
@@ -2762,6 +2864,7 @@ msgstr "List every problem"
 msgid "LMS"
 msgstr "LMS"
 
+#: src/worker/web/admin.tsx
 #: src/worker/web/labels.ts
 #: src/worker/web/profile.tsx
 msgid "LMS (LTI)"
@@ -3078,6 +3181,11 @@ msgstr "New content item"
 msgid "New course title"
 msgstr "New course title"
 
+#: src/worker/web/admin.tsx
+#: src/worker/web/profile.tsx
+msgid "New email address"
+msgstr "New email address"
+
 #: src/worker/web/content.tsx
 msgid "New revision"
 msgstr "New revision"
@@ -3153,6 +3261,11 @@ msgstr "No details given"
 #: src/worker/web/assignment-detail.tsx
 msgid "No due date"
 msgstr "No due date"
+
+#: src/worker/web/admin.tsx
+#: src/worker/web/profile.tsx
+msgid "No email address yet"
+msgstr "No email address yet"
 
 #: src/worker/web/courses.tsx
 msgid "No enrollment links have been created yet."
@@ -3313,6 +3426,10 @@ msgstr "not verified"
 msgid "Not yet graded"
 msgstr "Not yet graded"
 
+#: src/worker/web/profile.tsx
+msgid "Not yet verified. Signing in by email once will verify it."
+msgstr "Not yet verified. Signing in by email once will verify it."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Nothing in the world is named “{name}”, which “{formula}” uses."
 msgstr "Nothing in the world is named “{name}”, which “{formula}” uses."
@@ -3450,6 +3567,10 @@ msgstr "Open content in its own tab"
 msgid "Open the content item"
 msgstr "Open the content item"
 
+#: src/worker/middleware/auth.ts
+msgid "Open the link from your email and use its button."
+msgstr "Open the link from your email and use its button."
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Open this help"
@@ -3537,7 +3658,9 @@ msgstr "Percent penalty"
 msgid "Percent per day late"
 msgstr "Percent per day late"
 
-#. Example address in the add-staff field. Translate the local part; the example.edu domain is reserved for documentation.
+#. Example address in an email field. Translate the local part; the example.edu domain is reserved for documentation.
+#. Example address in an email field. Translate the local part; the example.edu domain is reserved for documentation.
+#: src/worker/web/admin.tsx
 #: src/worker/web/courses.tsx
 msgid "person@example.edu"
 msgstr "person@example.edu"
@@ -3642,6 +3765,10 @@ msgstr "Prawitz proof"
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "Prawitz proof workspace"
 msgstr "Prawitz proof workspace"
+
+#: src/worker/web/profile.tsx
+msgid "Preferences"
+msgstr "Preferences"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Premise"
@@ -3788,6 +3915,10 @@ msgstr "Put {block} back."
 #: src/worker/exercises/world/strings.ts
 msgid "Put a carried block back"
 msgstr "Put a carried block back"
+
+#: src/worker/web/email-change.tsx
+msgid "Put my old address back"
+msgstr "Put my old address back"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Put the block at column {col}, row {row} back."
@@ -4289,6 +4420,10 @@ msgstr "Select"
 msgid "Selected"
 msgstr "Selected"
 
+#: src/worker/web/profile.tsx
+msgid "Send link"
+msgstr "Send link"
+
 #: src/worker/web/auth.tsx
 msgid "Send login link"
 msgstr "Send login link"
@@ -4313,6 +4448,14 @@ msgstr "Separate sentences with commas."
 #: src/worker/web/assignment-detail.tsx
 msgid "Set an override for {name}"
 msgstr "Set an override for {name}"
+
+#: src/worker/web/profile.tsx
+msgid "Set by an administrator."
+msgstr "Set by an administrator."
+
+#: src/worker/web/profile.tsx
+msgid "Set by an administrator. Launches from your LMS won't change it."
+msgstr "Set by an administrator. Launches from your LMS won't change it."
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Set override"
@@ -4406,6 +4549,14 @@ msgstr "So you say {formula} is true."
 #: src/worker/web/gradebook.tsx
 msgid "Some scores here were graded when their exercises were worth different points. Each shows the points it was graded out of; the assignment total counts every exercise at its current points."
 msgstr "Some scores here were graded when their exercises were worth different points. Each shows the points it was graded out of; the assignment total counts every exercise at its current points."
+
+#: src/worker/infrastructure/email/resend.ts
+msgid "Someone signed in to Carnap asked to use this address for their account, but another Carnap account already uses it, so nothing has changed."
+msgstr "Someone signed in to Carnap asked to use this address for their account, but another Carnap account already uses it, so nothing has changed."
+
+#: src/worker/infrastructure/email/resend.ts
+msgid "Someone signed in to Carnap asked to use this address for their account. If this was you, use this link to confirm it:"
+msgstr "Someone signed in to Carnap asked to use this address for their account. If this was you, use this link to confirm it:"
 
 #: src/worker/web/errors.tsx
 msgid "Something went wrong"
@@ -4575,10 +4726,6 @@ msgstr "Submitting…"
 msgid "Substituting by row {row} into row {cited} writes nothing new on any open branch."
 msgstr "Substituting by row {row} into row {cited} writes nothing new on any open branch."
 
-#: src/worker/web/profile.tsx
-msgid "Supplied by your school's LMS."
-msgstr "Supplied by your school's LMS."
-
 #: src/worker/web/donate.tsx
 msgid "Support"
 msgstr "Support"
@@ -4632,6 +4779,10 @@ msgstr "Terms"
 msgid "Tet"
 msgstr "Tet"
 
+#: src/worker/application/email-authority.ts
+msgid "That address was recently moved off another Carnap account, and is kept for it while the change can still be undone."
+msgstr "That address was recently moved off another Carnap account, and is kept for it while the change can still be undone."
+
 #: src/worker/exercises/world/strings.ts
 msgid "That block is not in this world."
 msgstr "That block is not in this world."
@@ -4639,6 +4790,14 @@ msgstr "That block is not in this world."
 #: src/worker/application/assignments.ts
 msgid "That content item is a theory, not a lesson. An assignment can only be set on a lesson."
 msgstr "That content item is a theory, not a lesson. An assignment can only be set on a lesson."
+
+#: src/worker/application/admin.ts
+msgid "That is already the account's address."
+msgstr "That is already the account's address."
+
+#: src/worker/application/email-change.ts
+msgid "That is already your address."
+msgstr "That is already your address."
 
 #: src/worker/application/content.ts
 msgid "That is not a kind of content this site stores."
@@ -4651,6 +4810,14 @@ msgstr "That is not a sharing setting this site has."
 #: src/worker/application/auth.ts
 msgid "That language is not available."
 msgstr "That language is not available."
+
+#: src/worker/application/email-change.ts
+msgid "That link has expired or has already been used."
+msgstr "That link has expired or has already been used."
+
+#: src/worker/application/email-change.ts
+msgid "That LMS has no different address for you."
+msgstr "That LMS has no different address for you."
 
 #: src/worker/routes/web.ts
 msgid "That login link has expired or has already been used. Enter your email address below and we will send you a new one."
@@ -4695,6 +4862,14 @@ msgstr "The active platform capability was not found."
 #: src/worker/web/lti.tsx
 msgid "The activity you are adding in your LMS will open the assignment you choose here."
 msgstr "The activity you are adding in your LMS will open the assignment you choose here."
+
+#: src/worker/application/email-authority.ts
+msgid "The address changed while this page was open. Reload it and try again."
+msgstr "The address changed while this page was open. Reload it and try again."
+
+#: src/worker/infrastructure/email/resend.ts
+msgid "The address had been changed shortly before this as well. The link to undo that earlier change went to the address the account had then, and it puts that address back. If you did not expect this, contact the administrator of your Carnap site."
+msgstr "The address had been changed shortly before this as well. The link to undo that earlier change went to the address the account had then, and it puts that address back. If you did not expect this, contact the administrator of your Carnap site."
 
 #: src/worker/application/submissions.ts
 msgid "The answer is invalid."
@@ -4810,6 +4985,14 @@ msgstr "The domain cannot be empty."
 #: src/worker/exercises/model/strings.ts
 msgid "The domain must be a comma-separated list of numbers."
 msgstr "The domain must be a comma-separated list of numbers."
+
+#: src/worker/web/email-change.tsx
+msgid "The email address of the Carnap account that used {old} was changed to {new}."
+msgstr "The email address of the Carnap account that used {old} was changed to {new}."
+
+#: src/worker/infrastructure/email/resend.ts
+msgid "The email address of your Carnap account was changed to {address}. This address no longer signs in to it."
+msgstr "The email address of your Carnap account was changed to {address}. This address no longer signs in to it."
 
 #: src/worker/application/courses.ts
 msgid "The enrollment link is invalid or expired."
@@ -4933,6 +5116,7 @@ msgid "The linked assignment no longer exists."
 msgstr "The linked assignment no longer exists."
 
 #: src/worker/application/auth.ts
+#: src/worker/application/email-change.ts
 msgid "The linked identity was not found on your account."
 msgstr "The linked identity was not found on your account."
 
@@ -5145,6 +5329,10 @@ msgstr "The tree is not right yet."
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "The tree is right."
 msgstr "The tree is right."
+
+#: src/worker/web/admin.tsx
+msgid "The user"
+msgstr "The user"
 
 #: src/worker/application/admin.ts
 #: src/worker/application/auth.ts
@@ -5417,6 +5605,10 @@ msgstr "This launch was not issued for Carnap."
 #: src/worker/exercises/aufbau-proof-fitch/strings.ts
 msgid "This line's indentation does not match any open subproof level."
 msgstr "This line's indentation does not match any open subproof level."
+
+#: src/worker/web/email-change.tsx
+msgid "This link can't be used"
+msgstr "This link can't be used"
 
 #: src/worker/infrastructure/email/resend.ts
 msgid "This link expires {duration} after it was sent."
@@ -5696,13 +5888,25 @@ msgstr "Undo"
 msgid "Undo (Ctrl-Z)"
 msgstr "Undo (Ctrl-Z)"
 
+#: src/worker/web/email-change.tsx
+msgid "Undo email change"
+msgstr "Undo email change"
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Undo or redo"
 msgstr "Undo or redo"
 
+#: src/worker/infrastructure/email/resend.ts
+msgid "Undo the change"
+msgstr "Undo the change"
+
 #: src/worker/exercises/world/strings.ts
 msgid "Undo the last change"
 msgstr "Undo the last change"
+
+#: src/worker/web/email-change.tsx
+msgid "Undoing the change puts {old} back, signs you in, and signs the account out everywhere else. If you made the change yourself, there is nothing to do: sign in with {new} instead."
+msgstr "Undoing the change puts {old} back, signs you in, and signs the account out everywhere else. If you made the change yourself, there is nothing to do: sign in with {new} instead."
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Undone."
@@ -5765,10 +5969,6 @@ msgstr "Unpublish is blocked once a student has an attempt; reset attempts first
 msgid "Unverified"
 msgstr "Unverified"
 
-#: src/worker/web/profile.tsx
-msgid "Unverified — this address came from an LMS launch; signing in by email once will verify it."
-msgstr "Unverified — this address came from an LMS launch; signing in by email once will verify it."
-
 #: src/worker/web/courses.tsx
 msgid "Update membership"
 msgstr "Update membership"
@@ -5789,9 +5989,17 @@ msgstr "Usage and keyboard shortcuts"
 msgid "Use row {row} as the counterexample"
 msgstr "Use row {row} as the counterexample"
 
+#: src/worker/web/profile.tsx
+msgid "Use that instead"
+msgstr "Use that instead"
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Use the exercise controls above to submit answers."
 msgstr "Use the exercise controls above to submit answers."
+
+#: src/worker/web/email-change.tsx
+msgid "Use this address"
+msgstr "Use this address"
 
 #: src/worker/infrastructure/email/resend.ts
 msgid "Use this link to sign in to Carnap:"
@@ -5879,6 +6087,18 @@ msgstr "Voided"
 #: src/worker/middleware/errors.ts
 msgid "We could not find that page. The link may be out of date, or the page may have been deleted."
 msgstr "We could not find that page. The link may be out of date, or the page may have been deleted."
+
+#: src/worker/routes/web.ts
+msgid "We sent a link to the new address. Open it to finish the change."
+msgstr "We sent a link to the new address. Open it to finish the change."
+
+#: src/worker/web/profile.tsx
+msgid "We'll send a link to the new address, and change nothing until it is opened."
+msgstr "We'll send a link to the new address, and change nothing until it is opened."
+
+#: src/worker/web/profile.tsx
+msgid "We'll send a link to the new address, and change nothing until it is opened. After that, launches from your LMS won't change your address."
+msgstr "We'll send a link to the new address, and change nothing until it is opened. After that, launches from your LMS won't change your address."
 
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/content.tsx
@@ -6077,6 +6297,10 @@ msgstr "You say {left} is false and {right} is true."
 msgid "You say {left} is true and {right} is false."
 msgstr "You say {left} is true and {right} is false."
 
+#: src/worker/web/profile.tsx
+msgid "You set this address. Launches from your LMS won't change it."
+msgstr "You set this address. Launches from your LMS won't change it."
+
 #: src/worker/exercises/world/strings.ts
 msgid "You won every game."
 msgstr "You won every game."
@@ -6106,6 +6330,14 @@ msgid "Your Carnap account is disabled."
 msgstr "Your Carnap account is disabled."
 
 #: src/worker/infrastructure/email/resend.ts
+msgid "Your Carnap email address was changed"
+msgstr "Your Carnap email address was changed"
+
+#: src/worker/infrastructure/email/resend.ts
+msgid "Your Carnap email address was not changed"
+msgstr "Your Carnap email address was not changed"
+
+#: src/worker/infrastructure/email/resend.ts
 msgid "Your Carnap login link"
 msgstr "Your Carnap login link"
 
@@ -6117,6 +6349,10 @@ msgstr "Your content"
 msgid "Your courses"
 msgstr "Your courses"
 
+#: src/worker/routes/web.ts
+msgid "Your email address has been changed."
+msgstr "Your email address has been changed."
+
 #: src/worker/application/lti.ts
 msgid "Your enrollment in this course is not active."
 msgstr "Your enrollment in this course is not active."
@@ -6124,6 +6360,14 @@ msgstr "Your enrollment in this course is not active."
 #: src/worker/exercises/world/strings.ts
 msgid "Your first claim was wrong, so you could not win."
 msgstr "Your first claim was wrong, so you could not win."
+
+#: src/worker/web/profile.tsx
+msgid "Your LMS hasn't shared one with Carnap."
+msgstr "Your LMS hasn't shared one with Carnap."
+
+#: src/worker/routes/web.ts
+msgid "Your old email address is back, and every other session on your account has been signed out."
+msgstr "Your old email address is back, and every other session on your account has been signed out."
 
 #: src/worker/routes/web.ts
 msgid "Your profile has been saved."

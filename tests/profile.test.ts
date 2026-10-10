@@ -1,5 +1,6 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
 
+import type { AppStores } from "../src/worker/application/stores";
 import type { Env } from "../src/worker/env";
 import { appRequest, createTestApp } from "./helpers/app";
 import {
@@ -32,6 +33,54 @@ async function login(
   }
 
   return session;
+}
+
+async function profilePage(env: Env, session: LoginResult): Promise<string> {
+  const response = await appRequest(
+    createTestApp(),
+    "/profile",
+    { headers: { Cookie: session.cookieHeader } },
+    env,
+  );
+
+  expect(response.status).toBe(200);
+
+  return response.text();
+}
+
+function createCampusPlatform(stores: AppStores) {
+  return stores.lti.createPlatform({
+    id: "lti-platform-1",
+    name: "Campus Moodle",
+    issuer: "https://lms.example.test",
+    clientId: "client-1",
+    authorizationEndpoint: "https://lms.example.test/auth",
+    tokenEndpoint: "https://lms.example.test/token",
+    jwksUri: "https://lms.example.test/jwks",
+    createdAt: NOW,
+  });
+}
+
+function useLmsEmail(
+  env: Env,
+  session: LoginResult,
+  identityId: string,
+): Promise<Response> {
+  return appRequest(
+    createTestApp(),
+    "/profile/email/lms",
+    {
+      body: new URLSearchParams({ identityId }),
+      headers: {
+        Accept: "text/html",
+        "Content-Type": "application/x-www-form-urlencoded",
+        Cookie: session.cookieHeader,
+        "X-CSRF-Token": session.csrfToken,
+      },
+      method: "POST",
+    },
+    env,
+  );
 }
 
 function removeIdentity(
@@ -103,7 +152,7 @@ describe("profile page", () => {
   });
 
   // Shown so that someone whose grades are being matched against a roster can
-  // see which number they are matched by — and shown read-only, with no input
+  // see which number they are matched by — and shown as a fact, with no input
   // the form posts back, because the value is the institution's assertion about
   // them rather than a preference of theirs.
   test("shows an LMS-supplied student ID without offering to edit it", async () => {
@@ -120,8 +169,9 @@ describe("profile page", () => {
       );
       const html = await response.text();
 
-      expect(html).toContain("Student ID");
-      expect(html).toContain('<input readonly="" value="20261234"/>');
+      // A fact in the account strip, as text: no field, read-only or not.
+      expect(html).toContain("<dt>Student ID</dt><dd>20261234</dd>");
+      expect(html).not.toContain('value="20261234"');
       expect(html).not.toContain('name="studentId"');
     });
   });
@@ -219,7 +269,9 @@ describe("profile page", () => {
       });
       const html = await response.text();
 
-      expect(response.status).toBe(200);
+      // The form comes back with the reason on it, under the refusal's status,
+      // as every other form route's does.
+      expect(response.status).toBe(400);
       expect(html).toContain("Name must be 200 characters or less.");
       expect((await stores.users.getById(session.actorId))?.name).toBe(
         "Ada Lovelace",
@@ -283,6 +335,132 @@ describe("profile page", () => {
       await expect(
         stores.users.getExternalIdentity("lti", `${platform.id}:lms-user-9`),
       ).resolves.toBeNull();
+    });
+  });
+
+  // The address is a fact about the account, not a field: text, with its
+  // owner named only once an LMS could be thought to own it.
+  test("shows the address as text, unattributed until an LMS is linked", async () => {
+    await withStorage(async (_storage, env) => {
+      const session = await login(env);
+      const html = await profilePage(env, session);
+
+      expect(html).toContain(
+        '<p class="profile-email-address">ada@example.test</p>',
+      );
+      expect(html).not.toContain('value="ada@example.test"');
+      expect(html).not.toContain("You set this address");
+    });
+  });
+
+  test("names who owns the address and offers the address an LMS now has", async () => {
+    await withStorage(async ({ stores }, env) => {
+      const session = await login(env);
+      const platform = await createCampusPlatform(stores);
+
+      await stores.users.createExternalIdentity({
+        id: "identity-lti-1",
+        userId: session.actorId,
+        provider: "lti",
+        providerSubject: `${platform.id}:lms-user-9`,
+        assertedEmail: "ada@campus.example.test",
+        createdAt: NOW,
+      });
+
+      const before = await profilePage(env, session);
+
+      expect(before).toContain(
+        "You set this address. Launches from your LMS won&#39;t change it.",
+      );
+      expect(before).toContain(
+        "Campus Moodle has a different address for you: <strong>ada@campus.example.test</strong>",
+      );
+
+      const taken = await useLmsEmail(env, session, "identity-lti-1");
+
+      expect(taken.status).toBe(303);
+      expect(taken.headers.get("Location")).toBe("/profile?email=1");
+      await expect(
+        stores.users.getById(session.actorId),
+      ).resolves.toMatchObject({
+        email: "ada@campus.example.test",
+        emailSource: "lti",
+        emailSourcePlatformId: platform.id,
+        // The platform vouches for it; nobody has proved the mailbox yet.
+        emailVerifiedAt: null,
+      });
+      // The old mailbox no longer signs in to this account.
+      await expect(
+        stores.users.getExternalIdentity("native", "ada@example.test"),
+      ).resolves.toBeNull();
+
+      const after = await profilePage(env, session);
+
+      expect(after).toContain("From Campus Moodle.");
+      expect(after).toContain("Not yet verified.");
+      expect(after).not.toContain("has a different address for you");
+    });
+  });
+
+  test("refuses an LMS address another account holds", async () => {
+    await withStorage(async ({ stores }, env) => {
+      const session = await login(env);
+      const platform = await createCampusPlatform(stores);
+
+      await stores.users.createExternalIdentity({
+        id: "identity-lti-1",
+        userId: session.actorId,
+        provider: "lti",
+        providerSubject: `${platform.id}:lms-user-9`,
+        assertedEmail: "taken@example.test",
+        createdAt: NOW,
+      });
+      await stores.users.create({
+        id: "user-holder",
+        email: "taken@example.test",
+        name: null,
+        createdAt: NOW,
+      });
+
+      const refused = await useLmsEmail(env, session, "identity-lti-1");
+
+      expect(refused.status).toBe(400);
+      expect(await refused.text()).toContain(
+        "Another Carnap account already uses that address.",
+      );
+      await expect(
+        stores.users.getById(session.actorId),
+      ).resolves.toMatchObject({ email: "ada@example.test" });
+
+      // Nor can one account take the address another's LMS offers it.
+      expect(
+        (await useLmsEmail(env, session, "identity-missing")).status,
+      ).toBe(404);
+    });
+  });
+
+  // A launch that carried no email left a stand-in, which reads as a mailbox
+  // and is not one.
+  test("never shows a placeholder as an address", async () => {
+    await withStorage(async ({ stores }, env) => {
+      const session = await login(env);
+
+      await stores.users.changeEmail(session.actorId, {
+        from: "ada@example.test",
+        to: `lti-${session.actorId}@lti.invalid`,
+        source: "lti",
+        sourcePlatformId: null,
+        verifiedAt: null,
+        updatedAt: NOW,
+        pendingUndo: "carry",
+      });
+
+      const html = await profilePage(env, session);
+
+      expect(html).toContain("No email address yet");
+      expect(html).toContain("Your LMS hasn&#39;t shared one with Carnap.");
+      expect(html).not.toContain("lti.invalid");
+      expect(html).not.toContain("Not yet verified");
     });
   });
 

@@ -262,6 +262,8 @@ export function auditActionLabel(
       return i18n.t("Account suspended");
     case "admin.reactivate_user":
       return i18n.t("Account reactivated");
+    case "admin.change_user_email":
+      return i18n.t("Email address changed");
     case "admin.lti_platform_registered":
       return i18n.t("LTI platform registered");
     case "admin.lti_platform_enabled":

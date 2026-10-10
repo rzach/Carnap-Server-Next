@@ -212,13 +212,45 @@ table button:not(:where(.modal-dialog button)) {
   display: none;
 }
 
-/* The read-only account facts sit below the edit form, divided from it by a
-   rule with breathing room on both sides. Drop the strip's trailing rule,
-   which otherwise reads as a stray line above the footer. */
-.profile-sheet .summary-strip {
-  border-bottom: none;
-  border-top: 1px solid var(--rule);
-  margin-top: 1rem;
+.profile-email p {
+  margin: 0.15rem 0 0;
+}
+
+.profile-email-address {
+  overflow-wrap: anywhere;
+}
+
+/* One button size across the account sheet: the compact size its footer's
+   Log out already has, so Save, an LMS's offer and Log out read as one set.
+   A table's row actions keep the app's text style, and a dialog's buttons
+   its own chrome — it is in the top layer, not the sheet — hence the
+   exclusions, under :where() so they add no specificity. */
+.profile-sheet .sheet-section
+  button:not(:where(table button, .modal-dialog button)) {
+  font-size: 0.85rem;
+  min-height: 0;
+  padding: 0.4rem 0.8rem;
+}
+
+/* A line of the Email section with its action: the address and Change, an
+   LMS's offer and Use that instead. Text and button sit on one line, centred
+   on each other, wrapping to two on a narrow sheet. The button drops the top
+   margin every form button otherwise takes from the content layer — that
+   margin is what sat it below the text. */
+.profile-email-line {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+  margin-top: 0.6rem;
+}
+
+.profile-email-line p {
+  margin: 0;
+}
+
+.profile-email-line button {
+  margin: 0;
 }
 
 /* Turnstile renders into a bare div that takes no part in the form rhythm —

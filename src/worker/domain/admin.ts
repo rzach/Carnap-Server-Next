@@ -2,7 +2,7 @@ import type { Course, CourseMembership } from "./courses";
 import type { AppId } from "./ids";
 import type { JsonValue } from "./json";
 import type { Timestamp } from "./time";
-import type { ExternalIdentity, User } from "./users";
+import type { EmailAuthority, ExternalIdentity, User } from "./users";
 
 export type PlatformCapability =
   | "content_author"
@@ -44,6 +44,8 @@ export interface AdminUserProfile {
     readonly course: Course;
     readonly membership: CourseMembership;
   }[];
+  /** Who owns the address, as the record page describes it. */
+  readonly email: EmailAuthority;
   readonly identities: readonly ExternalIdentity[];
   readonly user: User;
 }

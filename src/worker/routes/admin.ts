@@ -31,6 +31,7 @@ import {
   redirect,
   wantsHtml,
 } from "../web/html";
+import { emailChangeNotifierForContext } from "./email-change";
 import {
   type FormErrorChrome,
   formErrorOrThrow,
@@ -47,6 +48,10 @@ interface CapabilityBody {
   readonly capability?: unknown;
 }
 
+interface EmailBody {
+  readonly email?: unknown;
+}
+
 interface MembershipBody {
   readonly courseId?: unknown;
   readonly role?: unknown;
@@ -56,6 +61,7 @@ interface MembershipBody {
 
 function adminService(context: Context<AppBindings>): AdminService {
   return new AdminService({
+    emailNotifier: emailChangeNotifierForContext(context),
     requestId: context.get("requestId"),
     stores: storesForContext(context),
   });
@@ -496,6 +502,36 @@ adminRoutes.post("/users/:userId/reactivate", async (context) => {
       error,
       ADMIN_CHROME,
       i18n.t("User not reactivated"),
+    );
+  }
+});
+
+adminRoutes.post("/users/:userId/email", async (context) => {
+  const actor = requireAuthenticated(context);
+
+  try {
+    const email = isFormSubmission(context)
+      ? fieldValue((await context.req.raw.formData()).get("email"))
+      : ((await readJsonObject(context)) as EmailBody).email;
+    const user = await adminService(context).changeUserEmail(
+      actor,
+      requiredParam(context, "userId"),
+      { email: typeof email === "string" ? email : "" },
+    );
+
+    if (isFormSubmission(context)) {
+      return redirect(`/admin/users/${user.id}?saved=1`);
+    }
+
+    return context.json({ user: publicUser(user) });
+  } catch (error) {
+    const i18n = context.get("i18n");
+
+    return formErrorOrThrow(
+      context,
+      error,
+      ADMIN_CHROME,
+      i18n.t("Email address not changed"),
     );
   }
 });

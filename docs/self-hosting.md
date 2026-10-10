@@ -190,6 +190,14 @@ Set `AUTH_LOGIN_CONFIRM_URL` to the public confirmation address if the
 request URL cannot be reconstructed correctly behind your proxy. Otherwise
 emails can contain an internal hostname or an HTTP URL.
 
+The same configuration sends the mail behind an address change: the
+confirmation link to a new address, and the notice to the old one, which
+carries a seven-day undo link. Without it, account holders cannot change
+their own address, and no changed address is told or can be undone. The
+change requests share the login throttle. A site administrator can still
+change an address from the user's admin record. That change is audited and
+needs no mail.
+
 SMTP is not implemented. A different delivery provider would implement
 `LoginEmailSender` in `src/worker/application/auth.ts`; the current adapter is
 `src/worker/infrastructure/email/resend.ts`.

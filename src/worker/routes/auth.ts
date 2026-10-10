@@ -89,6 +89,16 @@ authRoutes.post("/login/confirm", async (context) => {
     body.loginToken,
   );
 
+  // The address was moved off its account recently; it opens that change's
+  // undo, which is a page, not a session.
+  if (confirmed.kind === "undo") {
+    return context.json({
+      undo: {
+        url: `/profile/email/undo?token=${encodeURIComponent(confirmed.undoToken)}`,
+      },
+    });
+  }
+
   setSessionCookies(context, confirmed.sessionToken, confirmed.csrfToken);
 
   return context.json({

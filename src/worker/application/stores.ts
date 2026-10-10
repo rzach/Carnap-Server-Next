@@ -47,13 +47,24 @@ import type {
   LtiResourceLink,
 } from "../domain/lti";
 import type { Timestamp } from "../domain/time";
-import type { ExternalIdentity, User } from "../domain/users";
+import type {
+  EmailChangeToken,
+  EmailSource,
+  ExternalIdentity,
+  User,
+} from "../domain/users";
 
 export interface CreateUserInput {
   readonly id: AppId;
   readonly email: string;
   /** Omitted or null means the address has not been proven (LTI-asserted). */
   readonly emailVerifiedAt?: Timestamp | null;
+  /**
+   * Who owns the address. Omitted means `user` — a native sign-in, whose
+   * address its holder typed; a launch says `lti` and names its platform.
+   */
+  readonly emailSource?: EmailSource;
+  readonly emailSourcePlatformId?: AppId | null;
   readonly name: string | null;
   /**
    * The institution's identifier for this student, when the launch creating the
@@ -79,7 +90,35 @@ export interface CreateExternalIdentityInput {
   readonly userId: AppId;
   readonly provider: ExternalIdentity["provider"];
   readonly providerSubject: string;
+  /** The address the launch creating an LTI identity asserted, if any. */
+  readonly assertedEmail?: string | null;
   readonly createdAt: Timestamp;
+}
+
+/** One move of an account's address, from whichever source makes it. */
+export interface EmailChange {
+  /** The address the caller read; the change is refused if it has moved since. */
+  readonly from: string;
+  readonly to: string;
+  readonly source: EmailSource;
+  /** The platform an `lti` change came from; null for the other sources. */
+  readonly sourcePlatformId: AppId | null;
+  /**
+   * When the change itself proved the new mailbox — a confirmed link sent to
+   * it. Null leaves the new address unverified.
+   */
+  readonly verifiedAt: Timestamp | null;
+  readonly updatedAt: Timestamp;
+  /**
+   * What becomes of the undo link an earlier change left pending. `carry`
+   * moves it onto the new address, so that it still puts back the address the
+   * earliest change took away: a second change, by whoever made the first,
+   * must not take the old mailbox's way back from it. Moving the account back
+   * to that address itself uses the link up. `cancel` uses it up whatever the
+   * change: for an administrator's change, which is how an account is
+   * recovered from a mailbox, and for an undo.
+   */
+  readonly pendingUndo: "carry" | "cancel";
 }
 
 export interface SearchUsersInput {
@@ -139,28 +178,49 @@ export interface UserStore {
     updatedAt: Timestamp,
   ): Promise<User | null>;
   /**
-   * Swap the address an account holds for one a launch asserts — only while
-   * the account still holds `from`, and only if no other account holds `to`.
-   * The address lands unverified, and the native sign-in keyed on the old
-   * address is removed with it: native identities are keyed by address, so
-   * leaving that row would let the old mailbox keep signing in to the
-   * account after the address had moved. Returns null when the swap did not
-   * happen:
-   * the user is missing, their address has changed since the caller read it,
-   * or the new one is taken.
+   * Move an account to a new address and record who moved it — only while the
+   * account still holds `change.from`, and only if no other account holds
+   * `change.to`. Other things go with the old address, in the same batch and
+   * only if the swap takes: the native sign-in keyed on it, since native
+   * identities are keyed by address and leaving that row would let the old
+   * mailbox keep signing in; any login link still outstanding for it, which
+   * would otherwise make the old mailbox a fresh account; and the account's
+   * pending confirmation links, which name it as their starting point and
+   * would come back to life if an undo put it back. The account's pending
+   * undo link is carried or cancelled as `change.pendingUndo` says.
+   *
+   * The batch runs those statements first and the swap last, each under the
+   * swap's own condition, so that they happen exactly when the swap does — a
+   * test of the state after it ("the account now holds `to`") would also pass
+   * for a request that lost the race to an identical one.
+   *
+   * Returns null when the swap did not happen: the user is missing, their
+   * address has changed since the caller read it, or the new one is taken —
+   * by another account, or held for one by a pending undo link.
    *
    * Both conditions belong in the statement. The first is a compare-and-swap,
-   * so of two launches in flight at once, the one that read a stale address
+   * so of two changes in flight at once, the one that read a stale address
    * does not write over the other's. The second keeps a collision a quiet
    * no-op rather than a unique-index failure in the middle of someone's
    * launch.
    */
-  adoptEmail(
-    id: AppId,
-    from: string,
-    to: string,
-    updatedAt: Timestamp,
-  ): Promise<User | null>;
+  changeEmail(id: AppId, change: EmailChange): Promise<User | null>;
+  /**
+   * Record the address an LTI platform has just asserted for an identity, and
+   * say whether it differs from the last one recorded — the platform's own
+   * change, which is the only thing a launch may carry over to an account. A
+   * first recording counts as a change.
+   *
+   * A compare-and-set in one statement, so that of two launches carrying the
+   * same new address at once, exactly one is told it is new.
+   */
+  recordAssertedEmail(identityId: AppId, email: string): Promise<boolean>;
+  /**
+   * Forget a recorded assertion, while it is still `email`, so that the next
+   * launch carrying it counts it as new: for an address a launch could not
+   * take only because a pending undo held it for a while.
+   */
+  forgetAssertedEmail(identityId: AppId, email: string): Promise<void>;
   /**
    * Rewrite the fields a user controls about themselves — name and language —
    * as one row update, because they are saved as one form.
@@ -194,6 +254,60 @@ export interface UserStore {
     userIds: readonly AppId[],
     platformId: AppId,
   ): Promise<Map<AppId, string>>;
+}
+
+export interface CreateEmailChangeTokenInput extends EmailChangeToken {
+  readonly tokenHash: string;
+}
+
+/** The single-use links behind an address change; see {@link EmailChangeToken}. */
+export interface EmailChangeStore {
+  /**
+   * Store a new link, and sweep expired rows of every kind on the way. A
+   * confirmation link cancels the account's earlier pending ones: only the
+   * latest request to move stays live. An undo link is stored only if the
+   * account has none pending, and null is returned otherwise: that one,
+   * carried forward by the change (see {@link EmailChange.pendingUndo}),
+   * already puts back the address the earliest change took away. A unique
+   * index keeps it to one per account.
+   */
+  create(
+    input: CreateEmailChangeTokenInput,
+  ): Promise<EmailChangeToken | null>;
+  /** A pending link, without using it up: what its page describes. */
+  get(
+    tokenHash: string,
+    kind: EmailChangeToken["kind"],
+    now: Timestamp,
+  ): Promise<EmailChangeToken | null>;
+  /** Use a pending link up, once: of two clicks at once, one gets the row. */
+  consume(
+    tokenHash: string,
+    kind: EmailChangeToken["kind"],
+    now: Timestamp,
+  ): Promise<EmailChangeToken | null>;
+  /** Withdraw a link whose email could not be sent. */
+  delete(tokenHash: string): Promise<void>;
+  /**
+   * The pending undo link holding `email` for the account that left it, if
+   * any. There is at most one: the hold keeps every other account off the
+   * address, and the account has at most one pending undo.
+   */
+  findPendingUndo(
+    email: string,
+    now: Timestamp,
+  ): Promise<EmailChangeToken | null>;
+  /**
+   * Give the pending undo link holding `email` — the one
+   * {@link findPendingUndo} returns — a new token, keeping its expiry, and
+   * return it; null when there is none. For a sign-in with the
+   * held address, which leads to the undo rather than to a new account.
+   */
+  reissueUndo(
+    email: string,
+    tokenHash: string,
+    now: Timestamp,
+  ): Promise<EmailChangeToken | null>;
 }
 
 export interface CreateNativeLoginChallengeInput {
@@ -243,6 +357,11 @@ export interface AuthStore {
     tokenHash: string,
     revokedAt: Timestamp,
   ): Promise<AuthSession | null>;
+  /**
+   * Sign an account out everywhere: revoke every session it holds. For an
+   * undone address change, whose whole point may be that someone else got in.
+   */
+  revokeSessionsForUser(userId: AppId, revokedAt: Timestamp): Promise<void>;
   /**
    * How many hits each of `buckets` has taken at or after `since`, and when the
    * oldest of them was — the hit whose ageing out frees the next slot. Buckets
@@ -1223,6 +1342,7 @@ export interface AppStores {
   readonly auth: AuthStore;
   readonly content: ContentStore;
   readonly courses: CourseStore;
+  readonly emailChanges: EmailChangeStore;
   readonly lti: LtiStore;
   readonly platformCapabilities: PlatformCapabilityStore;
   readonly scores: ScoreStore;

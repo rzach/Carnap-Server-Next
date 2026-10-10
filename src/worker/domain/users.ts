@@ -3,6 +3,95 @@ import type { Timestamp } from "./time";
 
 export type ExternalIdentityProvider = "native" | "lti";
 
+/**
+ * Who owns an account's email address, and so who may change it.
+ *
+ * - `lti`: an LMS asserted it. A launch whose platform has just changed the
+ *   address it sends carries the change over, from any linked platform.
+ * - `user`: the account holder chose it — by typing it at a native sign-in or
+ *   by confirming a change. Launches leave it alone.
+ * - `admin`: a site administrator set it. Launches leave it alone too; kept
+ *   apart from `user` so that the account holder is told who did it.
+ *
+ * Proving the mailbox (a native sign-in) verifies the address without moving
+ * its ownership: verification is a fact about the mailbox, ownership about who
+ * gets to replace it.
+ */
+export type EmailSource = "lti" | "user" | "admin";
+
+/**
+ * The domain of the stand-in address an account gets when its creating launch
+ * carried no email. `.invalid` is reserved (RFC 2606), so it can never be
+ * delivered to, and never collides with a real address.
+ */
+export const PLACEHOLDER_EMAIL_DOMAIN = "lti.invalid";
+
+export function placeholderEmail(userId: AppId): string {
+  return `lti-${userId}@${PLACEHOLDER_EMAIL_DOMAIN}`;
+}
+
+/**
+ * Whether an address is a launch's stand-in rather than one a person has. No
+ * page shows it as an address: it would read as a mailbox Carnap writes to.
+ */
+export function isPlaceholderEmail(email: string): boolean {
+  return email.endsWith(`@${PLACEHOLDER_EMAIL_DOMAIN}`);
+}
+
+/** A linked platform that now asserts an address other than the account's. */
+export interface EmailAlternative {
+  readonly email: string;
+  readonly identityId: AppId;
+  /** The platform's registered name; null if it no longer exists. */
+  readonly platformName: string | null;
+}
+
+/**
+ * Who owns an account's address, put the way a page says it: the profile's
+ * "From Moodle" and the admin record's source line read this, never the raw
+ * columns, so the two pages cannot describe one account differently.
+ */
+export interface EmailAuthority {
+  /** The address, or null while the account holds only a launch's placeholder. */
+  readonly email: string | null;
+  readonly source: EmailSource;
+  /**
+   * For an `lti` source, the name of the platform the address came from; null
+   * for the other sources, and for a platform that no longer exists.
+   */
+  readonly platformName: string | null;
+  /**
+   * Linked platforms whose last assertion differs from the account's address,
+   * which the account holder may take instead. Under an `lti` source these are
+   * platforms whose record the latest change has overtaken; under the others,
+   * what the holder's LMS would have changed the address to.
+   */
+  readonly alternatives: readonly EmailAlternative[];
+}
+
+/**
+ * A single-use link behind an address change. `confirm` goes to the address an
+ * account holder asked to move to, and moves the account from `fromEmail` to
+ * `toEmail` once opened. `undo` goes to the address a change moved an account
+ * away from, and moves it back from `toEmail` to `fromEmail`, restoring the
+ * source that address had; while one is pending, `fromEmail` is held for its
+ * account. See `0034_email_change_tokens.sql`.
+ */
+export type EmailChangeTokenKind = "confirm" | "undo";
+
+export interface EmailChangeToken {
+  readonly kind: EmailChangeTokenKind;
+  readonly userId: AppId;
+  readonly fromEmail: string;
+  readonly toEmail: string;
+  /** For an undo, who owned the address it restores; null for a confirm. */
+  readonly restoreSource: EmailSource | null;
+  /** For an undo of an `lti` address, the platform it came from. */
+  readonly restorePlatformId: AppId | null;
+  readonly createdAt: Timestamp;
+  readonly expiresAt: Timestamp;
+}
+
 export interface User {
   readonly id: AppId;
   readonly email: string;
@@ -12,6 +101,14 @@ export interface User {
    * asserted by an LMS launch, and always null for placeholder addresses.
    */
   readonly emailVerifiedAt: Timestamp | null;
+  /** Who owns the address; see {@link EmailSource}. */
+  readonly emailSource: EmailSource;
+  /**
+   * The platform an `lti` address came from, kept after that platform is
+   * unlinked because it remains where the address came from. Null for the
+   * other sources.
+   */
+  readonly emailSourcePlatformId: AppId | null;
   readonly name: string | null;
   /**
    * The user's chosen interface language, as a BCP-47 tag. Null means "no
@@ -170,5 +267,12 @@ export interface ExternalIdentity {
   readonly userId: AppId;
   readonly provider: ExternalIdentityProvider;
   readonly providerSubject: string;
+  /**
+   * For an LTI identity, the last address its platform asserted — adopted or
+   * not, since an account whose holder chose their own address still wants to
+   * know what the LMS says. Null until a launch records one, and always null
+   * for a native identity, whose subject already is its address.
+   */
+  readonly assertedEmail: string | null;
   readonly createdAt: Timestamp;
 }

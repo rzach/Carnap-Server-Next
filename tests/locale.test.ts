@@ -357,7 +357,7 @@ describe("choosing a language", () => {
       const html = await response.text();
 
       // Rendered, not redirected — that is the case under test.
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(400);
       expect(html).toContain("Name must be 200 characters or less.");
       expect(selectedLocale(html, "de")).toBe(true);
       // Nothing was written, so the page is still in the language it was
@@ -415,7 +415,7 @@ describe("choosing a language", () => {
           name: "Grace",
         });
 
-        expect(response.status, locale).toBe(200);
+        expect(response.status, locale).toBe(400);
         expect(await response.text(), locale).toContain(
           "That language is not available.",
         );
