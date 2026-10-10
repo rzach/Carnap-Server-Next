@@ -501,12 +501,11 @@ export const attempts = sqliteTable(
       enum: ["student", "reset"],
     }).notNull(),
     /**
-     * The attempt this one replaced, for an attempt born of a reset; null for
-     * one a student opened. Unique, and that is the point: voiding an attempt
-     * and opening its replacement are two writes, and this is what stops the
-     * pair happening twice. A reset is the only thing that ever voids an
-     * attempt, so "voided" and "superseded exactly once" are the same fact,
-     * and the constraint says so where a guard clause used to.
+     * The attempt this one replaced, on an attempt a reset opened; null on
+     * one a student opened. Resets used to void an attempt and open its
+     * replacement at once; they now only void, and the student begins the
+     * next attempt themselves, so only older rows carry `created_from =
+     * 'reset'` and a value here. Kept as history; nothing writes it now.
      */
     supersedesAttemptId: text("supersedes_attempt_id").references(
       (): AnySQLiteColumn => attempts.id,

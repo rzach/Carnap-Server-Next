@@ -444,11 +444,7 @@ function gradeJobsForScoreChange(
   targets: readonly PassbackTarget[],
   subjects: LtiSubjects,
 ): EnqueueLtiGradeJobInput[] {
-  if (
-    assignment.assessmentMode !== "graded" ||
-    projection.status === "not-started" ||
-    targets.length === 0
-  ) {
+  if (assignment.assessmentMode !== "graded" || targets.length === 0) {
     return [];
   }
 

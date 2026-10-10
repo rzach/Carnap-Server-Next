@@ -123,8 +123,11 @@ The gradebook calculates scores from non-voided evidence:
 3. Sum the selected exercise scores and current nominal points, excluding
    excused exercises.
 
-Resetting an attempt voids it and creates a replacement. Its old work remains
-available as history but no longer contributes to the score.
+Resetting an attempt voids it. Its old work remains available as history but
+no longer contributes to the score, and a voided attempt does not count toward
+the attempt limit. The student begins the next attempt from the start page,
+which applies the current time limit and availability; a timed attempt's clock
+starts then, not at the reset.
 
 ## Displayed scores and the passback ledger
 

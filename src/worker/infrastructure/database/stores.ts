@@ -66,7 +66,6 @@ import type {
   PublishAssignmentInput,
   RecordLoginRateLimitHitInput,
   RepointPublishedAssignmentInput,
-  ResetAttemptInput,
   RevokeEnrollmentLinkInput,
   RevokePlatformCapabilityInput,
   ScoreStore,
@@ -89,6 +88,7 @@ import type {
   UpsertLatePolicyInput,
   UpsertLtiResourceLinkInput,
   UserStore,
+  VoidAttemptInput,
 } from "../../application/stores";
 import type {
   AdminAuditEvent,
@@ -2478,27 +2478,15 @@ class SqliteAssessmentStore implements AssessmentStore {
   }
 
   /**
-   * Void an attempt and open its replacement, together or not at all.
+   * Void an attempt, or return null when there is no such live attempt.
    *
-   * `supersedes_attempt_id` being unique is what makes the pair safe: a
-   * second reset of the same attempt cannot insert, so it cannot leave a
-   * replacement standing over a void that never happened, and because the
-   * batch is one transaction the failed insert takes the void down with it.
-   * That covers the race the caller cannot — two staff resetting the same
-   * attempt at once, both past their own checks.
-   *
-   * What it does not cover is being called about an attempt that is not this
-   * assignment's or not this user's: the void then matches nothing while the
-   * insert still lands, and this returns null having written a row. The
-   * caller establishes that much first (`AttemptService.reset` reads the
-   * attempt and checks both), so treat those fields as a precondition rather
-   * than something to pass hopefully.
+   * The update is conditional on the attempt not being voided already, so of
+   * two staff resetting the same attempt at once exactly one gets it back. No
+   * replacement is opened: the student begins the next attempt themselves,
+   * through the start page, as they began this one.
    */
-  async resetAttempt(input: ResetAttemptInput): Promise<{
-    readonly newAttempt: Attempt;
-    readonly voidedAttempt: Attempt;
-  } | null> {
-    const voidStatement = this.db
+  async voidAttempt(input: VoidAttemptInput): Promise<Attempt | null> {
+    const rows = await this.db
       .update(attempts)
       .set({
         status: "voided",
@@ -2508,57 +2496,16 @@ class SqliteAssessmentStore implements AssessmentStore {
       })
       .where(
         and(
-          eq(attempts.id, input.oldAttemptId),
+          eq(attempts.id, input.attemptId),
           eq(attempts.assignmentId, input.assignmentId),
           eq(attempts.userId, input.userId),
           ne(attempts.status, "voided"),
         ),
       )
       .returning();
-    // What keeps the pair honest is `supersedes_attempt_id` being unique: a
-    // second reset of the same attempt cannot insert, so it cannot leave a
-    // replacement behind for a void that never happened. The guard clause
-    // this replaces had to name the exact `voided_at` the update above wrote,
-    // which is why it could only ever be hand-written SQL.
-    //
-    // The ordinal is still read inside the statement rather than fetched and
-    // incremented here — two resets racing must not compute the same next
-    // number, and `attempts_assignment_user_ordinal_unique` would catch it
-    // but only by failing.
-    const newStatement = this.db
-      .insert(attempts)
-      .values({
-        assignmentId: input.assignmentId,
-        createdFrom: "reset",
-        expiresAt: input.expiresAt,
-        id: input.newAttemptId,
-        openedAt: input.openedAt,
-        ordinal: sql`COALESCE((
-          SELECT MAX(${attempts.ordinal})
-          FROM ${attempts}
-          WHERE ${attempts.assignmentId} = ${input.assignmentId}
-            AND ${attempts.userId} = ${input.userId}
-        ), 0) + 1`,
-        status: "active",
-        supersedesAttemptId: input.oldAttemptId,
-        userId: input.userId,
-      })
-      .returning();
-    const [voidRows, newRows] = await this.db.batch([
-      voidStatement,
-      newStatement,
-    ]);
-    const voidedRow = nullableSingle(voidRows);
-    const newRow = nullableSingle(newRows);
+    const row = nullableSingle(rows);
 
-    if (voidedRow === null || newRow === null) {
-      return null;
-    }
-
-    return {
-      newAttempt: mapAttempt(newRow),
-      voidedAttempt: mapAttempt(voidedRow),
-    };
+    return row === null ? null : mapAttempt(row);
   }
 
   async appendSubmission(input: AppendSubmissionInput): Promise<Submission> {

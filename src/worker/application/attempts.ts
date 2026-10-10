@@ -30,7 +30,6 @@ export interface AttemptBeginResult {
 }
 
 export interface AttemptResetResult {
-  readonly newAttempt: Attempt;
   readonly voidedAttempt: Attempt;
 }
 
@@ -263,25 +262,18 @@ export class AttemptService {
       throw forbidden("attempt_already_voided");
     }
 
-    const nowDate = this.options.now?.() ?? new Date();
-    const now = timestampNow(nowDate);
-    const effective = await effectiveAssignmentForUser(
-      this.options.stores,
-      assignment,
-      oldAttempt.userId,
-    );
-    const reset = await this.options.stores.assessment.resetAttempt({
+    // Only the void: the student starts the next attempt from the start page,
+    // which says which attempt it is and what its limits are, and starts its
+    // clock when they begin rather than now.
+    const voidedAttempt = await this.options.stores.assessment.voidAttempt({
       assignmentId: assignment.id,
-      expiresAt: expiresAtForTimedAttempt(now, effective.timeLimitMinutes),
-      newAttemptId: createAppId(nowDate.getTime()),
-      oldAttemptId: oldAttempt.id,
-      openedAt: now,
+      attemptId: oldAttempt.id,
       userId: oldAttempt.userId,
-      voidedAt: now,
+      voidedAt: timestampNow(this.options.now?.() ?? new Date()),
       voidedById: actor.user.id,
     });
 
-    if (reset === null) {
+    if (voidedAttempt === null) {
       throw attemptNotFound();
     }
 
@@ -292,7 +284,7 @@ export class AttemptService {
       stores: this.options.stores,
     }).refreshAfterInstructorChange(assignment, oldAttempt.userId);
 
-    return reset;
+    return { voidedAttempt };
   }
 
   private async expireAllOpenAttempts(

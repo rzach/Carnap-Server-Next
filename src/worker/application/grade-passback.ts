@@ -120,18 +120,19 @@ function scoreIsPublishable(input: PlanGradeJobInput): boolean {
 
   if (
     assignment.assessmentMode !== "graded" ||
-    link.agsLineItemUrl === null ||
-    score.status === "not-started"
+    link.agsLineItemUrl === null
   ) {
     return false;
   }
 
-  // "missing" is a student who opened an attempt and submitted nothing.
-  // Pushing that fresh zero would render as a real grade for someone who
-  // merely peeked — but as a correction to a previously synced value (an
-  // attempt reset, say) it must go out or the LMS keeps the old score.
+  // "missing" is a student who opened an attempt and submitted nothing, and
+  // "not-started" one with no live attempt at all. Pushing either fresh zero
+  // would render as a real grade for someone who merely peeked or never
+  // came — but as a correction to a previously synced value it must go out,
+  // or the LMS keeps the old score. An attempt reset is that case: it voids
+  // the student's only attempt and opens none in its place.
   if (
-    score.status === "missing" &&
+    (score.status === "missing" || score.status === "not-started") &&
     input.previousStatus !== "partial" &&
     input.previousStatus !== "complete"
   ) {

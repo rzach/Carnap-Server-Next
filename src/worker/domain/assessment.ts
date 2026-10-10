@@ -2,6 +2,8 @@ import type { AppId } from "./ids";
 import type { JsonValue } from "./json";
 import type { Timestamp } from "./time";
 
+/** `reset` marks the replacement attempts resets used to open; see the
+ *  `supersedes_attempt_id` column. Every new attempt is a student's. */
 export type AttemptCreatedFrom = "student" | "reset";
 export type AttemptStatus = "active" | "submitted" | "expired" | "voided";
 export type EvaluatorKind = "automatic" | "manual";

@@ -1045,8 +1045,8 @@ msgid "Attempt not reset"
 msgstr "Versuch nicht zurückgesetzt"
 
 #: src/worker/web/assignment-detail.tsx
-msgid "Attempt reset; the old attempt remains in the audit trail."
-msgstr "Versuch zurückgesetzt; der alte Versuch bleibt im Prüfprotokoll erhalten."
+msgid "Attempt reset. The student can start a new attempt, and the old one remains in the audit trail."
+msgstr "Versuch zurückgesetzt. Die oder der Studierende kann einen neuen Versuch beginnen; der alte bleibt im Prüfprotokoll erhalten."
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Attempt started."

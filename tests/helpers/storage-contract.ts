@@ -1887,13 +1887,10 @@ export function describeStorageContract(
         ).resolves.toBe(true);
 
         // A reset voids the attempt, and with it everything under it.
-        await stores.assessment.resetAttempt({
-          oldAttemptId: attempt.id,
-          newAttemptId: "attempt-2",
+        await stores.assessment.voidAttempt({
+          attemptId: attempt.id,
           assignmentId: attempt.assignmentId,
           userId: student.id,
-          openedAt: LATER,
-          expiresAt: null,
           voidedAt: LATER,
           voidedById: student.id,
         });
@@ -3082,46 +3079,47 @@ export function describeStorageContract(
       });
     });
 
-    test("a refused second reset takes its own void down with it", async () => {
+    test("voids an attempt once, and opens nothing in its place", async () => {
       await withStorage(async ({ stores }) => {
         const { attempt, student } = await createAttemptSlice(stores);
-        const reset = {
+        const input = {
           assignmentId: "assignment-1",
-          expiresAt: null,
-          oldAttemptId: attempt.id,
-          openedAt: LATER,
+          attemptId: attempt.id,
           userId: student.id,
           voidedAt: LATER,
           voidedById: student.id,
         };
 
-        const first = await stores.assessment.resetAttempt({
-          ...reset,
-          newAttemptId: "attempt-2",
+        const voided = await stores.assessment.voidAttempt(input);
+
+        expect(voided).toMatchObject({
+          id: attempt.id,
+          status: "voided",
+          voidReason: "reset",
+          voidedAt: LATER,
+          voidedById: student.id,
         });
 
-        // The ordinal is computed by a subquery inside the insert rather than
-        // read and incremented here, so this also checks that a parameterised
-        // expression nested in a batched statement survives the round trip.
-        expect(first?.newAttempt.ordinal).toBe(2);
-
-        const before =
+        const after =
           await stores.assessment.listAttemptsForAssignment("assignment-1");
 
-        // The unique `supersedes_attempt_id` refuses the second reset, and its
-        // void is in the same batch — so the void has to roll back with it. A
-        // driver whose batch were merely a loop would leave the attempt voided
-        // a second time with no replacement to show for it.
-        await expect(
-          stores.assessment.resetAttempt({
-            ...reset,
-            newAttemptId: "attempt-3",
-          }),
-        ).rejects.toThrow();
+        expect(after.map((row) => row.id)).toEqual([attempt.id]);
 
+        // The update is conditional on the attempt still being live, so of
+        // two staff resetting it at once only one gets it back.
+        await expect(
+          stores.assessment.voidAttempt(input),
+        ).resolves.toBeNull();
+        await expect(
+          stores.assessment.voidAttempt({
+            ...input,
+            assignmentId: "assignment-other",
+            attemptId: "attempt-missing",
+          }),
+        ).resolves.toBeNull();
         await expect(
           stores.assessment.listAttemptsForAssignment("assignment-1"),
-        ).resolves.toEqual(before);
+        ).resolves.toEqual(after);
       });
     });
   });

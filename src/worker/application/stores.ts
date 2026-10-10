@@ -891,13 +891,10 @@ export interface BeginAttemptInput {
   readonly maxAttempts: number | null;
 }
 
-export interface ResetAttemptInput {
-  readonly oldAttemptId: AppId;
-  readonly newAttemptId: AppId;
+export interface VoidAttemptInput {
+  readonly attemptId: AppId;
   readonly assignmentId: AppId;
   readonly userId: AppId;
-  readonly openedAt: Timestamp;
-  readonly expiresAt: Timestamp | null;
   readonly voidedAt: Timestamp;
   readonly voidedById: AppId;
 }
@@ -1023,10 +1020,7 @@ export interface AssessmentStore {
    * — the cheapest true answer to "has anyone's work been graded yet".
    */
   hasEvaluatedWork(assignmentId: AppId): Promise<boolean>;
-  resetAttempt(input: ResetAttemptInput): Promise<{
-    readonly newAttempt: Attempt;
-    readonly voidedAttempt: Attempt;
-  } | null>;
+  voidAttempt(input: VoidAttemptInput): Promise<Attempt | null>;
   appendSubmission(input: AppendSubmissionInput): Promise<Submission>;
   listSubmissionsForAttempt(attemptId: AppId): Promise<Submission[]>;
   appendEvaluation(input: AppendEvaluationInput): Promise<Evaluation>;

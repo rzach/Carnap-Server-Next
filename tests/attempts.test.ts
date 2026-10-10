@@ -45,7 +45,6 @@ interface AttemptListResponse {
 }
 
 interface ResetAttemptResponse {
-  readonly newAttempt: AttemptJson;
   readonly voidedAttempt: AttemptJson;
 }
 
@@ -173,11 +172,14 @@ describe("attempt policy", () => {
         revisionId,
         { maxAttempts: 1, timeLimitMinutes: 5 },
       );
+      // One timed attempt: the void must hand that one attempt back, and the
+      // clock must not start until the student begins again.
       const resettable = await createPublishedAssignment(
         env,
         instructor,
         courseId,
         revisionId,
+        { maxAttempts: 1, timeLimitMinutes: 5 },
       );
 
       const futureResponse = await beginAttempt(
@@ -266,15 +268,33 @@ describe("attempt policy", () => {
       expect(resetResponse.status).toBe(200);
       expect(reset.voidedAttempt.status).toBe("voided");
       expect(reset.voidedAttempt.voidedAt).not.toBeNull();
-      expect(reset.newAttempt.status).toBe("active");
-      expect(reset.newAttempt.ordinal).toBe(2);
+      // Nothing is opened in its place, so the student meets the start page
+      // again rather than landing in a running attempt.
       expect(resetList.attempts.map((attempt) => attempt.status)).toEqual([
         "voided",
-        "active",
       ]);
-      expect(resetList.attempts.map((attempt) => attempt.ordinal)).toEqual([
-        1, 2,
-      ]);
+
+      const briefingResponse = await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/assignments/${resettable}`,
+        { headers: { Accept: "text/html", Cookie: student.cookieHeader } },
+        env,
+      );
+
+      expect(briefingResponse.status).toBe(200);
+      expect(await briefingResponse.text()).toContain("Before you start");
+
+      const againResponse = await beginAttempt(
+        env,
+        student,
+        courseId,
+        resettable,
+      );
+      const again = (await againResponse.json()) as BeginAttemptResponse;
+
+      expect(againResponse.status).toBe(201);
+      expect(again.attempt.ordinal).toBe(2);
+      expect(again.attempt.expiresAt).not.toBeNull();
     });
   });
 });

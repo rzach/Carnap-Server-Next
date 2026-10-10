@@ -1868,7 +1868,6 @@ async function resetAttempt(
   }
 
   return context.json({
-    newAttempt: publicAttempt(result.newAttempt),
     voidedAttempt: publicAttempt(result.voidedAttempt),
   });
 }

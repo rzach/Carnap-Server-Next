@@ -1448,8 +1448,9 @@ describe("LTI grade passback", () => {
       ).resolves.toBeNull();
 
       // A reset does write the ledger — it is a correction path — and what
-      // it records is the same "missing" zero. Pushing that would render a
-      // real grade for a student who only peeked, so nothing is queued.
+      // it records is a "not-started" zero, the voided attempt being the
+      // only one. Pushing that would render a real grade for a student who
+      // only peeked, so nothing is queued.
       const resetResponse = await appRequest(
         createTestApp(),
         `/courses/${courseId}/instructor/assignments/${assignmentId}/attempts/${attemptId}/reset`,
@@ -1460,7 +1461,7 @@ describe("LTI grade passback", () => {
       expect(resetResponse.status).toBe(200);
       await expect(
         stores.scores.getAssignmentScore(assignmentId, student.actorId),
-      ).resolves.toMatchObject({ status: "missing" });
+      ).resolves.toMatchObject({ status: "not-started" });
       await expect(
         stores.lti.getGradeJob(link.id, student.actorId),
       ).resolves.toBeNull();

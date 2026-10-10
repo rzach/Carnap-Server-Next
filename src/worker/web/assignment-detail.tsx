@@ -2886,7 +2886,7 @@ export function renderInstructorAttempts(
       {model.attemptReset ? (
         <Notice>
           {i18n.t(
-            "Attempt reset; the old attempt remains in the audit trail.",
+            "Attempt reset. The student can start a new attempt, and the old one remains in the audit trail.",
           )}
         </Notice>
       ) : null}
