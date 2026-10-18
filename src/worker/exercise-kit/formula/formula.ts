@@ -48,7 +48,7 @@ import type {
   Term as SurfaceTerm,
   TermInfo,
 } from "@aufbau/syntax";
-import { printTerm } from "@aufbau/syntax";
+import { printTerm, unfoldDefinitions } from "@aufbau/syntax";
 import type { BinaryConnective } from "../../logic/specs/connectives";
 import {
   binaryConnectiveForRole,
@@ -548,6 +548,29 @@ export function parseEngineFormula(
     }),
     lang,
   );
+}
+
+/**
+ * Engine text with every def unfolded: the one spelling a formula has as the
+ * engine sees it, so two formulas are the same tree — `a ≠ b` and `¬a = b`
+ * included — exactly when these are equal. The printer's round-trip law is
+ * what makes the text a faithful stand-in for the tree. `null` when the text
+ * does not read.
+ */
+export function unfoldedEngineText(
+  engine: string,
+  lang: SurfaceLanguage,
+): string | null {
+  const sort = sentenceSort(lang);
+  const parsed = lang.parse(engine, {
+    lints: false,
+    mode: "engine",
+    ...(sort === undefined ? {} : { sort }),
+  });
+
+  return parsed.ok
+    ? printTerm(lang, unfoldDefinitions(lang, parsed.term), "engine")
+    : null;
 }
 
 /**

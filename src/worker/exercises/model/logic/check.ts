@@ -49,13 +49,17 @@ export interface ModelTask {
   readonly targeted: readonly Formula[];
 }
 
-/** A raw submitted model: exactly what the student typed, per field label. */
+/** A raw submitted model: exactly what the student typed, per field key. */
 export interface ModelInput {
   readonly domain: string;
   readonly fields: Readonly<Record<string, string>>;
 }
 
-/** Why a submitted model is not a model. */
+/**
+ * Why a submitted model is not a model. A `field` here is the field's label,
+ * for the message to name: a verdict is recomputed whenever it is shown and
+ * never stored, so nothing is keyed by it.
+ */
 export type ModelProblem =
   | { readonly kind: "domain-empty" }
   | { readonly kind: "domain-unreadable"; readonly position: number }
@@ -244,7 +248,7 @@ export function readModel(
       continue;
     }
 
-    const text = input.fields[field.label] ?? "";
+    const text = input.fields[field.key] ?? "";
 
     if (field.kind === "proposition") {
       const value = readProposition(text);

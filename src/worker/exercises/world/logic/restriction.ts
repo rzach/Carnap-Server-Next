@@ -3,16 +3,18 @@
  * student's sentence may use (`symbols=`) or may not (`without=`).
  *
  * The author spells a symbol the way the language does — `=`, `∀`,
- * `LeftOf` — and the check compares constructors, not spellings, so a
- * language with several spellings of one connective has them all caught by
- * naming any one. It reads the parse tree rather than the formula the
- * evaluator gets, because the formula has already unfolded `a≠b` into `¬a=b`
- * and would blame the student for a negation they never wrote.
+ * `LeftOf` — and the compiler resolves each spelling to constructors once
+ * ({@link resolveSpelling}), so the check compares constructors, not
+ * spellings, and a language with several spellings of one connective has
+ * them all caught by naming any one. It reads the parse tree rather than the
+ * formula the evaluator gets, because the formula has already unfolded `a≠b`
+ * into `¬a=b` and would blame the student for a negation they never wrote.
  */
 
 import type { NotationInfo, SurfaceLanguage } from "@aufbau/syntax";
 import { walkTerm } from "@aufbau/syntax";
 import { argumentListSort, sentenceSort } from "../../../logic/specs/roles";
+import type { WorldRestriction } from "../types";
 
 /** A name's key in a used-symbol set, kept apart from constructor names. */
 function nameKey(name: string): string {
@@ -94,10 +96,7 @@ export function resolveSpelling(
 export function restrictionBreaches(
   source: string,
   lang: SurfaceLanguage,
-  restriction: {
-    readonly symbols?: readonly string[];
-    readonly without?: readonly string[];
-  },
+  restriction: WorldRestriction,
 ): readonly string[] | null {
   const sort = sentenceSort(lang);
   const parsed = lang.parse(source, sort === undefined ? {} : { sort });
@@ -124,17 +123,13 @@ export function restrictionBreaches(
   });
 
   if (restriction.without !== undefined) {
-    return restriction.without.filter((spelling) =>
-      resolveSpelling(spelling, lang).some((key) => used.has(key)),
+    return restriction.without.flatMap(({ keys, spelling }) =>
+      keys.some((key) => used.has(key)) ? [spelling] : [],
     );
   }
 
   if (restriction.symbols !== undefined) {
-    const allowed = new Set(
-      restriction.symbols.flatMap((spelling) =>
-        resolveSpelling(spelling, lang),
-      ),
-    );
+    const allowed = new Set(restriction.symbols.flatMap(({ keys }) => keys));
 
     // Names are not vocabulary: a list of what may be used says which
     // predicates, connectives and quantifiers, and a sentence may still talk

@@ -72,13 +72,24 @@ export interface WorldSentence {
 }
 
 /**
- * A distinguish exercise's vocabulary restriction, as the author spelled it.
- * At most one of the two is present; the check resolves the spellings to the
- * language's constructors when it runs.
+ * One symbol a restriction names: the author's spelling, which the prompt
+ * shows, and what it resolved to when the exercise was compiled — constructor
+ * names, and `name a` for an object name. The check compares those keys and
+ * never the spelling, so a change to how the language spells a symbol cannot
+ * change what was restricted.
+ */
+export interface WorldRestrictedSymbol {
+  readonly keys: readonly string[];
+  readonly spelling: string;
+}
+
+/**
+ * A distinguish exercise's vocabulary restriction. At most one of the two is
+ * present.
  */
 export interface WorldRestriction {
-  readonly symbols?: readonly string[];
-  readonly without?: readonly string[];
+  readonly symbols?: readonly WorldRestrictedSymbol[];
+  readonly without?: readonly WorldRestrictedSymbol[];
 }
 
 export interface WorldPublicData {

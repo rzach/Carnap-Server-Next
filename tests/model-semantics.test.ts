@@ -11,6 +11,8 @@ import {
   checkModel,
   DEFAULT_LANGUAGE_ID,
   DOMAIN_FIELD_LABEL,
+  fieldForGiven,
+  fieldFromKey,
   firstOrderLanguageFor,
   formatFunctionTable,
   formulaToString,
@@ -286,6 +288,7 @@ describe("the signature a formula implies", () => {
 
     expect(signature[1]).toEqual({
       arity: 0,
+      key: "proposition P/0",
       kind: "proposition",
       label: "P",
       symbol: "P",
@@ -315,28 +318,28 @@ describe("the signature a formula implies", () => {
 describe("satisfaction", () => {
   test("a quantifier ranges over exactly the domain", () => {
     expect(
-      holds("AxF(x)", { domain: "0,1", fields: { "F(_)": "0,1" } }),
+      holds("AxF(x)", { domain: "0,1", fields: { "relation F/1": "0,1" } }),
     ).toBe(true);
-    expect(holds("AxF(x)", { domain: "0,1", fields: { "F(_)": "0" } })).toBe(
-      false,
-    );
-    expect(holds("ExF(x)", { domain: "0,1", fields: { "F(_)": "1" } })).toBe(
-      true,
-    );
-    expect(holds("ExF(x)", { domain: "0,1", fields: { "F(_)": "" } })).toBe(
-      false,
-    );
+    expect(
+      holds("AxF(x)", { domain: "0,1", fields: { "relation F/1": "0" } }),
+    ).toBe(false);
+    expect(
+      holds("ExF(x)", { domain: "0,1", fields: { "relation F/1": "1" } }),
+    ).toBe(true);
+    expect(
+      holds("ExF(x)", { domain: "0,1", fields: { "relation F/1": "" } }),
+    ).toBe(false);
   });
 
   test("widening the domain can falsify a universal claim", () => {
-    const fields = { "F(_)": "0" };
+    const fields = { "relation F/1": "0" };
 
     expect(holds("AxF(x)", { domain: "0", fields })).toBe(true);
     expect(holds("AxF(x)", { domain: "0,1", fields })).toBe(false);
   });
 
   test("relations are tuple membership, in order", () => {
-    const input = { domain: "0,1", fields: { "R(_,_)": "[0,1]" } };
+    const input = { domain: "0,1", fields: { "relation R/2": "[0,1]" } };
 
     expect(holds("ExEyR(x,y)", input)).toBe(true);
     expect(holds("AxAy(R(x,y) -> R(y,x))", input)).toBe(false);
@@ -344,24 +347,34 @@ describe("satisfaction", () => {
 
   test("identity is identity of domain elements", () => {
     expect(
-      holds("a = b", { domain: "0,1", fields: { a: "0", b: "0" } }),
+      holds("a = b", {
+        domain: "0,1",
+        fields: { "constant a/0": "0", "constant b/0": "0" },
+      }),
     ).toBe(true);
     expect(
-      holds("a = b", { domain: "0,1", fields: { a: "0", b: "1" } }),
+      holds("a = b", {
+        domain: "0,1",
+        fields: { "constant a/0": "0", "constant b/0": "1" },
+      }),
     ).toBe(false);
     expect(holds("ExEy~x = y", { domain: "0,1", fields: {} })).toBe(true);
     expect(holds("ExEy~x = y", { domain: "0", fields: {} })).toBe(false);
   });
 
   test("a sentence letter takes its truth value from its own field", () => {
-    expect(holds("P", { domain: "0", fields: { P: "True" } })).toBe(true);
-    expect(holds("P", { domain: "0", fields: { P: "False" } })).toBe(false);
+    expect(
+      holds("P", { domain: "0", fields: { "proposition P/0": "True" } }),
+    ).toBe(true);
+    expect(
+      holds("P", { domain: "0", fields: { "proposition P/0": "False" } }),
+    ).toBe(false);
   });
 
   test("functions are applied, and nest", () => {
     const input = {
       domain: "0,1",
-      fields: { "f(_)": "[0;1],[1;0]", "F(_)": "1" },
+      fields: { "function f/1": "[0;1],[1;0]", "relation F/1": "1" },
     };
 
     expect(holds("AxF(f(x))", input)).toBe(false);
@@ -369,7 +382,7 @@ describe("satisfaction", () => {
     expect(
       holds("Axf(f(x)) = x", {
         domain: "0,1",
-        fields: { "f(_)": "[0;1],[1;0]" },
+        fields: { "function f/1": "[0;1],[1;0]" },
       }),
     ).toBe(true);
   });
@@ -378,11 +391,11 @@ describe("satisfaction", () => {
     const source = "AxAyf(x,y) = f(y,x)";
     const commutative = {
       domain: "0,1",
-      fields: { "f(_,_)": "[0,0;0],[0,1;1],[1,0;1],[1,1;0]" },
+      fields: { "function f/2": "[0,0;0],[0,1;1],[1,0;1],[1,1;0]" },
     };
     const notCommutative = {
       domain: "0,1",
-      fields: { "f(_,_)": "[0,0;0],[0,1;0],[1,0;1],[1,1;0]" },
+      fields: { "function f/2": "[0,0;0],[0,1;0],[1,0;1],[1,1;0]" },
     };
 
     expect(holds(source, commutative)).toBe(true);
@@ -418,7 +431,10 @@ describe("reading a submitted model", () => {
   });
 
   test("a domain that does not read is reported with its offset", () => {
-    const read = readFor(["P"], { domain: "0,x", fields: { P: "True" } });
+    const read = readFor(["P"], {
+      domain: "0,x",
+      fields: { "proposition P/0": "True" },
+    });
 
     expect(read.ok === false && read.problem).toEqual({
       kind: "domain-unreadable",
@@ -433,7 +449,7 @@ describe("reading a submitted model", () => {
     );
     const read = readFor(["AxF(x)"], {
       domain: oversized.join(","),
-      fields: { "F(_)": "" },
+      fields: { "relation F/1": "" },
     });
 
     expect(read.ok === false && read.problem).toEqual({
@@ -445,7 +461,7 @@ describe("reading a submitted model", () => {
   test("an extension must lie inside the domain", () => {
     const read = readFor(["AxF(x)"], {
       domain: "0,1",
-      fields: { "F(_)": "0,2" },
+      fields: { "relation F/1": "0,2" },
     });
 
     expect(read.ok === false && read.problem).toEqual({
@@ -457,7 +473,7 @@ describe("reading a submitted model", () => {
   test("a constant must name an element of the domain", () => {
     const read = readFor(["F(a)"], {
       domain: "0,1",
-      fields: { a: "5", "F(_)": "0" },
+      fields: { "constant a/0": "5", "relation F/1": "0" },
     });
 
     expect(read.ok === false && read.problem).toEqual({
@@ -467,7 +483,10 @@ describe("reading a submitted model", () => {
   });
 
   test("a proposition field must say True or False", () => {
-    const read = readFor(["P"], { domain: "0", fields: { P: "maybe" } });
+    const read = readFor(["P"], {
+      domain: "0",
+      fields: { "proposition P/0": "maybe" },
+    });
 
     expect(read.ok === false && read.problem.kind).toBe("field-unreadable");
   });
@@ -475,7 +494,7 @@ describe("reading a submitted model", () => {
   test("a function must have a value for every argument tuple", () => {
     const read = readFor(["Axf(x) = x"], {
       domain: "0,1",
-      fields: { "f(_)": "[0;0]" },
+      fields: { "function f/1": "[0;0]" },
     });
 
     expect(read.ok === false && read.problem).toEqual({
@@ -488,7 +507,7 @@ describe("reading a submitted model", () => {
   test("a function may not give one argument two values", () => {
     const read = readFor(["Axf(x) = x"], {
       domain: "0,1",
-      fields: { "f(_)": "[0;0],[0;1],[1;1]" },
+      fields: { "function f/1": "[0;0],[0;1],[1;1]" },
     });
 
     expect(read.ok === false && read.problem).toEqual({
@@ -509,7 +528,10 @@ describe("reading a submitted model", () => {
 
 describe("judging a task", () => {
   test("a simple exercise wants every formula true", () => {
-    const input = { domain: "0,1", fields: { "F(_)": "0,1", "G(_)": "0" } };
+    const input = {
+      domain: "0,1",
+      fields: { "relation F/1": "0,1", "relation G/1": "0" },
+    };
     const verdict = checkModel(
       modelSignature(["AxF(x)", "ExG(x)"].map(parse), CALGARY),
       task(["AxF(x)", "ExG(x)"], "all-true"),
@@ -524,7 +546,7 @@ describe("judging a task", () => {
     const verdict = checkModel(
       modelSignature(sources.map(parse), CALGARY),
       task(sources, "all-true"),
-      { domain: "0,1", fields: { "F(_)": "0", "G(_)": "0" } },
+      { domain: "0,1", fields: { "relation F/1": "0", "relation G/1": "0" } },
     );
 
     expect(verdict.ok).toBe(false);
@@ -542,12 +564,12 @@ describe("judging a task", () => {
     // A two-element cycle: every x has a witness, but no single x is everyone's.
     const counterexample = {
       domain: "0,1",
-      fields: { "R(_,_)": "[0,1],[1,0]" },
+      fields: { "relation R/2": "[0,1],[1,0]" },
     };
     // The full relation makes the conclusion true, so it witnesses nothing.
     const notACounterexample = {
       domain: "0,1",
-      fields: { "R(_,_)": "[0,0],[0,1],[1,0],[1,1]" },
+      fields: { "relation R/2": "[0,0],[0,1],[1,0],[1,1]" },
     };
 
     expect(checkModel(signature, invalidity, counterexample).ok).toBe(true);
@@ -565,7 +587,7 @@ describe("judging a task", () => {
     const signature = modelSignature(["P", "Q"].map(parse), CALGARY);
     const verdict = checkModel(signature, task(["Q"], "all-false", ["P"]), {
       domain: "0",
-      fields: { P: "False", Q: "True" },
+      fields: { "proposition P/0": "False", "proposition Q/0": "True" },
     });
 
     expect(verdict.requiredFalse).toEqual([0]);
@@ -582,10 +604,10 @@ describe("judging a task", () => {
 
     // A one-element domain would make the universal claim true for free, which
     // is the point of the constraint.
-    const cheating = { domain: "0", fields: { "F(_,_)": "[0,0]" } };
+    const cheating = { domain: "0", fields: { "relation F/2": "[0,0]" } };
     const honest = {
       domain: "0,1",
-      fields: { "F(_,_)": "[0,0],[0,1],[1,0],[1,1]" },
+      fields: { "relation F/2": "[0,0],[0,1],[1,0],[1,1]" },
     };
 
     expect(
@@ -599,9 +621,9 @@ describe("judging a task", () => {
     const signature = modelSignature(sources.map(parse), CALGARY);
     const equivalence = task(sources, "not-all-equal");
 
-    const disagree = { domain: "0,1", fields: { "F(_)": "0" } };
-    const bothTrue = { domain: "0,1", fields: { "F(_)": "0,1" } };
-    const bothFalse = { domain: "0,1", fields: { "F(_)": "" } };
+    const disagree = { domain: "0,1", fields: { "relation F/1": "0" } };
+    const bothTrue = { domain: "0,1", fields: { "relation F/1": "0,1" } };
+    const bothFalse = { domain: "0,1", fields: { "relation F/1": "" } };
 
     expect(checkModel(signature, equivalence, disagree).ok).toBe(true);
 
@@ -685,20 +707,32 @@ infixl nand: $↑$ prec 30;
 
   test("a stroke is evaluated, not refused", () => {
     expect(
-      holdsIn("P ↑ Q", { domain: "0", fields: { P: "false", Q: "true" } }),
+      holdsIn("P ↑ Q", {
+        domain: "0",
+        fields: { "proposition P/0": "false", "proposition Q/0": "true" },
+      }),
     ).toBe(true);
     expect(
-      holdsIn("P ↑ Q", { domain: "0", fields: { P: "true", Q: "true" } }),
+      holdsIn("P ↑ Q", {
+        domain: "0",
+        fields: { "proposition P/0": "true", "proposition Q/0": "true" },
+      }),
     ).toBe(false);
   });
 
   test("it composes with the quantifiers like any other connective", () => {
     // ∀x(F(x) ↑ F(x)) is ∀x¬F(x): true exactly when the extension is empty.
     expect(
-      holdsIn("Ax(F(x) ↑ F(x))", { domain: "0,1", fields: { "F(_)": "" } }),
+      holdsIn("Ax(F(x) ↑ F(x))", {
+        domain: "0,1",
+        fields: { "relation F/1": "" },
+      }),
     ).toBe(true);
     expect(
-      holdsIn("Ax(F(x) ↑ F(x))", { domain: "0,1", fields: { "F(_)": "0" } }),
+      holdsIn("Ax(F(x) ↑ F(x))", {
+        domain: "0,1",
+        fields: { "relation F/1": "0" },
+      }),
     ).toBe(false);
   });
 
@@ -750,18 +784,48 @@ describe("symbols of fixed arity", () => {
     ]);
   });
 
+  test("a given names its field in any spelling the language reads", () => {
+    const key = (given: string) => fieldForGiven(given, FIXED)?.key ?? null;
+
+    expect(key("_ < _")).toBe("relation lt/2");
+    expect(key("_<_")).toBe("relation lt/2");
+    expect(key("lt _ _")).toBe("relation lt/2");
+    expect(key("_+_")).toBe("function plus/2");
+    expect(key("Red(_)")).toBe("relation Red/1");
+    expect(key("a")).toBe("constant a/0");
+    expect(key("_ < a")).toBe(null);
+    expect(key("¬Red(_)")).toBe(null);
+    expect(key("Red(succ(_))")).toBe(null);
+  });
+
+  test("a field's key reads back to the field, labelled in the language", () => {
+    const fields = modelSignature(
+      ["a + b < succ(c) ∧ Red(a)"].map(parseFixed),
+      FIXED,
+    );
+
+    for (const field of fields) {
+      expect(fieldFromKey(field.key, FIXED)).toEqual(field);
+    }
+
+    expect(fieldFromKey("relation lt/0", FIXED)).toBe(null);
+    expect(fieldFromKey("constant a/1", FIXED)).toBe(null);
+    expect(fieldFromKey("sort a/0", FIXED)).toBe(null);
+    expect(fieldFromKey("F(_)", FIXED)).toBe(null);
+  });
+
   test("an infix function is evaluated through its two-argument table", () => {
     const sources = ["a + b = succ(c)", "Red(a + b)", "a < b"];
     const read = readModel(modelSignature(sources.map(parseFixed), FIXED), {
       domain: "0,1",
       fields: {
-        a: "0",
-        b: "1",
-        c: "0",
-        "Red(_)": "1",
-        "_+_": "[0,0;0],[0,1;1],[1,0;1],[1,1;0]",
-        "_ < _": "[0,1]",
-        "succ(_)": "[0;1],[1;0]",
+        "constant a/0": "0",
+        "constant b/0": "1",
+        "constant c/0": "0",
+        "relation Red/1": "1",
+        "function plus/2": "[0,0;0],[0,1;1],[1,0;1],[1,1;0]",
+        "relation lt/2": "[0,1]",
+        "function succ/1": "[0;1],[1;0]",
       },
     });
 
@@ -851,7 +915,7 @@ describe("free variables", () => {
     const at = (x: string) =>
       checkModel(signature, openTask(["Red(x)"]), {
         domain: "0,1",
-        fields: { "Red(_)": "1", x },
+        fields: { "relation Red/1": "1", "variable x/0": x },
       }).ok;
 
     expect(at("1")).toBe(true);
@@ -864,7 +928,11 @@ describe("free variables", () => {
     const holdsWith = (blue: string) =>
       checkModel(signature, openTask([source]), {
         domain: "0,1",
-        fields: { "Blue(_)": blue, "Red(_)": "0", x: "0" },
+        fields: {
+          "relation Blue/1": blue,
+          "relation Red/1": "0",
+          "variable x/0": "0",
+        },
       }).ok;
 
     expect(holdsWith("0,1")).toBe(true);
@@ -875,7 +943,10 @@ describe("free variables", () => {
   test("a variable's value is read and bounded like a constant's", () => {
     const signature = modelSignature([parseOpen("Red(x)")], OPEN);
     const problem = (x: string) =>
-      readModel(signature, { domain: "0,1", fields: { "Red(_)": "", x } });
+      readModel(signature, {
+        domain: "0,1",
+        fields: { "relation Red/1": "", "variable x/0": x },
+      });
 
     expect(problem("2")).toEqual({
       ok: false,

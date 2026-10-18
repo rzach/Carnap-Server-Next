@@ -82,9 +82,9 @@ export interface ModelPublicData {
    */
   readonly dialect?: string;
   /**
-   * Author-seeded field values, keyed by field label exactly as the givens
-   * lines write them (`Domain`, `F(_,_)`, `a`). Absent when the author seeded
-   * nothing.
+   * Author-seeded field values, keyed by field key (`domain`, `relation F/2`,
+   * `constant a/0`; see `fieldKey`), whatever spelling the givens lines used.
+   * Absent when the author seeded nothing.
    */
   readonly givens?: Readonly<Record<string, string>>;
   readonly options: ModelOptions;
@@ -122,14 +122,14 @@ export interface ModelPublicData {
 
 /**
  * A submitted model: exactly the text the student put in each field, keyed by
- * field label.
+ * field key, as givens are.
  *
  * Raw strings rather than a parsed model, as Carnap records them
  * (`CounterModelFields = [(String,String)]`), for two reasons: the review page
- * can show what was actually typed, and the field spellings are the same ones an
- * author writes in givens, so there is one representation to reason about. The
- * generated function value table is an editor over the string it produces, not a
- * different format.
+ * can show what was actually typed, and the values are written the way an
+ * author writes them in givens, so there is one representation to reason
+ * about. The generated function value table is an editor over the string it
+ * produces, not a different format.
  */
 export interface ModelAnswerData extends ModelInput {
   /**

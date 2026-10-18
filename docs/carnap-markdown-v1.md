@@ -623,9 +623,11 @@ Use a domain with at least two elements and make the sentence true.
 
 ### Givens and fields
 
-Seed a field with `| Field : value` after the formulas. Field names match
-the interface labels, such as `Domain`, `F(_,_)`, `a`, and `f(_)`.
-Unknown fields, duplicate givens, and invalid values are compile errors.
+Seed a field with `| Field : value` after the formulas. A field is written
+as its symbol with its arguments blanked, such as `Domain`, `F(_,_)`, `a`,
+and `f(_)`, in any spelling the language reads: where `<` is infix, `_<_`
+and `_ < _` both name it. Unknown fields, duplicate givens (in either
+spelling), and invalid values are compile errors.
 
 ```md
 ::::model{id="seeded" options="strictGivens"}
@@ -687,9 +689,9 @@ every model with one, then build the model.
 A playground has no formula list: its sentences are the student's, and a list
 item is a compile error (`playground_lists_formulas`). Givens name the
 symbols the model always interprets instead. A given may name any field the
-language could have, spelled as the interface labels it (`F(_,_)`, `a`,
-`f(_)`), and its field is shown whatever the student writes. A label the
-language cannot read is refused (`unknown_model_given_field`).
+language could have, written as above (`F(_,_)`, `a`, `f(_)`), and its field
+is shown whatever the student writes. A field the language cannot read as
+one symbol over blanks is refused (`unknown_model_given_field`).
 
 With `strictGivens` the givens are a fixed model: the student only writes
 sentences, and a sentence using a symbol the givens do not name is refused.
@@ -1596,8 +1598,9 @@ Binders must be ordinary individual arguments. Constructors that bind
 variables or take sentences as arguments, such as description operators or
 formula-dependent functions, are not interpreted as ordinary model symbols.
 
-Meaning comes from the constructor tree; displayed field labels and stored
-formulas come from canonical notation. A function declared with infix `+`
+Meaning comes from the constructor tree; displayed field labels and display
+formulas come from canonical notation. Stored answers and givens are keyed by
+symbol and arity, never by a label. A function declared with infix `+`
 can appear as `a+b`, with `_+_` as its table label. Without notation, a
 predicate such as `Red` uses its name and brackets, as in `Red(_)`.
 

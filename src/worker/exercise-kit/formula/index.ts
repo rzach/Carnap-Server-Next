@@ -39,6 +39,7 @@ export {
   parseTerm,
   splitFormulaList,
   termToString,
+  unfoldedEngineText,
 } from "./formula";
 export { languageNames } from "./language";
 export type { Structure } from "./semantics";

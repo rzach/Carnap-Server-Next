@@ -21,8 +21,8 @@ import type {
 } from "./logic";
 import {
   checkModel,
-  DOMAIN_FIELD_LABEL,
-  fieldForLabel,
+  DOMAIN_FIELD_KEY,
+  fieldFromKey,
   firstOrderLanguageFor,
   formatFunctionTable,
   modelSignature,
@@ -194,8 +194,8 @@ export function resolveModelFor(
     return { problem: null, resolved: null };
   }
 
-  const vocabulary = Object.keys(publicData.givens ?? {}).flatMap((label) => {
-    const field = fieldForLabel(label, language);
+  const vocabulary = Object.keys(publicData.givens ?? {}).flatMap((key) => {
+    const field = fieldFromKey(key, language);
     return field === null ? [] : [field];
   });
 
@@ -229,8 +229,8 @@ export function resolveModelFor(
   let signature = modelSignature(typed, language, vocabulary);
 
   if (publicData.options.strictGivens) {
-    const known = new Set(own.map((field) => field.label));
-    const outside = signature.find((field) => !known.has(field.label));
+    const known = new Set(own.map((field) => field.key));
+    const outside = signature.find((field) => !known.has(field.key));
 
     if (outside !== undefined) {
       problem ??= { kind: "symbol-outside-model", symbol: outside.label };
@@ -323,28 +323,28 @@ export function effectiveAnswer(
   }
 
   const givens = publicData.givens;
-  const byLabel = new Map(
+  const byKey = new Map(
     (signature ?? resolveModel(publicData)?.signature ?? []).map((field) => [
-      field.label,
+      field.key,
       field,
     ]),
   );
   const fields = { ...answer.fields };
 
-  for (const [label, value] of Object.entries(givens)) {
-    if (label === DOMAIN_FIELD_LABEL) {
+  for (const [key, value] of Object.entries(givens)) {
+    if (key === DOMAIN_FIELD_KEY) {
       continue;
     }
 
-    const field = byLabel.get(label);
+    const field = byKey.get(key);
 
-    fields[label] =
+    fields[key] =
       field?.kind === "function"
-        ? withFunctionGiven(value, fields[label] ?? "", field.arity)
+        ? withFunctionGiven(value, fields[key] ?? "", field.arity)
         : value;
   }
 
-  return { domain: givens[DOMAIN_FIELD_LABEL] ?? answer.domain, fields };
+  return { domain: givens[DOMAIN_FIELD_KEY] ?? answer.domain, fields };
 }
 
 /** An answer graded: the exercise it was graded against, and how it did. */

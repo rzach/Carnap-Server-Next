@@ -94,16 +94,13 @@ The compiled exercise stores the resolved property, not the synonym used.
 `playground` (simple variant only; `playground_variant` otherwise) makes the
 student write the sentences. A list item is refused
 (`playground_lists_formulas`). Givens name the symbols the model always
-interprets: in a playground a given's label is read back against the language
-by `fieldForLabel` (`logic/signature.ts`), which fills each `_` with a name,
-reads the result as a sentence or a term, and accepts the field only when it
-prints back to exactly the label. Without givens the playground is free.
+interprets. Without givens the playground is free.
 `counterexample-to` still selects the target property. With `strictGivens`
 at least one given is required (`playground_strict_without_givens`) and a
 symbol the givens do not name is refused (`symbol-outside-model`).
 
 The public data carries `playground: true`; the vocabulary is not stored
-separately, because it is the givens' labels. `resolveModelFor(publicData,
+separately, because it is the givens' keys, which `fieldFromKey` reads back. `resolveModelFor(publicData,
 sentences)` in `grading.ts` builds the task and signature from those fields
 plus the readable typed sentences, and `judgeAnswer` grades. Grading is
 all-or-nothing with no triviality refusal. The client reshapes its field rows
@@ -121,8 +118,9 @@ discard values.
 
 ### Givens
 
-After the formulas, write `| Field : value` to seed a field. Names match
-interface labels and values use the field syntax described below:
+After the formulas, write `| Field : value` to seed a field. A field is its
+symbol with the arguments blanked, in any spelling the language reads, and
+values use the field syntax described below:
 
 ```md
 ::::model{#seeded}
@@ -132,6 +130,12 @@ interface labels and values use the field syntax described below:
 | a : 1
 ::::
 ```
+
+`fieldForGiven` (`logic/signature.ts`) fills each `_` with a different name,
+reads the result as a sentence or a term, and accepts it only when it is one
+symbol applied to exactly those names, so `_<_` and `_ < _` are the same
+field, and `F(a,_)` or `¬F(_)` are none. The given is stored under the field's
+key, not as written.
 
 Unknown fields, repeated givens, and invalid values are compile errors.
 Normally givens are editable hints. With `strictGivens`, they are locked in
@@ -174,8 +178,8 @@ and supported roles. The main Calgary rules are:
 
 Custom fixed-arity symbols also work. `@syntax role individual` identifies
 the domain sort, and `argument-list` identifies variadic argument lists.
-Fields use constructor identity and arity internally, with labels based on
-canonical notation: `Red(_)` for a named unary predicate, `_+_` for infix +.
+Fields are keyed by kind, constructor and arity (`fieldKey`: `relation Red/1`,
+`function plus/2`), with display labels based on canonical notation: `Red(_)` for a named unary predicate, `_+_` for infix +.
 All sixteen binary truth-function roles are supported, not just the default
 language's connectives. Unsupported semantic constructs are rejected.
 
@@ -238,7 +242,7 @@ exercise's formulas is then a field, and the formulas are evaluated at the
 assignment the fields describe — satisfaction relative to an assignment,
 not universal closure. The field is handled exactly as a constant is: a
 domain-value menu labelled `x`, a given `| x : 1`, locked by
-`strictGivens`, and `x` as its key in the answer. A variable that occurs only
+`strictGivens`, and `variable x/0` as its key in the answer. A variable that occurs only
 bound gets no field, and a quantifier rebinds a variable the assignment
 gave a value.
 
@@ -264,10 +268,12 @@ above.
 
 ## Answer data and grading
 
-`model-answer@1` stores raw field text keyed by label:
+`model-answer@1` stores raw field text keyed by field key, as givens are:
+the field's kind, symbol and arity, so a change to how a language prints or
+reads a symbol cannot orphan stored work. The label is display only.
 
 ```json
-{ "domain": "0,1", "fields": { "F(_)": "0,1", "a": "0" } }
+{ "domain": "0,1", "fields": { "relation F/1": "0,1", "constant a/0": "0" } }
 ```
 
 A playground's answer also carries `"sentences": "<text as typed>"`; no other

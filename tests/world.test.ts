@@ -504,6 +504,24 @@ describe("compiling a world directive", () => {
       ),
     ).toEqual(["world_restriction_both"]);
   });
+
+  test("a restriction is stored resolved to constructors, with its spelling for display", async () => {
+    const data = publicDataOf(
+      await declaration(
+        directive(
+          '#w variant="distinguish" without="= LeftOf"',
+          "| A block : small cube at 1,1\n| B block : small tet at 1,1",
+        ),
+      ),
+    );
+
+    expect(data.restriction).toEqual({
+      without: [
+        { keys: ["eq"], spelling: "=" },
+        { keys: ["LeftOf"], spelling: "LeftOf" },
+      ],
+    });
+  });
 });
 
 describe("grading", () => {

@@ -302,7 +302,7 @@ class CarnapTranslation extends CarnapExerciseElement<TranslationStringId> {
     }
 
     const solutionAt = verbatimSolutionIndex(
-      formula,
+      parsed.engine,
       data.solutions,
       language,
     );

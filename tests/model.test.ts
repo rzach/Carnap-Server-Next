@@ -265,7 +265,7 @@ describe("compiling a model directive", () => {
     );
   });
 
-  test("givens are stored by field label", async () => {
+  test("givens are stored by field key", async () => {
     const data = publicDataOf(
       await declaration(
         directive(
@@ -276,9 +276,9 @@ describe("compiling a model directive", () => {
     );
 
     expect(data.givens).toEqual({
-      Domain: "0,1,2",
-      "F(_)": "1,2",
-      a: "1",
+      domain: "0,1,2",
+      "relation F/1": "1,2",
+      "constant a/0": "1",
     });
   });
 
@@ -296,9 +296,9 @@ describe("compiling a model directive", () => {
     );
 
     expect(data.givens).toEqual({
-      Domain: "0,1,2",
-      "F(_)": "1,2",
-      a: "1",
+      domain: "0,1,2",
+      "relation F/1": "1,2",
+      "constant a/0": "1",
     });
   });
 
@@ -439,7 +439,7 @@ describe("grading a submitted model", () => {
     expect(
       await score(directive('#s1 points="4"', "- AxF(x), ExG(x)"), {
         domain: "0,1",
-        fields: { "F(_)": "0,1", "G(_)": "1" },
+        fields: { "relation F/1": "0,1", "relation G/1": "1" },
       }),
     ).toEqual({ score: 4, status: "correct" });
   });
@@ -448,7 +448,7 @@ describe("grading a submitted model", () => {
     expect(
       await score(directive('#s2 points="4"', "- AxF(x)"), {
         domain: "0,1",
-        fields: { "F(_)": "0" },
+        fields: { "relation F/1": "0" },
       }),
     ).toEqual({ score: 0, status: "incorrect" });
   });
@@ -471,14 +471,14 @@ describe("grading a submitted model", () => {
     expect(
       await score(source, {
         domain: "0,1",
-        fields: { "R(_,_)": "[0,1],[1,0]" },
+        fields: { "relation R/2": "[0,1],[1,0]" },
       }),
     ).toEqual({ score: 2, status: "correct" });
     // The full relation makes the conclusion true, so it is no counterexample.
     expect(
       await score(source, {
         domain: "0,1",
-        fields: { "R(_,_)": "[0,0],[0,1],[1,0],[1,1]" },
+        fields: { "relation R/2": "[0,0],[0,1],[1,0],[1,1]" },
       }),
     ).toEqual({ score: 0, status: "incorrect" });
   });
@@ -490,12 +490,15 @@ describe("grading a submitted model", () => {
     );
 
     expect(
-      await score(source, { domain: "0", fields: { "F(_,_)": "[0,0]" } }),
+      await score(source, {
+        domain: "0",
+        fields: { "relation F/2": "[0,0]" },
+      }),
     ).toEqual({ score: 0, status: "incorrect" });
     expect(
       await score(source, {
         domain: "0,1",
-        fields: { "F(_,_)": "[0,0],[0,1],[1,0],[1,1]" },
+        fields: { "relation F/2": "[0,0],[0,1],[1,0],[1,1]" },
       }),
     ).toEqual({ score: 1, status: "correct" });
   });
@@ -505,7 +508,7 @@ describe("normalizing an answer", () => {
   test("accepts a well-shaped model", async () => {
     const item = await declaration(directive("#n1", "- AxF(x)"));
     const result = handler.normalizeAnswer(
-      envelope({ domain: "0", fields: { "F(_)": "0" } }) as never,
+      envelope({ domain: "0", fields: { "relation F/1": "0" } }) as never,
       item,
     );
 
@@ -532,7 +535,7 @@ describe("normalizing an answer", () => {
     const result = handler.normalizeAnswer(
       envelope({
         domain: "0",
-        fields: { "F(_)": "0", "Z(_)": "0,1,2,3" },
+        fields: { "relation F/1": "0", "relation Z/1": "0,1,2,3" },
       }) as never,
       item,
     );
@@ -542,7 +545,7 @@ describe("normalizing an answer", () => {
     if (result.ok) {
       const data = result.answer.data as unknown as ModelAnswerData;
 
-      expect(Object.keys(data.fields)).toEqual(["F(_)"]);
+      expect(Object.keys(data.fields)).toEqual(["relation F/1"]);
     }
   });
 });
@@ -558,10 +561,10 @@ describe("strict givens", () => {
 
     // Submitting a one-element domain would make `AxF(x)` true for free.
     expect(
-      await score(source, { domain: "0", fields: { "F(_)": "0" } }),
+      await score(source, { domain: "0", fields: { "relation F/1": "0" } }),
     ).toEqual({ score: 0, status: "incorrect" });
     expect(
-      await score(source, { domain: "0", fields: { "F(_)": "0,1" } }),
+      await score(source, { domain: "0", fields: { "relation F/1": "0,1" } }),
     ).toEqual({ score: 1, status: "correct" });
   });
 
@@ -569,7 +572,7 @@ describe("strict givens", () => {
     const source = directive("#l2", "- AxF(x)\n| Domain : 0,1");
 
     expect(
-      await score(source, { domain: "0", fields: { "F(_)": "0" } }),
+      await score(source, { domain: "0", fields: { "relation F/1": "0" } }),
     ).toEqual({ score: 1, status: "correct" });
   });
 
@@ -585,7 +588,7 @@ describe("strict givens", () => {
     expect(
       await score(source, {
         domain: "0,1",
-        fields: { "f(_)": "[0;1],[1;0]" },
+        fields: { "function f/1": "[0;1],[1;0]" },
       }),
     ).toEqual({ score: 1, status: "correct" });
     // The student's own value for the row the given left open still counts,
@@ -593,7 +596,7 @@ describe("strict givens", () => {
     expect(
       await score(source, {
         domain: "0,1",
-        fields: { "f(_)": "[0;1],[1;1]" },
+        fields: { "function f/1": "[0;1],[1;1]" },
       }),
     ).toEqual({ score: 0, status: "incorrect" });
     // And the row the given did name is put back whatever arrived: the
@@ -601,7 +604,7 @@ describe("strict givens", () => {
     expect(
       await score(source, {
         domain: "0,1",
-        fields: { "f(_)": "[0;0],[1;1]" },
+        fields: { "function f/1": "[0;0],[1;1]" },
       }),
     ).toEqual({ score: 0, status: "incorrect" });
   });
@@ -617,11 +620,11 @@ describe("strict givens", () => {
     );
     const answer: ModelAnswerData = {
       domain: "0,1",
-      fields: { "F(_)": "0,1" },
+      fields: { "relation F/1": "0,1" },
     };
 
-    expect(effectiveAnswer(locked, answer).fields["F(_)"]).toBe("0");
-    expect(effectiveAnswer(loose, answer).fields["F(_)"]).toBe("0,1");
+    expect(effectiveAnswer(locked, answer).fields["relation F/1"]).toBe("0");
+    expect(effectiveAnswer(loose, answer).fields["relation F/1"]).toBe("0,1");
   });
 });
 
@@ -635,9 +638,9 @@ describe("the rendered element", () => {
     expect(html).toContain("<carnap-model");
     expect(html).toContain('<template shadowrootmode="open">');
     expect(html).toContain('aria-busy="true"');
-    expect(html).toContain('data-field="Domain"');
-    expect(html).toContain('data-field="F(_)"');
-    expect(html).toContain('data-field="a"');
+    expect(html).toContain('data-field="domain"');
+    expect(html).toContain('data-field="relation F/1"');
+    expect(html).toContain('data-field="constant a/0"');
     // Shown in logical symbols, not the ascii it is stored as.
     expect(html).toContain("∀xF(x), G(a)");
   });
@@ -764,7 +767,7 @@ describe("reviewing a submitted model", () => {
   test("the summary is the same sentence the widget's Check shows", async () => {
     const item = await declaration(directive("#w1", "- AxF(x)"));
     const answer = {
-      data: { domain: "0,1", fields: { "F(_)": "0" } },
+      data: { domain: "0,1", fields: { "relation F/1": "0" } },
       kind: MODEL_ANSWER_KIND,
       schemaVersion: MODEL_SCHEMA_VERSION,
     };
@@ -784,7 +787,7 @@ describe("reviewing a submitted model", () => {
     const item = await declaration(directive("#w2", "- AxF(x)"));
     const review = handler.reviewAnswer(
       {
-        data: { domain: "0,1", fields: { "F(_)": "0,1" } },
+        data: { domain: "0,1", fields: { "relation F/1": "0,1" } },
         kind: MODEL_ANSWER_KIND,
         schemaVersion: MODEL_SCHEMA_VERSION,
       } as never,
@@ -804,7 +807,7 @@ describe("reviewing a submitted model", () => {
     const html = renderModelReview(
       data,
       {
-        answer: { domain: "0, 1", fields: { "F(_)": "[0],[1]" } },
+        answer: { domain: "0, 1", fields: { "relation F/1": "[0],[1]" } },
         exerciseId: "w3",
         verdict: {
           ok: true,
@@ -831,7 +834,7 @@ describe("reviewing a submitted model", () => {
     const review = handler.reviewAnswer(
       {
         // The premise is false and the conclusion true: both halves wrong.
-        data: { domain: "0,1", fields: { "F(_)": "0" } },
+        data: { domain: "0,1", fields: { "relation F/1": "0" } },
         kind: MODEL_ANSWER_KIND,
         schemaVersion: MODEL_SCHEMA_VERSION,
       } as never,
@@ -875,7 +878,10 @@ ${FIXED_ARITY_SPEC_SOURCE.replace("--| @syntax lint closed-sentences\n", "")}:::
       ),
     );
 
-    expect(data.givens).toEqual({ Domain: "0,1", x: "1" });
+    expect(data.givens).toEqual({
+      domain: "0,1",
+      "variable x/0": "1",
+    });
   });
 
   test("only a free variable can be given", async () => {
@@ -893,13 +899,13 @@ ${FIXED_ARITY_SPEC_SOURCE.replace("--| @syntax lint closed-sentences\n", "")}:::
     expect(
       await score(source, {
         domain: "0,1",
-        fields: { "Red(_)": "1", x: "1" },
+        fields: { "relation Red/1": "1", "variable x/0": "1" },
       }),
     ).toEqual({ score: 1, status: "correct" });
     expect(
       await score(source, {
         domain: "0,1",
-        fields: { "Red(_)": "1", x: "0" },
+        fields: { "relation Red/1": "1", "variable x/0": "0" },
       }),
     ).toEqual({ score: 0, status: "incorrect" });
   });
@@ -914,13 +920,13 @@ ${FIXED_ARITY_SPEC_SOURCE.replace("--| @syntax lint closed-sentences\n", "")}:::
     expect(
       await score(source, {
         domain: "0,1",
-        fields: { "Red(_)": "1", x: "1" },
+        fields: { "relation Red/1": "1", "variable x/0": "1" },
       }),
     ).toEqual({ score: 0, status: "incorrect" });
     expect(
       await score(source, {
         domain: "0,1",
-        fields: { "Red(_)": "0", x: "0" },
+        fields: { "relation Red/1": "0", "variable x/0": "0" },
       }),
     ).toEqual({ score: 1, status: "correct" });
   });
@@ -933,7 +939,7 @@ ${FIXED_ARITY_SPEC_SOURCE.replace("--| @syntax lint closed-sentences\n", "")}:::
       i18nFor("en"),
     );
 
-    expect(html).toContain('data-field="x" data-kind="variable"');
+    expect(html).toContain('data-field="variable x/0" data-kind="variable"');
     expect(html).toContain("x: which element it is assigned");
   });
 });
@@ -996,14 +1002,27 @@ describe("a playground", () => {
     ).toEqual([]);
   });
 
-  test("a given the language cannot read, or spells differently, is refused", async () => {
-    for (const label of ["Q(", "F( _ )", "_", "Fred"]) {
+  test("a given the language cannot read as one symbol over blanks is refused", async () => {
+    for (const label of ["Q(", "_", "Fred", "F(a,_)", "~F(_)", "F(f(_))"]) {
       expect(
         await compileCodes(
           directive("#p6b playground", `Go.\n| ${label} : 0`),
         ),
       ).toEqual(["unknown_model_given_field"]);
     }
+  });
+
+  test("a given names its field in any spelling the language reads", async () => {
+    const data = publicDataOf(
+      await declaration(directive("#p6c playground", "Go.\n| F( _ ) : 0")),
+    );
+
+    expect(data.givens).toEqual({ "relation F/1": "0" });
+    expect(
+      await compileCodes(
+        directive("#p6d playground", "Go.\n| F(_) : 0\n| F( _ ) : 1"),
+      ),
+    ).toEqual(["duplicate_model_given"]);
   });
 
   test("the givens and the sentences decide the fields", async () => {
@@ -1032,14 +1051,14 @@ describe("a playground", () => {
     expect(
       await score(source, {
         domain: "0,1",
-        fields: { "G(_)": "0", "F(_)": "0,1" },
+        fields: { "relation G/1": "0", "relation F/1": "0,1" },
         sentences: "ExG(x), AxF(x)",
       }),
     ).toEqual({ score: 1, status: "correct" });
     expect(
       await score(source, {
         domain: "0,1",
-        fields: { "G(_)": "", "F(_)": "0,1" },
+        fields: { "relation G/1": "", "relation F/1": "0,1" },
         sentences: "ExG(x), AxF(x)",
       }),
     ).toEqual({ score: 0, status: "incorrect" });
@@ -1054,7 +1073,7 @@ describe("a playground", () => {
     expect(
       await score(source, {
         domain: "0,1",
-        fields: { "F(_)": "0" },
+        fields: { "relation F/1": "0" },
         sentences: "AxF(x)",
       }),
     ).toEqual({ score: 1, status: "correct" });
@@ -1079,7 +1098,7 @@ describe("a playground", () => {
     const ordinary = await declaration(directive("#p12", "- AxF(x)"));
     const answer = {
       domain: "0",
-      fields: { "F(_)": "0" },
+      fields: { "relation F/1": "0" },
       sentences: "AxF(x)",
     };
     const stored = (item: ExerciseManifestItem) => {
@@ -1134,7 +1153,7 @@ describe("a playground", () => {
     expect(
       await score(directive('#p0 playground points="0"', "Make it so."), {
         domain: "0",
-        fields: { "F(_)": "0" },
+        fields: { "relation F/1": "0" },
         sentences: "AxF(x)",
       }),
     ).toEqual({ score: 0, status: "correct" });
@@ -1155,7 +1174,7 @@ describe("a playground", () => {
     const data = publicDataOf(item);
     const answer: ModelAnswerData = {
       domain: "0,1",
-      fields: { "F(_)": "0" },
+      fields: { "relation F/1": "0" },
       sentences: "AxF(x)",
     };
     const judged = judgeAnswer(data, answer);

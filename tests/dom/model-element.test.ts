@@ -40,13 +40,13 @@ function modelExercise(body: string, attrs = "#m1") {
   return compileExercise(`::::model{${attrs}}\n${body}\n::::`);
 }
 
-function rowFor(root: ShadowRoot, label: string): HTMLElement {
+function rowFor(root: ShadowRoot, key: string): HTMLElement {
   const row = root.querySelector<HTMLElement>(
-    `.model-row[data-field="${label}"]`,
+    `.model-row[data-field="${key}"]`,
   );
 
   if (row === null) {
-    throw new Error(`No row for field ${label}.`);
+    throw new Error(`No row for field ${key}.`);
   }
 
   return row;
@@ -54,14 +54,14 @@ function rowFor(root: ShadowRoot, label: string): HTMLElement {
 
 function valueControl(
   root: ShadowRoot,
-  label: string,
+  key: string,
 ): HTMLInputElement | HTMLSelectElement {
-  const control = rowFor(root, label).querySelector<
+  const control = rowFor(root, key).querySelector<
     HTMLInputElement | HTMLSelectElement
   >('[data-role="value"]');
 
   if (control === null) {
-    throw new Error(`No control for field ${label}.`);
+    throw new Error(`No control for field ${key}.`);
   }
 
   return control;
@@ -102,8 +102,8 @@ describe("upgrading", () => {
     expect(
       mounted.root.querySelector("fieldset")?.hasAttribute("aria-busy"),
     ).toBe(false);
-    expect(valueControl(mounted.root, "Domain").disabled).toBe(false);
-    expect(valueControl(mounted.root, "F(_)").disabled).toBe(false);
+    expect(valueControl(mounted.root, "domain").disabled).toBe(false);
+    expect(valueControl(mounted.root, "relation F/1").disabled).toBe(false);
   });
 
   test("the answer is mirrored into the form on connect", async () => {
@@ -113,7 +113,7 @@ describe("upgrading", () => {
     // model in it — a one-element domain and an empty extension.
     expect(answerOf(mounted)).toEqual({
       domain: "0",
-      fields: { "F(_)": "" },
+      fields: { "relation F/1": "" },
     });
   });
 
@@ -125,8 +125,8 @@ describe("upgrading", () => {
       ),
     );
 
-    expect(valueControl(mounted.root, "Domain").disabled).toBe(true);
-    expect(valueControl(mounted.root, "F(_)").disabled).toBe(false);
+    expect(valueControl(mounted.root, "domain").disabled).toBe(true);
+    expect(valueControl(mounted.root, "relation F/1").disabled).toBe(false);
   });
 });
 
@@ -135,12 +135,12 @@ describe("the domain drives the other fields", () => {
     const mounted = mountExercise(await modelExercise("- F(a)"));
     const constant = valueControl(
       mounted.root,
-      "a",
+      "constant a/0",
     ) as unknown as HTMLSelectElement;
 
     expect(constant.options.length).toBe(1);
 
-    type(valueControl(mounted.root, "Domain"), "0,1,2");
+    type(valueControl(mounted.root, "domain"), "0,1,2");
 
     expect(Array.from(constant.options).map((o) => o.value)).toEqual([
       "0",
@@ -152,32 +152,40 @@ describe("the domain drives the other fields", () => {
   test("a chosen constant survives a widening of the domain", async () => {
     const mounted = mountExercise(await modelExercise("- F(a)"));
 
-    type(valueControl(mounted.root, "Domain"), "0,1,2");
-    choose(valueControl(mounted.root, "a") as HTMLSelectElement, "2");
-    type(valueControl(mounted.root, "Domain"), "0,1,2,3");
+    type(valueControl(mounted.root, "domain"), "0,1,2");
+    choose(
+      valueControl(mounted.root, "constant a/0") as HTMLSelectElement,
+      "2",
+    );
+    type(valueControl(mounted.root, "domain"), "0,1,2,3");
 
-    expect(answerOf(mounted).fields.a).toBe("2");
+    expect(answerOf(mounted).fields["constant a/0"]).toBe("2");
   });
 
   test("a constant outside a narrowed domain falls back inside it", async () => {
     const mounted = mountExercise(await modelExercise("- F(a)"));
 
-    type(valueControl(mounted.root, "Domain"), "0,1,2");
-    choose(valueControl(mounted.root, "a") as HTMLSelectElement, "2");
-    type(valueControl(mounted.root, "Domain"), "0,1");
+    type(valueControl(mounted.root, "domain"), "0,1,2");
+    choose(
+      valueControl(mounted.root, "constant a/0") as HTMLSelectElement,
+      "2",
+    );
+    type(valueControl(mounted.root, "domain"), "0,1");
 
     // Never a value the model could not interpret.
-    expect(answerOf(mounted).fields.a).toBe("0");
+    expect(answerOf(mounted).fields["constant a/0"]).toBe("0");
   });
 
   test("a function gets one control per argument tuple", async () => {
     const mounted = mountExercise(await modelExercise("- Axf(x) = x"));
     const table = () =>
-      rowFor(mounted.root, "f(_)").querySelectorAll("select[data-argument]");
+      rowFor(mounted.root, "function f/1").querySelectorAll(
+        "select[data-argument]",
+      );
 
     expect(table().length).toBe(1);
 
-    type(valueControl(mounted.root, "Domain"), "0,1,2");
+    type(valueControl(mounted.root, "domain"), "0,1,2");
 
     expect(table().length).toBe(3);
     expect(
@@ -192,12 +200,13 @@ describe("the domain drives the other fields", () => {
       await modelExercise("- AxAyf(x,y) = f(y,x)"),
     );
 
-    type(valueControl(mounted.root, "Domain"), "0,1");
+    type(valueControl(mounted.root, "domain"), "0,1");
 
     const args = Array.from(
-      rowFor(mounted.root, "f(_,_)").querySelectorAll<HTMLSelectElement>(
-        "select[data-argument]",
-      ),
+      rowFor(
+        mounted.root,
+        "function f/2",
+      ).querySelectorAll<HTMLSelectElement>("select[data-argument]"),
     ).map((select) => select.dataset.argument);
 
     expect(args).toEqual(["0,0", "0,1", "1,0", "1,1"]);
@@ -208,9 +217,9 @@ describe("the domain drives the other fields", () => {
       await modelExercise("- AxAyf(x,y) = f(y,x)"),
     );
 
-    type(valueControl(mounted.root, "Domain"), "0,1");
+    type(valueControl(mounted.root, "domain"), "0,1");
 
-    const table = rowFor(mounted.root, "f(_,_)").querySelector("table");
+    const table = rowFor(mounted.root, "function f/2").querySelector("table");
 
     expect(
       Array.from(
@@ -241,9 +250,9 @@ describe("the domain drives the other fields", () => {
   test("a rebuilt unary table has no header column either", async () => {
     const mounted = mountExercise(await modelExercise("- Axf(x) = x"));
 
-    type(valueControl(mounted.root, "Domain"), "0,1,2");
+    type(valueControl(mounted.root, "domain"), "0,1,2");
 
-    const table = rowFor(mounted.root, "f(_)").querySelector("table");
+    const table = rowFor(mounted.root, "function f/1").querySelector("table");
 
     expect(
       Array.from(
@@ -259,12 +268,13 @@ describe("the domain drives the other fields", () => {
   test("a function serializes to the spelling Carnap stores", async () => {
     const mounted = mountExercise(await modelExercise("- Axf(x) = x"));
 
-    type(valueControl(mounted.root, "Domain"), "0,1");
+    type(valueControl(mounted.root, "domain"), "0,1");
 
     const selects = Array.from(
-      rowFor(mounted.root, "f(_)").querySelectorAll<HTMLSelectElement>(
-        "select[data-argument]",
-      ),
+      rowFor(
+        mounted.root,
+        "function f/1",
+      ).querySelectorAll<HTMLSelectElement>("select[data-argument]"),
     );
 
     choose(selects[0] as HTMLSelectElement, "1");
@@ -272,23 +282,23 @@ describe("the domain drives the other fields", () => {
 
     // The value table is an editor over this string, not a different format —
     // which is what lets an author write the same thing in a given.
-    expect(answerOf(mounted).fields["f(_)"]).toBe("[0;1],[1;0]");
+    expect(answerOf(mounted).fields["function f/1"]).toBe("[0;1],[1;0]");
   });
 
   test("choices already made survive a function's rebuild", async () => {
     const mounted = mountExercise(await modelExercise("- Axf(x) = x"));
 
-    type(valueControl(mounted.root, "Domain"), "0,1");
+    type(valueControl(mounted.root, "domain"), "0,1");
 
     const first = rowFor(
       mounted.root,
-      "f(_)",
+      "function f/1",
     ).querySelector<HTMLSelectElement>('select[data-argument="0"]');
 
     choose(first as HTMLSelectElement, "1");
-    type(valueControl(mounted.root, "Domain"), "0,1,2");
+    type(valueControl(mounted.root, "domain"), "0,1,2");
 
-    expect(answerOf(mounted).fields["f(_)"]).toContain("[0;1]");
+    expect(answerOf(mounted).fields["function f/1"]).toContain("[0;1]");
   });
 
   test("a seeded function row is what the answer carries, and survives a rebuild", async () => {
@@ -298,11 +308,13 @@ describe("the domain drives the other fields", () => {
 
     // The given is the model the exercise starts from: an untouched widget
     // records it, rather than a table of first elements.
-    expect(answerOf(mounted).fields["f(_)"]).toBe("[0;1],[1;0]");
+    expect(answerOf(mounted).fields["function f/1"]).toBe("[0;1],[1;0]");
 
-    type(valueControl(mounted.root, "Domain"), "0,1,2");
+    type(valueControl(mounted.root, "domain"), "0,1,2");
 
-    expect(answerOf(mounted).fields["f(_)"]).toBe("[0;1],[1;0],[2;0]");
+    expect(answerOf(mounted).fields["function f/1"]).toBe(
+      "[0;1],[1;0],[2;0]",
+    );
   });
 
   test("strictGivens locks the rows a function's given names, and no others", async () => {
@@ -314,16 +326,17 @@ describe("the domain drives the other fields", () => {
     );
     const cells = () =>
       Array.from(
-        rowFor(mounted.root, "f(_)").querySelectorAll<HTMLSelectElement>(
-          "select[data-argument]",
-        ),
+        rowFor(
+          mounted.root,
+          "function f/1",
+        ).querySelectorAll<HTMLSelectElement>("select[data-argument]"),
       );
 
     expect(cells().map((select) => select.disabled)).toEqual([true, false]);
 
     // The lock has to survive the rebuild the domain drives, or widening the
     // domain would hand the student the row the exercise fixed.
-    type(valueControl(mounted.root, "Domain"), "0,1,2");
+    type(valueControl(mounted.root, "domain"), "0,1,2");
 
     expect(cells().map((select) => select.disabled)).toEqual([
       true,
@@ -336,13 +349,17 @@ describe("the domain drives the other fields", () => {
   test("an unreadable domain leaves the dependent controls alone", async () => {
     const mounted = mountExercise(await modelExercise("- F(a)"));
 
-    type(valueControl(mounted.root, "Domain"), "0,1,2");
-    type(valueControl(mounted.root, "Domain"), "0,x");
+    type(valueControl(mounted.root, "domain"), "0,1,2");
+    type(valueControl(mounted.root, "domain"), "0,x");
 
     // Rebuilding against a domain that does not parse would empty the select.
     expect(
-      (valueControl(mounted.root, "a") as unknown as HTMLSelectElement)
-        .options.length,
+      (
+        valueControl(
+          mounted.root,
+          "constant a/0",
+        ) as unknown as HTMLSelectElement
+      ).options.length,
     ).toBe(3);
   });
 });
@@ -351,13 +368,13 @@ describe("warnings", () => {
   test("a field that will not read is marked, and unmarked when fixed", async () => {
     const mounted = mountExercise(await modelExercise("- AxF(x)"));
     const warning = () =>
-      rowFor(mounted.root, "F(_)").querySelector<HTMLElement>(
+      rowFor(mounted.root, "relation F/1").querySelector<HTMLElement>(
         '[data-role="warning"]',
       );
 
     expect(warning()?.textContent).toBe("");
 
-    type(valueControl(mounted.root, "F(_)"), "[0,1]");
+    type(valueControl(mounted.root, "relation F/1"), "[0,1]");
 
     // A 2-tuple in a one-place extension.
     expect(warning()?.textContent).toBe("⚠");
@@ -365,7 +382,7 @@ describe("warnings", () => {
       "This value cannot be read.",
     );
 
-    type(valueControl(mounted.root, "F(_)"), "0");
+    type(valueControl(mounted.root, "relation F/1"), "0");
 
     expect(warning()?.textContent).toBe("");
     expect(warning()?.hasAttribute("title")).toBe(false);
@@ -376,7 +393,7 @@ describe("warnings", () => {
 
     // The empty relation is a perfectly good interpretation.
     expect(
-      rowFor(mounted.root, "F(_)").querySelector<HTMLElement>(
+      rowFor(mounted.root, "relation F/1").querySelector<HTMLElement>(
         '[data-role="warning"]',
       )?.textContent,
     ).toBe("");
@@ -387,9 +404,9 @@ describe("the local Check", () => {
   test("agrees with the server on a model that works", async () => {
     const mounted = mountExercise(await modelExercise("- AxF(x), ExG(x)"));
 
-    type(valueControl(mounted.root, "Domain"), "0,1");
-    type(valueControl(mounted.root, "F(_)"), "0,1");
-    type(valueControl(mounted.root, "G(_)"), "1");
+    type(valueControl(mounted.root, "domain"), "0,1");
+    type(valueControl(mounted.root, "relation F/1"), "0,1");
+    type(valueControl(mounted.root, "relation G/1"), "1");
     clickCheck(mounted);
 
     expect(statusText(mounted)).toBe(
@@ -401,8 +418,8 @@ describe("the local Check", () => {
   test("names the formulas that came out wrong", async () => {
     const mounted = mountExercise(await modelExercise("- AxF(x)"));
 
-    type(valueControl(mounted.root, "Domain"), "0,1");
-    type(valueControl(mounted.root, "F(_)"), "0");
+    type(valueControl(mounted.root, "domain"), "0,1");
+    type(valueControl(mounted.root, "relation F/1"), "0");
     clickCheck(mounted);
 
     expect(statusText(mounted)).toBe(
@@ -413,7 +430,7 @@ describe("the local Check", () => {
   test("reports an unreadable model rather than judging it", async () => {
     const mounted = mountExercise(await modelExercise("- AxF(x)"));
 
-    type(valueControl(mounted.root, "Domain"), "");
+    type(valueControl(mounted.root, "domain"), "");
     clickCheck(mounted);
 
     expect(statusText(mounted)).toBe("The domain cannot be empty.");
@@ -425,7 +442,7 @@ describe("the local Check", () => {
     clickCheck(mounted);
     expect(statusText(mounted)).not.toBe("");
 
-    type(valueControl(mounted.root, "F(_)"), "0");
+    type(valueControl(mounted.root, "relation F/1"), "0");
 
     expect(statusText(mounted)).toBe("");
   });
@@ -439,7 +456,7 @@ describe("the local Check", () => {
   });
 
   test('feedback="none" takes the button and refuses the mark', async () => {
-    const answer = { domain: "0", fields: { "F(_)": "0" } };
+    const answer = { domain: "0", fields: { "relation F/1": "0" } };
     // A correct model, so the mark would go green if anything let it.
     const withFeedback = mountExercise(await modelExercise("- AxF(x)"), {
       priorAnswer: answer,
@@ -556,15 +573,15 @@ describe("restoring a prior answer", () => {
     const mounted = mountExercise(await modelExercise("- AxF(x)"), {
       priorAnswer: {
         domain: "0,1,2",
-        fields: { "F(_)": "0,1,2" },
+        fields: { "relation F/1": "0,1,2" },
       },
     });
 
-    expect(valueControl(mounted.root, "Domain").value).toBe("0,1,2");
-    expect(valueControl(mounted.root, "F(_)").value).toBe("0,1,2");
+    expect(valueControl(mounted.root, "domain").value).toBe("0,1,2");
+    expect(valueControl(mounted.root, "relation F/1").value).toBe("0,1,2");
     expect(answerOf(mounted)).toEqual({
       domain: "0,1,2",
-      fields: { "F(_)": "0,1,2" },
+      fields: { "relation F/1": "0,1,2" },
     });
   });
 
@@ -572,24 +589,24 @@ describe("restoring a prior answer", () => {
     const mounted = mountExercise(await modelExercise("- Axf(x) = x"), {
       priorAnswer: {
         domain: "0,1",
-        fields: { "f(_)": "[0;1],[1;0]" },
+        fields: { "function f/1": "[0;1],[1;0]" },
       },
     });
 
     // The table has to be rebuilt for the restored domain first, or there is
     // nowhere to put the second row's value.
-    expect(answerOf(mounted).fields["f(_)"]).toBe("[0;1],[1;0]");
+    expect(answerOf(mounted).fields["function f/1"]).toBe("[0;1],[1;0]");
   });
 
   test("a constant's choice comes back", async () => {
     const mounted = mountExercise(await modelExercise("- F(a)"), {
       priorAnswer: {
         domain: "0,1,2",
-        fields: { a: "2", "F(_)": "" },
+        fields: { "constant a/0": "2", "relation F/1": "" },
       },
     });
 
-    expect(answerOf(mounted).fields.a).toBe("2");
+    expect(answerOf(mounted).fields["constant a/0"]).toBe("2");
   });
 });
 
@@ -610,10 +627,10 @@ describe("a free variable", () => {
     const mounted = mountExercise(await openExercise("- Red(x)"));
     const variable = valueControl(
       mounted.root,
-      "x",
+      "variable x/0",
     ) as unknown as HTMLSelectElement;
 
-    type(valueControl(mounted.root, "Domain"), "0,1,2");
+    type(valueControl(mounted.root, "domain"), "0,1,2");
     choose(variable, "2");
 
     expect(Array.from(variable.options).map((o) => o.value)).toEqual([
@@ -621,20 +638,26 @@ describe("a free variable", () => {
       "1",
       "2",
     ]);
-    expect(answerOf(mounted).fields.x).toBe("2");
+    expect(answerOf(mounted).fields["variable x/0"]).toBe("2");
   });
 
   test("the local Check evaluates at the chosen value", async () => {
     const mounted = mountExercise(await openExercise("- Red(x)"));
 
-    type(valueControl(mounted.root, "Domain"), "0,1");
-    type(valueControl(mounted.root, "Red(_)"), "1");
-    choose(valueControl(mounted.root, "x") as HTMLSelectElement, "0");
+    type(valueControl(mounted.root, "domain"), "0,1");
+    type(valueControl(mounted.root, "relation Red/1"), "1");
+    choose(
+      valueControl(mounted.root, "variable x/0") as HTMLSelectElement,
+      "0",
+    );
     clickCheck(mounted);
 
     expect(checkStatus(mounted)?.dataset.state).not.toBe("correct");
 
-    choose(valueControl(mounted.root, "x") as HTMLSelectElement, "1");
+    choose(
+      valueControl(mounted.root, "variable x/0") as HTMLSelectElement,
+      "1",
+    );
     clickCheck(mounted);
 
     expect(checkStatus(mounted)?.dataset.state).toBe("correct");
@@ -655,7 +678,7 @@ describe("a playground", () => {
   };
   const previewText = (mounted: Mounted) =>
     mounted.root.querySelector<HTMLElement>('[data-role="preview"]');
-  const labels = (mounted: Mounted) =>
+  const keys = (mounted: Mounted) =>
     Array.from(mounted.root.querySelectorAll<HTMLElement>(".model-row")).map(
       (row) => row.dataset.field,
     );
@@ -678,17 +701,22 @@ describe("a playground", () => {
       await modelExercise("Make it so.", "#pg playground"),
     );
 
-    expect(labels(mounted)).toEqual(["Domain"]);
+    expect(keys(mounted)).toEqual(["domain"]);
 
     type(sentencesBox(mounted), "ExG(x), H(a)");
 
-    expect(labels(mounted)).toEqual(["Domain", "G(_)", "H(_)", "a"]);
+    expect(keys(mounted)).toEqual([
+      "domain",
+      "relation G/1",
+      "relation H/1",
+      "constant a/0",
+    ]);
     expect(answerOf(mounted).sentences).toBe("ExG(x), H(a)");
-    expect(valueControl(mounted.root, "G(_)").disabled).toBe(false);
+    expect(valueControl(mounted.root, "relation G/1").disabled).toBe(false);
 
     type(sentencesBox(mounted), "ExG(x)");
 
-    expect(labels(mounted)).toEqual(["Domain", "G(_)"]);
+    expect(keys(mounted)).toEqual(["domain", "relation G/1"]);
   });
 
   test("a given's field is there before any sentence, and stays", async () => {
@@ -696,13 +724,13 @@ describe("a playground", () => {
       await modelExercise("Go.\n| F(_) : 1", "#pg playground"),
     );
 
-    expect(labels(mounted)).toEqual(["Domain", "F(_)"]);
-    expect(valueControl(mounted.root, "F(_)").value).toBe("1");
+    expect(keys(mounted)).toEqual(["domain", "relation F/1"]);
+    expect(valueControl(mounted.root, "relation F/1").value).toBe("1");
 
     type(sentencesBox(mounted), "ExG(x)");
     type(sentencesBox(mounted), "");
 
-    expect(labels(mounted)).toEqual(["Domain", "F(_)"]);
+    expect(keys(mounted)).toEqual(["domain", "relation F/1"]);
   });
 
   test("a new field's values survive another edit of the sentences", async () => {
@@ -711,11 +739,11 @@ describe("a playground", () => {
     );
 
     type(sentencesBox(mounted), "ExG(x)");
-    type(valueControl(mounted.root, "Domain"), "0,1");
-    type(valueControl(mounted.root, "G(_)"), "1");
+    type(valueControl(mounted.root, "domain"), "0,1");
+    type(valueControl(mounted.root, "relation G/1"), "1");
     type(sentencesBox(mounted), "ExG(x), H(a)");
 
-    expect(answerOf(mounted).fields["G(_)"]).toBe("1");
+    expect(answerOf(mounted).fields["relation G/1"]).toBe("1");
   });
 
   test("the preview reads the sentences back, and complains when it cannot", async () => {
@@ -743,11 +771,11 @@ describe("a playground", () => {
     );
 
     type(sentencesBox(mounted), "ExG(x)");
-    type(valueControl(mounted.root, "G(_)"), "0");
+    type(valueControl(mounted.root, "relation G/1"), "0");
     type(sentencesBox(mounted), "ExG(x");
 
-    expect(labels(mounted)).toEqual(["Domain", "G(_)"]);
-    expect(valueControl(mounted.root, "G(_)").value).toBe("0");
+    expect(keys(mounted)).toEqual(["domain", "relation G/1"]);
+    expect(valueControl(mounted.root, "relation G/1").value).toBe("0");
   });
 
   test("Check judges the model against what was typed", async () => {
@@ -760,7 +788,7 @@ describe("a playground", () => {
 
     expect(checkStatus(mounted)?.dataset.state).not.toBe("correct");
 
-    type(valueControl(mounted.root, "G(_)"), "0");
+    type(valueControl(mounted.root, "relation G/1"), "0");
     clickCheck(mounted);
 
     expect(checkStatus(mounted)?.dataset.state).toBe("correct");
@@ -782,18 +810,18 @@ describe("a playground", () => {
       {
         priorAnswer: {
           domain: "0,1",
-          fields: { "G(_)": "1" },
+          fields: { "relation G/1": "1" },
           sentences: "ExG(x)",
         },
       },
     );
 
     expect(sentencesBox(mounted).value).toBe("ExG(x)");
-    expect(valueControl(mounted.root, "G(_)").value).toBe("1");
+    expect(valueControl(mounted.root, "relation G/1").value).toBe("1");
     expect(previewText(mounted)?.textContent).toBe("Reads as ∃xG(x)");
     expect(answerOf(mounted)).toEqual({
       domain: "0,1",
-      fields: { "G(_)": "1" },
+      fields: { "relation G/1": "1" },
       sentences: "ExG(x)",
     });
   });

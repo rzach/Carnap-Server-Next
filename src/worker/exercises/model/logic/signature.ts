@@ -38,27 +38,112 @@ export type ModelFieldKind =
 export interface ModelField {
   /** 0 for the domain, a proposition, a constant, or a variable. */
   readonly arity: number;
+  /**
+   * The field's key in a submitted answer and in an exercise's givens, made
+   * from what the field *is* rather than how it is written: `relation F/2`,
+   * `function f/1`, `constant a/0`, `domain` (see {@link fieldKey}). So a change
+   * to how the language prints or reads a symbol cannot orphan stored work.
+   */
+  readonly key: string;
   readonly kind: ModelFieldKind;
   /**
-   * The field's label, which is also its key in a submitted answer and in an
-   * exercise's givens: `Domain`, `F(_,_)`, `P`, `a`, `f(_)`. Carnap shows the
-   * symbol with its terms blanked, and both the givens syntax and the "take
-   * another look at" messages spell it this way, so there is one vocabulary.
+   * What the student sees beside the field: `Domain`, `F(_,_)`, `P`, `a`,
+   * `_ < _`. Carnap shows the symbol with its terms blanked. Display only:
+   * nothing is keyed by it or compared against it.
    */
   readonly label: string;
   /** The bare symbol, without the blanks: `F`, `P`, `a`, `f`. */
   readonly symbol: string;
 }
 
-/** The label Carnap gives the domain field, and the key givens use for it. */
+/** The label Carnap gives the domain field, and the spelling givens use for it. */
 export const DOMAIN_FIELD_LABEL = "Domain";
+
+/** The domain's key in givens. */
+export const DOMAIN_FIELD_KEY = "domain";
 
 export const DOMAIN_FIELD: ModelField = {
   arity: 0,
+  key: DOMAIN_FIELD_KEY,
   kind: "domain",
   label: DOMAIN_FIELD_LABEL,
   symbol: DOMAIN_FIELD_LABEL,
 };
+
+/**
+ * A field's key: its kind and {@link symbolKey}. The kind is part of it so
+ * that a key names its field on its own — a playground's givens are the whole
+ * of its vocabulary, and are read back with {@link fieldFromKey} — and so that
+ * a variable and a constant can never share one.
+ */
+export function fieldKey(
+  kind: KeyedKind,
+  symbol: string,
+  arity: number,
+): string {
+  return `${kind} ${symbolKey(symbol, arity)}`;
+}
+
+type KeyedKind = Exclude<ModelFieldKind, "domain">;
+
+function makeField(
+  kind: KeyedKind,
+  symbol: string,
+  arity: number,
+  lang: SurfaceLanguage,
+): ModelField {
+  return {
+    arity,
+    key: fieldKey(kind, symbol, arity),
+    kind,
+    label:
+      kind === "variable"
+        ? termToString({ name: symbol, type: "variable" }, lang)
+        : blankedLabel(symbol, arity, lang),
+    symbol,
+  };
+}
+
+const KEYED_KINDS: ReadonlySet<string> = new Set<KeyedKind>([
+  "relation",
+  "proposition",
+  "constant",
+  "variable",
+  "function",
+]);
+
+function isKeyedKind(kind: string): kind is KeyedKind {
+  return KEYED_KINDS.has(kind);
+}
+
+/**
+ * The field a key names, labelled in the language; `null` for anything that is
+ * not a key {@link fieldKey} could have written.
+ */
+export function fieldFromKey(
+  key: string,
+  lang: SurfaceLanguage,
+): ModelField | null {
+  if (key === DOMAIN_FIELD_KEY) {
+    return DOMAIN_FIELD;
+  }
+
+  const match = /^(\S+) (.+)\/(\d+)$/.exec(key);
+  const kind = match?.[1] ?? "";
+  const symbol = match?.[2] ?? "";
+  const arity = Number(match?.[3]);
+
+  if (!isKeyedKind(kind) || symbol === "") {
+    return null;
+  }
+
+  const nullary =
+    kind === "proposition" || kind === "constant" || kind === "variable";
+
+  return nullary === (arity === 0)
+    ? makeField(kind, symbol, arity, lang)
+    : null;
+}
 
 /**
  * `F` with arity 2 → `F(_,_)`; arity 0 → `F`. A symbol the spec gives a
@@ -101,15 +186,6 @@ export function blankedLabel(
 /** A symbol's key in a model, distinguishing arities of the same letter. */
 export { symbolKey };
 
-/**
- * A free variable's key. Kept apart from {@link symbolKey}'s space so that no
- * spelling could make a variable and a constant share a field, though a token
- * is only ever one or the other.
- */
-function variableKey(name: string): string {
-  return `var ${name}`;
-}
-
 function collectFromTerm(
   term: Term,
   into: Map<string, ModelField>,
@@ -118,35 +194,21 @@ function collectFromTerm(
 ): void {
   if (term.type === "variable") {
     if (!bound.has(term.name)) {
-      into.set(variableKey(term.name), {
-        arity: 0,
-        kind: "variable",
-        label: termToString(term, lang),
-        symbol: term.name,
-      });
+      const found = makeField("variable", term.name, 0, lang);
+      into.set(found.key, found);
     }
 
     return;
   }
 
   if (term.type === "constant") {
-    const key = symbolKey(term.name, 0);
-    into.set(key, {
-      arity: 0,
-      kind: "constant",
-      label: blankedLabel(term.name, 0, lang),
-      symbol: term.name,
-    });
+    const found = makeField("constant", term.name, 0, lang);
+    into.set(found.key, found);
     return;
   }
 
-  const key = symbolKey(term.name, term.args.length);
-  into.set(key, {
-    arity: term.args.length,
-    kind: "function",
-    label: blankedLabel(term.name, term.args.length, lang),
-    symbol: term.name,
-  });
+  const found = makeField("function", term.name, term.args.length, lang);
+  into.set(found.key, found);
 
   for (const argument of term.args) {
     collectFromTerm(argument, into, lang, bound);
@@ -162,12 +224,13 @@ function collectFromFormula(
   switch (formula.type) {
     case "predicate": {
       const arity = formula.args.length;
-      into.set(symbolKey(formula.name, arity), {
+      const found = makeField(
+        arity === 0 ? "proposition" : "relation",
+        formula.name,
         arity,
-        kind: arity === 0 ? "proposition" : "relation",
-        label: blankedLabel(formula.name, arity, lang),
-        symbol: formula.name,
-      });
+        lang,
+      );
+      into.set(found.key, found);
 
       for (const argument of formula.args) {
         collectFromTerm(argument, into, lang, bound);
@@ -225,12 +288,7 @@ export function modelSignature(
   const collected = new Map<string, ModelField>(
     extra
       .filter((field) => field.kind !== "domain")
-      .map((field) => [
-        field.kind === "variable"
-          ? variableKey(field.symbol)
-          : symbolKey(field.symbol, field.arity),
-        field,
-      ]),
+      .map((field) => [field.key, field]),
   );
 
   for (const formula of formulas) {
@@ -247,8 +305,8 @@ export function modelSignature(
 
     // Code-unit order, not `localeCompare`. Carnap sorts on Haskell's `Ord
     // String`, which is this; and collation would put `F(_,_)` before `F(_)`
-    // in a way that depends on the runtime's ICU data, while this order is
-    // compiled into the exercise's stored field list and has to be stable.
+    // in a way that depends on the runtime's ICU data, where the order the
+    // fields are shown in should be the same in every browser.
     return left.label < right.label ? -1 : left.label > right.label ? 1 : 0;
   });
 
@@ -256,24 +314,25 @@ export function modelSignature(
 }
 
 /**
- * The field a label names, read back against the language: `F(_,_)` is a
- * two-place relation, `f(_)` a function, `a` a constant, as {@link
- * blankedLabel} would print them.
+ * The field an author's given names, in any spelling the language reads:
+ * `F(_,_)` is a two-place relation, `f(_)` a function, `a` a constant, and in
+ * a language that writes `lt` as `<`, both `_ < _` and `_<_` name it.
  *
- * Each blank is filled with one of the language's names and the result read as
- * a sentence, then as a term; the field it yields counts only if it prints back
- * to exactly the label. So a label is accepted in the spelling the exercise
- * would show it in, and nothing the language does not have becomes a field.
+ * Each blank is filled with a different one of the language's names and the
+ * result read as a sentence, then as a term. It names a field only if what
+ * reads is one symbol applied to exactly those names, in order — so `F(a,_)`,
+ * `¬F(_)` and `F(f(_))` name nothing, and nothing the language does not have
+ * becomes a field.
  */
-export function fieldForLabel(
-  label: string,
+export function fieldForGiven(
+  given: string,
   lang: SurfaceLanguage,
 ): ModelField | null {
-  if (label === DOMAIN_FIELD_LABEL) {
+  if (given === DOMAIN_FIELD_LABEL) {
     return DOMAIN_FIELD;
   }
 
-  const blanks = label.split("_").length - 1;
+  const blanks = given.split("_").length - 1;
   const names = languageNames(lang).slice(0, blanks);
 
   if (names.length < blanks) {
@@ -281,25 +340,41 @@ export function fieldForLabel(
   }
 
   let index = 0;
-  const filled = label.replace(/_/g, () => names[index++] ?? "_");
+  const filled = given.replace(/_/g, () => names[index++] ?? "_");
+  const blanked = (args: readonly Term[]): boolean =>
+    args.length === names.length &&
+    args.every(
+      (arg, position) =>
+        arg.type === "constant" && arg.name === names[position],
+    );
   const sentence = parseFormula(filled, lang);
-  const formulas: Formula[] = [];
 
   if (sentence.ok) {
-    formulas.push(sentence.formula);
-  } else {
-    const term = parseTerm(filled, lang);
+    const formula = sentence.formula;
 
-    if (!term.ok) {
-      return null;
-    }
-
-    formulas.push({ left: term.term, right: term.term, type: "identity" });
+    return formula.type === "predicate" && blanked(formula.args)
+      ? makeField(
+          formula.args.length === 0 ? "proposition" : "relation",
+          formula.name,
+          formula.args.length,
+          lang,
+        )
+      : null;
   }
 
-  return (
-    modelSignature(formulas, lang).find(
-      (field) => field.kind !== "domain" && field.label === label,
-    ) ?? null
-  );
+  const read = parseTerm(filled, lang);
+
+  if (!read.ok) {
+    return null;
+  }
+
+  const term = read.term;
+
+  if (term.type === "function") {
+    return blanked(term.args)
+      ? makeField("function", term.name, term.args.length, lang)
+      : null;
+  }
+
+  return blanks === 0 ? makeField(term.type, term.name, 0, lang) : null;
 }

@@ -227,6 +227,20 @@ What is the missing premise?
     expect(await statusFor(item, { text: "~~P" })).toBe("incorrect");
   });
 
+  test("a verbatim match sees through a def, not through a renamed binder", async () => {
+    const item = await manifestItem(`::::translation{#t1 variant="exact"}
+Say that a and b differ, and that everything is F.
+
+- ~a=b & AxF(x)
+::::`);
+
+    // `≠` is a def of the negated identity, so it is the stored formula.
+    expect(await statusFor(item, { text: "a!=b & AxF(x)" })).toBe("correct");
+    expect(await statusFor(item, { text: "~a=b & AyF(y)" })).toBe(
+      "incorrect",
+    );
+  });
+
   test("a certificate for an out-of-range solution index is refused", async () => {
     const item = await manifestItem(PROP_EXERCISE);
 

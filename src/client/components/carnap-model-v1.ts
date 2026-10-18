@@ -115,9 +115,9 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
 
   /** Every field row in the shadow root, paired with the field it renders. */
   private collectRows(root: ShadowRoot, data: ModelPublicData): FieldRow[] {
-    const byLabel = new Map(
+    const byKey = new Map(
       (resolveModelFor(data).resolved?.signature ?? []).map((field) => [
-        field.label,
+        field.key,
         field,
       ]),
     );
@@ -125,7 +125,7 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
     return Array.from(
       root.querySelectorAll<HTMLElement>(".model-row[data-field]"),
     ).flatMap((row) => {
-      const field = byLabel.get(row.dataset.field ?? "");
+      const field = byKey.get(row.dataset.field ?? "");
       return field === undefined ? [] : [{ field, row }];
     });
   }
@@ -248,13 +248,13 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
     }
 
     const existing = new Map(
-      this.rows.map((fieldRow) => [fieldRow.field.label, fieldRow]),
+      this.rows.map((fieldRow) => [fieldRow.field.key, fieldRow]),
     );
     const parsed = parseDomain(this.domainInput?.value ?? "");
     const domain = parsed.ok ? parsed.value : [0];
 
     this.rows = resolved.signature.map((field) => {
-      const kept = existing.get(field.label);
+      const kept = existing.get(field.key);
 
       if (kept !== undefined) {
         return kept;
@@ -281,10 +281,10 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
     field: ModelField,
     domain: readonly number[],
   ): HTMLElement {
-    const id = `model-field-${encodeURIComponent(field.label)}`;
+    const id = `model-field-${encodeURIComponent(field.key)}`;
     const row = document.createElement("div");
     row.className = "model-row";
-    row.dataset.field = field.label;
+    row.dataset.field = field.key;
     row.dataset.kind = field.kind;
 
     if (field.kind === "function") {
@@ -431,7 +431,7 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
     }
 
     const seeded = seededFunctionRows(
-      this.data?.givens?.[field.label] ?? "",
+      this.data?.givens?.[field.key] ?? "",
       field.arity,
     );
     const lock = this.data?.options.strictGivens ?? false;
@@ -599,7 +599,7 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
     }
 
     for (const { field, row } of this.rows) {
-      const value = prior.fields[field.label];
+      const value = prior.fields[field.key];
 
       if (field.kind === "domain" || value === undefined) {
         continue;
@@ -702,7 +702,7 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
         continue;
       }
 
-      fields[field.label] = this.fieldValue(field, row);
+      fields[field.key] = this.fieldValue(field, row);
     }
 
     return this.sentencesInput === null

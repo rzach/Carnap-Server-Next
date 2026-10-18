@@ -59,8 +59,11 @@ export type { ModelField, ModelFieldKind } from "./signature";
 export {
   blankedLabel,
   DOMAIN_FIELD,
+  DOMAIN_FIELD_KEY,
   DOMAIN_FIELD_LABEL,
-  fieldForLabel,
+  fieldForGiven,
+  fieldFromKey,
+  fieldKey,
   modelSignature,
   symbolKey,
 } from "./signature";

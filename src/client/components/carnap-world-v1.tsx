@@ -2424,13 +2424,17 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
           {restriction?.symbols !== undefined ? (
             <p class="world-restriction">
               {words("Allowed symbols: {symbols}", {
-                symbols: restriction.symbols.join(" "),
+                symbols: restriction.symbols
+                  .map(({ spelling }) => spelling)
+                  .join(" "),
               })}
             </p>
           ) : restriction?.without !== undefined ? (
             <p class="world-restriction">
               {words("Not allowed: {symbols}", {
-                symbols: restriction.without.join(" "),
+                symbols: restriction.without
+                  .map(({ spelling }) => spelling)
+                  .join(" "),
               })}
             </p>
           ) : null}

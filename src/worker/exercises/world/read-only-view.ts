@@ -193,11 +193,11 @@ function restrictionHtml(
   const restriction = publicData.restriction;
 
   if (restriction?.symbols !== undefined) {
-    return `<p class="world-restriction">${escapeHtml(words("Allowed symbols: {symbols}", { symbols: restriction.symbols.join(" ") }))}</p>`;
+    return `<p class="world-restriction">${escapeHtml(words("Allowed symbols: {symbols}", { symbols: restriction.symbols.map(({ spelling }) => spelling).join(" ") }))}</p>`;
   }
 
   if (restriction?.without !== undefined) {
-    return `<p class="world-restriction">${escapeHtml(words("Not allowed: {symbols}", { symbols: restriction.without.join(" ") }))}</p>`;
+    return `<p class="world-restriction">${escapeHtml(words("Not allowed: {symbols}", { symbols: restriction.without.map(({ spelling }) => spelling).join(" ") }))}</p>`;
   }
 
   return "";

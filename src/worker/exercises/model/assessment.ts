@@ -109,7 +109,7 @@ export const MODEL_ASSESSMENT = {
 
     for (const field of resolved?.signature ?? []) {
       if (field.kind !== "domain") {
-        fields[field.label] = submitted.fields[field.label] ?? "";
+        fields[field.key] = submitted.fields[field.key] ?? "";
       }
     }
 

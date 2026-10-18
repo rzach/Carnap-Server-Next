@@ -24,7 +24,7 @@ import {
 } from "./grading";
 import type { Formula, ModelField, ModelVerdict } from "./logic";
 import {
-  DOMAIN_FIELD_LABEL,
+  DOMAIN_FIELD_KEY,
   formulaToString,
   functionTableLayout,
   parseDomain,
@@ -102,7 +102,7 @@ export function modelGoalText(
 export function initialDomain(
   publicData: ModelPublicData,
 ): readonly number[] {
-  const seeded = publicData.givens?.[DOMAIN_FIELD_LABEL];
+  const seeded = publicData.givens?.[DOMAIN_FIELD_KEY];
   const parsed = parseDomain(seeded ?? "0");
 
   // Carnap seeds the domain box with `0`, so an untouched exercise interprets
@@ -137,8 +137,8 @@ function domainSelect(
 
 /** One field's row: its label, its control, and its parse warning. */
 function renderField(field: ModelField, context: FieldRenderContext): string {
-  const id = `model-field-${encodeURIComponent(field.label)}`;
-  const given = context.givens[field.label] ?? "";
+  const id = `model-field-${encodeURIComponent(field.key)}`;
+  const given = context.givens[field.key] ?? "";
   const locked = context.locked && given !== "";
   const disabled = context.disabled || locked;
   const lockedAttr = locked ? " data-locked" : "";
@@ -146,7 +146,7 @@ function renderField(field: ModelField, context: FieldRenderContext): string {
     field.kind === "domain" ? context.strings("Domain") : field.label,
   )}</label>`;
   const row = (control: string): string =>
-    `<div class="model-row" data-field="${escapeHtml(field.label)}" data-kind="${field.kind}"${lockedAttr}>${label}${control}</div>`;
+    `<div class="model-row" data-field="${escapeHtml(field.key)}" data-kind="${field.kind}"${lockedAttr}>${label}${control}</div>`;
 
   if (field.kind === "proposition") {
     const value = given.toLowerCase() === "true";
@@ -225,7 +225,7 @@ function renderField(field: ModelField, context: FieldRenderContext): string {
     // The label names the group rather than one control, so it is not a `for=`
     // target: each select carries its own name (`f(_,_) of 0,1`), and the two
     // header rows put the same argument on the page for a sighted reader.
-    return `<div class="model-row" data-field="${escapeHtml(field.label)}" data-kind="function"${lockedAttr}><span class="model-label">${escapeHtml(field.label)}</span><div class="model-function" data-role="table" role="group" aria-label="${escapeHtml(field.label)}"><table class="model-function-table">${head}${body}</table></div></div>`;
+    return `<div class="model-row" data-field="${escapeHtml(field.key)}" data-kind="function"${lockedAttr}><span class="model-label">${escapeHtml(field.label)}</span><div class="model-function" data-role="table" role="group" aria-label="${escapeHtml(field.label)}"><table class="model-function-table">${head}${body}</table></div></div>`;
   }
 
   // Domain and relations are free text: a comma-separated list of numbers, or
@@ -364,7 +364,7 @@ export function renderModelReview(
       const value =
         field.kind === "domain"
           ? review.answer.domain
-          : (review.answer.fields[field.label] ?? "");
+          : (review.answer.fields[field.key] ?? "");
       const label = field.kind === "domain" ? strings("Domain") : field.label;
 
       return reviewItem(label, value);

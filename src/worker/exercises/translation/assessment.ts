@@ -46,13 +46,13 @@ function translationAnswerData(
 
 /**
  * The student's submission as the grader sees it: parsed in the exercise's
- * language, restricted to the variant's fragment. `null` is "this cannot be
- * correct", never "this cannot be graded".
+ * language, restricted to the variant's fragment, as a formula and as engine
+ * text. `null` is "this cannot be correct", never "this cannot be graded".
  */
 function readSubmission(
   publicData: TranslationPublicData,
   text: string,
-): Formula | null {
+): { readonly engine: string; readonly formula: Formula } | null {
   const language = firstOrderLanguageFor(publicData);
 
   if (language === null) {
@@ -69,7 +69,7 @@ function readSubmission(
     return null;
   }
 
-  return parsed.formula;
+  return parsed;
 }
 
 export const TRANSLATION_ASSESSMENT = {
@@ -189,11 +189,13 @@ export const TRANSLATION_ASSESSMENT = {
       status: "incorrect",
     });
 
-    const formula = readSubmission(publicData, data.text);
+    const submission = readSubmission(publicData, data.text);
 
-    if (formula === null) {
+    if (submission === null) {
       return incorrect("unreadable");
     }
+
+    const { engine, formula } = submission;
 
     const language = firstOrderLanguageFor(publicData);
 
@@ -213,7 +215,7 @@ export const TRANSLATION_ASSESSMENT = {
 
     // Typing a solution verbatim (canonically) is correct in every variant,
     // and for `exact` it is the whole question.
-    if (verbatimSolutionIndex(formula, publicData.solutions, language) >= 0) {
+    if (verbatimSolutionIndex(engine, publicData.solutions, language) >= 0) {
       return correct();
     }
 

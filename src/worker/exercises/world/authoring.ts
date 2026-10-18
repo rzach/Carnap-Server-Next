@@ -211,12 +211,16 @@ function parseRestriction(
     return undefined;
   }
 
-  const spellings = (symbols ?? without ?? "")
+  const named = (symbols ?? without ?? "")
     .split(/\s+/)
-    .filter((spelling) => spelling.length > 0);
+    .filter((spelling) => spelling.length > 0)
+    .map((spelling) => ({
+      keys: resolveSpelling(spelling, language),
+      spelling,
+    }));
 
-  for (const spelling of spellings) {
-    if (resolveSpelling(spelling, language).length === 0) {
+  for (const { keys, spelling } of named) {
+    if (keys.length === 0) {
       diagnostics.push(
         diagnostic(
           block.line,
@@ -228,9 +232,7 @@ function parseRestriction(
     }
   }
 
-  return symbols === undefined
-    ? { without: spellings }
-    : { symbols: spellings };
+  return symbols === undefined ? { without: named } : { symbols: named };
 }
 
 interface Located {

@@ -26,7 +26,7 @@ import type { ExerciseCompileContext } from "../../exercise-kit/type";
 import type { ModelField, ModelTarget } from "./logic";
 import {
   DEFAULT_LANGUAGE_ID,
-  fieldForLabel,
+  fieldForGiven,
   isArgumentLine,
   modelSignature,
   parseDomain,
@@ -555,16 +555,12 @@ export function modelDataBodyLines(
 }
 
 /**
- * What a given may name: a field of the exercise's formulas, or — on a
- * playground, which has none — any field the language could interpret.
- */
-type FieldsForGivens =
-  | { readonly kind: "signature"; readonly signature: readonly ModelField[] }
-  | { readonly kind: "language"; readonly language: SurfaceLanguage };
-
-/**
  * Read the `| Field : value` lines, checking each names a field this exercise
- * actually has and holds something that field could contain.
+ * actually has and holds something that field could contain: a field of the
+ * exercise's formulas, its `signature`, or — on a playground, which has none
+ * and passes `null` — any field the language could interpret. A field may be
+ * written in any spelling the language reads (see {@link fieldForGiven}); it
+ * is stored under its key, so it does not matter which.
  *
  * Carnap validates a given only when the student submits, so a typo in a field
  * name silently seeds nothing ("missing or duplicated field … in countermodel
@@ -573,13 +569,12 @@ type FieldsForGivens =
  */
 function parseGivens(
   lines: readonly { line: number; text: string }[],
-  fields: FieldsForGivens,
+  language: SurfaceLanguage,
+  signature: readonly ModelField[] | null,
   diagnostics: CompilerDiagnostic[],
 ): Record<string, string> {
-  const byLabel =
-    fields.kind === "signature"
-      ? new Map(fields.signature.map((field) => [field.label, field]))
-      : null;
+  const keys =
+    signature === null ? null : new Set(signature.map((field) => field.key));
   const givens: Record<string, string> = {};
 
   for (const { line, text } of lines) {
@@ -598,14 +593,11 @@ function parseGivens(
 
     const label = (match[1] ?? "").trim();
     const value = (match[2] ?? "").trim();
-    const field =
-      fields.kind === "language"
-        ? (fieldForLabel(label, fields.language) ?? undefined)
-        : byLabel?.get(label);
+    const field = fieldForGiven(label, language);
 
-    if (field === undefined) {
+    if (field === null || (keys !== null && !keys.has(field.key))) {
       diagnostics.push(
-        fields.kind === "language"
+        signature === null
           ? diagnostic(
               line,
               "unknown_model_given_field",
@@ -622,7 +614,7 @@ function parseGivens(
       continue;
     }
 
-    if (label in givens) {
+    if (field.key in givens) {
       diagnostics.push(
         diagnostic(
           line,
@@ -646,7 +638,7 @@ function parseGivens(
       continue;
     }
 
-    givens[label] = value;
+    givens[field.key] = value;
   }
 
   return givens;
@@ -789,9 +781,8 @@ export async function compileModel(
   });
   const givens = parseGivens(
     body.givenLines,
-    playground
-      ? { kind: "language", language }
-      : { kind: "signature", signature: modelSignature(parsed, language) },
+    language,
+    playground ? null : modelSignature(parsed, language),
     diagnostics,
   );
 
