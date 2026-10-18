@@ -408,7 +408,7 @@ describe("compiling a world directive", () => {
       "∃xLarge(x)",
     ]);
     expect(resolved?.laws.map((law) => law.text)).toEqual([
-      "∀x∀y(SameRow(x,y) → x=y)",
+      "∀x∀y(SameRow(x,y) → x = y)",
     ]);
     expect(data.pinned).toEqual(["o1"]);
     expect(data.budget).toBe(2);

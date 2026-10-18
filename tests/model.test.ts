@@ -181,7 +181,7 @@ describe("compiling a model directive", () => {
       ),
     );
 
-    expect(shown(data.required)).toEqual(["∃x∃y¬x=y"]);
+    expect(shown(data.required)).toEqual(["∃x∃y¬x = y"]);
     expect(shown(data.targeted)).toEqual(["∀x∀yF(x,y)"]);
     expect(data.target).toBe("all-true");
     // The prose colon is prose: only a list item is read as the separator.
@@ -309,7 +309,7 @@ describe("compiling a model directive", () => {
       ),
     );
 
-    expect(shown(data.required)).toEqual(["∃x∃y¬x=y"]);
+    expect(shown(data.required)).toEqual(["∃x∃y¬x = y"]);
   });
 
   test("a directive in the prompt is still reported", async () => {

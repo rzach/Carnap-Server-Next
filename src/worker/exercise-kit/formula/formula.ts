@@ -44,16 +44,14 @@
 
 import type {
   AppTerm,
-  NotationInfo,
   SurfaceLanguage,
   Term as SurfaceTerm,
+  TermInfo,
 } from "@aufbau/syntax";
-import { adjoin, printTerm } from "@aufbau/syntax";
+import { printTerm } from "@aufbau/syntax";
 import type { BinaryConnective } from "../../logic/specs/connectives";
 import {
-  BINARY_CONNECTIVES,
   binaryConnectiveForRole,
-  DEFAULT_BINARY_SPELLING,
   roleForBinaryConnective,
 } from "../../logic/specs/connectives";
 import type { FormulaParseError } from "../../logic/specs/diagnostics";
@@ -71,8 +69,8 @@ export type { BinaryConnective };
  * A term: a variable, an individual constant, or a function symbol applied to
  * terms. `name` is the constructor's name in the spec — for a lexicon letter
  * its spelling, for a notated symbol (`plus`, written `+`) the name behind the
- * notation — which is how a model keys it and, until the printer reads
- * notations, how it is shown back.
+ * notation — which is how a model keys it, and how the printer finds the
+ * notation to show it back through.
  */
 export type Term =
   | { readonly type: "variable"; readonly name: string }
@@ -387,8 +385,8 @@ function readFormula(node: SurfaceTerm, lang: SurfaceLanguage): Formula {
     // `≠` is a `def` over negation and identity, and unfolding it here is what
     // keeps the {@link Formula} union free of a node whose only content is
     // that the writer used the shorter spelling. The evaluator and the MM0
-    // emitter see `¬a=b` either way, and the printer writes back whichever
-    // spelling the spec makes canonical.
+    // emitter see `¬a=b` either way, and the printer writes it back as the
+    // negated identity it is, `¬a = b`.
     case "inequality":
       return {
         operand: {
@@ -622,306 +620,323 @@ export function parseFormulaTree(
 }
 
 /**
- * Printed text and the precedence of the operator at its head — `a+b` is the
- * rung `+` sits on, a name or an application is `max`, and a sentential
- * compound is `max` as well because {@link schematize} brackets every one of
- * them.
- *
- * Carrying the rung is what lets an operand be bracketed exactly where the
- * spec's ladder needs it: what a student is shown should be text they could
- * type back.
+ * A node as the printer reads it. Where a node stood in the source, and how it
+ * was spelled there, are a parse's to record; a tree built to be printed has
+ * neither, and `printTerm` asks for neither.
  */
-interface Written {
-  readonly prec: number;
-  readonly text: string;
-}
-
-/** MM0's `max`, as a number the numbered rungs compare against. */
-const MAX_PRECEDENCE = Number.MAX_SAFE_INTEGER;
-
-/** Something nothing needs brackets around: a name, or an already-bracketed compound. */
-const atom = (text: string): Written => ({ prec: MAX_PRECEDENCE, text });
-
-function precedenceOf(prec: number | "max"): number {
-  return prec === "max" ? MAX_PRECEDENCE : prec;
-}
-
-/**
- * Pieces set as tight as the language's delimiters allow, by the library's
- * own seam rule: `∀xCube(x)` under letter delimiters, but `∀x Cube(x)` where
- * `xCube` would be one chunk to the reader and the text would not read back.
- */
-function tight(lang: SurfaceLanguage, ...pieces: readonly string[]): string {
-  return pieces.reduce((left, right) =>
-    adjoin(left, right, lang.scanner.rules),
-  );
-}
-
-/** An operand, bracketed where its head binds looser than the slot allows. */
-function bracketed(written: Written, minimum: number): string {
-  return written.prec < minimum ? `(${written.text})` : written.text;
-}
-
-/**
- * The notation to write a symbol in: the spec's canonical (last-declared) one,
- * when it can say the arity the symbol is applied at.
- *
- * A textbook's variadic letter is applied at every arity and notated at none,
- * so it falls through to `F(a,b)` — its constructor's name, which is the
- * letter itself. A fixed-arity `plus` notated `infixl +` is written `a+b`, and
- * a nullary `zero` notated `0` is written `0`. Anything else falls through
- * too: this printer interleaves the two simple shapes and nothing more, and a
- * general notation with argument slots is the printer in `@aufbau/syntax`'s
- * job, over its own tree.
- */
-function notationFor(
-  name: string,
-  arity: number,
-  lang: SurfaceLanguage,
-): NotationInfo | null {
-  const notation = lang.canonical.get(name);
-
-  if (notation === undefined) {
-    return null;
-  }
-
-  if (notation.form === "general") {
-    return arity === 0 &&
-      notation.literals.every((literal) => literal.kind === "constant")
-      ? notation
-      : null;
-  }
-
-  return (notation.fixity === "prefix" ? 1 : 2) === arity ? notation : null;
-}
-
-/**
- * A symbol applied to terms, through its notation where it has a fitting one
- * and as `name(a,b)` where it has none.
- */
-function writeSymbol(
-  name: string,
-  args: readonly Term[],
-  lang: SurfaceLanguage,
-): Written {
-  const notation = notationFor(name, args.length, lang);
-
-  if (notation === null) {
-    return atom(
-      args.length === 0
-        ? name
-        : `${name}(${args.map((arg) => writeTerm(arg, lang).text).join(",")})`,
-    );
-  }
-
-  if (notation.form === "general") {
-    return atom(
-      tight(
-        lang,
-        ...notation.literals.flatMap((literal) =>
-          literal.kind === "constant" ? [literal.token] : [],
-        ),
-      ),
-    );
-  }
-
-  const prec = precedenceOf(notation.prec);
-  const tighter = Math.min(prec + 1, MAX_PRECEDENCE);
-  // The side an infix associates on takes an operand at its own rung — that is
-  // what makes `a+b+c` one reading — and the other side has to bind tighter.
-  const associative = notation.fixity === "infixl" ? 0 : 1;
-  const parts = args.map((arg, at) =>
-    bracketed(
-      writeTerm(arg, lang),
-      notation.fixity === "prefix" || at === associative ? prec : tighter,
-    ),
-  );
-
+function node(
+  term: string,
+  sort: string,
+  args: readonly SurfaceTerm[],
+): AppTerm {
   return {
-    prec,
-    text:
-      notation.fixity === "prefix"
-        ? tight(lang, notation.token, ...parts)
-        : tight(
-            lang,
-            ...parts.flatMap((part, at) =>
-              at === 0 ? [part] : [notation.token, part],
-            ),
-          ),
+    args,
+    fixity: null,
+    grouped: false,
+    kind: "app",
+    prec: null,
+    sort,
+    span: { end: 0, start: 0 },
+    term,
+    token: null,
   };
 }
 
-function writeTerm(term: Term, lang: SurfaceLanguage): Written {
-  if (term.type === "variable") {
-    return atom(term.name);
+/**
+ * A tree this module was asked to build that the parser could never have
+ * produced: a formula from somewhere other than this language, which is a
+ * caller's bug. Thrown rather than printed as something plausible.
+ */
+function unwritable(detail: string): Error {
+  return new Error(
+    `This formula cannot be written in this language: ${detail}`,
+  );
+}
+
+/**
+ * A node read at `sort`, inside the coercions the parser would have put
+ * around it there — `F(x)` is `F` over `t2s(v2t(x))` in forallx. The printer
+ * writes a coercion as nothing, but reads the sort it lands on: that is how it
+ * knows an argument list is juxtaposed, or a formula outermost.
+ */
+function coerced(
+  term: SurfaceTerm,
+  sort: string,
+  lang: SurfaceLanguage,
+): SurfaceTerm {
+  const path = lang.coerce(term.sort, sort);
+
+  if (path === null) {
+    throw unwritable(`nothing takes ${term.sort} to ${sort}.`);
   }
 
-  return writeSymbol(
-    term.name,
-    term.type === "function" ? term.args : [],
+  return path.reduce<SurfaceTerm>((inner, name) => {
+    const coercion = lang.spec.coercions.find((each) => each.name === name);
+
+    if (coercion === undefined) {
+      throw unwritable(`${name} is not a coercion.`);
+    }
+
+    return node(name, coercion.to, [inner]);
+  }, term);
+}
+
+/**
+ * A constructor applied to argument trees, each read at its binder's sort.
+ */
+function applied(
+  info: TermInfo,
+  args: readonly SurfaceTerm[],
+  lang: SurfaceLanguage,
+): AppTerm {
+  if (args.length !== info.binders.length) {
+    throw unwritable(
+      `${info.name} takes ${info.binders.length} arguments, not ${args.length}.`,
+    );
+  }
+
+  return node(
+    info.name,
+    info.returnSort,
+    args.map((arg, at) => {
+      const type = info.binders[at]?.type;
+
+      return type !== undefined && "sort" in type
+        ? coerced(arg, type.sort, lang)
+        : arg;
+    }),
+  );
+}
+
+/** The constructor a spec gives a role, for a formula that needs it written. */
+function constructorFor(role: string, lang: SurfaceLanguage): TermInfo {
+  const term = roleIndex(lang).termFor(role);
+  const info = term === null ? undefined : lang.spec.terms.get(term);
+
+  if (info === undefined) {
+    throw unwritable(`it has no constructor for ${role}.`);
+  }
+
+  return info;
+}
+
+/**
+ * The sort whose `@vars` pool holds a name: a bindable one for a variable, any
+ * other for a constant drawn from a pool (forallx's `a`–`e`, UBC's `a₁`).
+ *
+ * A variable in no pool stands at the first bindable sort. That is the `_` a
+ * model's blanked label is written with: a placeholder, not a name, and the
+ * printer writes a variable as its name whatever its sort. A constant in no
+ * pool is not one this language could have read.
+ */
+function poolSort(
+  name: string,
+  bindable: boolean,
+  lang: SurfaceLanguage,
+): string {
+  for (const info of lang.spec.sorts.values()) {
+    if (
+      lang.bindableSorts.has(info.name) === bindable &&
+      info.vars.includes(name)
+    ) {
+      return info.name;
+    }
+  }
+
+  const fallback = bindable ? [...lang.bindableSorts][0] : undefined;
+
+  if (fallback === undefined) {
+    throw unwritable(`“${name}” is not one of its names.`);
+  }
+
+  return fallback;
+}
+
+function variable(name: string, sort: string, binds: boolean): SurfaceTerm {
+  return {
+    binder: binds,
+    grouped: false,
+    kind: "variable",
+    name,
+    sort,
+    span: { end: 0, start: 0 },
+  };
+}
+
+/**
+ * Individuals as one argument list, the inverse of {@link readArguments}: the
+ * spec's elided term for none, and otherwise the elements joined left to right
+ * by the list sort's combiner — its `@syntax juxtaposed` term where it has one
+ * (Magnus's `Rab`), else the one constructor joining two lists (Calgary's
+ * comma). Left-nested, because that is the tree the parser builds and the one
+ * the printer flattens back into `Rab` or `R(a,b)`.
+ */
+function argumentList(
+  items: readonly SurfaceTerm[],
+  list: string,
+  lang: SurfaceLanguage,
+): SurfaceTerm {
+  const elements = items.map((item) => coerced(item, list, lang));
+  const [first, ...rest] = elements;
+
+  if (first === undefined) {
+    const nil = lang.elidedOf.get(list);
+
+    if (nil === undefined) {
+      throw unwritable(`it has no empty ${list}.`);
+    }
+
+    return node(nil.name, list, []);
+  }
+
+  if (rest.length === 0) {
+    return first;
+  }
+
+  const join =
+    lang.juxtaposedOf.get(list) ??
+    [...lang.spec.terms.values()].find(
+      (info) =>
+        info.returnSort === list &&
+        info.binders.length === 2 &&
+        info.binders.every(
+          (binder) =>
+            !binder.binds &&
+            "sort" in binder.type &&
+            binder.type.sort === list,
+        ),
+    );
+
+  if (join === undefined) {
+    throw unwritable(`it has no way to join two ${list}s.`);
+  }
+
+  return rest.reduce<SurfaceTerm>(
+    (left, right) => node(join.name, list, [left, right]),
+    first,
+  );
+}
+
+/**
+ * A symbol applied to individuals, as the parser would have read it: one
+ * argument per binder, except that a binder at the argument-list sort takes
+ * whatever the binders around it leave — all of them, for a textbook's
+ * variadic letter. {@link readArguments} flattens every such binder, so a
+ * symbol with two could be read from more than one tree, and is refused.
+ */
+function application(
+  name: string,
+  args: readonly Term[],
+  lang: SurfaceLanguage,
+): AppTerm {
+  const info = lang.spec.terms.get(name);
+
+  if (info === undefined) {
+    throw unwritable(`“${name}” is not one of its constructors.`);
+  }
+
+  const list = argumentListSort(lang);
+  const terms = args.map((arg) => termTree(arg, lang));
+  const lists = info.binders.flatMap((binder, at) =>
+    "sort" in binder.type && binder.type.sort === list ? [at] : [],
+  );
+  const [at, ...more] = lists;
+
+  if (list === undefined || at === undefined) {
+    return applied(info, terms, lang);
+  }
+
+  if (more.length > 0) {
+    throw unwritable(`${name} takes more than one argument list.`);
+  }
+
+  const after = info.binders.length - at - 1;
+
+  if (terms.length < at + after) {
+    throw unwritable(
+      `${name} takes at least ${at + after} arguments, not ${terms.length}.`,
+    );
+  }
+
+  return applied(
+    info,
+    [
+      ...terms.slice(0, at),
+      argumentList(terms.slice(at, terms.length - after), list, lang),
+      ...terms.slice(terms.length - after),
+    ],
     lang,
   );
 }
 
-/** Render a term back to source, in the spec's own notation. */
-export function termToString(term: Term, lang: SurfaceLanguage): string {
-  return writeTerm(term, lang).text;
-}
-
-/**
- * The symbol each role is written with: the spec's *last* notation for it,
- * which is the one convention `@aufbau/syntax` fixes and every spec here
- * follows by listing its ASCII spellings first and its glyph last. Its rung
- * comes along, since a prefix operator has to bracket an operand that binds
- * looser than it does.
- *
- * The fallbacks are unreachable for anything a student can write — a
- * constructor with no notation cannot be typed — and are here so that a spec
- * missing one prints something rather than `undefined`. A missing rung falls
- * back to `0`, which brackets nothing: the right answer where the spec has
- * said nothing to bracket by.
- */
-function symbols(lang: SurfaceLanguage) {
-  const index = roleIndex(lang);
-  const of = (role: string, fallback: string): string =>
-    index.spellingFor(role) ?? fallback;
-  const rung = (role: string): number => {
-    const term = index.termFor(role);
-    const notation = term === null ? undefined : lang.canonical.get(term);
-
-    return notation === undefined || notation.form === "general"
-      ? 0
-      : precedenceOf(notation.prec);
-  };
-  const binary = {} as Record<BinaryConnective, string>;
-
-  for (const connective of BINARY_CONNECTIVES) {
-    binary[connective] = of(
-      roleForBinaryConnective(connective),
-      DEFAULT_BINARY_SPELLING[connective],
-    );
+function termTree(term: Term, lang: SurfaceLanguage): SurfaceTerm {
+  switch (term.type) {
+    case "variable":
+      return variable(term.name, poolSort(term.name, true, lang), false);
+    case "function":
+      return application(term.name, term.args, lang);
+    case "constant":
+      // A constant is a nullary constructor (`zero`) or a name from a pool.
+      return lang.spec.terms.has(term.name)
+        ? application(term.name, [], lang)
+        : variable(term.name, poolSort(term.name, false, lang), false);
   }
-
-  return {
-    binary,
-    exists: of("exists", "∃"),
-    existsPrec: rung("exists"),
-    falsum: of("falsum", "⊥"),
-    forall: of("forall", "∀"),
-    forallPrec: rung("forall"),
-    identity: of("identity", "="),
-    not: of("negation", "¬"),
-    notPrec: rung("negation"),
-    verum: of("verum", "⊤"),
-  };
 }
 
 /**
- * Carnap's `schematize`: **every** binary compound parenthesized with spaces
- * around the connective, a quantifier or a negation written straight onto what
- * follows it, and identity closed up (`a=b`) — as tight, that is, as the
- * delimiters let the text read back ({@link tight}). A symbol with a notation is
- * written through it on the same terms — `x<x+a`, tight, like identity — and
- * one without through its constructor's name, `F(a,b)`.
+ * A formula as the tree `@aufbau/syntax` would parse it to: the inverse of
+ * {@link readFormula}, taking each constructor from the role the spec gives
+ * it. This is what lets one printer — the library's — write every formula,
+ * whether it was read from text or built by an exercise type.
  */
-function schematize(
-  formula: Formula,
-  lang: SurfaceLanguage,
-  spelling: ReturnType<typeof symbols>,
-): Written {
-  const inner = (part: Formula): Written => schematize(part, lang, spelling);
+function formulaTree(formula: Formula, lang: SurfaceLanguage): AppTerm {
+  const apply = (role: string, args: readonly SurfaceTerm[]): AppTerm =>
+    applied(constructorFor(role, lang), args, lang);
 
   switch (formula.type) {
     case "predicate":
-      return writeSymbol(formula.name, formula.args, lang);
-    case "identity": {
-      // Identity is an ordinary notated symbol, so it is written as one; the
-      // fallback is for a spec that gives the role a constructor with no
-      // notation, which would otherwise print as `ideq(a,b)`.
-      const term = roleIndex(lang).termFor("identity");
-
-      return term !== null && notationFor(term, 2, lang) !== null
-        ? writeSymbol(term, [formula.left, formula.right], lang)
-        : atom(
-            tight(
-              lang,
-              writeTerm(formula.left, lang).text,
-              spelling.identity,
-              writeTerm(formula.right, lang).text,
-            ),
-          );
-    }
+      return application(formula.name, formula.args, lang);
+    case "identity":
+      return apply("identity", [
+        termTree(formula.left, lang),
+        termTree(formula.right, lang),
+      ]);
     case "falsum":
-      return atom(spelling.falsum);
     case "verum":
-      return atom(spelling.verum);
+      return apply(formula.type, []);
     case "not":
-      return {
-        prec: spelling.notPrec,
-        text: tight(
-          lang,
-          spelling.not,
-          bracketed(inner(formula.operand), spelling.notPrec),
-        ),
-      };
+      return apply("negation", [formulaTree(formula.operand, lang)]);
     case "forall":
     case "exists": {
-      const prec =
-        formula.type === "forall" ? spelling.forallPrec : spelling.existsPrec;
+      const bound = constructorFor(formula.type, lang).binders[0];
 
-      return {
-        prec,
-        text: tight(
-          lang,
-          formula.type === "forall" ? spelling.forall : spelling.exists,
-          formula.variable,
-          bracketed(inner(formula.body), prec),
-        ),
-      };
+      if (bound?.binds !== true || !("sort" in bound.type)) {
+        throw unwritable(`its ${formula.type} binds no variable first.`);
+      }
+
+      return apply(formula.type, [
+        variable(formula.variable, bound.type.sort, true),
+        formulaTree(formula.body, lang),
+      ]);
     }
     default:
-      return atom(
-        `(${inner(formula.left).text} ${spelling.binary[formula.type]} ${
-          inner(formula.right).text
-        })`,
-      );
+      return apply(roleForBinaryConnective(formula.type), [
+        formulaTree(formula.left, lang),
+        formulaTree(formula.right, lang),
+      ]);
   }
 }
 
-/**
- * Drop the one bracket pair that wraps the whole string, if there is one —
- * Carnap's `dropOuterParensForm`. Parenthesizing every binary leaves a
- * redundant pair around the outside, and only around the outside.
- */
-function dropOuterParens(text: string): string {
-  if (!text.startsWith("(")) {
-    return text;
-  }
-
-  let depth = 0;
-
-  for (let index = 0; index < text.length; index += 1) {
-    const char = text[index];
-
-    if (char === "(") {
-      depth += 1;
-    } else if (char === ")") {
-      depth -= 1;
-
-      // Closed before the end, so the opening bracket was not the outer one:
-      // `(P /\ Q) \/ R` keeps every bracket it has.
-      if (depth === 0) {
-        return index === text.length - 1 ? text.slice(1, -1) : text;
-      }
-    }
-  }
-
-  return text;
+/** Render a term back to source, in the spec's own notation. */
+export function termToString(term: Term, lang: SurfaceLanguage): string {
+  return printTerm(lang, termTree(term, lang), "display");
 }
 
 /**
- * A formula as a reader is shown it: the spec's canonical spelling of every
- * symbol, bracketed by the spec's display convention, and text the language
+ * A formula as a reader is shown it, by `@aufbau/syntax`'s display printer:
+ * the spec's canonical spelling of every symbol, every binary compound
+ * bracketed (Carnap's convention) bar the outermost where the spec drops it,
+ * arguments juxtaposed where the spec juxtaposes them, and text the language
  * reads back.
  *
  * Display only. What an exercise stores is engine text
@@ -932,7 +947,5 @@ export function formulaToString(
   formula: Formula,
   lang: SurfaceLanguage,
 ): string {
-  const shown = schematize(formula, lang, symbols(lang)).text;
-
-  return lang.spec.display.dropOuterParens ? dropOuterParens(shown) : shown;
+  return printTerm(lang, formulaTree(formula, lang), "display");
 }

@@ -62,20 +62,27 @@ export const DOMAIN_FIELD: ModelField = {
 
 /**
  * `F` with arity 2 → `F(_,_)`; arity 0 → `F`. A symbol the spec gives a
- * notation is labelled *through* it — `lt` written `<` is `_<_`, and a
+ * notation is labelled *through* it — `lt` written `<` is `_ < _`, and a
  * notated constant `zero` is `0` — because the label is what the exercise
- * shows beside the sentences, and a student reading `x<a` should not have to
+ * shows beside the sentences, and a student reading `x < a` should not have to
  * work out that the table headed `lt(_,_)` is the same symbol.
  *
  * Blanking the arguments is printing the symbol applied to blanks, so that is
- * how it is done: one printer decides how a symbol is written, here and in the
- * sentences both.
+ * how a notated symbol is done: one printer decides how it is written, here
+ * and in the sentences both. A lexicon letter keeps the bracketed `F(_,_)`
+ * even where the language juxtaposes its arguments: a blank is not a term,
+ * and glued blanks need a space to stay two (`R_ _`), where the bracketed form
+ * says the arity at a glance and is one Magnus and UBC read as well.
  */
 export function blankedLabel(
   symbol: string,
   arity: number,
   lang: SurfaceLanguage,
 ): string {
+  if (arity > 0 && !lang.canonical.has(symbol)) {
+    return `${symbol}(${Array(arity).fill("_").join(",")})`;
+  }
+
   return termToString(
     arity === 0
       ? { name: symbol, type: "constant" }

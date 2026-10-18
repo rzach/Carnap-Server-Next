@@ -1,16 +1,23 @@
 import { describe, expect, test } from "bun:test";
 import type { SurfaceLanguage } from "@aufbau/syntax";
-import type { Formula } from "../src/worker/exercise-kit/formula";
+import type { Formula, Term } from "../src/worker/exercise-kit/formula";
 import {
   DEFAULT_LANGUAGE_ID,
   firstOrderLanguageFor,
   formulaToString,
   parseFormula,
+  parseFormulaTree,
 } from "../src/worker/exercise-kit/formula";
 import {
   LANGUAGE_SPEC_SOURCES,
+  languageById,
   languageFromSource,
 } from "../src/worker/logic/specs";
+import {
+  BINARY_CONNECTIVES,
+  roleForBinaryConnective,
+} from "../src/worker/logic/specs/connectives";
+import { roleIndex } from "../src/worker/logic/specs/roles";
 import {
   FIXED_ARITY_SPEC_SOURCE,
   fixedArityLanguage,
@@ -127,11 +134,11 @@ describe("the language registry", () => {
     // would silently mis-parse if segmentation took the shorter match.
     expect(show("P -> Q")).toBe("P → Q");
     expect(show("-P")).toBe("¬P");
-    expect(show("a = b")).toBe("a=b");
+    expect(show("a = b")).toBe("a = b");
     expect(show("P => Q")).toBe("P → Q");
     expect(show("P <-> Q")).toBe("P ↔ Q");
     expect(show("P <> Q")).toBe("P ↔ Q");
-    expect(show("a != b")).toBe("¬a=b");
+    expect(show("a != b")).toBe("¬a = b");
   });
 });
 
@@ -192,7 +199,7 @@ describe("atoms and terms", () => {
   });
 
   test("functions nest", () => {
-    expect(show("f(g(a),b) = c")).toBe("f(g(a),b)=c");
+    expect(show("f(g(a),b) = c")).toBe("f(g(a),b) = c");
   });
 
   test("s and t are variables, and only variables", () => {
@@ -552,7 +559,9 @@ describe("how a formula is written back out", () => {
    * instances it prints through were replicated in Haskell and run (GHC, parsec
    * 3.1.16), and these are its outputs. What used to be a hardcoded symbol table
    * is now the spec's last-declared notation for each role, and `dropOuterParens`
-   * is `@syntax display drop-outer-parens` in the same file.
+   * is `@syntax display drop-outer-parens` in the same file. The one departure
+   * is identity: the printer is `@aufbau/syntax`'s now, which spaces a relation
+   * between terms (`a = b`) where the original closed it up.
    */
   test("connectives and quantifiers are logical symbols, not ascii", () => {
     expect(show("~~P")).toBe("¬¬P");
@@ -570,18 +579,120 @@ describe("how a formula is written back out", () => {
   });
 
   test("a quantifier or a negation is written straight onto what follows", () => {
-    expect(show("AxAyf(x,y) = f(y,x)")).toBe("∀x∀yf(x,y)=f(y,x)");
-    expect(show("ExEy~x = y")).toBe("∃x∃y¬x=y");
+    expect(show("AxAyf(x,y) = f(y,x)")).toBe("∀x∀yf(x,y) = f(y,x)");
+    expect(show("ExEy~x = y")).toBe("∃x∃y¬x = y");
   });
 
-  test("identity closes up and inequality is a negated identity", () => {
-    expect(show("a = b")).toBe("a=b");
-    expect(show("a != b")).toBe("¬a=b");
+  test("identity is spaced, and inequality is a negated identity", () => {
+    expect(show("a = b")).toBe("a = b");
+    expect(show("a != b")).toBe("¬a = b");
   });
 
   test("predicates keep their parentheses; a sentence letter has none", () => {
     expect(show("R(a,b)")).toBe("R(a,b)");
     expect(show("P")).toBe("P");
+  });
+
+  test("a language that juxtaposes arguments is shown them juxtaposed (gh #50)", () => {
+    for (const id of ["forallx-magnus", "forallx-ubc"]) {
+      const lang = languageById(id);
+
+      if (lang === null) {
+        throw new Error(`no language under the id ${id}`);
+      }
+
+      expect(show("@x (Tx & Bx)", lang)).toBe("∀x(Tx & Bx)");
+      expect(show("R(a,b)", lang)).toBe("Rab");
+      expect(show("P", lang)).toBe("P");
+    }
+  });
+
+  test("whatever is printed reads back as the formula it came from", () => {
+    // The printer is the library's, over a tree this module builds from the
+    // formula; this pins that the tree is the one the parser would have built.
+    // A seeded generator, so a failure names a formula that can be rerun.
+    let seed = 7;
+    const next = (bound: number): number => {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      return seed % bound;
+    };
+    const pick = <T>(items: readonly T[]): T =>
+      items[next(items.length)] as T;
+    const languages: readonly [
+      string,
+      readonly string[],
+      readonly string[],
+    ][] = [
+      ["carnap-prop", ["P", "Q", "R"], []],
+      ["forallx-calgary", ["F", "G", "R", "P"], ["a", "b", "c"]],
+      ["forallx-magnus", ["F", "G", "R", "P"], ["a", "b", "c"]],
+      ["forallx-ubc", ["F", "G", "R", "P"], ["a", "b", "a1", "c2"]],
+      ["open-logic-tableaux", ["F", "G", "R", "P"], ["a", "b", "c"]],
+    ];
+
+    for (const [id, letters, names] of languages) {
+      const lang = languageById(id);
+
+      if (lang === null) {
+        throw new Error(`no language under the id ${id}`);
+      }
+
+      const roles = roleIndex(lang);
+      const binaries = BINARY_CONNECTIVES.filter(
+        (connective) =>
+          roles.termFor(roleForBinaryConnective(connective)) !== null,
+      );
+      const firstOrder = names.length > 0;
+
+      for (let count = 0; count < 200; count += 1) {
+        const bound: string[] = [];
+        const term = (): Term =>
+          bound.length > 0 && next(2) === 0
+            ? { name: pick(bound), type: "variable" }
+            : { name: pick(names), type: "constant" };
+        const formula = (depth: number): Formula => {
+          const shape = depth === 0 ? 0 : next(firstOrder ? 6 : 3);
+
+          switch (shape) {
+            case 0:
+              return {
+                args: firstOrder ? Array.from({ length: next(3) }, term) : [],
+                name: pick(letters),
+                type: "predicate",
+              };
+            case 1:
+              return { operand: formula(depth - 1), type: "not" };
+            case 2:
+              return {
+                left: formula(depth - 1),
+                right: formula(depth - 1),
+                type: pick(binaries),
+              };
+            case 3:
+              return { left: term(), right: term(), type: "identity" };
+            default: {
+              const variable = pick(["x", "y", "z"]);
+              bound.push(variable);
+
+              return {
+                body: formula(depth - 1),
+                type: next(2) === 0 ? "forall" : "exists",
+                variable,
+              };
+            }
+          }
+        };
+        const original = formula(4);
+        const printed = formulaToString(original, lang);
+
+        // Read back without the lints: a generated formula may be open, or
+        // quantify vacuously, and neither is the printer's concern.
+        expect(
+          parseFormulaTree(printed, lang)?.formula,
+          `${id}: ${printed}`,
+        ).toEqual(original);
+      }
+    }
   });
 });
 
@@ -696,19 +807,19 @@ describe("symbols of fixed arity, and every notation", () => {
   });
 
   test("a notated symbol is written back through its notation", () => {
-    expect(show("a + b = c", FIXED)).toBe("a+b=c");
-    expect(show("a < b", FIXED)).toBe("a<b");
+    expect(show("a + b = c", FIXED)).toBe("a+b = c");
+    expect(show("a < b", FIXED)).toBe("a < b");
     // One with no notation keeps its constructor's name and its brackets,
     // which for a textbook letter is how it was written in the first place.
     expect(show("Red(succ(a))", FIXED)).toBe("Red(succ(a))");
-    expect(show("f(a + b) = c", FIXED)).toBe("f(a+b)=c");
+    expect(show("f(a + b) = c", FIXED)).toBe("f(a+b) = c");
   });
 
   test("association is bracketed back in, so the tree survives storage", () => {
     // `+` is `infixl`: a left nest is what the notation already says, and a
     // right one has to be bracketed or it would read back as the other tree.
-    expect(show("(a + b) + c = c", FIXED)).toBe("a+b+c=c");
-    expect(show("a + (b + c) = c", FIXED)).toBe("a+(b+c)=c");
+    expect(show("(a + b) + c = c", FIXED)).toBe("a+b+c = c");
+    expect(show("a + (b + c) = c", FIXED)).toBe("a+(b+c) = c");
 
     for (const source of [
       "a+b+c=c",
