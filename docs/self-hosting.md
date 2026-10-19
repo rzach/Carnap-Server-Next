@@ -115,6 +115,17 @@ Deploy on Workers Paid. The free plan cannot run a course of useful size:
 Workers Paid raises the per-request limits to 30 seconds of CPU by default and
 1,000 D1 queries.
 
+The free plan's CPU limit is lenient at first: an isolate tolerates the
+occasional request that runs over, then cuts off the next one with error 1102
+("Worker exceeded resource limits"). Saving a lesson takes half a second to a
+second of CPU, so on the free plan saves and proof checks fail now and then
+rather than always.
+
+Memory is limited the same way on every plan: 128 MB per isolate, shared by
+the requests it serves and including WebAssembly memory. Carnap stays inside
+it by refusing request bodies over 4 MiB before reading them, and truth-tree
+certificates over 2 MiB, whose verification would hold the most memory.
+
 As of September 2026, Workers Paid costs $5 a month. That includes 10 million
 requests and 30 million CPU milliseconds. Beyond those allowances, requests
 cost $0.30 per million and CPU time $0.02 per million milliseconds. D1 has no

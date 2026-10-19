@@ -10,14 +10,47 @@
  * questioned, at a tenth of the size. See [[aufbau-engine-packages]].
  */
 
+import type { AnswerNormalizationResult } from "../../domain/content";
+import { diagnostic } from "../assessment";
+
 /** Generous cap so an intro proof passes but a submission can't be unbounded. */
 export const MAX_CERTIFICATE_BASE64_LENGTH = 262_144;
 
 /**
+ * Whether an envelope's `mmb` is a string longer than the cap (the shared one
+ * unless a type gives its own). Checked before {@link readCertificate}, which
+ * refuses the same certificate as `null`, so that the one refusal honest work
+ * can reach is reported as such: see {@link certificateTooLargeRefusal}.
+ */
+export function certificateTooLarge(
+  data: object,
+  maxLength: number = MAX_CERTIFICATE_BASE64_LENGTH,
+): boolean {
+  const value = (data as { readonly mmb?: unknown }).mmb;
+  return typeof value === "string" && value.length > maxLength;
+}
+
+/** The refusal of an envelope whose certificate is over its cap. */
+export function certificateTooLargeRefusal(): AnswerNormalizationResult {
+  return {
+    diagnostics: [
+      diagnostic(
+        "certificate_too_large",
+        "The certificate is too large to check.",
+        ["data", "mmb"],
+      ),
+    ],
+    ok: false,
+    reason: "too-large",
+  };
+}
+
+/**
  * Decode the base64 `mmb` field of an envelope's data. `undefined` when the
  * envelope carries none, `null` when it carries one that is over the cap (the
- * shared one unless a type gives its own) or is not base64. The proof types treat both as malformed; translation accepts the
- * first (an answer typed but never checked) and refuses only the second.
+ * shared one unless a type gives its own) or is not base64. The proof types
+ * treat both as malformed; translation accepts the first (an answer typed but
+ * never checked) and refuses only the second.
  */
 export function readCertificate(
   data: object,

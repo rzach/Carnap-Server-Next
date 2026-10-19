@@ -219,7 +219,7 @@ l1: $ top $ by top_i []
       answerEnvelope("A".repeat(300_000)),
       item,
     );
-    expect(result.ok).toBe(false);
+    expect(result).toMatchObject({ ok: false, reason: "too-large" });
   });
 
   test("reviewAnswer surfaces the submitted proof source", async () => {

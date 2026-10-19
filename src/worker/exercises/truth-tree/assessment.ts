@@ -11,7 +11,11 @@ import type {
 } from "../../domain/content";
 import type { JsonValue } from "../../domain/json";
 import { diagnostic, isObject } from "../../exercise-kit/assessment";
-import { readCertificate } from "../../exercise-kit/proof/certificate";
+import {
+  certificateTooLarge,
+  certificateTooLargeRefusal,
+  readCertificate,
+} from "../../exercise-kit/proof/certificate";
 import type { ExerciseAssessment } from "../../exercise-kit/type";
 import { stringsResolver } from "../../i18n/translator";
 import {
@@ -40,13 +44,18 @@ const TRUTH_TREE_EVALUATOR_VERSION = "truth-tree-evaluator@2";
 
 /**
  * The longest certificate a tree may carry, as base64: far past the proof
- * types' cap, because a tree's grows faster than its rows. Each step restates
- * its branch, and a first-order step carries its instance's normalization
- * through the whole branch, so one 48-row first-order branch is 3.3 MB and a
- * 55-row one 5 MB. Verifying is cheap at that size (about 50 ms in workerd for
- * 5 MB, decoding included); the cost is the student's upload.
+ * types' cap, because a tree's grows faster than its rows (each step restates
+ * its branch). Textbook trees certify in 10–60 KiB.
+ *
+ * Set from the Worker's memory, not its CPU (measured 2026-10-19; see task
+ * #483). Verifying costs about 50 ms per MiB of certificate, but leaves 25–53
+ * MiB of the verifier's memory resident per MiB, quantifier steps costing the
+ * most, and an isolate has 128 MB. At 2 MiB of base64 (1.5 MiB raw) no tree
+ * of any shape measured can push one over. The browser's compiler runs out of
+ * memory at about 200–240 rows; this refuses only the largest of those, with
+ * identity steps, as too large rather than as malformed.
  */
-const MAX_TREE_CERTIFICATE_LENGTH = 8 * 1024 * 1024;
+const MAX_TREE_CERTIFICATE_LENGTH = 2 * 1024 * 1024;
 
 function treeAnswer(answer: NormalizedAnswer): TruthTreeAnswerData {
   return answer.data as unknown as TruthTreeAnswerData;
@@ -120,6 +129,11 @@ export const TRUTH_TREE_ASSESSMENT = {
     // beside the answer to be verified and let go; a tree never compiled has
     // none, and is graded without one.
     const data = envelope.data;
+
+    if (certificateTooLarge(data, MAX_TREE_CERTIFICATE_LENGTH)) {
+      return certificateTooLargeRefusal();
+    }
+
     const certificate = readCertificate(data, MAX_TREE_CERTIFICATE_LENGTH);
 
     if (certificate === null) {
@@ -127,7 +141,7 @@ export const TRUTH_TREE_ASSESSMENT = {
         diagnostics: [
           diagnostic(
             "malformed_answer_data",
-            "The tree's certificate is malformed or too large.",
+            "The tree's certificate is malformed.",
             ["data", "mmb"],
           ),
         ],

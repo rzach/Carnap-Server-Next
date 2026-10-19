@@ -384,10 +384,15 @@ export class SubmissionService {
     );
 
     if (!normalized.ok) {
-      throw badRequest(
-        "invalid_answer",
-        deferred.i18n.t("The answer is invalid."),
-      );
+      throw normalized.reason === "too-large"
+        ? badRequest(
+            "answer_too_large",
+            deferred.i18n.t("This answer is too large to check."),
+          )
+        : badRequest(
+            "invalid_answer",
+            deferred.i18n.t("The answer is invalid."),
+          );
     }
 
     // The certificate a proof or translation answer carries is verified here

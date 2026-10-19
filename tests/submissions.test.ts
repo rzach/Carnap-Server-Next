@@ -3510,4 +3510,67 @@ Use a tree.
       expect(body.evaluation.score).toBe(2);
     });
   });
+
+  test("an oversized certificate is refused as too large, and so is an oversized body", async () => {
+    await withStorage(async (_storage, env) => {
+      const instructor = await login(env, "tree-cap-teacher@example.test");
+      const student = await login(env, "tree-cap-student@example.test");
+      const courseId = await createCourse(env, instructor);
+      const revisionId = await createRevision(
+        env,
+        instructor,
+        `# Lesson
+
+::::truth-tree{#tt points="2"}
+Use a tree.
+
+- P
+- ¬P
+::::`,
+      );
+
+      await enrollStudent(env, instructor, student, courseId);
+
+      const assignment = await createPublishedAssignment(
+        env,
+        instructor,
+        courseId,
+        revisionId,
+      );
+      const attemptId = await beginAttempt(
+        env,
+        student,
+        courseId,
+        assignment.id,
+      );
+      const submit = (mmb: string) =>
+        submitAnswer(env, student, courseId, assignment.id, attemptId, {
+          answer: {
+            data: { mmb, nodes: [] },
+            kind: "truth-tree-answer@1",
+            schemaVersion: 1,
+          },
+          exerciseId: "tt",
+        });
+      const errorOf = async (response: Response) =>
+        (
+          (await response.json()) as {
+            error: { code: string; message: string };
+          }
+        ).error;
+
+      // Over the tree's 2 MiB cap: the student is told why, not "invalid".
+      const tooLarge = await submit("A".repeat(2 * 1024 * 1024 + 4));
+      expect(tooLarge.status).toBe(400);
+      expect(await errorOf(tooLarge)).toMatchObject({
+        code: "answer_too_large",
+        message: "This answer is too large to check.",
+      });
+
+      // Over the application's 4 MiB body limit: refused before it is parsed.
+      const oversized = await submit("A".repeat(5 * 1024 * 1024));
+      expect(oversized.status).toBe(413);
+      expect((await errorOf(oversized)).code).toBe("payload_too_large");
+    });
+  });
 });

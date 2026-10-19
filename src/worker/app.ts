@@ -1,6 +1,8 @@
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 
 import type { TurnstileVerifier } from "./application/auth";
+import { payloadTooLarge } from "./application/errors";
 import type { LtiPlatformKeyResolver } from "./application/lti";
 import type { AppBindings, WorkerApp } from "./http";
 import { actorMiddleware, csrfMiddleware } from "./middleware/auth";
@@ -24,6 +26,15 @@ import { scriptRoutes } from "./routes/scripts";
 import { styleRoutes } from "./routes/styles";
 import { theoryRoutes } from "./routes/theories";
 import { webRoutes } from "./routes/web";
+
+/**
+ * The largest request body the application reads, for every route. The
+ * largest legitimate one is a truth-tree submission: a certificate of up to 2
+ * MiB of base64 beside up to 128 KiB of tree. A lesson source is at most
+ * 200,000 characters. Parsing costs a multiple of the body in memory, and an
+ * isolate has 128 MB (task #483).
+ */
+const MAX_REQUEST_BODY_BYTES = 4 * 1024 * 1024;
 
 export interface CreateAppOptions {
   readonly configure?: (app: WorkerApp) => void;
@@ -75,6 +86,19 @@ export function createApp(options: CreateAppOptions = {}): WorkerApp {
   // once the actor is known. Nothing between the two may assume the second has
   // run, and nothing after may assume it has not.
   app.use("*", localeDetectorMiddleware());
+  // Before anything reads a body, and before the session lookup, so an
+  // oversized request costs neither a parse nor a query. Each route's own caps
+  // apply after its body is parsed, which is too late to protect an isolate:
+  // see MAX_REQUEST_BODY_BYTES.
+  app.use(
+    "*",
+    bodyLimit({
+      maxSize: MAX_REQUEST_BODY_BYTES,
+      onError: () => {
+        throw payloadTooLarge();
+      },
+    }),
+  );
   app.use("*", actorMiddleware());
   app.use("*", localeMiddleware());
   app.use("*", csrfMiddleware());

@@ -18,7 +18,11 @@ import {
   parseEngineFormula,
   parseFormula,
 } from "../../exercise-kit/formula";
-import { readCertificate } from "../../exercise-kit/proof/certificate";
+import {
+  certificateTooLarge,
+  certificateTooLargeRefusal,
+  readCertificate,
+} from "../../exercise-kit/proof/certificate";
 import type { ExerciseAssessment } from "../../exercise-kit/type";
 import { buildEquivalenceCheck } from "./logic/mm0";
 import { verbatimSolutionIndex } from "./logic/solutions";
@@ -120,6 +124,11 @@ export const TRANSLATION_ASSESSMENT = {
     }
 
     const data = envelope.data;
+
+    if (certificateTooLarge(data)) {
+      return certificateTooLargeRefusal();
+    }
+
     const certificate = readCertificate(data);
 
     if (data.text.length > MAX_TEXT_LENGTH || certificate === null) {

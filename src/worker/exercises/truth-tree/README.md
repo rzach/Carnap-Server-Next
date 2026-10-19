@@ -166,10 +166,14 @@ changed it) is set aside when the element restores, as the root cannot be
 edited.
 
 The certificate rides beside the answer and is not stored. A tree's may be
-up to 8 MiB of base64, far past the proof types' 256 KiB: each step restates
-its branch, and a first-order step carries its instance's normalization
-through the whole branch, so a 48-row first-order branch certifies in 3.3 MB.
-Verifying 5 MB takes about 50 ms in workerd, decoding included.
+up to 2 MiB of base64, far past the proof types' 256 KiB, because each step
+restates its branch: textbook trees certify in 10–60 KiB, and a 182-row
+chain of conditionals in 1.1 MiB. The cap is set by the Worker's memory
+rather than its CPU (task #483): verifying costs about 50 ms per MiB, but
+holds 25–53 MiB of the verifier's memory per MiB, quantifier steps the most,
+against an isolate's 128 MB. Past the cap the answer is refused as too large
+("This answer is too large to check."), which only identity-heavy trees near
+`TREE_ROW_CAP` reach.
 
 ## Not yet
 

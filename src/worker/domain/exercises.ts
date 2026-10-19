@@ -145,9 +145,15 @@ export interface NormalizedAnswer {
   readonly schemaVersion: number;
 }
 
+/**
+ * Why an envelope was refused. `too-large` is told apart from `malformed`
+ * because honest work can reach it — a very large tree's certificate — and the
+ * student should be told so rather than that the answer is invalid.
+ */
 export type AnswerNormalizationFailureReason =
   | "malformed"
   | "schema-invalid"
+  | "too-large"
   | "wrong-kind";
 
 export type AnswerNormalizationResult =

@@ -5316,6 +5316,10 @@ msgstr ""
 msgid "The reference segment needs {expected} tokens (one per atom); found {found}."
 msgstr ""
 
+#: src/worker/application/errors.ts
+msgid "The request is too large."
+msgstr ""
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The role “{role}” needs {arity} arguments, but “{symbol}” takes {declared}."
 msgstr ""
@@ -5609,6 +5613,10 @@ msgstr ""
 
 #: src/worker/exercises/world/strings.ts
 msgid "This answer holds no world."
+msgstr ""
+
+#: src/worker/application/submissions.ts
+msgid "This answer is too large to check."
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -5977,6 +5985,10 @@ msgstr ""
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "To discharge an assumption, give it a label and write the same label on the rule that discharges it. Both boxes appear on a line once it is selected."
+msgstr ""
+
+#: src/worker/web/errors.tsx
+msgid "Too large"
 msgstr ""
 
 #: src/worker/web/errors.tsx

@@ -6,7 +6,7 @@ import {
   translateMessage,
 } from "../i18n/translator";
 
-export type AppErrorStatus = 400 | 401 | 403 | 404 | 429 | 500;
+export type AppErrorStatus = 400 | 401 | 403 | 404 | 413 | 429 | 500;
 
 export class AppHttpError extends Error {
   /**
@@ -100,6 +100,15 @@ export function attemptNotFound(): AppHttpError {
     404,
     "attempt_not_found",
     deferred.i18n.t("The attempt was not found."),
+  );
+}
+
+/** A request body over the application's limit (see `app.ts`). */
+export function payloadTooLarge(): AppHttpError {
+  return new AppHttpError(
+    413,
+    "payload_too_large",
+    deferred.i18n.t("The request is too large."),
   );
 }
 

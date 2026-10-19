@@ -5316,6 +5316,10 @@ msgstr "Die Beweis-Engine konnte diesen Beweis nicht lesen — prüfen Sie ihn a
 msgid "The reference segment needs {expected} tokens (one per atom); found {found}."
 msgstr "Der Referenzabschnitt braucht {expected} Tokens (eines pro Atom); gefunden: {found}."
 
+#: src/worker/application/errors.ts
+msgid "The request is too large."
+msgstr "Die Anfrage ist zu groß."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The role “{role}” needs {arity} arguments, but “{symbol}” takes {declared}."
 msgstr "Die Rolle „{role}“ braucht {arity} Argumente, aber „{symbol}“ nimmt {declared}."
@@ -5610,6 +5614,10 @@ msgstr "Diese Antwort ist nicht wohlgeformt und kann daher in einer Prüfung nic
 #: src/worker/exercises/world/strings.ts
 msgid "This answer holds no world."
 msgstr "Diese Antwort enthält keine Welt."
+
+#: src/worker/application/submissions.ts
+msgid "This answer is too large to check."
+msgstr "Diese Antwort ist zu groß, um geprüft zu werden."
 
 #: src/worker/web/assignment-detail.tsx
 msgid "This assignment is not accepting new attempts."
@@ -5978,6 +5986,10 @@ msgstr "Um eine Regel anzuwenden, setzen Sie das Häkchen unter jeder Prämisse 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "To discharge an assumption, give it a label and write the same label on the rule that discharges it. Both boxes appear on a line once it is selected."
 msgstr "Um eine Annahme zu entlasten, geben Sie ihr eine Marke und schreiben dieselbe Marke an die entlastende Regel. Beide Felder erscheinen an einer Zeile, sobald sie ausgewählt ist."
+
+#: src/worker/web/errors.tsx
+msgid "Too large"
+msgstr "Zu groß"
 
 #: src/worker/web/errors.tsx
 msgid "Too many requests"

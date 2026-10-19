@@ -52,6 +52,8 @@ function errorHeading(status: AppErrorStatus, i18n: Translator): string {
       return i18n.t("Not allowed");
     case 404:
       return i18n.t("Page not found");
+    case 413:
+      return i18n.t("Too large");
     case 429:
       return i18n.t("Too many requests");
     default:

@@ -9,7 +9,11 @@ import type {
 } from "../../domain/content";
 import type { JsonValue } from "../../domain/json";
 import { diagnostic } from "../assessment";
-import { readCertificate } from "./certificate";
+import {
+  certificateTooLarge,
+  certificateTooLargeRefusal,
+  readCertificate,
+} from "./certificate";
 import type { PlaygroundGoal } from "./playground";
 import {
   answerGoal,
@@ -126,6 +130,11 @@ export function normalizeProofAnswer<Data extends ProofAnswerData>(
   }
 
   const data = envelope.data;
+
+  if (certificateTooLarge(data)) {
+    return certificateTooLargeRefusal();
+  }
+
   const certificate = readCertificate(data);
   const own = shape.own?.(data) ?? { fields: {}, withinCaps: true };
 

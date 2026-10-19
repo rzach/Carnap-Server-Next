@@ -456,26 +456,30 @@ describe("grading", () => {
     expect(withRules({ a: "&", b: "&", c: "&" })).toBe(false);
   });
 
-  test("a tree's certificate may be far larger than a proof's, up to 8 MiB", async () => {
+  test("a tree's certificate may be far larger than a proof's, up to 2 MiB", async () => {
     const item = await declaration(VALID);
     const root = builderFor(item).tree.nodes;
-    const accepts = (length: number) =>
+    const normalize = (mmb: string) =>
       TRUTH_TREE_EXERCISE.normalizeAnswer(
         {
-          data: {
-            mmb: "A".repeat(length),
-            nodes: root,
-          } as unknown as JsonValue,
+          data: { mmb, nodes: root } as unknown as JsonValue,
           kind: TRUTH_TREE_ANSWER_KIND,
           schemaVersion: TRUTH_TREE_SCHEMA_VERSION,
         },
         item,
-      ).ok;
+      );
+    const reason = (mmb: string) => {
+      const result = normalize(mmb);
+      return result.ok ? "ok" : result.reason;
+    };
 
     // Past the proof types' 256 KiB, as a long first-order branch's is.
-    expect(accepts(MAX_CERTIFICATE_BASE64_LENGTH + 4)).toBe(true);
-    expect(accepts(8 * 1024 * 1024)).toBe(true);
-    expect(accepts(8 * 1024 * 1024 + 4)).toBe(false);
+    expect(reason("A".repeat(MAX_CERTIFICATE_BASE64_LENGTH + 4))).toBe("ok");
+    expect(reason("A".repeat(2 * 1024 * 1024))).toBe("ok");
+    // Over the cap is too large, which the student is told as such, not
+    // malformed, which a widget never sends.
+    expect(reason("A".repeat(2 * 1024 * 1024 + 4))).toBe("too-large");
+    expect(reason("not-base-64!!!")).toBe("malformed");
   });
 
   test("nodes that are not one tree are refused, and so is a tree too big to read", async () => {

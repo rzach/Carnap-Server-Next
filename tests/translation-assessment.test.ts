@@ -252,6 +252,24 @@ Say that a and b differ, and that everything is F.
       }),
     ).toBe("incorrect");
   });
+
+  test("a certificate over the cap is too large, not malformed", async () => {
+    const item = await manifestItem(PROP_EXERCISE);
+    const refused = (mmb: string) =>
+      TRANSLATION_EXERCISE.normalizeAnswer(
+        envelope({ mmb, solutionIndex: 0, text: "Q/\\P" }),
+        item,
+      );
+
+    expect(refused("A".repeat(300_000))).toMatchObject({
+      ok: false,
+      reason: "too-large",
+    });
+    expect(refused("not-base-64!!!")).toMatchObject({
+      ok: false,
+      reason: "malformed",
+    });
+  });
 });
 
 describe("review", () => {

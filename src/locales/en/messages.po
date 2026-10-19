@@ -5316,6 +5316,10 @@ msgstr "The proof engine couldn't read this proof — check for unexpected chara
 msgid "The reference segment needs {expected} tokens (one per atom); found {found}."
 msgstr "The reference segment needs {expected} tokens (one per atom); found {found}."
 
+#: src/worker/application/errors.ts
+msgid "The request is too large."
+msgstr "The request is too large."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The role “{role}” needs {arity} arguments, but “{symbol}” takes {declared}."
 msgstr "The role “{role}” needs {arity} arguments, but “{symbol}” takes {declared}."
@@ -5610,6 +5614,10 @@ msgstr "This answer does not parse, so it cannot be submitted on an exam."
 #: src/worker/exercises/world/strings.ts
 msgid "This answer holds no world."
 msgstr "This answer holds no world."
+
+#: src/worker/application/submissions.ts
+msgid "This answer is too large to check."
+msgstr "This answer is too large to check."
 
 #: src/worker/web/assignment-detail.tsx
 msgid "This assignment is not accepting new attempts."
@@ -5978,6 +5986,10 @@ msgstr "To apply a rule, tick the dot under each premise in the order the rule t
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "To discharge an assumption, give it a label and write the same label on the rule that discharges it. Both boxes appear on a line once it is selected."
 msgstr "To discharge an assumption, give it a label and write the same label on the rule that discharges it. Both boxes appear on a line once it is selected."
+
+#: src/worker/web/errors.tsx
+msgid "Too large"
+msgstr "Too large"
 
 #: src/worker/web/errors.tsx
 msgid "Too many requests"
