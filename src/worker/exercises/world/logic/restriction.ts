@@ -11,28 +11,14 @@
  * into `¬a=b` and would blame the student for a negation they never wrote.
  */
 
-import type { NotationInfo, SurfaceLanguage } from "@aufbau/syntax";
-import { walkTerm } from "@aufbau/syntax";
+import type { SurfaceLanguage } from "@aufbau/syntax";
+import { spellingMeanings, walkTerm } from "@aufbau/syntax";
 import { argumentListSort, sentenceSort } from "../../../logic/specs/roles";
 import type { WorldRestriction } from "../types";
 
 /** A name's key in a used-symbol set, kept apart from constructor names. */
 function nameKey(name: string): string {
   return `name ${name}`;
-}
-
-function leadingToken(notation: NotationInfo): string | null {
-  if (notation.form === "simple") {
-    return notation.token;
-  }
-
-  for (const literal of notation.literals) {
-    if (literal.kind === "constant") {
-      return literal.token;
-    }
-  }
-
-  return null;
 }
 
 /**
@@ -48,45 +34,12 @@ export function resolveSpelling(
   spelling: string,
   lang: SurfaceLanguage,
 ): readonly string[] {
-  const keys = new Set<string>();
+  const { terms, varSorts } = spellingMeanings(lang, spelling);
 
-  if (lang.spec.terms.has(spelling)) {
-    keys.add(spelling);
-  }
-
-  const tokens = new Set([spelling]);
-
-  // An elab rule is a spelling too: Calgary's `E ?x` is written for `∃ ?x`,
-  // so naming `E` names what its template's literals spell.
-  for (const rule of lang.spec.elabRules) {
-    if (
-      rule.pattern.some(
-        (element) => element.kind === "literal" && element.token === spelling,
-      )
-    ) {
-      for (const element of rule.template) {
-        if (element.kind === "literal") {
-          tokens.add(element.token);
-        }
-      }
-    }
-  }
-
-  for (const notation of lang.spec.notations) {
-    const token = leadingToken(notation);
-
-    if (token !== null && tokens.has(token)) {
-      keys.add(notation.term);
-    }
-  }
-
-  for (const info of lang.spec.sorts.values()) {
-    if (!lang.bindableSorts.has(info.name) && info.vars.includes(spelling)) {
-      keys.add(nameKey(spelling));
-    }
-  }
-
-  return [...keys];
+  // A variable no quantifier binds is an object's name.
+  return varSorts.some((sort) => !lang.bindableSorts.has(sort))
+    ? [...terms, nameKey(spelling)]
+    : terms;
 }
 
 /**

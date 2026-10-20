@@ -11,6 +11,7 @@
  */
 
 import type { SurfaceLanguage } from "@aufbau/syntax";
+import { splitTopLevel } from "@aufbau/syntax";
 import type {
   Formula,
   ModelField,
@@ -29,7 +30,6 @@ import {
   parseEngineFormula,
   parseFormula,
   parseFunctionTable,
-  splitFormulaList,
   tupleKey,
 } from "./logic";
 import type { ModelAnswerData, ModelPublicData, ModelVariant } from "./types";
@@ -199,7 +199,7 @@ export function resolveModelFor(
     return field === null ? [] : [field];
   });
 
-  const pieces = splitFormulaList(sentences)
+  const pieces = splitTopLevel(language, sentences, ",")
     .map((piece) => piece.trim())
     .filter((piece) => piece !== "");
   const typed: Formula[] = [];

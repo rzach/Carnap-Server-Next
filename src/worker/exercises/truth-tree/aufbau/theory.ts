@@ -12,7 +12,6 @@
 
 import type { AppTerm, SurfaceLanguage } from "@aufbau/syntax";
 import { printTerm } from "@aufbau/syntax";
-import { acuiOf } from "../../../logic/specs/annotations";
 import {
   roleIndex,
   sentenceSort,
@@ -243,7 +242,9 @@ function emptyBranch(
   join: string | null,
 ): TreeTheory["empty"] {
   const unit =
-    join === null ? null : (acuiOf(language).get(join)?.unit ?? null);
+    join === null
+      ? null
+      : (language.spec.terms.get(join)?.acui?.unit ?? null);
   const info = unit === null ? undefined : language.spec.terms.get(unit);
 
   if (unit === null || info === undefined) {

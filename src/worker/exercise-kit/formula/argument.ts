@@ -13,7 +13,8 @@
  * truth table needs premises, a world's counterexample does not.
  */
 
-import { splitFormulaList } from "./formula";
+import type { SurfaceLanguage } from "@aufbau/syntax";
+import { splitTopLevel } from "@aufbau/syntax";
 
 /** What separates an argument's premises from its conclusions. */
 export const ARGUMENT_TURNSTILE = ":|-:";
@@ -29,8 +30,8 @@ export interface ArgumentLine {
   readonly conclusions: readonly string[];
 }
 
-function pieces(side: string): string[] {
-  return splitFormulaList(side)
+function pieces(side: string, lang: SurfaceLanguage): string[] {
+  return splitTopLevel(lang, side, ",")
     .map((piece) => piece.trim())
     .filter((piece) => piece.length > 0);
 }
@@ -38,9 +39,13 @@ function pieces(side: string): string[] {
 /**
  * Split an argument line into its premises and conclusions, or `null` when it
  * has more than one turnstile. A leading list bullet is dropped, so
- * `- P :|-: Q` reads as well.
+ * `- P :|-: Q` reads as well. Each side splits at its commas outside the
+ * language's brackets, since `R(a, b)` has a comma of its own.
  */
-export function splitArgumentLine(line: string): ArgumentLine | null {
+export function splitArgumentLine(
+  line: string,
+  lang: SurfaceLanguage,
+): ArgumentLine | null {
   const parts = line.replace(/^\s*-\s+/, "").split(ARGUMENT_TURNSTILE);
 
   if (parts.length !== 2) {
@@ -48,7 +53,7 @@ export function splitArgumentLine(line: string): ArgumentLine | null {
   }
 
   return {
-    conclusions: pieces(parts[1] ?? ""),
-    premises: pieces(parts[0] ?? ""),
+    conclusions: pieces(parts[1] ?? "", lang),
+    premises: pieces(parts[0] ?? "", lang),
   };
 }

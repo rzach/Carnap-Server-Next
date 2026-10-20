@@ -28,10 +28,16 @@
  * something this walk does not recognize, has none either.
  */
 
-import type { AssertStatement, SurfaceLanguage, Term } from "@aufbau/syntax";
-import { printTerm } from "@aufbau/syntax";
+import type {
+  AssertStatement,
+  ParseResult,
+  StatementReading,
+  SurfaceLanguage,
+  Term,
+} from "@aufbau/syntax";
+import { parseStatement, printTerm } from "@aufbau/syntax";
 import { roleIndex } from "../../logic/specs/roles";
-import { binderScope, theoryLanguage } from "./formulas";
+import { theoryLanguage } from "./formulas";
 
 /** One formula a sequent's context assumes. */
 export interface RuleAssumption {
@@ -158,8 +164,21 @@ function readSignature(
   statement: AssertStatement,
   reading: SequentReading,
 ): RuleSignature | null {
-  const scope = binderScope(statement);
-  const conclusion = readSequent(statement.conclusion.text, scope, reading);
+  if (statement.hypotheses.some((hypothesis) => "sort" in hypothesis)) {
+    return null; // a type hypothesis is not a citable premise
+  }
+
+  let read: StatementReading;
+
+  try {
+    read = parseStatement(reading.language, statement, {
+      sort: reading.judgementSort,
+    });
+  } catch {
+    return null;
+  }
+
+  const conclusion = readSequent(read.conclusion.result, reading);
 
   if (conclusion === null) {
     return null;
@@ -168,12 +187,9 @@ function readSignature(
   const ambient = new Set(conclusion.assumptions.map(({ key }) => key));
   const premises: RulePremise[] = [];
 
-  for (const hypothesis of statement.hypotheses) {
-    if ("sort" in hypothesis) {
-      return null; // a type hypothesis is not a citable premise
-    }
-
-    const sequent = readSequent(hypothesis.text, scope, reading);
+  // In citation order, which the engine numbers from the statement.
+  for (const hypothesis of read.hypotheses) {
+    const sequent = readSequent(hypothesis.result, reading);
 
     if (sequent === null) {
       return null;
@@ -195,26 +211,13 @@ function readSignature(
 }
 
 /**
- * One rule statement's sequent, or `null` where the text does not parse as a
- * sequent or its context holds something this walk does not recognize.
+ * One rule formula's sequent, or `null` where it did not parse as a sequent
+ * or its context holds something this walk does not recognize.
  */
 function readSequent(
-  text: string,
-  scope: ReadonlyMap<string, string>,
+  result: ParseResult,
   reading: SequentReading,
 ): RuleSequent | null {
-  let result: ReturnType<SurfaceLanguage["parse"]>;
-
-  try {
-    result = reading.language.parse(text.trim(), {
-      mode: "engine",
-      scope,
-      sort: reading.judgementSort,
-    });
-  } catch {
-    return null;
-  }
-
   if (!result.ok) {
     return null;
   }

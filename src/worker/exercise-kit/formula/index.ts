@@ -37,7 +37,6 @@ export {
   parseFormula,
   parseFormulaTree,
   parseTerm,
-  splitFormulaList,
   termToString,
   unfoldedEngineText,
 } from "./formula";

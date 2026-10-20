@@ -1,3 +1,5 @@
+import type { SurfaceLanguage } from "@aufbau/syntax";
+import { splitTopLevel } from "@aufbau/syntax";
 import {
   type CompilerDiagnostic,
   diagnostic,
@@ -22,7 +24,6 @@ import {
 import {
   isArgumentLine,
   splitArgumentLine,
-  splitFormulaList,
 } from "../../exercise-kit/formula";
 import { parseSystemAttribute } from "../../exercise-kit/systems/attribute";
 import type { ExerciseCompileContext } from "../../exercise-kit/type";
@@ -380,6 +381,7 @@ function parseListBody(
   givens: TruthTableGivenRow[];
   promptLines: string[];
 } {
+  const lang = truthTableLanguage({ source: system });
   const promptLines: string[] = [];
   const formulas: string[] = [];
   const gridRows: { text: string; line: number }[] = [];
@@ -416,10 +418,17 @@ function parseListBody(
       continue;
     }
 
+    // A language that did not resolve is already reported by
+    // `parseSystemAttribute`; piling a parse error onto every formula would
+    // only bury it.
+    if (lang === null) {
+      continue;
+    }
+
     // Only a partial table reads a colon; elsewhere it is the language's.
     const sides =
       variant === "partial"
-        ? splitFormulaList(match[1] ?? "", ":")
+        ? splitTopLevel(lang, match[1] ?? "", ":")
         : [match[1] ?? ""];
 
     if (sides.length > 2 || (sides.length === 2 && colon !== null)) {
@@ -441,14 +450,14 @@ function parseListBody(
       // A single bullet may list several comma-separated formulas, so multiple
       // formulas can share one line just as they do on a validity sequent's
       // sides.
-      const pieces = splitFormulaList(side);
+      const pieces = splitTopLevel(lang, side, ",");
 
       if (colon !== null && pieces.some((piece) => piece.trim().length > 0)) {
         formulaAfterColon = true;
       }
 
       formulas.push(
-        ...parseFormulaList(pieces, system, lineNumber, diagnostics),
+        ...parseFormulaList(pieces, lang, lineNumber, diagnostics),
       );
     }
   }
@@ -483,24 +492,15 @@ function parseListBody(
 /**
  * Parse the pieces of a comma-separated list of formulas (one side of a
  * sequent, say) into engine text in the exercise's language, collecting a
- * diagnostic per unparseable formula. The split respects brackets, because a
- * first-order language's `R(a,b)` has a comma of its own.
+ * diagnostic per unparseable formula.
  */
 function parseFormulaList(
   pieces: readonly string[],
-  system: string,
+  lang: SurfaceLanguage,
   line: number,
   diagnostics: CompilerDiagnostic[],
 ): string[] {
-  const lang = truthTableLanguage({ source: system });
   const formulas: string[] = [];
-
-  // A language that did not resolve is already reported by
-  // `parseSystemAttribute`; piling a parse error onto every formula would
-  // only bury it.
-  if (lang === null) {
-    return formulas;
-  }
 
   for (const piece of pieces) {
     const trimmed = piece.trim();
@@ -599,8 +599,15 @@ function parseValidityBody(
     return { formulas: [], givens: [], premiseCount: 0, promptLines };
   }
 
+  const lang = truthTableLanguage({ source: system });
+
+  // Nothing to read without the language, as in `parseListBody`.
+  if (lang === null) {
+    return { formulas: [], givens: [], premiseCount: 0, promptLines };
+  }
+
   // An optional leading list bullet is dropped, so '- P :|-: Q' also reads.
-  const argument = splitArgumentLine(sequent.text);
+  const argument = splitArgumentLine(sequent.text, lang);
 
   if (argument === null || extraTurnstileLine) {
     diagnostics.push(tooManyTurnstiles(sequent.line));
@@ -609,13 +616,13 @@ function parseValidityBody(
 
   const premises = parseFormulaList(
     argument.premises,
-    system,
+    lang,
     sequent.line,
     diagnostics,
   );
   const conclusions = parseFormulaList(
     argument.conclusions,
-    system,
+    lang,
     sequent.line,
     diagnostics,
   );

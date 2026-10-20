@@ -35,10 +35,7 @@
 
 import type { AssertStatement, SurfaceLanguage, Term } from "@aufbau/syntax";
 import { printTerm, unfoldDefinitions } from "@aufbau/syntax";
-import { binderScope } from "../../../exercise-kit/proof/formulas";
-import { acuiOf } from "../../../logic/specs/annotations";
 import { roleIndex } from "../../../logic/specs/roles";
-import { readEngine } from "./rows";
 
 /** What each metavariable of a pattern stands for. */
 export type Bindings = ReadonlyMap<string, Term>;
@@ -90,9 +87,11 @@ function listsOf(language: SurfaceLanguage): ReadonlyMap<string, List> {
   if (lists === undefined) {
     const found = new Map<string, List>();
 
-    for (const acui of acuiOf(language).values()) {
-      if (acui.comm === null && acui.idem === null && acui.unit !== null) {
-        found.set(acui.sort, { term: acui.term, unit: acui.unit });
+    for (const info of language.spec.terms.values()) {
+      const acui = info.acui;
+
+      if (acui !== null && acui.comm === null && acui.idem === null) {
+        found.set(info.returnSort, { term: info.name, unit: acui.unit });
       }
     }
 
@@ -543,20 +542,6 @@ function matchFilled(
   };
 
   return walk(body, term, bindings);
-}
-
-/**
- * A reader of a statement's formulas at a sort, as patterns: engine syntax,
- * with the statement's binders in scope. Null for a formula that does not
- * read.
- */
-export function statementReader(
-  language: SurfaceLanguage,
-  statement: AssertStatement,
-  sort: string,
-): (text: string) => Term | null {
-  const scope = binderScope(statement);
-  return (text) => readEngine(language, text, sort, scope);
 }
 
 /**

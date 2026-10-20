@@ -62,7 +62,6 @@ import type {
   TermInfo,
 } from "@aufbau/syntax";
 import { parseStatements, printTerm } from "@aufbau/syntax";
-import { acuiOf, relationsOf } from "../../../logic/specs/annotations";
 import type {
   DevelopmentRule,
   InstanceSlot,
@@ -664,7 +663,7 @@ function generate(
   }
 
   // The judgements, their congruences, and their chains.
-  const relations = relationsOf(language);
+  const relations = language.spec.relations;
   const text: string[] = [
     "-- When a row is developed: generated from the rules (Carnap, gh #46).",
   ];
@@ -891,7 +890,9 @@ function constructorsBySort(
 ): ReadonlyMap<string, readonly TermInfo[]> {
   const bySort = new Map<string, TermInfo[]>();
   const lists = new Set(
-    [...acuiOf(language).values()].map((each) => each.sort),
+    [...language.spec.terms.values()].flatMap((each) =>
+      each.acui === null ? [] : [each.returnSort],
+    ),
   );
 
   for (const info of language.spec.terms.values()) {

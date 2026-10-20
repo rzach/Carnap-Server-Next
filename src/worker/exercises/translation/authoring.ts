@@ -1,4 +1,5 @@
 import type { SurfaceLanguage } from "@aufbau/syntax";
+import { splitTopLevel } from "@aufbau/syntax";
 import {
   type CompilerDiagnostic,
   diagnostic,
@@ -19,7 +20,6 @@ import {
 import {
   DEFAULT_LANGUAGE_ID,
   parseFormula,
-  splitFormulaList,
 } from "../../exercise-kit/formula";
 import { parseSystemAttribute } from "../../exercise-kit/systems/attribute";
 import type { ExerciseCompileContext } from "../../exercise-kit/type";
@@ -187,7 +187,7 @@ function parseBody(
       continue;
     }
 
-    for (const piece of splitFormulaList(match[1] ?? "")) {
+    for (const piece of splitTopLevel(language, match[1] ?? "", ",")) {
       const trimmed = piece.trim();
 
       if (trimmed.length === 0) {

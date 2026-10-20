@@ -879,7 +879,7 @@ export async function compileWorld(
         ),
       );
     } else {
-      const argument = splitArgumentLine(body.sequent.text);
+      const argument = splitArgumentLine(body.sequent.text, language);
 
       if (argument === null) {
         diagnostics.push(tooManyTurnstiles(body.sequent.line));

@@ -25,7 +25,8 @@
  * language they claimed to spell.
  */
 
-import type { NotationInfo, SurfaceLanguage } from "@aufbau/syntax";
+import type { SurfaceLanguage } from "@aufbau/syntax";
+import { spellingsOf } from "@aufbau/syntax";
 
 export interface RoleIndex {
   /**
@@ -154,28 +155,6 @@ export function isNamespacedRole(role: string): boolean {
 /** Built once per language, like the language's own tables. */
 const indexes = new WeakMap<SurfaceLanguage, RoleIndex>();
 
-/**
- * A notation's leading token.
- *
- * A simple notation (`infixl and: $∧$ prec 30`) is its token. A general one
- * (`notation bot: wff = ($⊥$:max)`) is a list of constants and variable
- * slots, and the spelling is its first constant — which for the nullary
- * constants a textbook writes this way is the whole notation.
- */
-function leadingToken(notation: NotationInfo): string | null {
-  if (notation.form === "simple") {
-    return notation.token;
-  }
-
-  for (const literal of notation.literals) {
-    if (literal.kind === "constant") {
-      return literal.token;
-    }
-  }
-
-  return null;
-}
-
 export function roleIndex(lang: SurfaceLanguage): RoleIndex {
   const cached = indexes.get(lang);
 
@@ -226,40 +205,11 @@ export function roleIndex(lang: SurfaceLanguage): RoleIndex {
 
       return roles;
     },
-    spellingFor: (role) => {
-      const term = termOfRole.get(role);
-
-      if (term === undefined) {
-        return null;
-      }
-
-      const notation = lang.canonical.get(term);
-
-      return notation === undefined ? null : leadingToken(notation);
-    },
+    spellingFor: (role) => index.spellingsFor(role)[0] ?? null,
     spellingsFor: (role) => {
       const term = termOfRole.get(role);
 
-      if (term === undefined) {
-        return [];
-      }
-
-      const spellings: string[] = [];
-      const canonical = index.spellingFor(role);
-
-      if (canonical !== null) {
-        spellings.push(canonical);
-      }
-
-      for (const notation of lang.spec.notations) {
-        const token = notation.term === term ? leadingToken(notation) : null;
-
-        if (token !== null && !spellings.includes(token)) {
-          spellings.push(token);
-        }
-      }
-
-      return spellings;
+      return term === undefined ? [] : spellingsOf(lang, term);
     },
     termFor: (role) => termOfRole.get(role) ?? null,
     ruleFor: (role) => ruleOfRole.get(role) ?? null,

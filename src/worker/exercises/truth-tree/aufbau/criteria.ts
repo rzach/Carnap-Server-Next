@@ -22,8 +22,13 @@
  * diagnostics word them.
  */
 
-import type { AssertStatement, SurfaceLanguage, Term } from "@aufbau/syntax";
-import { relationsOf } from "../../../logic/specs/annotations";
+import type {
+  AssertStatement,
+  StatementFormula,
+  SurfaceLanguage,
+  Term,
+} from "@aufbau/syntax";
+import { parseStatement, statementScope } from "@aufbau/syntax";
 import { roleIndex } from "../../../logic/specs/roles";
 import type { Bindings, RulePatterns } from "./patterns";
 import {
@@ -32,7 +37,6 @@ import {
   mentions,
   occurrence,
   ruleMatches,
-  statementReader,
   substitutionOf,
   termKey,
 } from "./patterns";
@@ -490,16 +494,24 @@ function isStep(
   statement: AssertStatement,
 ): boolean {
   const judgement = language.spec.terms.get(theory.closes)?.returnSort;
+  // The conclusion alone: most statements are not steps, and their
+  // hypotheses need not be read to say so.
   const conclusion =
     judgement === undefined
       ? null
-      : statementReader(
+      : readEngine(
           language,
-          statement,
+          statement.conclusion.text,
           judgement,
-        )(statement.conclusion.text);
+          statementScope(statement),
+        );
 
   return conclusion?.kind === "app" && conclusion.term === theory.focus;
+}
+
+/** A rule formula as a pattern; null for one that does not read. */
+function patternOf({ result }: StatementFormula): Term | null {
+  return result.ok ? result.term : null;
 }
 
 /**
@@ -518,8 +530,13 @@ export function rulePatterns(
     return null;
   }
 
-  const parse = statementReader(language, statement, judgement);
-  const conclusion = parse(statement.conclusion.text);
+  // A type in the `>`-chain is no premise a step could have written.
+  if (statement.hypotheses.some((hypothesis) => "sort" in hypothesis)) {
+    return null;
+  }
+
+  const read = parseStatement(language, statement, { sort: judgement });
+  const conclusion = patternOf(read.conclusion);
 
   if (
     conclusion?.kind !== "app" ||
@@ -545,13 +562,8 @@ export function rulePatterns(
   const written: Term[][] = [];
   const marks: Term[][] = [];
 
-  for (const hypothesis of statement.hypotheses) {
-    if ("sort" in hypothesis) {
-      return null;
-    }
-
-    const premise = parse(hypothesis.text);
-
+  // In citation order, which the engine numbers from the statement.
+  for (const premise of read.hypotheses.map(patternOf)) {
     if (
       premise?.kind !== "app" ||
       premise.term !== theory.closes ||
@@ -855,9 +867,9 @@ function judgementRelation(
 ): JudgementRelation | null {
   const sort = language.spec.terms.get(theory.closes)?.returnSort;
   const relation =
-    sort === undefined ? undefined : relationsOf(language).get(sort);
+    sort === undefined ? undefined : language.spec.relations.get(sort);
 
-  return relation === undefined || relation.mp === null
+  return relation === undefined || relation.transport === null
     ? null
-    : { mp: relation.mp, refl: relation.refl };
+    : { mp: relation.transport, refl: relation.refl };
 }

@@ -1,4 +1,5 @@
 import type { SurfaceLanguage } from "@aufbau/syntax";
+import { splitTopLevel } from "@aufbau/syntax";
 import {
   type CompilerDiagnostic,
   diagnostic,
@@ -36,7 +37,6 @@ import {
   parseNatural,
   parseTupleList,
   splitArgumentLine,
-  splitFormulaList,
 } from "./logic";
 import type {
   ModelCheckMode,
@@ -336,7 +336,7 @@ function parseSimpleBody(
 
     targeted.push(
       ...parseFormulaList(
-        splitFormulaList(match[1] ?? ""),
+        splitTopLevel(language, match[1] ?? "", ","),
         language,
         lineNumber,
         diagnostics,
@@ -403,7 +403,7 @@ function parseValidityBody(
     return { givenLines, promptLines, required: [], targeted: [] };
   }
 
-  const argument = splitArgumentLine(sequent.text);
+  const argument = splitArgumentLine(sequent.text, language);
 
   if (argument === null || extraTurnstile) {
     diagnostics.push(tooManyTurnstiles(sequent.line));
@@ -493,13 +493,13 @@ function parseConstraintBody(
 
   const separator = split.text.indexOf(":");
   const required = parseFormulaList(
-    splitFormulaList(split.text.slice(0, separator)),
+    splitTopLevel(language, split.text.slice(0, separator), ","),
     language,
     split.line,
     diagnostics,
   );
   const targeted = parseFormulaList(
-    splitFormulaList(split.text.slice(separator + 1)),
+    splitTopLevel(language, split.text.slice(separator + 1), ","),
     language,
     split.line,
     diagnostics,

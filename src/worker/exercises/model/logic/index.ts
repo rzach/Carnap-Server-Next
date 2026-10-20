@@ -23,7 +23,6 @@ export {
   parseEngineFormula,
   parseFormula,
   splitArgumentLine,
-  splitFormulaList,
   termToString,
 } from "../../../exercise-kit/formula";
 export type {
