@@ -20,7 +20,7 @@
  */
 
 import type { SurfaceLanguage, Term } from "@aufbau/syntax";
-import { freeVariables, substitute } from "@aufbau/syntax";
+import { freeVariables, substitute, variables } from "@aufbau/syntax";
 import type { Missing } from "../report";
 import type { TableauIndex, TableauNode } from "../tableau/document";
 import { isLiteral, isSelfIdentity } from "./branch";
@@ -149,11 +149,6 @@ function isVacuous(
   );
 }
 
-/** Every variable in a term, binding occurrences too. */
-function variablesOf(term: Term): Extract<Term, { kind: "variable" }>[] {
-  return term.kind === "variable" ? [term] : term.args.flatMap(variablesOf);
-}
-
 /**
  * What each branch marked open is asked, for a theory that says when a row
  * is developed.
@@ -197,23 +192,20 @@ export function branchQuestions(
     const renames = new Map<string, Term>();
 
     for (const value of bindings.values()) {
-      for (const variable of variablesOf(value)) {
+      for (const [name, sort] of variables(value)) {
         // A variable the matcher made up is in no pool.
-        if (
-          language.sortOfName(variable.name) !== null ||
-          renames.has(variable.name)
-        ) {
+        if (language.sortOfName(name) !== null || renames.has(name)) {
           continue;
         }
 
-        const token = language.freshName(variable.sort, taken);
+        const token = language.freshName(sort, taken);
 
         if (token?.kind !== "variable") {
           return null;
         }
 
         taken.add(token.name);
-        renames.set(variable.name, { ...variable, name: token.name });
+        renames.set(name, token);
       }
     }
 

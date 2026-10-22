@@ -55,7 +55,7 @@
  */
 
 import type { Binder, SurfaceLanguage, Term, TermInfo } from "@aufbau/syntax";
-import { printTerm } from "@aufbau/syntax";
+import { printTerm, variables } from "@aufbau/syntax";
 import type {
   DevelopmentRule,
   InstanceSlot,
@@ -260,10 +260,7 @@ function generate(
       arg.map((term) => renamed(term, names)),
     );
     const terms = [...heads.flat(), ...parts];
-    const mentioned = new Set([
-      patterns.branch,
-      ...terms.flatMap(variablesIn),
-    ]);
+    const mentioned = new Set([patterns.branch, ...namesIn(terms)]);
     const conclusion = `${judgement} ${heads
       .map(
         (arg) =>
@@ -411,14 +408,14 @@ function generate(
           ? [
               ...(side ? [] : patterns.side),
               ...(patterns.written[premise] ?? []).filter((row) =>
-                variablesIn(row).includes(slot.binder),
+                variables(row).has(slot.binder),
               ),
             ]
           : (patterns.marks[premise] ?? []).filter(
               (mark) =>
                 mark.kind === "app" &&
                 mark.term === theory.markInstance &&
-                variablesIn(mark).includes(slot.binder),
+                variables(mark).has(slot.binder),
             );
 
         if (parts.length === 0) {
@@ -459,8 +456,8 @@ function generate(
     const recovers = engineAnnotations(language, axiom).filter((line) =>
       line.startsWith("@recover "),
     );
-    const own = new Set(variablesIn(patterns.focus[0] as Term));
-    const asked = new Set(parts.flatMap(variablesIn));
+    const own = variables(patterns.focus[0] as Term);
+    const asked = new Set(namesIn(parts));
     const needed = recovers.filter((line) => {
       const target = line.split(/\s+/u)[1] ?? "";
       return asked.has(target) && !own.has(target);
@@ -785,11 +782,9 @@ function reservedNames(language: SurfaceLanguage): ReadonlySet<string> {
   return names;
 }
 
-/** Every variable in a term, binding occurrences too, in order. */
-function variablesIn(term: Term): string[] {
-  return term.kind === "variable"
-    ? [term.name]
-    : term.args.flatMap(variablesIn);
+/** Every variable name in `terms`, binding occurrences too. */
+function namesIn(terms: readonly Term[]): string[] {
+  return terms.flatMap((term) => [...variables(term).keys()]);
 }
 
 /**

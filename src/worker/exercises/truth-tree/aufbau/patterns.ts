@@ -53,6 +53,7 @@ import {
   RewriteLimitError,
   substitute,
   unfoldDefinitions,
+  variables,
 } from "@aufbau/syntax";
 
 /** What each metavariable of a pattern stands for. */
@@ -304,9 +305,10 @@ export function computedTerm(
 }
 
 /**
- * A variable of `sort` named nowhere in `term`: `x0`, `x1`, …, which no
- * pool holds, so that it cannot be mistaken for a row's own variable; the
- * engine is told a pool token in its place (`pairBindings`).
+ * A variable of `sort` named nowhere in `term` and held by no pool: the
+ * first of `x0`, `x1`, … that is neither, so that it cannot be mistaken for
+ * a row's own variable; the engine is told a pool token in its place
+ * (`pairBindings`).
  */
 function freshVariable(
   language: SurfaceLanguage,
@@ -314,20 +316,12 @@ function freshVariable(
   sort: string,
   term: Term,
 ): VariableTerm {
-  const names = new Set<string>();
-  const collect = (node: Term): void => {
-    if (node.kind === "variable") {
-      names.add(node.name);
-    } else {
-      node.args.forEach(collect);
-    }
-  };
-
-  collect(term);
-
+  const names = variables(term);
+  const taken = (candidate: string) =>
+    names.has(candidate) || language.sortOfName(candidate) !== null;
   let at = 0;
 
-  while (names.has(`${name}${at}`)) {
+  while (taken(`${name}${at}`)) {
     at += 1;
   }
 
