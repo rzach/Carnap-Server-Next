@@ -144,32 +144,3 @@ export function applyBinaryConnective(
 ): boolean {
   return TRUTH_FUNCTIONS[connective](left, right);
 }
-
-/**
- * What a connective is written as when the spec declares its role but gives
- * the constructor no notation to report.
- *
- * Unreachable for anything an author can actually write — a connective with no
- * notation cannot be typed, so no formula can contain one — and here so that a
- * printer emits a symbol rather than `undefined`. The glyphs are the standard
- * ones; the six degenerate functions have no standard glyph and are written as
- * the equivalent a reader can decode.
- */
-export const DEFAULT_BINARY_SPELLING: Record<BinaryConnective, string> = {
-  and: "∧",
-  "binary-falsum": "⊥",
-  "binary-verum": "⊤",
-  "converse-conditional": "←",
-  "converse-non-conditional": "↚",
-  if: "→",
-  iff: "↔",
-  "left-projection": "π₁",
-  nand: "↑",
-  "negated-left-projection": "¬π₁",
-  "negated-right-projection": "¬π₂",
-  "non-conditional": "↛",
-  nor: "↓",
-  or: "∨",
-  "right-projection": "π₂",
-  xor: "⊻",
-};

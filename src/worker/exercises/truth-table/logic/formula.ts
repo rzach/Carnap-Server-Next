@@ -5,8 +5,8 @@
  * names — `logic/theories/carnap-prop.mm0`, registered by `logic/specs`, when
  * the author names nothing — an ordinary MM0 signature with `@syntax`
  * annotations, read by `@aufbau/syntax`; this module only converts what that
- * parser returns into the {@link Formula} tree a table is built from, and
- * writes one back out. The spec is the same kind of artifact a proof
+ * parser returns into the {@link Formula} tree a table is built from. Writing
+ * one back out is the library's printer, through `layout.ts`. The spec is the same kind of artifact a proof
  * exercise's `system=` names, and the same kind the model and translation
  * types read; before it there were two hand parsers here and next door, with
  * no way to make a course's truth tables and its models agree about what `A`
@@ -48,15 +48,10 @@ import type {
   SurfaceLanguage,
   Term as SurfaceTerm,
 } from "@aufbau/syntax";
-import { adjoin, printTerm } from "@aufbau/syntax";
+import { printTerm } from "@aufbau/syntax";
 import { namedLanguage } from "../../../logic/specs/by-id";
 import type { BinaryConnective } from "../../../logic/specs/connectives";
-import {
-  BINARY_CONNECTIVES,
-  binaryConnectiveForRole,
-  DEFAULT_BINARY_SPELLING,
-  roleForBinaryConnective,
-} from "../../../logic/specs/connectives";
+import { binaryConnectiveForRole } from "../../../logic/specs/connectives";
 import type { FormulaParseError } from "../../../logic/specs/diagnostics";
 import { formulaParseErrors } from "../../../logic/specs/diagnostics";
 import { languageFromSource } from "../../../logic/specs/read";
@@ -83,6 +78,13 @@ export type ParseResult =
       readonly formula: Formula;
       /** The formula as engine text, which is what an exercise stores. */
       readonly engine: string;
+      /** The tree it was read from, which the grid is printed from. */
+      readonly term: SurfaceTerm;
+      /**
+       * Each node of `term` read as a formula, by its path (`"0.1"`, `""`
+       * for the root): what a printed piece of `term` evaluates.
+       */
+      readonly nodes: ReadonlyMap<string, Formula>;
     }
   | { readonly ok: false; readonly errors: readonly ParseError[] };
 
@@ -172,15 +174,22 @@ function prop(): SurfaceLanguage {
   return found;
 }
 
+/** Where a formula's nodes are recorded as they are read. */
+interface Reading {
+  readonly lang: SurfaceLanguage;
+  readonly nodes: Map<string, Formula>;
+}
+
 function operand(
   node: SurfaceTerm | undefined,
-  lang: SurfaceLanguage,
+  reading: Reading,
+  path: readonly number[],
 ): Formula {
   if (node === undefined) {
     throw malformed();
   }
 
-  return readFormula(node, lang);
+  return readFormula(node, reading, path);
 }
 
 /**
@@ -203,8 +212,29 @@ function operand(
  * a truth table's reading of a connective is exactly its truth function and
  * nothing else — `logic/specs/connectives.ts` holds all sixteen. What is left
  * to case on is the handful that are not binary.
+ *
+ * Each node read is recorded under its path in the tree, which is how the
+ * grid finds the formula a printed piece of the tree evaluates.
  */
-function readFormula(node: SurfaceTerm, lang: SurfaceLanguage): Formula {
+function readFormula(
+  node: SurfaceTerm,
+  reading: Reading,
+  path: readonly number[],
+): Formula {
+  const formula = readNode(node, reading, path);
+
+  reading.nodes.set(path.join("."), formula);
+  return formula;
+}
+
+/** {@link readFormula}'s dispatch, before the node is recorded. */
+function readNode(
+  node: SurfaceTerm,
+  reading: Reading,
+  path: readonly number[],
+): Formula {
+  const { lang } = reading;
+
   if (node.kind === "variable") {
     throw malformed();
   }
@@ -219,7 +249,10 @@ function readFormula(node: SurfaceTerm, lang: SurfaceLanguage): Formula {
 
       return { name: printTerm(lang, node, "display"), type: "atom" };
     case "negation":
-      return { operand: operand(node.args[0], lang), type: "not" };
+      return {
+        operand: operand(node.args[0], reading, [...path, 0]),
+        type: "not",
+      };
     case "verum":
       return { type: "verum" };
     case "falsum":
@@ -232,8 +265,8 @@ function readFormula(node: SurfaceTerm, lang: SurfaceLanguage): Formula {
       }
 
       return {
-        left: operand(node.args[0], lang),
-        right: operand(node.args[1], lang),
+        left: operand(node.args[0], reading, [...path, 0]),
+        right: operand(node.args[1], reading, [...path, 1]),
         type: connective,
       };
     }
@@ -279,10 +312,14 @@ function readParse(
   }
 
   try {
+    const nodes = new Map<string, Formula>();
+
     return {
       engine: printTerm(lang, result.term, "engine"),
-      formula: readFormula(result.term, lang),
+      formula: readFormula(result.term, { lang, nodes }, []),
+      nodes,
       ok: true,
+      term: result.term,
     };
   } catch (error) {
     if (error instanceof Unreadable) {
@@ -291,80 +328,6 @@ function readParse(
 
     throw error;
   }
-}
-
-/** Every symbol a written-out formula needs, as this spec spells it. */
-export interface Spellings {
-  readonly binary: Record<BinaryConnective, string>;
-  readonly not: string;
-  readonly verum: string;
-  readonly falsum: string;
-}
-
-/**
- * The spec's canonical spelling of every symbol this type reads — its
- * last-declared notation for each role.
- *
- * The one place a truth table decides what a connective *looks like*, shared
- * by the printer below and by `layout.ts`, which used to carry a second table
- * of hardcoded ASCII. That divergence was visible: an author whose spec spells
- * conjunction `&` had their formula stored as `(P & Q)` and drawn as
- * `(P /\ Q)`, because storage asked the spec and the grid did not.
- *
- * The fallbacks are unreachable for anything writable — a constructor with no
- * notation cannot be typed — and are here so a printer emits a symbol rather
- * than `undefined`.
- */
-export function connectiveSpellings(lang: SurfaceLanguage): Spellings {
-  const index = roleIndex(lang);
-  const binary = {} as Record<BinaryConnective, string>;
-
-  for (const connective of BINARY_CONNECTIVES) {
-    binary[connective] =
-      index.spellingFor(roleForBinaryConnective(connective)) ??
-      DEFAULT_BINARY_SPELLING[connective];
-  }
-
-  return {
-    binary,
-    falsum: index.spellingFor("falsum") ?? "⊥",
-    not: index.spellingFor("negation") ?? "~",
-    verum: index.spellingFor("verum") ?? "⊤",
-  };
-}
-
-/**
- * Render a formula for a reader (fully parenthesized).
- *
- * The symbols are the spec's canonical spelling of each role — its
- * last-declared notation. `carnap-prop` declares nothing but ASCII, so this
- * is the ASCII a student types. Display only: a table stores engine text
- * ({@link ParseResult}).
- */
-export function formulaToString(
-  formula: Formula,
-  lang: SurfaceLanguage = prop(),
-): string {
-  const spelling = connectiveSpellings(lang);
-
-  const write = (part: Formula): string => {
-    switch (part.type) {
-      case "atom":
-        return part.name;
-      case "verum":
-        return spelling.verum;
-      case "falsum":
-        return spelling.falsum;
-      case "not":
-        // Tight where the delimiters cut, spaced where a spelled-out `not`
-        // would otherwise run into its operand.
-        return adjoin(spelling.not, write(part.operand), lang.scanner.rules);
-      default:
-        return `(${write(part.left)} ${spelling.binary[part.type]} ${write(part.right)})`;
-    }
-  };
-
-  return write(formula);
 }
 
 /**

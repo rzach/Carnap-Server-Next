@@ -243,8 +243,11 @@ supplied automatically. A table may use at most `MAX_TABLE_ATOMS` (12)
 distinct atoms.
 
 `system` can select another language, including a first-order language's
-propositional fragment. Grid labels use its canonical notation rather than
-the default spellings. See [Languages and theories][languages] for extensions.
+propositional fragment. The grid is the formula as that language displays
+it: its canonical spellings, its brackets, its order, and the outermost pair
+only where its `@syntax display` keeps one (none of the built-ins do). There
+is one cell under each atom, however it prints (`F(a)` is one cell), and one
+under each connective's token. See [Languages and theories][languages] for extensions.
 
 ### Supported formula constructs
 
@@ -302,9 +305,11 @@ from public formulas, so submitted dimensions must match that layout.
 
 ## Implementation and tests
 
-- `logic/formula.ts`: language parsing, formula tree, and printing.
+- `logic/formula.ts`: language parsing, and the formula tree with each node's
+  path in the parse.
 - `logic/truth-table.ts`: atoms, valuations, and evaluation.
-- `logic/layout.ts`: displayed parentheses and cells.
+- `logic/layout.ts`: cells and brackets, from `@aufbau/syntax`'s
+  `printPieces`.
 - `types.ts`: public data, options, and answer contracts.
 - `grading.ts`: fill masks, correct grids, scores, and structural checks.
 - `authoring.ts`: directives, attributes, formulas, and given validation.

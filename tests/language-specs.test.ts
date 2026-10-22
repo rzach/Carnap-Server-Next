@@ -226,7 +226,7 @@ describe("language specs", () => {
     const id = "carnap-prop";
 
     test("atoms are single Roman letters of either case", () => {
-      expect(display(id, "p/\\Z")).toBe("(p /\\ Z)");
+      expect(display(id, "p/\\Z")).toBe("p /\\ Z");
       // The incumbent's bare-digit subscript is the documented casualty — of
       // the *shipped signature*, which declares 52 atoms and no `P0`. It is no
       // longer a casualty of segmentation: see the next test.
@@ -252,22 +252,22 @@ describe("language specs", () => {
 
       expect(parsed.ok).toBe(true);
       expect(parsed.ok && printTerm(extended, parsed.term, "display")).toBe(
-        "(~Rain -> P1)",
+        "~Rain -> P1",
       );
       // The half the letters were supposed to be buying, which they never were.
       expect(display(id, "~~P")).toBe("~~P");
     });
 
     test("five rungs: ~ over /\\ over \\/ over -> over <->", () => {
-      expect(display(id, "P/\\Q\\/R")).toBe("((P /\\ Q) \\/ R)");
-      expect(display(id, "~P/\\Q")).toBe("(~P /\\ Q)");
-      expect(display(id, "P\\/Q->R")).toBe("((P \\/ Q) -> R)");
-      expect(display(id, "P->Q<->R")).toBe("((P -> Q) <-> R)");
+      expect(display(id, "P/\\Q\\/R")).toBe("(P /\\ Q) \\/ R");
+      expect(display(id, "~P/\\Q")).toBe("~P /\\ Q");
+      expect(display(id, "P\\/Q->R")).toBe("(P \\/ Q) -> R");
+      expect(display(id, "P->Q<->R")).toBe("(P -> Q) <-> R");
     });
 
     test("every rung chains, and -> chains to the right", () => {
-      expect(display(id, "P->Q->R")).toBe("(P -> (Q -> R))");
-      expect(display(id, "P<->Q<->R")).toBe("((P <-> Q) <-> R)");
+      expect(display(id, "P->Q->R")).toBe("P -> (Q -> R)");
+      expect(display(id, "P<->Q<->R")).toBe("(P <-> Q) <-> R");
     });
 
     test("parentheses may enclose anything", () => {

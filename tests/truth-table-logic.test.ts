@@ -9,10 +9,35 @@ import {
   enumerateValuations,
   evaluate,
   formulaLayout,
-  formulaToString,
   parseFormula,
 } from "../src/worker/exercises/truth-table/logic";
 import { languageById, languageFromSource } from "../src/worker/logic/specs";
+
+const SPELLING: Partial<Record<Formula["type"], string>> = {
+  and: "/\\",
+  if: "->",
+  iff: "<->",
+  or: "\\/",
+};
+
+/**
+ * The parse's structure, every binary compound bracketed: what these tests
+ * pin, apart from how any language displays it.
+ */
+function shape(formula: Formula): string {
+  switch (formula.type) {
+    case "atom":
+      return formula.name;
+    case "verum":
+      return "⊤";
+    case "falsum":
+      return "⊥";
+    case "not":
+      return `~${shape(formula.operand)}`;
+    default:
+      return `(${shape(formula.left)} ${SPELLING[formula.type] ?? formula.type} ${shape(formula.right)})`;
+  }
+}
 
 /**
  * A propositional language with one construct this type has no reading for,
@@ -130,39 +155,37 @@ describe("parseFormula", () => {
   });
 
   test("tolerates whitespace", () => {
-    expect(formulaToString(parse("  P   /\\   Q "))).toBe("(P /\\ Q)");
+    expect(shape(parse("  P   /\\   Q "))).toBe("(P /\\ Q)");
   });
 
   test("binds ~ tighter than /\\", () => {
     // ~P /\ Q parses as (~P) /\ Q, not ~(P /\ Q).
-    expect(formulaToString(parse("~P /\\ Q"))).toBe("(~P /\\ Q)");
+    expect(shape(parse("~P /\\ Q"))).toBe("(~P /\\ Q)");
   });
 
   test("binds /\\ tighter than \\/", () => {
-    expect(formulaToString(parse("P \\/ Q /\\ R"))).toBe("(P \\/ (Q /\\ R))");
+    expect(shape(parse("P \\/ Q /\\ R"))).toBe("(P \\/ (Q /\\ R))");
   });
 
   test("binds \\/ tighter than ->", () => {
-    expect(formulaToString(parse("P -> Q \\/ R"))).toBe("(P -> (Q \\/ R))");
+    expect(shape(parse("P -> Q \\/ R"))).toBe("(P -> (Q \\/ R))");
   });
 
   test("binds -> tighter than <->", () => {
-    expect(formulaToString(parse("P <-> Q -> R"))).toBe("(P <-> (Q -> R))");
+    expect(shape(parse("P <-> Q -> R"))).toBe("(P <-> (Q -> R))");
   });
 
   test("-> is right-associative", () => {
-    expect(formulaToString(parse("P -> Q -> R"))).toBe("(P -> (Q -> R))");
+    expect(shape(parse("P -> Q -> R"))).toBe("(P -> (Q -> R))");
   });
 
   test("/\\ is left-associative", () => {
-    expect(formulaToString(parse("P /\\ Q /\\ R"))).toBe("((P /\\ Q) /\\ R)");
+    expect(shape(parse("P /\\ Q /\\ R"))).toBe("((P /\\ Q) /\\ R)");
   });
 
   test("parentheses override precedence", () => {
-    expect(formulaToString(parse("~(P /\\ Q)"))).toBe("~(P /\\ Q)");
-    expect(formulaToString(parse("(P \\/ Q) /\\ R"))).toBe(
-      "((P \\/ Q) /\\ R)",
-    );
+    expect(shape(parse("~(P /\\ Q)"))).toBe("~(P /\\ Q)");
+    expect(shape(parse("(P \\/ Q) /\\ R"))).toBe("((P \\/ Q) /\\ R)");
   });
 });
 
@@ -509,7 +532,7 @@ describe("connectives past the five carnap-prop declares", () => {
 
     if (result.ok) {
       expect(
-        formulaLayout(result.formula, extended)
+        formulaLayout(result, extended)
           .filter((segment) => segment.kind === "cell")
           .map((segment) => segment.text),
       ).toEqual(["~", "P", "&", "Q", "|", "R"]);

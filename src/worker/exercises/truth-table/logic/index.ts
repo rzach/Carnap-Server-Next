@@ -10,13 +10,17 @@ export type {
   ParseResult,
 } from "./formula";
 export {
-  formulaToString,
   PROP_LANGUAGE_ID,
   parseEngineFormula,
   parseFormula,
   truthTableLanguage,
 } from "./formula";
-export type { CellRole, CellSegment, FormulaSegment } from "./layout";
+export type {
+  CellRole,
+  CellSegment,
+  FormulaSegment,
+  MarkSegment,
+} from "./layout";
 export { formulaLayout } from "./layout";
 export {
   collectAtoms,

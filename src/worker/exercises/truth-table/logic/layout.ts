@@ -1,22 +1,24 @@
 /**
- * Display layout for a written-out formula: the ordered run of parentheses and
- * fillable cells (one per atom occurrence and one per connective), as a truth
- * table draws it left to right. DOM-free — the worker SSRs the grid from it and
- * the client element reads cell coordinates back against the same order, so both
- * sides must derive the layout from this one function.
+ * Display layout for a written-out formula: the ordered run of fillable cells
+ * (one per atom occurrence and one per connective) and the text between them,
+ * as a truth table draws it left to right. DOM-free — the worker SSRs the grid
+ * from it and the client element reads cell coordinates back against the same
+ * order, so both sides must derive the layout from this one function.
  *
- * Parenthesization mirrors {@link formulaToString} but drops the redundant
- * outermost parens: a binary sub-formula is wrapped only when it is nested.
- *
- * Symbols come from the spec, through the same {@link connectiveSpellings} the
- * printer uses. They were a hardcoded ASCII table here until 2026-08-27, which
- * meant a table set in forallx stored `(P ∧ Q)` and drew `(P /\ Q)`, and meant
- * a connective an author declared themselves had no spelling at all to draw.
+ * The layout is the formula as the language prints it, not a second printer:
+ * `printPieces` gives the display text as pieces, each naming the node it came
+ * from, and every piece lands under the formula that node was read as. The
+ * spellings, the brackets and their order are the spec's, so a table set in
+ * forallx draws `∧` where `carnap-prop` draws `/\`, and the outermost pair is
+ * there exactly when the language's display keeps it (`@syntax display
+ * drop-outer-parens`). Before 2026-10-21 this file re-derived the brackets and
+ * spellings itself, and could disagree with every other place a formula is
+ * shown.
  */
 
 import type { SurfaceLanguage } from "@aufbau/syntax";
-import type { Formula, Spellings } from "./formula";
-import { connectiveSpellings } from "./formula";
+import { printPieces } from "@aufbau/syntax";
+import type { Formula, ParseResult } from "./formula";
 
 export type CellRole = "atom" | "connective";
 
@@ -24,7 +26,7 @@ export type CellRole = "atom" | "connective";
 export interface CellSegment {
   readonly kind: "cell";
   readonly role: CellRole;
-  /** The display token: the atom name, or the connective symbol. */
+  /** The display text: the atom as printed, or the connective's token. */
   readonly text: string;
   /** The sub-formula this cell evaluates (an atom node or a connective node). */
   readonly formula: Formula;
@@ -32,73 +34,94 @@ export interface CellSegment {
   readonly isMain: boolean;
 }
 
-export type FormulaSegment =
-  | { readonly kind: "paren"; readonly text: "(" | ")" }
-  | CellSegment;
+/**
+ * Text no cell stands under: a bracket, or a connective's second token where
+ * its notation has more than one.
+ */
+export interface MarkSegment {
+  readonly kind: "mark";
+  readonly text: string;
+}
 
-function emit(
-  node: Formula,
-  root: Formula,
-  isRoot: boolean,
-  spelling: Spellings,
-  out: FormulaSegment[],
-): void {
-  const cell = (text: string): void => {
-    out.push({
-      formula: node,
-      isMain: node === root,
-      kind: "cell",
-      role: "connective",
-      text,
-    });
-  };
+export type FormulaSegment = MarkSegment | CellSegment;
 
-  switch (node.type) {
-    case "atom":
-      out.push({
-        formula: node,
-        isMain: false,
-        kind: "cell",
-        role: "atom",
-        text: node.name,
-      });
-      return;
+type Read = Extract<ParseResult, { readonly ok: true }>;
+
+/**
+ * The formula a piece at `path` belongs to: its node's, or the nearest
+ * enclosing node's that was read as one. An atom's own structure — `F(a)`'s
+ * head, brackets and argument — is nobody's but the atom's.
+ */
+function owner(
+  nodes: Read["nodes"],
+  path: readonly number[],
+): Formula | undefined {
+  for (let depth = path.length; depth >= 0; depth -= 1) {
+    const found = nodes.get(path.slice(0, depth).join("."));
+
+    if (found !== undefined) {
+      return found;
+    }
+  }
+
+  return undefined;
+}
+
+/** The full cell-and-bracket run for a written-out formula. */
+export function formulaLayout(
+  read: Read,
+  lang: SurfaceLanguage,
+): FormulaSegment[] {
+  const out: FormulaSegment[] = [];
+  const cellOf = new Set<Formula>();
+
+  for (const piece of printPieces(lang, read.term)) {
+    const formula = owner(read.nodes, piece.path);
+
+    if (formula === undefined) {
+      continue;
+    }
+
+    // An atom is one cell, whatever it prints as: `P`, `F(a)`, `R(a, b)`.
+    if (formula.type === "atom") {
+      const last = out.at(-1);
+
+      if (last?.kind === "cell" && last.formula === formula) {
+        out[out.length - 1] = { ...last, text: last.text + piece.text };
+      } else {
+        out.push({
+          formula,
+          isMain: false,
+          kind: "cell",
+          role: "atom",
+          text: piece.text,
+        });
+      }
+
+      continue;
+    }
+
+    if (piece.kind === "space") {
+      continue;
+    }
+
     // `⊤` and `⊥` take no operands and are still connectives: a column of
     // constant Ts under the symbol, which is what a student is being asked to
     // notice about them.
-    case "verum":
-      cell(spelling.verum);
-      return;
-    case "falsum":
-      cell(spelling.falsum);
-      return;
-    case "not":
-      cell(spelling.not);
-      // A negation's operand is parenthesized only when it is binary.
-      emit(node.operand, root, false, spelling, out);
-      return;
-    default: {
-      if (!isRoot) {
-        out.push({ kind: "paren", text: "(" });
-      }
-
-      emit(node.left, root, false, spelling, out);
-      cell(spelling.binary[node.type]);
-      emit(node.right, root, false, spelling, out);
-
-      if (!isRoot) {
-        out.push({ kind: "paren", text: ")" });
-      }
+    if (piece.kind === "token" && !cellOf.has(formula)) {
+      cellOf.add(formula);
+      out.push({
+        formula,
+        isMain: formula === read.formula,
+        kind: "cell",
+        role: "connective",
+        text: piece.text,
+      });
+      continue;
     }
-  }
-}
 
-/** The full parenthesis-and-cell run for a written-out formula. */
-export function formulaLayout(
-  formula: Formula,
-  lang: SurfaceLanguage,
-): FormulaSegment[] {
-  const segments: FormulaSegment[] = [];
-  emit(formula, formula, true, connectiveSpellings(lang), segments);
-  return segments;
+    out.push({ kind: "mark", text: piece.text });
+  }
+
+  return out;
 }

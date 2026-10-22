@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { SurfaceLanguage } from "@aufbau/syntax";
+import { printTerm } from "@aufbau/syntax";
 import { compileCarnapMarkdown } from "../src/worker/application/content/compiler";
 import { renderCompiledContent } from "../src/worker/application/content/renderer";
 import type {
@@ -20,9 +21,8 @@ import {
 } from "../src/worker/exercises/truth-table/grading";
 import {
   type CellSegment,
-  type Formula,
   formulaLayout,
-  formulaToString,
+  type ParseResult,
   parseEngineFormula,
   parseFormula,
   truthTableLanguage,
@@ -44,7 +44,7 @@ import {
   passthroughTranslator,
   type Translator,
 } from "../src/worker/i18n/translator";
-import { languageById } from "../src/worker/logic/specs";
+import { languageById, languageFromSource } from "../src/worker/logic/specs";
 
 /** Review text is resolved for a viewer, so a review needs a translator. */
 const REVIEW_CONTEXT = {
@@ -109,16 +109,16 @@ function shownIn(language: string, engines: readonly string[]): string[] {
       throw new Error(`'${engine}' does not read back`);
     }
 
-    return formulaToString(read.formula, lang);
+    return printTerm(lang, read.term);
   });
 }
 
 /** Just the fillable cells of a formula, in left-to-right display order. */
 function formulaCells(
-  formula: Formula,
+  read: Extract<ParseResult, { ok: true }>,
   lang: SurfaceLanguage,
 ): CellSegment[] {
-  return formulaLayout(formula, lang).filter(
+  return formulaLayout(read, lang).filter(
     (segment): segment is CellSegment => segment.kind === "cell",
   );
 }
@@ -134,7 +134,7 @@ describe("truth-table layout", () => {
     const parsed = parseFormula("~(P /\\ Q)");
     expect(parsed.ok).toBe(true);
     if (parsed.ok) {
-      const cells = formulaCells(parsed.formula, prop);
+      const cells = formulaCells(parsed, prop);
       expect(cells.map((c) => c.text)).toEqual(["~", "P", "/\\", "Q"]);
     }
   });
@@ -143,13 +143,91 @@ describe("truth-table layout", () => {
     const parsed = parseFormula("P -> Q");
     expect(parsed.ok).toBe(true);
     if (parsed.ok) {
-      const cells = formulaCells(parsed.formula, prop);
+      const cells = formulaCells(parsed, prop);
       expect(cells.map((c) => ({ main: c.isMain, role: c.role }))).toEqual([
         { main: false, role: "atom" },
         { main: true, role: "connective" },
         { main: false, role: "atom" },
       ]);
     }
+  });
+
+  /** The grid's whole run, brackets as `(`…`)` and each cell as `[text]`. */
+  function run(source: string, lang: SurfaceLanguage): string {
+    const parsed = parseFormula(source, lang);
+
+    if (!parsed.ok) {
+      throw new Error(`'${source}': ${parsed.errors[0]?.message}`);
+    }
+
+    return formulaLayout(parsed, lang)
+      .map((segment) =>
+        segment.kind === "cell" ? `[${segment.text}]` : segment.text,
+      )
+      .join("");
+  }
+
+  /** A propositional language with its own display choices. */
+  function propWith(
+    notation: string,
+    token: string,
+    display = "",
+  ): SurfaceLanguage {
+    const lang = languageFromSource(`--| @syntax delimiter $ ( ) ~ ${token} $
+${display}
+delimiter $ ( ) $;
+provable sort wff;
+term P: wff;
+term Q: wff;
+--| @syntax role negation
+term not (p: wff): wff;
+prefix not: $~$ prec 50;
+--| @syntax role conjunction
+term and (p q: wff): wff;
+${notation}
+`);
+
+    if (lang === null) {
+      throw new Error("the fixture language does not read");
+    }
+
+    return lang;
+  }
+
+  test("the outermost pair is there exactly when the language displays it", () => {
+    expect(run("~(P /\\ Q) -> R", prop)).toBe("[~]([P][/\\][Q])[->][R]");
+
+    const kept = propWith("infixl and: $&$ prec 40;", "&");
+    const dropped = propWith(
+      "infixl and: $&$ prec 40;",
+      "&",
+      "--| @syntax display drop-outer-parens",
+    );
+
+    expect(run("P & ~Q", kept)).toBe("([P][&][~][Q])");
+    expect(run("P & ~Q", dropped)).toBe("[P][&][~][Q]");
+  });
+
+  test("cells come in the order the language prints, not infix by assumption", () => {
+    // Łukasiewicz's `Kpq`: the connective's cell comes first because that is
+    // where it is written.
+    const polish = propWith("prefix and: $K$ prec 40;", "K");
+
+    expect(run("K P ~Q", polish)).toBe("[K][P][~][Q]");
+  });
+
+  test("an atom is one cell, however it prints", () => {
+    const calgary = languageById("forallx-calgary");
+    const ubc = languageById("forallx-ubc");
+
+    if (calgary === null || ubc === null) {
+      throw new Error("a built-in language is no longer registered");
+    }
+
+    expect(run("F(a) & R(a,b)", calgary)).toBe("[F(a)][∧][R(a,b)]");
+    // UBC's subscripts are elab rules over the printed text, and the cell
+    // still gets the whole name.
+    expect(run("Fa₁ & ~Ga₂", ubc)).toBe("[Fa₁][&][¬][Ga₂]");
   });
 });
 
@@ -298,7 +376,7 @@ describe("truth-table compile", () => {
     const data = publicDataOf(artifact.manifest[0] as ExerciseManifestItem);
 
     expect(shownIn("forallx-calgary", data.formulas)).toEqual([
-      "(R(a,b) ∨ F(a))",
+      "R(a,b) ∨ F(a)",
       "⊥",
       "R(a,b)",
     ]);
@@ -318,7 +396,7 @@ describe("truth-table compile", () => {
 
     expect(shownIn("forallx-calgary", data.formulas)).toEqual([
       "F(a)",
-      "(F(a) ∨ F(b))",
+      "F(a) ∨ F(b)",
     ]);
     expect(data.givens).toHaveLength(1);
   });
@@ -423,7 +501,7 @@ describe("truth-table compile", () => {
       (row) => (row.match(/<t[hd]\b(?![^>]*aria-hidden)/g) ?? []).length,
     );
 
-    expect(html).toContain("tt-paren");
+    expect(html).toContain("tt-mark");
     // The header and eight rows, each: the counterexample selector, the three
     // atoms, and the five symbols of the formula that are not brackets.
     expect(exposed).toEqual(Array.from({ length: 9 }, () => 9));

@@ -9,7 +9,12 @@
  * `publicData.formulas`, so the worker and client agree cell-for-cell.
  */
 
-import type { CellSegment, Formula, FormulaSegment } from "./logic";
+import type {
+  CellSegment,
+  Formula,
+  FormulaSegment,
+  ParseResult,
+} from "./logic";
 import {
   collectAtoms,
   enumerateValuations,
@@ -29,7 +34,7 @@ import type {
 
 export interface ResolvedFormula {
   readonly formula: Formula;
-  /** Parens and cells, in display order (for the header and body layout). */
+  /** Marks and cells, in display order (for the header and body layout). */
   readonly segments: readonly FormulaSegment[];
   /** Just the fillable/gradeable cells, in display order. */
   readonly cells: readonly CellSegment[];
@@ -69,7 +74,7 @@ export function resolveTable(input: TruthTableSource): ResolvedTable | null {
     return null;
   }
 
-  const parsed: Formula[] = [];
+  const reads: Extract<ParseResult, { ok: true }>[] = [];
 
   for (const engine of input.formulas) {
     const result = parseEngineFormula(engine, lang);
@@ -78,18 +83,18 @@ export function resolveTable(input: TruthTableSource): ResolvedTable | null {
       return null;
     }
 
-    parsed.push(result.formula);
+    reads.push(result);
   }
 
-  const atoms = collectAtoms(parsed);
+  const atoms = collectAtoms(reads.map((read) => read.formula));
   const valuations = enumerateValuations(atoms);
-  const formulas = parsed.map((formula) => {
-    const segments = formulaLayout(formula, lang);
+  const formulas = reads.map((read) => {
+    const segments = formulaLayout(read, lang);
     return {
       cells: segments.filter(
         (segment): segment is CellSegment => segment.kind === "cell",
       ),
-      formula,
+      formula: read.formula,
       segments,
     };
   });

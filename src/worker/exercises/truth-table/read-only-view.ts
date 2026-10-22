@@ -90,15 +90,16 @@ function turnstileGlyphFor(options: TruthTableOptions): string {
 }
 
 /**
- * The body cell under a parenthesis: empty, and hidden from assistive
+ * The body cell under a bracket, or other text no cell stands under
+ * ({@link MarkSegment}): empty, and hidden from assistive
  * technology like the heading above it. Hidden in every row, not just the
  * header, because a reader counts a table by its cells: with the headings gone
  * and these left in, the header row came out two cells short of every row
  * beneath it, the table's size was reported as neither, and walking a row
  * stopped on a blank cell at each bracket.
  */
-function parenBodyCell(sep: string): string {
-  return `<td class="tt-paren${sep}" aria-hidden="true"></td>`;
+function markBodyCell(sep: string): string {
+  return `<td class="tt-mark${sep}" aria-hidden="true"></td>`;
 }
 
 /** The written-out header cells for one formula (no turnstile handling). */
@@ -107,8 +108,8 @@ function formulaHead(formula: ResolvedTable["formulas"][number]): string {
     .map((segment, index) => {
       const sep = index === 0 ? " tt-sep" : "";
 
-      if (segment.kind === "paren") {
-        return `<th class="tt-paren${sep}" aria-hidden="true">${escapeHtml(segment.text)}</th>`;
+      if (segment.kind === "mark") {
+        return `<th class="tt-mark${sep}" aria-hidden="true">${escapeHtml(segment.text)}</th>`;
       }
 
       const main = segment.isMain ? " tt-main" : "";
@@ -301,8 +302,8 @@ function bodyRow(
           .map((segment, segmentIndex) => {
             const sep = segmentIndex === 0 ? " tt-sep" : "";
 
-            if (segment.kind === "paren") {
-              return parenBodyCell(sep);
+            if (segment.kind === "mark") {
+              return markBodyCell(sep);
             }
 
             cellIndex += 1;
@@ -420,8 +421,8 @@ function partialBodyRow(
         .map((segment, segmentIndex) => {
           const sep = segmentIndex === 0 ? " tt-sep" : "";
 
-          if (segment.kind === "paren") {
-            return parenBodyCell(sep);
+          if (segment.kind === "mark") {
+            return markBodyCell(sep);
           }
 
           cellIndex += 1;
@@ -472,8 +473,8 @@ function partialReviewRow(
         .map((segment, segmentIndex) => {
           const sep = segmentIndex === 0 ? " tt-sep" : "";
 
-          if (segment.kind === "paren") {
-            return parenBodyCell(sep);
+          if (segment.kind === "mark") {
+            return markBodyCell(sep);
           }
 
           cellIndex += 1;
@@ -748,8 +749,8 @@ function reviewRow(
           .map((segment, segmentIndex) => {
             const sep = segmentIndex === 0 ? " tt-sep" : "";
 
-            if (segment.kind === "paren") {
-              return parenBodyCell(sep);
+            if (segment.kind === "mark") {
+              return markBodyCell(sep);
             }
 
             cellIndex += 1;

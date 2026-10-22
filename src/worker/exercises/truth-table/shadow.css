@@ -54,7 +54,7 @@ table.tt {
   font-weight: 600;
 }
 
-.tt .tt-paren {
+.tt .tt-mark {
   border-inline: 0;
   color: var(--_text-muted);
   min-width: 0;
@@ -62,8 +62,8 @@ table.tt {
 }
 
 /*
- * Parens drop their side borders so they blend, but that erases the table's
- * outer edge when a formula ends (or starts) with one. Force the edge back on
+ * Brackets (the .tt-mark columns) drop their side borders so they blend, but
+ * that erases the table's outer edge when a formula ends (or starts) with one. Force the edge back on
  * the first and last cell of every row.
  */
 .tt tr > :first-child {

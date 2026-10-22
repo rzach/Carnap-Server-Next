@@ -36,6 +36,10 @@
 -- one-character price for exactly that and where a multi-character name has to
 -- declare itself a delimiter to be readable.
 --| @syntax delimiter $ ( ) ~ /\ \/ -> <-> $
+-- Display leaves off the outermost pair, as every other built-in does, and as
+-- the truth table's grid always drew it (2026-10-21): the grid is now this
+-- language's own display, so the language says.
+--| @syntax display drop-outer-parens
 delimiter $ ( ) $;
 
 provable sort wff;
