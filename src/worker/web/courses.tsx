@@ -25,6 +25,7 @@ import {
 import { coursesCrumb } from "./breadcrumbs";
 import {
   ArchiveToggle,
+  BarField,
   BrowserTimezoneInput,
   ChoiceNotes,
   ContentSplit,
@@ -40,6 +41,7 @@ import {
   Sheet,
   StatusBadge,
   SummaryStrip,
+  shortCreateLabel,
   TableScroll,
   Time,
   TimestampInput,
@@ -60,7 +62,7 @@ import {
 } from "./labels";
 import { type PageStatus, renderShell, useI18n } from "./layout";
 import { SortHeader, sortRank } from "./table-sort";
-import { UserLabel, userDisplayName } from "./users";
+import { UserLabel, userDetail, userDisplayName } from "./users";
 
 const DEFAULT_TIMEZONE = "UTC";
 const FALLBACK_TIMEZONES = [
@@ -146,6 +148,18 @@ function membershipSortValue(membership: CourseMembership): string {
   const status = MEMBERSHIP_STATUS_ORDER.indexOf(membership.status);
 
   return String(role * 10 + status);
+}
+
+/**
+ * A zone as the course record shows it: its city, as a person writes it —
+ * "New York", not "America/New_York", whose region prefix and underscore set
+ * in the record's display serif ran to two awkward lines on a phone. The full
+ * identifier stays in the tile's tooltip and in the course form's picker,
+ * where it is what a reader chooses by. A zone with no region ("UTC") is its
+ * own name.
+ */
+function timezoneCity(timezone: string): string {
+  return (timezone.split("/").at(-1) ?? timezone).replaceAll("_", " ");
 }
 
 const TimezoneSelect: FC<{
@@ -252,12 +266,9 @@ const CoursesCreateBar: FC<{ readonly context: Context<AppBindings> }> = ({
       context={context}
       submitLabel={i18n.t("Create course")}
     >
-      <input
-        aria-label={i18n.t("Course title")}
-        name="title"
-        placeholder={i18n.t("Title of new course")}
-        required
-      />
+      <BarField label={i18n.t("Course title")}>
+        <input name="title" required />
+      </BarField>
       {/* Not a picker: the browser knows the reader's zone, and the course
           record's form is where the rare disagreement gets settled. */}
       <BrowserTimezoneInput name="timezone" />
@@ -309,7 +320,7 @@ const CoursesTable: FC<{
   );
 
   return (
-    <TableScroll>
+    <TableScroll phoneList>
       <thead>
         <tr>
           <SortHeader label={i18n.t("Course")} />
@@ -637,7 +648,7 @@ const MembersTable: FC<{
       membership.userId,
     );
   return (
-    <TableScroll>
+    <TableScroll phoneList>
       <thead>
         <tr>
           {/* Roles carry their rank as the sort value, not the word:
@@ -650,44 +661,59 @@ const MembersTable: FC<{
         </tr>
       </thead>
       <tbody>
-        {memberships.map((membership) => (
-          <tr>
-            {/* Two lines and a crown in the cell; the one name a reader looks
-                for it under is what it sorts by. */}
-            <td data-sort-value={nameOf(membership)}>
-              <UserLabel directory={directory} userId={membership.userId} />
-              {membership.userId === course.createdById ? (
-                <OwnerCrown />
-              ) : null}
-            </td>
-            <td data-sort-value={membershipSortValue(membership)}>
-              {courseRoleLabel(i18n, membership.role)}
-              <MembershipStatusBadge status={membership.status} />
-              <AccommodationBadge
-                accommodation={
-                  accommodationsByUserId.get(membership.userId) ?? null
-                }
-              />
-            </td>
-            <td>
-              <AccommodationDialogControl
-                accommodation={
-                  accommodationsByUserId.get(membership.userId) ?? null
-                }
-                context={context}
-                courseId={course.id}
-                directory={directory}
-                membership={membership}
-              />
-              <MemberManageControl
-                context={context}
-                courseId={course.id}
-                directory={directory}
-                membership={membership}
-              />
-            </td>
-          </tr>
-        ))}
+        {memberships.map((membership) => {
+          const detail = userDetail(
+            i18n,
+            directory.get(membership.userId) ?? null,
+            membership.userId,
+          );
+
+          return (
+            <tr>
+              {/* Two lines and a crown in the cell; the one name a reader
+                  looks for it under is what it sorts by. */}
+              <td class="member-user" data-sort-value={nameOf(membership)}>
+                <UserLabel directory={directory} userId={membership.userId} />
+                {membership.userId === course.createdById ? (
+                  <OwnerCrown />
+                ) : null}
+              </td>
+              {/* The address again, for the phone list, which reads the role
+                  and the address as one line under the name and can only put
+                  a cell's contents there. Only one copy is ever displayed
+                  (chrome.css), so a screen reader hears it once. */}
+              <td data-sort-value={membershipSortValue(membership)}>
+                {courseRoleLabel(i18n, membership.role)}
+                <MembershipStatusBadge status={membership.status} />
+                <AccommodationBadge
+                  accommodation={
+                    accommodationsByUserId.get(membership.userId) ?? null
+                  }
+                />
+                {detail === null ? null : (
+                  <span class="member-detail">{detail}</span>
+                )}
+              </td>
+              <td>
+                <AccommodationDialogControl
+                  accommodation={
+                    accommodationsByUserId.get(membership.userId) ?? null
+                  }
+                  context={context}
+                  courseId={course.id}
+                  directory={directory}
+                  membership={membership}
+                />
+                <MemberManageControl
+                  context={context}
+                  courseId={course.id}
+                  directory={directory}
+                  membership={membership}
+                />
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </TableScroll>
   );
@@ -742,26 +768,25 @@ const AddStaffBar: FC<{
       context={context}
       submitLabel={i18n.t("Add staff")}
     >
-      <input
-        aria-label={i18n.t("Staff member email")}
-        name="email"
-        placeholder={i18n.t("person@example.edu", undefined, {
-          comment:
-            "Example address in an email field. Translate the local " +
-            "part; the example.edu domain is reserved for documentation.",
-        })}
-        required
-        type="email"
-      />
-      <select
-        aria-label={i18n.t("Staff role")}
-        data-choice-notes="role"
-        name="role"
-      >
-        {STAFF_ROLE_ORDER.map((role) => (
-          <option value={role}>{courseRoleLabel(i18n, role)}</option>
-        ))}
-      </select>
+      <BarField label={i18n.t("Staff member email")}>
+        <input
+          name="email"
+          placeholder={i18n.t("person@example.edu", undefined, {
+            comment:
+              "Example address in an email field. Translate the local " +
+              "part; the example.edu domain is reserved for documentation.",
+          })}
+          required
+          type="email"
+        />
+      </BarField>
+      <BarField label={i18n.t("Staff role")}>
+        <select data-choice-notes="role" name="role">
+          {STAFF_ROLE_ORDER.map((role) => (
+            <option value={role}>{courseRoleLabel(i18n, role)}</option>
+          ))}
+        </select>
+      </BarField>
       <ChoiceNotes
         group="role"
         notes={STAFF_ROLE_ORDER.map((role) => ({
@@ -784,11 +809,12 @@ const EnrollmentCreateBar: FC<{
     <CreateBar
       action={`/courses/${courseId}/enrollment-links`}
       context={context}
+      shortLabel={shortCreateLabel(i18n)}
       submitLabel={i18n.t("Create enrollment link")}
     >
       <TimestampInput
+        inBar
         label={i18n.t("Expires at, optional")}
-        labelHidden
         name="expiresAt"
       />
     </CreateBar>
@@ -1224,7 +1250,7 @@ const ArchivedCoursesTable: FC<{
     managesCourse(entry.membership),
   );
   return (
-    <TableScroll>
+    <TableScroll phoneList>
       <thead>
         <tr>
           <SortHeader label={i18n.t("Course")} />
@@ -1424,7 +1450,9 @@ const GradebookLinks: FC<{ readonly courseId: string }> = ({ courseId }) => {
         {
           hint: i18n.t("Scores across every graded assignment"),
           href: `/courses/${courseId}/instructor/gradebook`,
-          label: i18n.t("Course gradebook"),
+          // Not "Course gradebook", which broke onto two lines on a phone:
+          // the strip is the course's, and its hint says what it covers.
+          label: i18n.t("Gradebook"),
         },
         {
           hint: i18n.t("CSV of the whole course's grades"),
@@ -1468,7 +1496,14 @@ export function renderCourseDetail(
         // active member reaches this page, so it could only ever say "Active".
         <SummaryStrip
           items={[
-            { label: i18n.t("Timezone"), value: model.course.timezone },
+            {
+              label: i18n.t("Timezone"),
+              value: (
+                <span title={model.course.timezone}>
+                  {timezoneCity(model.course.timezone)}
+                </span>
+              ),
+            },
             {
               label: i18n.t("Course status"),
               value:
@@ -1495,7 +1530,9 @@ export function renderCourseDetail(
         {model.notices.map((message) => (
           <Notice>{message}</Notice>
         ))}
-        {courseRecord}
+        {/* No course record here: its timezone, status and role are for
+            someone telling several courses apart from the staff side, and a
+            student's page is the course's assignments. */}
         <Sheet
           description={i18n.t(
             "Published assignments available to you in this course.",

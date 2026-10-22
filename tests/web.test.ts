@@ -278,15 +278,21 @@ describe("native web workflow", () => {
 
       expect(instructorCourseHtml).toContain("Assignment management");
       expect(instructorCourseHtml).toContain("Inline homework");
-      expect(instructorCourseHtml).toContain('placeholder="new assignment"');
+      // The record names the zone by its city; the identifier is the tooltip.
+      expect(instructorCourseHtml).toContain(
+        '<span title="America/New_York">New York</span>',
+      );
+      expect(instructorCourseHtml).toContain(
+        '<span class="bar-field-label">New assignment title</span>',
+      );
       // The course's scores and one assignment's scores are two destinations
-      // sitting on the same page, so they carry two names rather than both
-      // saying "Gradebook": the strip goes to the course gradebook, the row in
-      // the table goes to that assignment's grades.
+      // sitting on the same page, so they carry two names: the strip's
+      // "Gradebook" goes to the course gradebook, the row in the table goes
+      // to that assignment's "Grades".
       expect(instructorCourseHtml).toContain(
         `<a class="link-strip-item" ` +
           `href="/courses/${courseId}/instructor/gradebook">` +
-          `<span class="link-strip-label">Course gradebook`,
+          `<span class="link-strip-label">Gradebook`,
       );
       expect(instructorCourseHtml).toContain(
         `<a href="/courses/${courseId}/instructor/assignments/` +
@@ -309,11 +315,12 @@ describe("native web workflow", () => {
           'status-badge-warn">Draft</span> <span class="status-badge ' +
           'status-badge-warn">Hidden</span></td>',
       );
-      // The enrollment bar has no room for a visible label, so the expiry
-      // field carries its name on itself — and the same shape as the labelled
-      // fields elsewhere: no `step`, and a hidden sibling holding the instant.
+      // The enrollment bar's expiry is a bar field, named by the label shown
+      // over it — and the same shape as the labelled fields elsewhere: no
+      // `step`, and a hidden sibling holding the instant.
       expect(instructorCourseHtml).toContain(
-        '<input aria-label="Expires at, optional" ' +
+        '<label class="bar-field"><span class="bar-field-label">' +
+          "Expires at, optional</span><input " +
           'data-timestamp-local="expiresAt" type="datetime-local"/>',
       );
       expect(instructorCourseHtml).toContain(
@@ -333,8 +340,14 @@ describe("native web workflow", () => {
       // An open assignment is the ordinary case and says nothing about it.
       expect(studentCourseHtml).not.toContain("Availability");
       expect(studentCourseHtml).not.toContain("status-badge");
+      // The course record is the staff side's: a student's page is the
+      // course's assignments.
+      expect(instructorCourseHtml).toContain("<h2>Course record</h2>");
+      expect(studentCourseHtml).not.toContain("Course record");
       expect(studentCourseHtml).not.toContain("Assignment management");
-      expect(studentCourseHtml).not.toContain('placeholder="new assignment"');
+      expect(studentCourseHtml).not.toContain(
+        '<span class="bar-field-label">New assignment title</span>',
+      );
       expect(studentCourseHtml).not.toContain("View student assignments");
     });
   });
@@ -562,7 +575,9 @@ describe("native web workflow", () => {
       // What the columns sort by travels with the cells. The user column
       // carries the one name a reader looks a member up under, since the cell
       // itself holds two lines and a crown.
-      expect(roster).toContain('<td data-sort-value="zoe@example.test">');
+      expect(roster).toContain(
+        '<td class="member-user" data-sort-value="zoe@example.test">',
+      );
       // Roles carry their rank, not their words: sorting the labels would
       // order the roster differently in every language. The status's rank
       // rides underneath, and active is first among them, so an active member
@@ -626,7 +641,7 @@ describe("native web workflow", () => {
       );
 
       expect(await coursePage.text()).toContain(
-        "<dt>Timezone</dt><dd>UTC</dd>",
+        '<dt>Timezone</dt><dd><span title="UTC">UTC</span></dd>',
       );
     });
   });
@@ -742,7 +757,9 @@ describe("native web workflow", () => {
       const coursesIndexHtml = await coursesIndex.text();
 
       expect(coursesIndex.status).toBe(200);
-      expect(coursesIndexHtml).toContain('placeholder="Title of new course"');
+      expect(coursesIndexHtml).toContain(
+        '<span class="bar-field-label">Course title</span>',
+      );
       expect(coursesIndexHtml).toContain("Create course");
 
       const courseResponse = await appRequest(

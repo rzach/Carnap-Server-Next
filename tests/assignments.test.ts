@@ -941,7 +941,9 @@ describe("assignment publication", () => {
       const quickEditHtml = await quickEditResponse.text();
 
       expect(coursePageResponse.status).toBe(200);
-      expect(coursePageHtml).toContain('placeholder="new assignment"');
+      expect(coursePageHtml).toContain(
+        '<span class="bar-field-label">New assignment title</span>',
+      );
       expect(coursePageHtml).toContain('name="quickCreate"');
       expect(quickCreateResponse.status).toBe(303);
       expect(quickLocation).toContain("/edit?created=1");

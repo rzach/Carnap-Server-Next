@@ -14,6 +14,7 @@ import type { AppBindings } from "../http";
 import { splitAtValue, type Translator, VALUE } from "../i18n/translator";
 import { adminCrumb } from "./breadcrumbs";
 import {
+  BarField,
   CreateBar,
   CsrfInput,
   LinkStrip,
@@ -92,13 +93,15 @@ const SearchForm: FC<{ readonly query?: string }> = ({ query }) => {
   const i18n = useI18n();
 
   return (
-    <form action="/admin/users" method="get">
-      <label>
-        {i18n.t("Find user")}
-        <br />
-        <input name="query" value={query ?? ""} />
-      </label>
-      <button type="submit">{i18n.t("Search")}</button>
+    // A bar like the create bars, though it posts nothing: one field and the
+    // button that acts on it, on one line.
+    <form action="/admin/users" class="create-bar" method="get">
+      <BarField label={i18n.t("Find user")}>
+        <input name="query" type="search" value={query ?? ""} />
+      </BarField>
+      <button class="secondary" type="submit">
+        {i18n.t("Search")}
+      </button>
     </form>
   );
 };
@@ -111,21 +114,33 @@ const UsersTable: FC<{ readonly users: readonly User[] }> = ({ users }) => {
   }
 
   return (
-    <TableScroll>
+    // Name first, as everywhere a person is listed; the address and the
+    // account's age are columns of their own on a wide screen, where one
+    // column left the sheet mostly empty, and the line under the name on a
+    // phone.
+    <TableScroll phoneList="flat">
       <thead>
         <tr>
-          <th>{i18n.t("Email")}</th>
           <th>{i18n.t("Name")}</th>
+          <th>{i18n.t("Email")}</th>
+          <th>{i18n.t("Member since")}</th>
         </tr>
       </thead>
       <tbody>
         {users.map((user) => (
           <tr>
             <td>
-              <a href={`/admin/users/${user.id}`}>{user.email}</a>
+              <a href={`/admin/users/${user.id}`}>
+                {userDisplayName(i18n, user, user.id)}
+              </a>
               <UserStatusBadge user={user} />
             </td>
-            <td>{user.name ?? ""}</td>
+            <td>{user.email}</td>
+            {/* A column to compare rows by, not something to read on a
+                phone, where it pushed the line under the name onto two. */}
+            <td class="wide-only">
+              <Time value={user.createdAt} />
+            </td>
           </tr>
         ))}
       </tbody>
@@ -145,12 +160,14 @@ const CapabilityGrantBar: FC<{
       context={context}
       submitLabel={i18n.t("Grant capability")}
     >
-      <select aria-label={i18n.t("Capability")} name="capability" required>
-        <SelectOptions
-          options={capabilityOptions(i18n)}
-          selected="content_author"
-        />
-      </select>
+      <BarField label={i18n.t("Capability")}>
+        <select name="capability" required>
+          <SelectOptions
+            options={capabilityOptions(i18n)}
+            selected="content_author"
+          />
+        </select>
+      </BarField>
     </CreateBar>
   );
 };
@@ -204,7 +221,12 @@ const CapabilitiesTable: FC<{
   );
 };
 
-const SuspensionForm: FC<{
+/**
+ * The account's state, with the one control that changes it on the same
+ * line: in the record's body, as the profile's email line is, and not in the
+ * sheet's header, which no other sheet gives a button.
+ */
+const AccountSection: FC<{
   readonly context: Context<AppBindings>;
   readonly profile: AdminUserProfile;
 }> = ({ context, profile }) => {
@@ -212,17 +234,23 @@ const SuspensionForm: FC<{
   const suspending = profile.user.disabledAt === null;
 
   return (
-    <form
-      action={`/admin/users/${profile.user.id}/${
-        suspending ? "suspend" : "reactivate"
-      }`}
-      method="post"
-    >
-      <CsrfInput context={context} />
-      <button class={suspending ? "danger" : "secondary"} type="submit">
-        {suspending ? i18n.t("Suspend user") : i18n.t("Reactivate user")}
-      </button>
-    </form>
+    <section aria-labelledby="record-account-heading" class="record-section">
+      <h3 id="record-account-heading">{i18n.t("Account")}</h3>
+      <div class="record-line">
+        <p>{suspending ? i18n.t("Active") : i18n.t("Suspended")}</p>
+        <form
+          action={`/admin/users/${profile.user.id}/${
+            suspending ? "suspend" : "reactivate"
+          }`}
+          method="post"
+        >
+          <CsrfInput context={context} />
+          <button class={suspending ? "danger" : "secondary"} type="submit">
+            {suspending ? i18n.t("Suspend user") : i18n.t("Reactivate user")}
+          </button>
+        </form>
+      </div>
+    </section>
   );
 };
 
@@ -243,18 +271,19 @@ const AdminEmailBar: FC<{
       context={context}
       submitLabel={i18n.t("Change email address")}
     >
-      <input
-        aria-label={i18n.t("New email address")}
-        maxlength={254}
-        name="email"
-        placeholder={i18n.t("person@example.edu", undefined, {
-          comment:
-            "Example address in an email field. Translate the local " +
-            "part; the example.edu domain is reserved for documentation.",
-        })}
-        required
-        type="email"
-      />
+      <BarField label={i18n.t("New email address")}>
+        <input
+          maxlength={254}
+          name="email"
+          placeholder={i18n.t("person@example.edu", undefined, {
+            comment:
+              "Example address in an email field. Translate the local " +
+              "part; the example.edu domain is reserved for documentation.",
+          })}
+          required
+          type="email"
+        />
+      </BarField>
     </CreateBar>
   );
 };
@@ -269,7 +298,7 @@ const IdentitiesTable: FC<{ readonly profile: AdminUserProfile }> = ({
   }
 
   return (
-    <TableScroll>
+    <TableScroll phoneList="flat">
       <thead>
         <tr>
           <th>{i18n.t("Provider")}</th>
@@ -293,15 +322,17 @@ const IdentitiesTable: FC<{ readonly profile: AdminUserProfile }> = ({
   );
 };
 
-/** Who owns an account's address, in the admin record's terms. */
-function emailSourceLabel(i18n: Translator, email: EmailAuthority): string {
+/** Who owns an account's address, as the line under it in the record says. */
+function emailSourceLine(i18n: Translator, email: EmailAuthority): string {
   switch (email.source) {
     case "lti":
-      return email.platformName ?? i18n.t("LMS (LTI)");
+      return i18n.t("Set by {platform}", {
+        platform: email.platformName ?? i18n.t("LMS (LTI)"),
+      });
     case "user":
-      return i18n.t("The user");
+      return i18n.t("Set by the user");
     case "admin":
-      return i18n.t("An administrator");
+      return i18n.t("Set by an administrator");
   }
 }
 
@@ -408,20 +439,29 @@ const MembershipCreateBar: FC<{
       submitLabel={i18n.t("Add membership")}
     >
       <input name="userId" type="hidden" value={userId} />
-      <select aria-label={i18n.t("Course")} name="courseId" required>
-        {courses.map((course) => (
-          <option value={course.id}>{course.title}</option>
-        ))}
-      </select>
-      <select aria-label={i18n.t("Role")} name="role" required>
-        <SelectOptions options={courseRoleOptions(i18n)} selected="student" />
-      </select>
-      <select aria-label={i18n.t("Status")} name="status" required>
-        <SelectOptions
-          options={membershipStatusOptions(i18n)}
-          selected="active"
-        />
-      </select>
+      <BarField label={i18n.t("Course")}>
+        <select name="courseId" required>
+          {courses.map((course) => (
+            <option value={course.id}>{course.title}</option>
+          ))}
+        </select>
+      </BarField>
+      <BarField label={i18n.t("Role")}>
+        <select name="role" required>
+          <SelectOptions
+            options={courseRoleOptions(i18n)}
+            selected="student"
+          />
+        </select>
+      </BarField>
+      <BarField label={i18n.t("Status")}>
+        <select name="status" required>
+          <SelectOptions
+            options={membershipStatusOptions(i18n)}
+            selected="active"
+          />
+        </select>
+      </BarField>
     </CreateBar>
   );
 };
@@ -697,54 +737,60 @@ export function renderAdminUserProfile(
     },
     <>
       {model.saved ? <Notice>{i18n.t("Change saved.")}</Notice> : null}
+      {/* Sections of plain text, as the profile is, rather than a strip of
+          display tiles: an address and "Set by the user" are words, and in
+          the strip's large serif the address broke at its hyphen even on a
+          wide screen. */}
       <Sheet
         footer={
           <CapabilityGrantBar context={context} userId={profile.user.id} />
         }
-        summary={
-          <div class="record-headline">
-            <SummaryStrip
-              items={[
-                {
-                  label: i18n.t("Email"),
-                  value:
-                    profile.email.email ?? i18n.t("No email address yet"),
-                },
-                {
-                  label: i18n.t("Email set by"),
-                  value: emailSourceLabel(i18n, profile.email),
-                },
-                {
-                  label: i18n.t("Email status"),
-                  value:
-                    profile.user.emailVerifiedAt === null ? (
-                      i18n.t("Unverified")
-                    ) : (
-                      <VerifiedAt at={profile.user.emailVerifiedAt} />
-                    ),
-                },
-                // Omitted rather than shown empty: an admin looking at a record
-                // needs to know an LMS asserted an ID and what it was, and a
-                // blank field on the majority of accounts that have none would
-                // only crowd the strip.
-                ...(profile.user.studentId === null
-                  ? []
-                  : [
-                      {
-                        label: i18n.t("Student ID"),
-                        value: profile.user.studentId,
-                      },
-                    ]),
-              ]}
+        sections={[
+          // The short facts share a row where there is room for one, as the
+          // strip of tiles did, and stack on a phone.
+          <div class="record-facts">
+            <section
+              aria-labelledby="record-email-heading"
+              class="record-section"
+            >
+              <h3 id="record-email-heading">{i18n.t("Email")}</h3>
+              <p class="record-email-address">
+                {profile.email.email ?? i18n.t("No email address yet")}
+              </p>
+              <p class="small">
+                {emailSourceLine(i18n, profile.email)} ·{" "}
+                {profile.user.emailVerifiedAt === null ? (
+                  i18n.t("Unverified")
+                ) : (
+                  <VerifiedAt at={profile.user.emailVerifiedAt} />
+                )}
+              </p>
+            </section>
+            {/* Omitted rather than shown empty: an admin looking at a record
+                needs to know an LMS asserted an ID and what it was, and a
+                blank on the majority of accounts that have none would only
+                add a line. */}
+            {profile.user.studentId === null ? null : (
+              <section
+                aria-labelledby="record-student-id-heading"
+                class="record-section"
+              >
+                <h3 id="record-student-id-heading">{i18n.t("Student ID")}</h3>
+                <p>{profile.user.studentId}</p>
+              </section>
+            )}
+            <AccountSection context={context} profile={profile} />
+          </div>,
+          <>
+            <h3>{i18n.t("Platform capabilities")}</h3>
+            <CapabilitiesTable
+              context={context}
+              grants={profile.capabilities}
             />
-            <SuspensionForm context={context} profile={profile} />
-          </div>
-        }
+          </>,
+        ]}
         title={i18n.t("User record")}
-      >
-        <h3>{i18n.t("Platform capabilities")}</h3>
-        <CapabilitiesTable context={context} grants={profile.capabilities} />
-      </Sheet>
+      />
       {/* The address change sits with the sign-ins, which it changes: the
           native one keyed on the old address goes with it. */}
       <Sheet

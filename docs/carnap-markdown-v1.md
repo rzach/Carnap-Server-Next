@@ -1445,7 +1445,7 @@ host an immutable theory revision on this site instead.
 
 ### Hosting a theory of your own
 
-Create a content item of kind **Theory or language**. Its revisions contain
+Create a content item of kind **Theory**. Its revisions contain
 MM0 rather than Markdown, and saving validates that the source can be read.
 The revision page gives its address:
 

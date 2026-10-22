@@ -10,7 +10,14 @@ import {
 import type { Timestamp } from "../domain/time";
 import type { AppBindings } from "../http";
 import { splitAtValue, VALUE } from "../i18n/translator";
-import { CreateBar, StatusBadge, TableScroll, Time } from "./components";
+import {
+  BarField,
+  CreateBar,
+  StatusBadge,
+  shortCreateLabel,
+  TableScroll,
+  Time,
+} from "./components";
 import {
   ASSESSMENT_MODE_ORDER,
   ASSIGNMENT_STATE_ORDER,
@@ -334,7 +341,7 @@ export const AssignmentsTable: FC<{
     (scores ?? []).map((entry) => [entry.assignmentId, entry]),
   );
   return (
-    <TableScroll>
+    <TableScroll phoneList>
       <thead>
         <tr>
           <SortHeader label={i18n.t("Title")} />
@@ -388,7 +395,7 @@ export const GradingTable: FC<{
   }
 
   return (
-    <TableScroll>
+    <TableScroll phoneList>
       <thead>
         <tr>
           <SortHeader label={i18n.t("Title")} />
@@ -451,16 +458,13 @@ export const AssignmentCreateBar: FC<{
     <CreateBar
       action={`/courses/${courseId}/assignments`}
       context={context}
+      shortLabel={shortCreateLabel(i18n)}
       submitLabel={i18n.t("Create assignment")}
     >
       <input name="quickCreate" type="hidden" value="1" />
-      <input
-        aria-label={i18n.t("New assignment title")}
-        maxlength={200}
-        name="title"
-        placeholder={i18n.t("new assignment")}
-        required
-      />
+      <BarField label={i18n.t("New assignment title")}>
+        <input maxlength={200} name="title" required />
+      </BarField>
     </CreateBar>
   );
 };

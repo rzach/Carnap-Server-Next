@@ -89,9 +89,12 @@ input:disabled {
   margin: 0;
 }
 
-/* Compact buttons for dense rows: tables, inline forms, record headline. */
+/* Compact buttons for dense rows: inline forms, a user record's account
+   line, and the Revisions footer's "Create revision", the upload bar's
+   neighbour. */
 .create-bar button,
-.record-headline button {
+.record-line button,
+.revision-actions > .button {
   font-size: 0.85rem;
   min-height: 0;
   padding: 0.4rem 0.8rem;
@@ -104,12 +107,23 @@ input:disabled {
    is not in the table as far as the reader is concerned — it is in the top
    layer — so its buttons keep the ordinary chrome. The exclusion is wrapped
    in :where() so it adds no specificity: a bare :not() takes its argument's,
-   which would outrank .icon-button and flatten the icons this rule is for. */
-table button:not(:where(.modal-dialog button)) {
+   which would outrank .icon-button and flatten the icons this rule is for.
+   A form bar in a row (a membership's role, status and Save) is stripped
+   like any other table button, and named again because the bar's own button
+   rules outrank the plain selector. */
+table button:not(:where(.modal-dialog button)),
+table .create-bar button {
   min-height: 0;
   padding: 0;
   margin: 0;
   border: none;
+}
+
+/* A row form's button is a word in the row, in the row's own size: the
+   bar's smaller text, meant for a framed button, read as a mismatch beside
+   the row's name. */
+table .create-bar button {
+  font-size: inherit;
 }
 
 /* Application header and shell */
@@ -212,11 +226,29 @@ table button:not(:where(.modal-dialog button)) {
   display: none;
 }
 
-.profile-email p {
+/* The admin user record's short facts — email, student ID, account — in a
+   row of columns where they fit, each column wide enough for an address, and
+   one under another on a phone. */
+.record-facts {
+  display: grid;
+  gap: 1.25rem 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.record-facts h3 {
+  margin-top: 0;
+}
+
+/* The admin user record's sections (`.record-*`) are laid out as the
+   profile's are: the same facts, seen from the other side. */
+.profile-email p,
+.profile-roles p,
+.record-section p {
   margin: 0.15rem 0 0;
 }
 
-.profile-email-address {
+.profile-email-address,
+.record-email-address {
   overflow-wrap: anywhere;
 }
 
@@ -237,7 +269,8 @@ table button:not(:where(.modal-dialog button)) {
    on each other, wrapping to two on a narrow sheet. The button drops the top
    margin every form button otherwise takes from the content layer — that
    margin is what sat it below the text. */
-.profile-email-line {
+.profile-email-line,
+.record-line {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
@@ -245,11 +278,13 @@ table button:not(:where(.modal-dialog button)) {
   margin-top: 0.6rem;
 }
 
-.profile-email-line p {
+.profile-email-line p,
+.record-line p {
   margin: 0;
 }
 
-.profile-email-line button {
+.profile-email-line button,
+.record-line :is(form, button) {
   margin: 0;
 }
 
@@ -430,6 +465,23 @@ table button:not(:where(.modal-dialog button)) {
   color: var(--ink-faint);
 }
 
+/* On a phone a deep trail took three lines before the page began. With
+   three or more steps above the page, the middle ones give way to an
+   ellipsis: the first step (where the trail starts) and the parent (one tap
+   back) stay, with the page's own name after them. The nav holds each step
+   followed by its separator, so the rule keeps the first pair and the last
+   separator, step and separator, and the first separator carries the "…". */
+@media (max-width: 480px) {
+  .breadcrumb > :not(:nth-child(-n + 2), :nth-last-child(-n + 3)) {
+    display: none;
+  }
+
+  .breadcrumb > :nth-child(2):nth-last-child(n + 5)::after {
+    content: "…" / "";
+    margin-inline-start: 0.55rem;
+  }
+}
+
 /* The trail's last step names the page, and a page can be named by free
    text the author wrote — a revision is named by its note. That is one line
    about where you are, so a long name is cut short rather than allowed to
@@ -584,68 +636,47 @@ table button:not(:where(.modal-dialog button)) {
   white-space: nowrap;
 }
 
-/* Email + account-status row on the admin user record */
-.record-headline {
-  align-items: center;
-  border-bottom: 1px solid var(--rule);
-  display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-}
-
-.record-headline .summary-strip {
-  border-bottom: none;
-  flex: 1 1 auto;
-}
-
-.record-headline > form {
-  margin: 0;
-  padding-right: clamp(1rem, 2vw, 1.5rem);
-}
-
 /* Status badges */
 
+/* A status is a word in its tone's colour, set heavy so it reads as a flag
+   on the row rather than as more of the row's text. It was a pill — a faint
+   wash, a border, small type — until the phone list showed the same words
+   bare in the line under a name, and the bare words read better at every
+   width: a box on a ledger row said "separate object" about what is one more
+   fact about that row. The tone carries the exception, so the ordinary state
+   still shows nothing at all (see the badge discipline).
+
+   In a table cell a dot sets it off from the cell's other words, as the
+   values in a phone list's line are. */
 .status-badge {
-  align-items: center;
-  background: var(--surface-soft);
-  border: 1px solid var(--rule);
-  border-radius: 4px;
-  color: var(--ink-muted);
-  display: inline-flex;
-  font-size: 0.76rem;
-  font-weight: 600;
-  gap: 0.35rem;
-  padding: 0.24rem 0.6rem;
+  color: var(--ink-muted-strong);
+  font-weight: 650;
   white-space: nowrap;
 }
 
-/* Each badge's border is its own accent, gone faint. Mixed from the token
-   rather than written out at an alpha, so it tracks the accent when the
-   accent moves — the green here had been left behind at the pre-AA
-   #26935d after --green was darkened to #1b7048. */
+td .status-badge::before {
+  color: var(--ink-muted);
+  content: "·" / "";
+  font-weight: 400;
+  margin-inline: 0.15em 0.4em;
+}
 
 .status-badge-ok {
-  background: var(--green-soft);
-  border-color: color-mix(in srgb, var(--green) 28%, transparent);
   color: var(--green);
 }
 
 .status-badge-warn {
-  background: var(--gold-soft);
-  border-color: color-mix(in srgb, var(--gold) 25%, transparent);
   color: var(--gold);
 }
 
 .status-badge-danger {
-  background: var(--red-soft);
-  border-color: color-mix(in srgb, var(--red) 24%, transparent);
   color: var(--red);
 }
 
+/* Not the blue of the other accents: as bold text in a ledger, blue is what a
+   link looks like, and "Closed" or "Dropped" is not one. */
 .status-badge-neutral {
-  background: var(--blue-soft);
-  border-color: color-mix(in srgb, var(--blue) 28%, transparent);
-  color: var(--blue-strong);
+  color: var(--ink-muted-strong);
 }
 
 /* A closed assignment lingers, greyed, for reference; any link it still
@@ -723,6 +754,182 @@ th > .column-sort:hover {
    phone. */
 .table-scroll {
   overflow-x: auto;
+}
+
+/* A row holding an inline form (a membership's role and status, an LMS link's
+   assignment) centres its cells: top-aligned, as ledger cells otherwise are,
+   a course title sat level with the top edge of the selects beside it, well
+   above their text. */
+tr:has(> td > .create-bar) > td {
+  vertical-align: middle;
+}
+
+/* And the bar centres its own items: it bottom-aligns them for fields
+   labelled over their boxes, which a row's bare controls are not, and a
+   stripped button sat at the selects' bottom edge, below the row's text. */
+td > .create-bar {
+  align-items: center;
+}
+
+/* The members roster's second copy of an address, for the phone list below:
+   off everywhere else. `.phone-only` is the same device for a row's other
+   pieces — a revision's sharing, moved to the line under its name — with
+   `.wide-only` on the copy the phone list hides. */
+.member-detail,
+.phone-only {
+  display: none;
+}
+
+/* A ledger that reads as a list on a phone (`TableScroll`'s `phoneList`).
+   Four columns in a phone's width leave the row's name a word wide and the
+   one-word cells beside it half the row, so each row becomes an entry
+   instead: the name, with the row's end (its link, score or action icons)
+   held on one line at the right, and the cells between them in a muted line
+   underneath. The headings go, because nothing is under them any more —
+   sorting with them, which is an enhancement a phone can do without.
+
+   A flex row, not a grid, so that the in-between cells can share one line:
+   the name and the end come first by `order`, the row's ::after takes a whole
+   line of no height to break after them, and the rest follow it.
+
+   A table whose rows have no end — an address and a name, a sign-in's
+   provider and what it asserted — is `phone-flat`: every cell after the name
+   joins the line under it. */
+@media (max-width: 480px) {
+  table.phone-list,
+  table.phone-list > :is(tbody, tfoot) {
+    display: block;
+  }
+
+  table.phone-list > thead {
+    display: none;
+  }
+
+  /* Top-aligned, as the desktop table's cells are, so that the end sits on
+     the name's first line however many lines the name cell holds (a member's
+     name has their address under it). An end of icon buttons lands there
+     too: their lift (see `.icon-button`) is what sets a glyph on a cell's
+     first line. A shared baseline did not — it rode them above the name. */
+  table.phone-list tr {
+    align-items: flex-start;
+    border-bottom: 1px solid var(--rule-soft);
+    display: flex;
+    flex-wrap: wrap;
+    padding-block: 0.8rem;
+  }
+
+  table.phone-list > :is(tbody, tfoot):last-child > tr:last-child {
+    border-bottom: 0;
+  }
+
+  table.phone-list tr::after {
+    content: "";
+    flex-basis: 100%;
+    order: 1;
+  }
+
+  table.phone-list td {
+    border: 0;
+    padding: 0;
+  }
+
+  /* The end, one line high whatever it holds: a row of icon buttons is
+     taller than the name's line (their padding is their hit area), and as
+     the line's tallest item it pushed the line under the name down by the
+     difference. The buttons still draw, and still take taps, past the box.
+     Written before the name's rule, so that a row of one cell is a name. */
+  table.phone-list:not(.phone-flat) td:last-child {
+    flex: 0 0 auto;
+    margin-inline-start: 1rem;
+    max-height: 1.5em;
+    order: 1;
+  }
+
+  table.phone-list td:first-child {
+    flex: 1 1 0;
+    margin-inline-start: 0;
+    max-height: none;
+    min-width: 0;
+    order: 0;
+  }
+
+  /* A flex row of its own, which drops the whitespace between a cell's
+     pieces, so every dot on the line is spaced by its own margins alone. */
+  table.phone-list td:not(:first-child, :last-child),
+  table.phone-flat td:not(:first-child) {
+    align-items: baseline;
+    color: var(--ink-muted);
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    margin-top: 0.2rem;
+    order: 2;
+  }
+
+  table.phone-list
+    td:not(:first-child, :last-child):is([data-sort-value=""], :empty),
+  table.phone-flat td:not(:first-child):is([data-sort-value=""], :empty) {
+    display: none;
+  }
+
+  /* With no end beside it the name takes its line whole: at the shared basis
+     of 0 it and the row's line break fitted on one line together, and the
+     name was left no width at all. */
+  table.phone-flat td:first-child {
+    flex-basis: 100%;
+  }
+
+  /* A member's role and address share the line under their name: the
+     roster's address moves from the name cell to the role cell's copy of it
+     (see the members table), so one of the two is displayed at any width. */
+  table.phone-list .member-user :is(br, .small) {
+    display: none;
+  }
+
+  /* The line reads address, role, then any badges: the address is what
+     tells two members apart, and a badge, the exception, comes last as it
+     does after any other values. The cell is a flex row (below), so order
+     moves the pieces, and the dot follows the address instead of leading it. */
+  table.phone-list .member-detail {
+    display: inline;
+    order: -1;
+  }
+
+  table.phone-list .member-detail::after {
+    color: var(--ink-muted);
+    content: "·" / "";
+    margin-inline: 0.4em;
+  }
+
+  table.phone-list td:not(:first-child, :last-child) > .status-badge,
+  table.phone-flat td:not(:first-child) > .status-badge,
+  table.phone-list .phone-only {
+    order: 1;
+  }
+
+  table.phone-list .phone-only {
+    display: inline;
+  }
+
+  /* As specific as the line's own cell rules, which a hidden cell is one of. */
+  table.phone-list .wide-only,
+  table.phone-list td.wide-only:not(:first-child) {
+    display: none;
+  }
+
+  /* In the line under a name the cell is a flex row, which drops the
+     markup's space before a badge, so its dot is spaced evenly instead. */
+  table.phone-list td:not(:first-child) .status-badge::before {
+    margin-inline: 0.4em;
+  }
+
+  /* A dot between the line's values, which the cells' own words already
+     separate for a screen reader. */
+  table.phone-list td:not(:first-child) + td:not(:last-child)::before,
+  table.phone-flat td:not(:first-child) + td::before {
+    content: "·" / "";
+    margin-inline: 0.4em;
+  }
 }
 
 /* The admin audit log is one event per *pair* of rows: the four fields anyone
@@ -886,7 +1093,7 @@ th > .column-sort:hover {
    "Create revision" link sits at its right end. Wraps to stacked rows when
    the footer is too narrow. */
 .revision-actions {
-  align-items: center;
+  align-items: flex-end;
   display: flex;
   flex-wrap: wrap;
   gap: 0.9rem;
@@ -909,7 +1116,7 @@ th > .column-sort:hover {
 /* A sheet footer's action row: buttons (or small forms wrapping one)
    gathered at the right edge. */
 .sheet-actions {
-  align-items: center;
+  align-items: flex-end;
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -934,10 +1141,8 @@ th > .column-sort:hover {
    editor's "what changed"). Inputs are full-width blocks by default, which in
    this flex row would push the button onto its own line; this one takes the
    free space instead and leaves the button at the end. */
-.sheet-actions .details-field {
+.sheet-actions .bar-field {
   flex: 1 1 12rem;
-  min-width: 0;
-  width: auto;
 }
 
 .diagnostics {
@@ -964,8 +1169,10 @@ th > .column-sort:hover {
   padding: 0;
 }
 
+/* Bottom-aligned, so that a labelled field's box and the button beside it
+   share a baseline whatever the label above the field adds. */
 .create-bar {
-  align-items: center;
+  align-items: flex-end;
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -973,8 +1180,10 @@ th > .column-sort:hover {
   width: 100%;
 }
 
-.create-bar input,
-.create-bar select {
+/* A bare control: the in-row forms of a table, whose column heading is the
+   name the reader sees. */
+.create-bar > :is(input, select),
+.bar-field {
   flex: 1 1 12rem;
   min-width: 0;
   width: auto;
@@ -982,13 +1191,68 @@ th > .column-sort:hover {
 
 /* Restated over the min-width:0 above, which would otherwise let the bar
    crop a date rather than wrap. */
-.create-bar input[type="datetime-local"] {
+.create-bar > input[type="datetime-local"],
+.bar-field:has(> input[type="datetime-local"]) {
   flex-basis: 17rem;
   min-width: min-content;
 }
 
-.create-bar button {
+/* Chromium's date control stands a couple of pixels taller than a text field
+   of the same font, padding and border; held to the field's box, so the
+   button beside it lines up as it does beside any other field. */
+.bar-field > input[type="datetime-local"] {
+  height: calc(1.5em + 1.1rem + 2px);
+}
+
+/* A labelled field (`BarField`): its name stacked over it, smaller than a
+   form's own labels, since a bar sits in a sheet's footer under the table it
+   adds to. The shared `label` rule's smaller size is for a label's words —
+   here `.bar-field-label`, sized on its own — so the field keeps the page's
+   size, as a bar's bare controls and its button's height floor assume. The
+   margin reset is the shared `form > label` spacing, which is for a stacked
+   form and not for a row. */
+.bar-field {
+  display: flex;
+  flex-direction: column;
+  font-size: inherit;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+form > .bar-field {
+  margin-top: 0;
+}
+
+.bar-field-label {
+  color: var(--ink-muted-strong);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* As tall as the field it submits, rather than the compact button's own
+   height: the bar bottom-aligns its items, so a shorter button sat on the
+   field's bottom edge with its top a few pixels below the field's. The height
+   is a field's box (its line, padding and border; see the select's floor in
+   content.css), stated in rem because the button's own text is smaller. */
+.create-bar button,
+.revision-actions > .button {
   flex: 0 0 auto;
+  min-height: calc(1.5rem + 1.1rem + 2px);
+}
+
+/* A bar with a short label shows it on a phone only (see `CreateBar`). */
+.create-bar-short {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .create-bar-long {
+    display: none;
+  }
+
+  .create-bar-short {
+    display: inline;
+  }
 }
 
 /* A choice's note takes a row of its own under the fields and the submit
@@ -1019,7 +1283,7 @@ th > .column-sort:hover {
    with display:contents forms lines up the fields into equal columns across
    both rows, so the two inputs are the same size regardless of button width. */
 .correction-bars {
-  align-items: center;
+  align-items: end;
   display: grid;
   gap: 0.75rem;
   grid-template-columns: 1fr 1fr auto;
@@ -1941,8 +2205,15 @@ th > .column-sort:hover {
      target floor. The surface is opaque so the words underneath don't show
      through, and the shell grows its bottom padding by the switch's height so
      the last lines of a column can still scroll out from under it. The
-     footer is left to sit beneath it. */
-  .split-switch[data-enhanced] {
+     footer is left to sit beneath it.
+
+     The course's staff/student switch goes the same way, for the same
+     reason: it shares the header row with a trail that ends in an
+     assignment's free-text title. It is links, shown from the first paint,
+     so it needs no enhancement to float. No page carries both switches — a
+     split is a content-library page, which has no course. */
+  .split-switch[data-enhanced],
+  .course-view-switch {
     background: var(--surface);
     bottom: max(0.85rem, env(safe-area-inset-bottom));
     box-shadow: 0 6px 22px
@@ -1953,14 +2224,15 @@ th > .column-sort:hover {
     z-index: 2;
   }
 
-  .split-switch button {
+  .split-switch button,
+  .course-view-switch a {
     font-size: 0.86rem;
     min-height: 30px;
     min-width: 5.5rem;
     padding: 0.25rem 0.85rem;
   }
 
-  .page-shell:has(.split-switch[data-enhanced]) {
+  .page-shell:has(.split-switch[data-enhanced], .course-view-switch) {
     padding-bottom: 7rem;
   }
 
@@ -2119,7 +2391,10 @@ th > .column-sort:hover {
   display: flex;
   gap: 1.5rem;
   justify-content: space-between;
-  margin: 4rem auto 0;
+  /* No top margin: the shell's own 4rem of bottom padding already parts the
+     page from the footer, and a margin on top of it made a short page scroll
+     on a phone by the margin's height alone. */
+  margin: 0 auto;
   max-width: 85rem;
   padding: 1.75rem var(--shell-gutter) 2.5rem;
   width: 100%;
@@ -2289,7 +2564,7 @@ th > .column-sort:hover {
     display: contents;
   }
 
-  .revision-actions .create-bar input {
+  .revision-actions .create-bar .bar-field {
     flex-basis: 100%;
   }
 

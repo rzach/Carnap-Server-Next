@@ -298,7 +298,9 @@ export function renderAssignmentGradebook(
           {
             hint: i18n.t("Newest submissions and manual grading"),
             href: `/courses/${courseId}/instructor/assignments/${gradebook.assignment.id}/submissions`,
-            label: i18n.t("Review submissions"),
+            // Not "Review submissions", which broke onto two lines on a
+            // phone; the hint says what is done there.
+            label: i18n.t("Submissions"),
           },
         ]}
       />

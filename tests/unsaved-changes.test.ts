@@ -240,7 +240,7 @@ describe("the revision editor's unsaved-source guard", () => {
        <body>
          <form action="/content/i1/revisions/new" method="post">
            <input name="csrfToken" type="hidden" value="csrf">
-           <input class="details-field" name="details" value="">
+           <input name="details" value="">
            <textarea data-editor-source name="sourceText">the saved source</textarea>
            <button type="submit">Create revision</button>
          </form>

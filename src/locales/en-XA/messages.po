@@ -640,6 +640,7 @@ msgstr ""
 msgid "Accommodations for {name}"
 msgstr ""
 
+#: src/worker/web/admin.tsx
 #: src/worker/web/profile.tsx
 msgid "Account"
 msgstr ""
@@ -670,6 +671,7 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
+#: src/worker/web/admin.tsx
 #: src/worker/web/courses.tsx
 #: src/worker/web/labels.ts
 msgid "Active"
@@ -843,10 +845,6 @@ msgstr ""
 
 #: src/worker/web/content.tsx
 msgid "Also a language: formulas are read at the sort {sort}, so exercises can be set in it too."
-msgstr ""
-
-#: src/worker/web/admin.tsx
-msgid "An administrator"
 msgstr ""
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
@@ -1575,10 +1573,6 @@ msgstr ""
 msgid "Content revision"
 msgstr ""
 
-#: src/worker/web/assignment-detail.tsx
-msgid "Content revision to publish"
-msgstr ""
-
 #: src/worker/application/content.ts
 msgid "Content source must be between 1 and 200000 characters."
 msgstr ""
@@ -1760,7 +1754,6 @@ msgstr ""
 msgid "Course default"
 msgstr ""
 
-#: src/worker/web/courses.tsx
 #: src/worker/web/gradebook.tsx
 msgid "Course gradebook"
 msgstr ""
@@ -1871,6 +1864,11 @@ msgstr ""
 msgid "Courses you have archived. They keep all their data and can be returned to the active list at any time."
 msgstr ""
 
+#. A create button's short label on a phone, beside the field it submits. Use the verb the longer create buttons use (Create assignment, Create enrollment link).
+#: src/worker/web/components.tsx
+msgid "Create"
+msgstr ""
+
 #: src/worker/routes/assignments.ts
 msgid "Create a content revision before creating an assignment."
 msgstr ""
@@ -1972,10 +1970,6 @@ msgstr ""
 #: src/worker/application/lti-admin.ts
 #: src/worker/web/admin-lti.tsx
 msgid "Deployment ID"
-msgstr ""
-
-#: src/worker/web/admin-lti.tsx
-msgid "Deployment ID from the LMS"
 msgstr ""
 
 #: src/worker/web/admin-lti.tsx
@@ -2200,16 +2194,8 @@ msgstr ""
 msgid "Email delivery is not configured for this environment."
 msgstr ""
 
-#: src/worker/web/admin.tsx
-msgid "Email set by"
-msgstr ""
-
 #: src/worker/application/auth.ts
 msgid "Email sign-in cannot be removed from an account."
-msgstr ""
-
-#: src/worker/web/admin.tsx
-msgid "Email status"
 msgstr ""
 
 #: src/worker/exercise-kit/assessment.ts
@@ -2534,6 +2520,10 @@ msgstr ""
 msgid "From the end of a line, go on to its citation, then its rule; Delete clears either"
 msgstr ""
 
+#: src/worker/web/admin-lti.tsx
+msgid "From the LMS"
+msgstr ""
+
 #: src/worker/web/email-change.tsx
 msgid "From then on, sign in with the new address. If you did not ask for this, close this page and nothing will change."
 msgstr ""
@@ -2603,6 +2593,10 @@ msgstr ""
 
 #: src/worker/application/assignments.ts
 msgid "Grade visibility must be immediate, manual, or scheduled."
+msgstr ""
+
+#: src/worker/web/courses.tsx
+msgid "Gradebook"
 msgstr ""
 
 #: src/worker/application/gradebook.ts
@@ -3104,6 +3098,7 @@ msgstr ""
 msgid "medium tet"
 msgstr ""
 
+#: src/worker/web/admin.tsx
 #: src/worker/web/profile.tsx
 msgid "Member since"
 msgstr ""
@@ -3212,10 +3207,6 @@ msgstr ""
 msgid "Name the rule this step uses: type it in the margin, after the row it develops."
 msgstr ""
 
-#: src/worker/web/admin-lti.tsx
-msgid "Name, optional"
-msgstr ""
-
 #: src/worker/exercises/world/strings.ts
 msgid "Names"
 msgstr ""
@@ -3237,10 +3228,6 @@ msgid "Never"
 msgstr ""
 
 #: src/worker/web/assignments.tsx
-msgid "new assignment"
-msgstr ""
-
-#: src/worker/web/assignments.tsx
 msgid "New assignment title"
 msgstr ""
 
@@ -3250,10 +3237,6 @@ msgstr ""
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "New assumption (a)"
-msgstr ""
-
-#: src/worker/web/content.tsx
-msgid "New content item"
 msgstr ""
 
 #: src/worker/web/courses.tsx
@@ -3694,6 +3677,11 @@ msgstr ""
 msgid "Option labels cannot be empty."
 msgstr ""
 
+#: src/worker/web/admin-lti.tsx
+#: src/worker/web/assignment-detail.tsx
+msgid "Optional"
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Override"
 msgstr ""
@@ -4015,10 +4003,6 @@ msgstr ""
 msgid "Reads as {formula}"
 msgstr ""
 
-#: src/worker/web/assignment-detail.tsx
-msgid "Reason, optional"
-msgstr ""
-
 #: src/worker/web/admin.tsx
 msgid "Recent administrative actions with request IDs."
 msgstr ""
@@ -4204,7 +4188,6 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/assignments.tsx
-#: src/worker/web/gradebook.tsx
 msgid "Review submissions"
 msgstr ""
 
@@ -4234,6 +4217,10 @@ msgstr ""
 
 #: src/worker/web/content.tsx
 msgid "Revision source"
+msgstr ""
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Revision to publish"
 msgstr ""
 
 #: src/worker/web/content.tsx
@@ -4532,12 +4519,24 @@ msgstr ""
 msgid "Set an override for {name}"
 msgstr ""
 
+#: src/worker/web/admin.tsx
+msgid "Set by {platform}"
+msgstr ""
+
+#: src/worker/web/admin.tsx
+msgid "Set by an administrator"
+msgstr ""
+
 #: src/worker/web/profile.tsx
 msgid "Set by an administrator."
 msgstr ""
 
 #: src/worker/web/profile.tsx
 msgid "Set by an administrator. Launches from your LMS won't change it."
+msgstr ""
+
+#: src/worker/web/admin.tsx
+msgid "Set by the user"
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -4558,6 +4557,14 @@ msgstr ""
 
 #: src/worker/web/content.tsx
 msgid "Share Markdown source"
+msgstr ""
+
+#: src/worker/web/content.tsx
+msgid "Shared by link"
+msgstr ""
+
+#: src/worker/web/content.tsx
+msgid "Shared with authors"
 msgstr ""
 
 #: src/worker/web/content.tsx
@@ -4760,6 +4767,7 @@ msgstr ""
 
 #: src/worker/web/admin.tsx
 #: src/worker/web/assignments.tsx
+#: src/worker/web/gradebook.tsx
 msgid "Submissions"
 msgstr ""
 
@@ -5516,10 +5524,6 @@ msgstr ""
 msgid "The tree is too large to check: its branches hold too much text."
 msgstr ""
 
-#: src/worker/web/admin.tsx
-msgid "The user"
-msgstr ""
-
 #: src/worker/application/admin.ts
 #: src/worker/application/auth.ts
 #: src/worker/application/courses.ts
@@ -5561,10 +5565,6 @@ msgstr ""
 #: src/worker/application/content/theory-panel.ts
 #: src/worker/web/content.tsx
 msgid "Theory"
-msgstr ""
-
-#: src/worker/web/content.tsx
-msgid "Theory or language"
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -5973,10 +5973,6 @@ msgstr ""
 #: src/worker/web/content.tsx
 #: src/worker/web/courses.tsx
 msgid "Title"
-msgstr ""
-
-#: src/worker/web/courses.tsx
-msgid "Title of new course"
 msgstr ""
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts

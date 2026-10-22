@@ -5,6 +5,7 @@ import type { LtiPlatformOverview } from "../application/lti-admin";
 import type { AppBindings } from "../http";
 import { adminCrumb } from "./breadcrumbs";
 import {
+  BarField,
   CopyField,
   CreateBar,
   CsrfInput,
@@ -139,17 +140,16 @@ const PlatformSheet: FC<{
             context={context}
             submitLabel={i18n.t("Add deployment")}
           >
-            <input
-              aria-label={i18n.t("Deployment ID")}
-              name="deploymentId"
-              placeholder={i18n.t("Deployment ID from the LMS")}
-              required
-            />
-            <input
-              aria-label={i18n.t("Deployment name")}
-              name="name"
-              placeholder={i18n.t("Name, optional")}
-            />
+            <BarField label={i18n.t("Deployment ID")}>
+              <input
+                name="deploymentId"
+                placeholder={i18n.t("From the LMS")}
+                required
+              />
+            </BarField>
+            <BarField label={i18n.t("Deployment name")}>
+              <input name="name" placeholder={i18n.t("Optional")} />
+            </BarField>
           </CreateBar>
           <form
             action={`/admin/lti/platforms/${platform.id}/${disabled ? "enable" : "disable"}`}

@@ -69,6 +69,7 @@ import {
 } from "./breadcrumbs";
 import {
   AnswerReview,
+  BarField,
   ContentFrame,
   ContentSplit,
   CourseViewSwitch,
@@ -1504,26 +1505,27 @@ const CorrectionForms: FC<{
           method="post"
         >
           <CsrfInput context={context} />
-          <select
-            aria-label={i18n.t("Content revision to publish")}
-            name="contentRevisionId"
-            required
-          >
-            {revisions
-              .filter(({ item }) => item.id === detail.contentItem.id)
-              .map((option) => (
-                <RevisionOption
-                  context={context}
-                  option={option}
-                  selected={option.revision.id === detail.contentRevision.id}
-                />
-              ))}
-          </select>
-          <input
-            aria-label={i18n.t("Correction note")}
-            name="note"
-            placeholder={i18n.t("What changed, optional")}
-          />
+          <BarField label={i18n.t("Revision to publish")}>
+            <select name="contentRevisionId" required>
+              {revisions
+                .filter(({ item }) => item.id === detail.contentItem.id)
+                .map((option) => (
+                  <RevisionOption
+                    context={context}
+                    option={option}
+                    selected={
+                      option.revision.id === detail.contentRevision.id
+                    }
+                  />
+                ))}
+            </select>
+          </BarField>
+          <BarField label={i18n.t("Correction note")}>
+            <input
+              name="note"
+              placeholder={i18n.t("What changed, optional")}
+            />
+          </BarField>
           <button class="secondary" type="submit">
             {i18n.t("Publish correction")}
           </button>
@@ -1540,20 +1542,16 @@ const CorrectionForms: FC<{
             method="post"
           >
             <CsrfInput context={context} />
-            <select
-              aria-label={i18n.t("Exercise to excuse")}
-              name="exerciseId"
-              required
-            >
-              {detail.artifact.manifest.map((item) => (
-                <option value={item.id}>{item.title ?? item.id}</option>
-              ))}
-            </select>
-            <input
-              aria-label={i18n.t("Excuse reason")}
-              name="reason"
-              placeholder={i18n.t("Reason, optional")}
-            />
+            <BarField label={i18n.t("Exercise to excuse")}>
+              <select name="exerciseId" required>
+                {detail.artifact.manifest.map((item) => (
+                  <option value={item.id}>{item.title ?? item.id}</option>
+                ))}
+              </select>
+            </BarField>
+            <BarField label={i18n.t("Excuse reason")}>
+              <input name="reason" placeholder={i18n.t("Optional")} />
+            </BarField>
             <button class="secondary" type="submit">
               {i18n.t("Excuse exercise")}
             </button>

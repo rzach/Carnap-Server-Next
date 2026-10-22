@@ -28,6 +28,7 @@ import { hostedTheoryPath } from "../logic/theories";
 import { contentCrumb, contentItemCrumb } from "./breadcrumbs";
 import {
   ArchiveToggle,
+  BarField,
   ChoiceNotes,
   ContentFrame,
   CopyField,
@@ -39,6 +40,7 @@ import {
   Sheet,
   StatusBadge,
   SummaryStrip,
+  shortCreateLabel,
   splitView,
   TableScroll,
   Time,
@@ -229,7 +231,7 @@ const ItemsTable: FC<{
   }
 
   return (
-    <TableScroll>
+    <TableScroll phoneList>
       <thead>
         <tr>
           <SortHeader label={i18n.t("Title")} />
@@ -303,9 +305,7 @@ function sourceFormatLabel(
   i18n: Translator,
   sourceFormat: ContentSourceFormat,
 ): string {
-  return sourceFormat === "mm0"
-    ? i18n.t("Theory or language")
-    : i18n.t("Lesson");
+  return sourceFormat === "mm0" ? i18n.t("Theory") : i18n.t("Lesson");
 }
 
 const ContentItemCreateBar: FC<{
@@ -317,14 +317,12 @@ const ContentItemCreateBar: FC<{
     <CreateBar
       action="/content"
       context={context}
+      shortLabel={shortCreateLabel(i18n)}
       submitLabel={i18n.t("Create content item")}
     >
-      <input
-        aria-label={i18n.t("Content item title")}
-        name="title"
-        placeholder={i18n.t("New content item")}
-        required
-      />
+      <BarField label={i18n.t("Content item title")}>
+        <input name="title" required />
+      </BarField>
       <SourceFormatSelect />
     </CreateBar>
   );
@@ -349,18 +347,17 @@ const SourceFormatSelect: FC<{ readonly labelled?: boolean }> = ({
   const options = (
     <>
       <option value="markdown">{i18n.t("Lesson")}</option>
-      <option value="mm0">{i18n.t("Theory or language")}</option>
+      <option value="mm0">{i18n.t("Theory")}</option>
     </>
   );
 
-  // The create bar is a row of controls with no room for headings, so its
-  // label is the accessible name and nothing more; the standalone form has the
-  // space to show one.
+  // The create bar is a row of controls, so its label is a bar field's;
+  // the standalone form lays its fields out as a column of its own.
   if (labelled !== true) {
     return (
-      <select aria-label={label} name="sourceFormat">
-        {options}
-      </select>
+      <BarField label={label}>
+        <select name="sourceFormat">{options}</select>
+      </BarField>
     );
   }
 
@@ -496,13 +493,13 @@ const RevisionEditor: FC<{
                 the source and never reaches a student. Prefilled rather than
                 hinted, since the only source of a value here is a submission the
                 compiler just rejected — the author should not retype it. */}
-            <input
-              aria-label={i18n.t("Revision details")}
-              class="details-field"
-              name="details"
-              placeholder={i18n.t("What changed, optional")}
-              value={details}
-            />
+            <BarField label={i18n.t("Revision details")}>
+              <input
+                name="details"
+                placeholder={i18n.t("What changed, optional")}
+                value={details}
+              />
+            </BarField>
             <div class="action-pair">
               {/* The way out that does not save — the same place the breadcrumb
                   goes, said again where the decision is being made. A revision
@@ -591,24 +588,26 @@ const RevisionFooterActions: FC<{
         method="post"
       >
         <CsrfInput context={context} />
-        <input
-          accept={
-            theory
-              ? ".mm0,.txt,text/plain"
-              : ".md,.markdown,.txt,text/markdown,text/plain"
-          }
-          aria-label={
-            theory ? i18n.t("MM0 file") : i18n.t("Carnap Markdown file")
-          }
-          name="sourceFile"
-          required
-          type="file"
-        />
-        <input
-          aria-label={i18n.t("Revision details")}
-          name="details"
-          placeholder={i18n.t("What changed, optional")}
-        />
+        <BarField
+          label={theory ? i18n.t("MM0 file") : i18n.t("Carnap Markdown file")}
+        >
+          <input
+            accept={
+              theory
+                ? ".mm0,.txt,text/plain"
+                : ".md,.markdown,.txt,text/markdown,text/plain"
+            }
+            name="sourceFile"
+            required
+            type="file"
+          />
+        </BarField>
+        <BarField label={i18n.t("Revision details")}>
+          <input
+            name="details"
+            placeholder={i18n.t("What changed, optional")}
+          />
+        </BarField>
         <button class="secondary" type="submit">
           {i18n.t("Upload revision")}
         </button>
@@ -638,6 +637,21 @@ function sharingLabel(i18n: Translator, sharing: ContentSharing): string {
     default:
       return i18n.t("Only you");
   }
+}
+
+/**
+ * A shared revision's mark in the revisions table, as a state rather than the
+ * picker's answer to "who may open it": "Content authors" alone beside a
+ * revision's note read as part of the note. Neutral, since being shared is
+ * the author's choice and not a condition to warn about.
+ */
+function sharedLabel(
+  i18n: Translator,
+  sharing: Exclude<ContentSharing, "private">,
+): string {
+  return sharing === "public"
+    ? i18n.t("Shared by link")
+    : i18n.t("Shared with authors");
 }
 
 /**
@@ -881,7 +895,7 @@ const RevisionsTable: FC<{
   }
 
   return (
-    <TableScroll>
+    <TableScroll phoneList>
       <thead>
         <tr>
           <th>{i18n.t("Details")}</th>
@@ -908,14 +922,20 @@ const RevisionsTable: FC<{
                 )}
               </a>{" "}
               {revision.sharing === "private" ? null : (
-                <StatusBadge
-                  label={sharingLabel(i18n, revision.sharing)}
-                  tone="ok"
-                />
+                <span class="wide-only">
+                  <StatusBadge label={sharedLabel(i18n, revision.sharing)} />
+                </span>
               )}
             </td>
+            {/* The sharing again, for the phone list, which ends the line
+                under the note with a row's badges; one copy is ever shown. */}
             <td>
               <Time value={revision.createdAt} />
+              {revision.sharing === "private" ? null : (
+                <span class="phone-only">
+                  <StatusBadge label={sharedLabel(i18n, revision.sharing)} />
+                </span>
+              )}
             </td>
             {/* Named by the same note the row is named by, so a reader who
                 cannot see which row a link is in still hears which revision

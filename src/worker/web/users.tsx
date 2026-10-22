@@ -59,6 +59,22 @@ export const UserLabel: FC<{
   />
 );
 
+/**
+ * The line a {@link UserLabel} sets under the name — the address, or the
+ * identifier that stands in for one — or null when it shows none.
+ */
+export function userDetail(
+  i18n: Translator,
+  user: User | null,
+  userId: string,
+  identified = false,
+): string | null {
+  const detail =
+    identified || hasName(user) ? userDisplayMeta(i18n, user, userId) : null;
+
+  return detail === userDisplayName(i18n, user, userId) ? null : detail;
+}
+
 /** {@link UserLabel} for a user record already in hand. */
 export const UserRecordLabel: FC<{
   readonly identified?: boolean;
@@ -66,14 +82,12 @@ export const UserRecordLabel: FC<{
   readonly userId: string;
 }> = ({ identified = false, user, userId }) => {
   const i18n = useI18n();
-  const name = userDisplayName(i18n, user, userId);
-  const detail =
-    identified || hasName(user) ? userDisplayMeta(i18n, user, userId) : null;
+  const detail = userDetail(i18n, user, userId, identified);
 
   return (
     <>
-      {name}
-      {detail === null || detail === name ? null : (
+      {userDisplayName(i18n, user, userId)}
+      {detail === null ? null : (
         <>
           <br />
           <span class="small">{detail}</span>

@@ -7,6 +7,7 @@ import { CSRF_COOKIE_NAME } from "../application/auth";
 import type { StoredPointsDrift } from "../domain/assessment";
 import type { ExerciseAnswerReview } from "../domain/content";
 import type { AppBindings } from "../http";
+import type { Translator } from "../i18n/translator";
 import { APP_FRAME_PARAM } from "./content-document";
 import type { StatusTone } from "./html";
 // Straight from the context module rather than the layout's re-export, so that
@@ -260,12 +261,32 @@ export const CourseViewSwitch: FC<{
  * keeps `width: 100%` on wide screens; when its content is wider than the
  * available space (many gradebook columns, long URLs, a phone) the wrapper
  * gains a horizontal scrollbar rather than hiding the overflowing columns.
+ *
+ * `phoneList` is for a ledger whose rows each name one thing: on a phone it
+ * reads as a list instead (see chrome.css). The first cell is the row's name,
+ * the last is its end — a link, a score, the action icons — and the cells
+ * between them become a muted line under the name. A cell whose
+ * `data-sort-value` is empty holds nothing (the sort's own convention) and is
+ * left out of that line rather than shown as a dash with no heading to
+ * explain it.
  */
-export const TableScroll: FC<{ readonly children?: Child }> = ({
-  children,
-}) => (
+export const TableScroll: FC<{
+  readonly children?: Child;
+  /** `"flat"` for rows with no end: every cell after the name is the line. */
+  readonly phoneList?: boolean | "flat";
+}> = ({ children, phoneList = false }) => (
   <div class="table-scroll">
-    <table>{children}</table>
+    <table
+      class={
+        phoneList === "flat"
+          ? "phone-list phone-flat"
+          : phoneList
+            ? "phone-list"
+            : undefined
+      }
+    >
+      {children}
+    </table>
   </div>
 );
 
@@ -547,21 +568,62 @@ export function splitView(options: {
  * An inline "add a new record" form for a sheet footer. Replaces the older
  * pattern of embedding a create control as the last row of a table (which
  * forced the submit button into an arbitrary column). Fields are passed as
- * children; each should carry its own `aria-label`.
+ * children, each in a {@link BarField}.
+ *
+ * `shortLabel` is what the button shows on a phone, where a long label
+ * ("Create enrollment link") pushes the button onto a line of its own under
+ * the field. The button keeps `submitLabel` as its name at every width, so
+ * the short label should be a word of the long one: the name then still
+ * contains what is shown.
  */
 export const CreateBar: FC<{
   readonly action: string;
   readonly children: Child;
   readonly context: Context<AppBindings>;
+  readonly shortLabel?: string;
   readonly submitLabel: string;
-}> = ({ action, children, context, submitLabel }) => (
+}> = ({ action, children, context, shortLabel, submitLabel }) => (
   <form action={action} class="create-bar" method="post">
     <CsrfInput context={context} />
     {children}
-    <button class="secondary" type="submit">
-      {submitLabel}
-    </button>
+    {shortLabel === undefined ? (
+      <button class="secondary" type="submit">
+        {submitLabel}
+      </button>
+    ) : (
+      <button aria-label={submitLabel} class="secondary" type="submit">
+        <span class="create-bar-long">{submitLabel}</span>
+        <span class="create-bar-short">{shortLabel}</span>
+      </button>
+    )}
   </form>
+);
+
+/** The short label a create bar's button shows on a phone. */
+export function shortCreateLabel(i18n: Translator): string {
+  return i18n.t("Create", undefined, {
+    comment:
+      "A create button's short label on a phone, beside the field it submits. Use the verb the longer create buttons use (Create assignment, Create enrollment link).",
+  });
+}
+
+/**
+ * One field of a bar of controls — a create bar, a sheet footer's note —
+ * with its name shown above it. The words a reader sees are the field's
+ * accessible name, because the label wraps the control and nothing else
+ * names it: a bar used to name its fields with `aria-label` alone, and with a
+ * placeholder that said something else (WCAG 2.5.3, gh #4). A placeholder,
+ * where a field keeps one, is an example or an "optional", not the name.
+ */
+export const BarField: FC<{
+  readonly children: Child;
+  readonly label: string;
+}> = ({ children, label }) => (
+  // biome-ignore lint/a11y/noLabelWithoutControl: the control is `children`, which every caller passes; the rule cannot see through the prop.
+  <label class="bar-field">
+    <span class="bar-field-label">{label}</span>
+    {children}
+  </label>
 );
 
 /**
@@ -714,12 +776,12 @@ export const BrowserTimezoneInput: FC<{ readonly name: string }> = ({
  * the minute when the form is next saved.
  */
 export const TimestampInput: FC<{
+  /** One field of a create bar: labelled as a {@link BarField}. */
+  readonly inBar?: boolean;
   readonly label: string;
-  /** Attach the label to the field itself, for a bar with no room for text. */
-  readonly labelHidden?: boolean;
   readonly name: string;
   readonly value?: string | null | undefined;
-}> = ({ label, labelHidden = false, name, value }) => {
+}> = ({ inBar = false, label, name, value }) => {
   const hidden = (
     <input
       data-timestamp-hidden={name}
@@ -729,16 +791,12 @@ export const TimestampInput: FC<{
     />
   );
 
-  if (labelHidden) {
+  if (inBar) {
     return (
-      <>
-        <input
-          aria-label={label}
-          data-timestamp-local={name}
-          type="datetime-local"
-        />
+      <BarField label={label}>
+        <input data-timestamp-local={name} type="datetime-local" />
         {hidden}
-      </>
+      </BarField>
     );
   }
 

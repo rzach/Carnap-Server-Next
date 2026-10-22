@@ -91,17 +91,6 @@ export function renderProfile(
 
   const facts: SummaryItem[] = [];
 
-  if (actor.capabilities.length > 0) {
-    facts.push({
-      label: i18n.t("Platform roles"),
-      value: joinDistinct(
-        actor.capabilities.map((grant) =>
-          capabilityLabel(i18n, grant.capability),
-        ),
-      ),
-    });
-  }
-
   facts.push({
     label: i18n.t("Sign-in"),
     value: joinDistinct(
@@ -157,6 +146,24 @@ export function renderProfile(
           </form>
         }
         sections={[
+          // A section, not a tile in the strip above: the strip's values are
+          // single figures set in the display face, and a list of roles there
+          // wrapped to several lines and was the odd one out at every width.
+          actor.capabilities.length > 0 ? (
+            <section
+              aria-labelledby="profile-roles-heading"
+              class="profile-roles"
+            >
+              <h3 id="profile-roles-heading">{i18n.t("Platform roles")}</h3>
+              <p>
+                {joinDistinct(
+                  actor.capabilities.map((grant) =>
+                    capabilityLabel(i18n, grant.capability),
+                  ),
+                )}
+              </p>
+            </section>
+          ) : null,
           <ProfileForm
             context={context}
             localeValue={localeValue}

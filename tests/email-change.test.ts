@@ -644,7 +644,7 @@ describe("an administrator changing an address", () => {
 
         const page = await get(env, `/admin/users/${ada.actorId}`, admin);
 
-        expect(await page.text()).toContain("An administrator");
+        expect(await page.text()).toContain("Set by an administrator");
       }, EMAIL_ENV);
     });
   });
