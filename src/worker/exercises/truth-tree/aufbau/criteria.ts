@@ -28,19 +28,24 @@ import type {
   SurfaceLanguage,
   Term,
 } from "@aufbau/syntax";
-import { parseStatement, statementScope } from "@aufbau/syntax";
-import { roleIndex } from "../../../logic/specs/roles";
-import type { Bindings, RulePatterns } from "./patterns";
 import {
+  parseStatement,
+  parseStatements,
+  printTerm,
+  statementScope,
+} from "@aufbau/syntax";
+import { roleIndex } from "../../../logic/specs/roles";
+import type { Abstraction, Bindings, RulePatterns } from "./patterns";
+import {
+  computedTerm,
   instantiate,
-  matchTerm,
+  matchedBy,
   mentions,
   occurrence,
   ruleMatches,
-  substitutionOf,
   termKey,
 } from "./patterns";
-import { readEngine } from "./rows";
+import { displayText, readEngine } from "./rows";
 import type { TreeTheory } from "./theory";
 import { TREE_ROLES } from "./theory";
 
@@ -221,6 +226,8 @@ export interface JudgementRelation {
 
 /** A theory's development rules, and what is wrong with them. */
 export interface TreeDevelopment {
+  /** The theory it is read from. */
+  readonly theory: TreeTheory;
   readonly rules: readonly DevelopmentRule[];
   /** By every axiom of every chain, the rule it belongs to. */
   readonly byAxiom: ReadonlyMap<string, DevelopmentRule>;
@@ -245,8 +252,17 @@ export type DevelopmentProblem =
   | { readonly type: "unreadable" }
   /** A `tree.` role Carnap does not know, as a misspelt one is. */
   | { readonly type: "unknown-role"; readonly role: string }
-  /** The `tree.substitution` term is not `{x / te} ph`-shaped. */
-  | { readonly type: "bad-substitution" };
+  /**
+   * A row Carnap matches a branch's rows by, a closure rule's or one a rule
+   * develops or asks beside it, is built with a term the theory's rewrites
+   * compute (`term`), so which rows it matches cannot be read off their
+   * shape, and the rule has no `@view` and `@abstract` that read them.
+   */
+  | {
+      readonly type: "not-rigid";
+      readonly row: string;
+      readonly term: string;
+    };
 
 const cache = new WeakMap<SurfaceLanguage, TreeDevelopment>();
 
@@ -421,13 +437,21 @@ function readDevelopment(
     return patterns === null ? [] : [patterns];
   });
   const relation = judgementRelation(language, theory);
-  const substitution = roleIndex(language).termFor("tree.substitution");
+  // What a branch's rows are matched by must be rigid.
+  for (const [patterns, row] of matchedRows(closure, rules)) {
+    const term = computedTerm(language, row);
 
-  if (substitution !== null && substitutionOf(language) === null) {
-    problems.push({
-      problem: { type: "bad-substitution" },
-      rule: substitution,
-    });
+    if (term !== null) {
+      problems.push({
+        problem: {
+          row:
+            displayText(language, row) ?? printTerm(language, row, "engine"),
+          term,
+          type: "not-rigid",
+        },
+        rule: patterns.name,
+      });
+    }
   }
 
   for (const [owner, role] of treeRoles(language)) {
@@ -458,7 +482,39 @@ function readDevelopment(
     problems,
     relation,
     rules: used,
+    theory,
   };
+}
+
+/**
+ * The rows Carnap matches a branch's rows by, each with the statement it is
+ * matched as: the rows that close a branch, and the rows each rule develops
+ * and asks beside them. A branch marked open is decided by them
+ * (`./branch.ts`, `./developed.ts`), exactly only where each is rigid.
+ *
+ * A pair is matched by its view where it has one that abstracts
+ * (`branchQuestions`); a closure, or a rule on one row (its marks and
+ * instances), by its own rows; a rule on several rows that asks for no
+ * pairs is not matched at all.
+ */
+export function matchedRows(
+  closure: readonly RulePatterns[],
+  rules: readonly DevelopmentRule[],
+): (readonly [statement: RulePatterns, row: Term])[] {
+  return [
+    ...closure,
+    ...rules.flatMap((rule) =>
+      rule.criterion?.kind === "pairs"
+        ? rule.variants.map(matchedBy)
+        : rule.patterns.focus.length === 1
+          ? rule.variants
+          : [],
+    ),
+  ].flatMap((patterns) =>
+    [...patterns.focus, ...patterns.side].map(
+      (row) => [patterns, row] as const,
+    ),
+  );
 }
 
 /** A rule whose instances cannot be confirmed asks only that it be used. */
@@ -516,10 +572,60 @@ function patternOf({ result }: StatementFormula): Term | null {
 
 /**
  * A rule statement read as patterns: `focus (ga ; side) at (Δ)` for its
- * conclusion, `closes (ga ; side ; rows)` for each premise. Null for a rule
+ * conclusion, `closes (ga ; side ; rows)` for each premise, and how the
+ * engine reads its rows where its rewrites compute them. Null for a rule
  * whose conclusion is not a focused branch, or whose rows are not plain rows.
  */
 export function rulePatterns(
+  language: SurfaceLanguage,
+  theory: TreeTheory,
+  statement: AssertStatement,
+): RulePatterns | null {
+  const patterns = readPatterns(language, theory, statement);
+
+  return patterns === null
+    ? null
+    : { ...patterns, abstraction: abstractionOf(language, theory, patterns) };
+}
+
+/** A rule's engine annotations (`@view`, `@abstract`, `@recover`), trimmed. */
+export function engineAnnotations(
+  language: SurfaceLanguage,
+  rule: string,
+): string[] {
+  return (language.spec.rules.get(rule)?.foreignAnnotations ?? []).map(
+    (each) => each.text.trim(),
+  );
+}
+
+const VIEW = "@view ";
+
+/**
+ * A rule's `@view`, read as the rule's own rows are and under its name: the
+ * statement the engine matches a line by. Null where it has none, or the
+ * view does not read.
+ */
+export function viewPatterns(
+  language: SurfaceLanguage,
+  theory: TreeTheory,
+  rule: string,
+): RulePatterns | null {
+  const view = engineAnnotations(language, rule).find((line) =>
+    line.startsWith(VIEW),
+  );
+  const read =
+    view === undefined
+      ? undefined
+      : parseStatements(`axiom ${rule} ${view.slice(VIEW.length)};`)
+          .statements[0];
+
+  return read?.kind === "axiom"
+    ? readPatterns(language, theory, read as AssertStatement)
+    : null;
+}
+
+/** {@link rulePatterns} without the abstraction: the rows alone. */
+function readPatterns(
   language: SurfaceLanguage,
   theory: TreeTheory,
   statement: AssertStatement,
@@ -591,6 +697,7 @@ export function rulePatterns(
   }
 
   return {
+    abstraction: null,
     binders: statement.binders,
     branch: branch.name,
     focus,
@@ -604,6 +711,46 @@ export function rulePatterns(
     side,
     written,
   };
+}
+
+/**
+ * A rule's `@view` and `@abstract`, where it has both and the plugs are bare
+ * names (`@abstract ph ps ch x a b`). Null otherwise, or where the binders do
+ * not name the view's and the rule's: the target and hole the rule's, the
+ * hole bound, the rows and plugs the view's.
+ */
+function abstractionOf(
+  language: SurfaceLanguage,
+  theory: TreeTheory,
+  patterns: RulePatterns,
+): Abstraction | null {
+  const slots = engineAnnotations(language, patterns.name)
+    .find((line) => line.startsWith("@abstract "))
+    ?.split(/\s+/u)
+    .slice(1);
+  const viewed =
+    slots?.length === 6
+      ? viewPatterns(language, theory, patterns.name)
+      : null;
+
+  if (slots === undefined || viewed === null) {
+    return null;
+  }
+
+  const [target, left, , hole, plug, other] = slots as [
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+  ];
+
+  return patterns.metas.get(hole) === true &&
+    patterns.metas.has(target) &&
+    [left, plug, other].every((name) => viewed.metas.has(name))
+    ? { hole, left, other, plug, target, view: viewed }
+    : null;
 }
 
 /**
@@ -748,30 +895,23 @@ function instanceSlot(
 }
 
 /**
- * The template a written row is an instance of: the one whose shape it has,
- * its instance left open; the first where none does, as a row written by a
- * substitution (`{x / te} ph`) matches none in a theory that does not name
- * its substitution.
+ * The row a rule writes at `instance` that a written row is: the template it
+ * keys like, so instantiated, by canonical form (a template's substitution
+ * computes); the first template so instantiated where none does.
  */
-export function templateFor(
+export function instanceRow(
   language: SurfaceLanguage,
-  rule: DevelopmentRule,
   slot: InstanceSlot,
   bindings: Bindings,
   row: Term,
+  instance: Term,
 ): Term {
-  const [first] = slot.templates;
-
-  if (slot.templates.length === 1) {
-    return first as Term;
-  }
+  const at = new Map([...bindings, [slot.binder, instance]]);
+  const rows = slot.templates.map((template) => instantiate(template, at));
+  const key = termKey(language, row);
 
   return (
-    slot.templates.find(
-      (template) =>
-        matchTerm(language, template, row, rule.patterns.metas, bindings) !==
-        null,
-    ) ?? (first as Term)
+    rows.find((each) => termKey(language, each) === key) ?? (rows[0] as Term)
   );
 }
 

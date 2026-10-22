@@ -54,21 +54,16 @@
  * DOM-free and free of i18n.
  */
 
-import type {
-  AssertStatement,
-  Binder,
-  SurfaceLanguage,
-  Term,
-  TermInfo,
-} from "@aufbau/syntax";
-import { parseStatements, printTerm } from "@aufbau/syntax";
+import type { Binder, SurfaceLanguage, Term, TermInfo } from "@aufbau/syntax";
+import { printTerm } from "@aufbau/syntax";
 import type {
   DevelopmentRule,
   InstanceSlot,
   TreeDevelopment,
 } from "./criteria";
-import { rulePatterns } from "./criteria";
+import { engineAnnotations, viewPatterns } from "./criteria";
 import type { RulePatterns } from "./patterns";
+import { rewriteHeads } from "./patterns";
 import type { TreeTheory } from "./theory";
 
 /** A judgement and the axiom to cite for it. */
@@ -468,32 +463,20 @@ function generate(
     parts: readonly Term[],
     premise: number,
   ): string[] | null | "unstated" {
-    const annotations = spec.rules.get(axiom)?.foreignAnnotations ?? [];
-    const lines = annotations.map((each) => each.text.trim());
-    const recovers = lines.filter((line) => line.startsWith("@recover "));
+    const recovers = engineAnnotations(language, axiom).filter((line) =>
+      line.startsWith("@recover "),
+    );
     const own = new Set(variablesIn(patterns.focus[0] as Term));
     const asked = new Set(parts.flatMap(variablesIn));
     const needed = recovers.filter((line) => {
       const target = line.split(/\s+/u)[1] ?? "";
       return asked.has(target) && !own.has(target);
     });
-    const view = lines.find((line) => line.startsWith("@view "));
-
     if (needed.length === 0) {
       return null;
     }
 
-    if (view === undefined) {
-      return "unstated";
-    }
-
-    const statement = parseStatements(
-      `axiom view ${view.slice("@view ".length)};`,
-    ).statements[0];
-    const viewed =
-      statement?.kind === "axiom"
-        ? rulePatterns(language, theory, statement as AssertStatement)
-        : null;
+    const viewed = viewPatterns(language, theory, axiom);
     const viewParts = viewed === null ? null : onceParts(viewed, premise);
 
     if (viewed === null || viewParts === null) {
@@ -881,14 +864,15 @@ function renamed(term: Term, names: ReadonlyMap<string, string>): Term {
 
 /**
  * The terms that build each sort's values, which a row's shape is made of:
- * not a definition (a row in one is a row in its definiens), not the
- * theory's substitution (the engine computes it away), and none for a sort
+ * not a definition (a row in one is a row in its definiens), not a term the
+ * theory's rewrites compute away (a substitution), and none for a sort
  * built by a list, whose terms are equal however they are bracketed.
  */
 function constructorsBySort(
   language: SurfaceLanguage,
 ): ReadonlyMap<string, readonly TermInfo[]> {
   const bySort = new Map<string, TermInfo[]>();
+  const computed = rewriteHeads(language);
   const lists = new Set(
     [...language.spec.terms.values()].flatMap((each) =>
       each.acui === null ? [] : [each.returnSort],
@@ -896,11 +880,7 @@ function constructorsBySort(
   );
 
   for (const info of language.spec.terms.values()) {
-    if (
-      info.isDef ||
-      info.roles.includes("tree.substitution") ||
-      lists.has(info.returnSort)
-    ) {
+    if (info.isDef || computed.has(info.name) || lists.has(info.returnSort)) {
       continue;
     }
 

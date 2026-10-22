@@ -20,8 +20,8 @@
  */
 
 import type { SurfaceLanguage, Term } from "@aufbau/syntax";
-import type { TableauIndex, TableauNode } from "../../../../tableau/document";
 import type { Missing } from "../report";
+import type { TableauIndex, TableauNode } from "../tableau/document";
 import { isLiteral, isSelfIdentity } from "./branch";
 import type { InstanceSlot, TreeDevelopment } from "./criteria";
 import { instanceShower, witnesses } from "./criteria";
@@ -29,10 +29,12 @@ import type { OkAxioms } from "./ok";
 import { atWitnesses } from "./ok";
 import type { Bindings, RulePatterns } from "./patterns";
 import {
+  abstracted,
+  canonical,
   closedSubterms,
-  conclude,
   instantiate,
   matchAll,
+  matchedBy,
   matchFocus,
   occursFree,
   termKey,
@@ -162,7 +164,8 @@ function isVacuous(
   const at = new Map([...bindings, [slot.binder, probe]]);
 
   return slot.templates.every(
-    (template) => !occursFree(conclude(language, template, at), probe.name),
+    (template) =>
+      !occursFree(canonical(language, instantiate(template, at)), probe.name),
   );
 }
 
@@ -422,21 +425,24 @@ export function branchQuestions(
 
       for (const row of firsts) {
         // Each statement the row sets off, with how its first focus row
-        // matched: the first way, as an identity `a = b` matches one way.
+        // matched: the first way, as an identity `a = b` matches one way. A
+        // statement whose partner its rewrites compute (`{x / a} ph`) is
+        // matched by its view (`a = b ; ps`).
         const starts = rule.variants.flatMap((patterns) => {
-          const [first, second] = patterns.focus;
+          const matched = matchedBy(patterns);
+          const [first, second] = matched.focus;
           const judgement = ok.pairs.get(patterns.name);
           const start =
-            first === undefined || patterns.focus.length !== 2
+            first === undefined || matched.focus.length !== 2
               ? null
-              : matchAll(language, first, row.term, patterns.metas).next();
+              : matchAll(language, first, row.term, matched.metas).next();
 
           return judgement === undefined ||
             second === undefined ||
             start === null ||
             start.done === true
             ? []
-            : [{ judgement, patterns, second, start: start.value }];
+            : [{ judgement, matched, patterns, second, start: start.value }];
         });
 
         if (starts.length === 0) {
@@ -463,7 +469,13 @@ export function branchQuestions(
 
         pairings.set(key, candidates);
 
-        for (const { judgement, patterns, second, start } of starts) {
+        for (const {
+          judgement,
+          matched,
+          patterns,
+          second,
+          start,
+        } of starts) {
           if (!stated.includes(patterns.name)) {
             continue;
           }
@@ -475,13 +487,21 @@ export function branchQuestions(
               ]),
             );
 
-            for (const bindings of matchAll(
+            for (const viewed of matchAll(
               language,
               second,
               partner.term,
-              patterns.metas,
+              matched.metas,
               start,
             )) {
+              // The statement's own bindings: `ph` built from the partner
+              // as the engine's `@abstract` does, every `a` in it made `x`.
+              const bindings = abstracted(language, patterns, viewed);
+
+              if (bindings === null) {
+                continue;
+              }
+
               // A conclusion that is a self-identity (`b = b`) is true on
               // any branch, and no step need write it.
               const waived = patterns.written.some(
@@ -490,7 +510,7 @@ export function branchQuestions(
                   premise.every((each) =>
                     isSelfIdentity(
                       language,
-                      conclude(language, each, bindings),
+                      canonical(language, instantiate(each, bindings)),
                     ),
                   ),
               );

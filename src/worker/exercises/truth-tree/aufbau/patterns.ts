@@ -3,28 +3,34 @@
  *
  * The development criteria ask which rows a rule applies to, and a closed
  * branch's × which rows close it: both are questions about a rule's focus
- * pattern (`∀ x ph`, `ph ; ¬ ph`) against a row's term. Matching is
- * syntactic, over `@aufbau/syntax` parses with their defs unfolded, as the
- * engine sees through them (`a ≠ a` is `¬ a = a`): a rule's binders are its
- * metavariables, and anything else must be the same constructor with matching
- * arguments. A pattern that needs the theory's computation to match matches
- * only what it says literally, which is the conservative failure: such a rule
- * imposes nothing it cannot see.
+ * pattern (`∀ x ph`, `ph ; ¬ ph`) against a row's term. A rule's binders are
+ * its metavariables, and anything else must be the same constructor with
+ * matching arguments.
  *
- * The theory's substitution is the exception, where it says which term that
- * is (`@syntax role tree.substitution`): `{x / te} ph` is `ph` with `te` for
- * each `x` in it. Where `ph` is known, from a focus `∀ x ph`, a row matches
- * where it is `ph` with one term at every `x`, and `te` is that term. Where
- * `te` is known and `ph` is not, as in the identity rule's `{x / a} ph` once
- * `a = b` has fixed `a`, `ph` is the row with every `a` made `x`: every one,
- * because the rule's `ph` may not mention `a`.
+ * A row is matched in its canonical form: its defs unfolded, then normalized
+ * by the theory's rewrites and `@acui` laws as far as the engine can prove
+ * (`@aufbau/syntax`'s `engineForm`), so `a ≠ a` is the `¬ te = te` a closure
+ * rule asks for. A pattern no term of which heads a `@rewrite` once its defs
+ * are unfolded is *rigid*: computing an instance of it only computes inside
+ * what its metavariables stand for, so it matches a row exactly where it
+ * matches the row's canonical form syntactically (#478). The closure rules'
+ * rows and the rows each rule develops must be rigid (`./criteria.ts` says
+ * where one is not), since an open branch is decided by them.
  *
- * The one computation matching does see is a list: a constructor the theory
- * declares associative with a unit and nothing more (`@acui assoc _ unit _`),
- * as the intuitionistic tableaux' prefixes are. A term of it is the sequence
- * of its members, so `(1 . wa) . waa` and `1 . (wa . waa)` are one term, and
- * a metavariable of the list's sort in a pattern stands for any run of
- * members, none included: `σ . ρ` is `σ` and every prefix that extends it.
+ * A term that heads a rewrite is computed away (`{x / a} ph` becomes `ph`
+ * with `a` for `x`), so no row has the shape of a pattern built with one. A
+ * rule whose rows are stated so says, for the engine, how it reads them: a
+ * `@view` whose rows are rigid (`a = b ; ps`), and an `@abstract` that builds
+ * what the view leaves unread (`ph`) from a row it matched. Carnap matches
+ * such a rule by its view and builds the rest as the engine does
+ * ({@link abstracted}).
+ *
+ * The one computation matching does itself is a list: a constructor the
+ * theory declares associative with a unit and nothing more (`@acui assoc _
+ * unit _`), as the intuitionistic tableaux' prefixes are. A term of it is the
+ * sequence of its members, so `(1 . wa) . waa` and `1 . (wa . waa)` are one
+ * term, and a metavariable of the list's sort in a pattern stands for any run
+ * of members, none included: `σ . ρ` is `σ` and every prefix that extends it.
  *
  * Instantiating is the converse, and the engine checks what it produces: a
  * link theorem (`./emit.ts`) states a written row is a rule's template with
@@ -34,8 +40,14 @@
  */
 
 import type { AssertStatement, SurfaceLanguage, Term } from "@aufbau/syntax";
-import { printTerm, unfoldDefinitions } from "@aufbau/syntax";
-import { roleIndex } from "../../../logic/specs/roles";
+import {
+  abstractContext,
+  engineForm,
+  parseStatement,
+  printTerm,
+  RewriteLimitError,
+  unfoldDefinitions,
+} from "@aufbau/syntax";
 
 /** What each metavariable of a pattern stands for. */
 export type Bindings = ReadonlyMap<string, Term>;
@@ -70,6 +82,23 @@ export interface RulePatterns {
   /** The statement's binders: its metavariables. */
   readonly metas: Metas;
   readonly binders: AssertStatement["binders"];
+  /** How its rows are read where its rewrites compute them; usually null. */
+  readonly abstraction: Abstraction | null;
+}
+
+/**
+ * A rule's `@view` and `@abstract target left right hole plug other`, with
+ * bare-name plugs: the rows are matched by the view, and `target` is `left`
+ * with each site of `plug` made `hole`.
+ */
+export interface Abstraction {
+  /** The view as patterns, named for the rule: what rows are matched by. */
+  readonly view: RulePatterns;
+  readonly target: string;
+  readonly left: string;
+  readonly hole: string;
+  readonly plug: string;
+  readonly other: string;
 }
 
 /** A list constructor: associative, with a unit, neither commutative nor idempotent. */
@@ -157,189 +186,127 @@ function unfolded(language: SurfaceLanguage, term: Term): Term {
   return found;
 }
 
-/**
- * A term with its defs unfolded and each list in it flattened and nested to
- * the left.
- */
-function normal(language: SurfaceLanguage, term: Term): Term {
-  const lists = listsOf(language);
-
-  if (lists.size === 0) {
-    return unfolded(language, term);
-  }
-
-  const walk = (node: Term): Term => {
-    if (node.kind !== "app") {
-      return node;
-    }
-
-    const list = lists.get(node.sort);
-
-    if (list !== undefined && isListed(list, node)) {
-      return listOf(list, node.sort, members(list, node).map(walk));
-    }
-
-    return { ...node, args: node.args.map(walk) };
-  };
-
-  return walk(unfolded(language, term));
-}
+/** Each term read, in canonical form. */
+const canonicals = new WeakMap<Term, Term>();
 
 /**
- * The theory's substitution constructor, `{x / te} ph`: which argument is the
- * bound variable, which the term put for it, and which the body.
+ * A term in canonical form: its defs unfolded, then as the engine compares
+ * it (`engineForm`): the normal form of the theory's rewrites and `@acui`
+ * laws where the engine can prove its way there, and the term as written
+ * where it cannot, as under a term with no `@congr`, or where the rewrites
+ * do not terminate.
  */
-export interface Substitution {
-  readonly term: string;
-  readonly hole: number;
-  readonly value: number;
-  readonly body: number;
-}
+export function canonical(language: SurfaceLanguage, term: Term): Term {
+  let found = canonicals.get(term);
 
-const substitutionCache = new WeakMap<SurfaceLanguage, Substitution | null>();
+  if (found === undefined) {
+    const plain = unfolded(language, term);
 
-/**
- * The constructor carrying `@syntax role tree.substitution`: three arguments,
- * one a bound variable, one of the sort it builds (the body), and the term.
- * Null where the theory names none, or one of another shape.
- */
-export function substitutionOf(
-  language: SurfaceLanguage,
-): Substitution | null {
-  if (substitutionCache.has(language)) {
-    return substitutionCache.get(language) ?? null;
-  }
+    try {
+      found = engineForm(language, plain);
+    } catch (error) {
+      if (!(error instanceof RewriteLimitError)) {
+        throw error;
+      }
 
-  const term = roleIndex(language).termFor("tree.substitution");
-  const info = term === null ? undefined : language.spec.terms.get(term);
-  let found: Substitution | null = null;
-
-  if (term !== null && info !== undefined && info.binders.length === 3) {
-    const sorts = info.binders.map((binder) =>
-      "sort" in binder.type ? binder.type.sort : null,
-    );
-    const hole = info.binders.findIndex((binder) => binder.binds);
-    const body = sorts.findIndex(
-      (sort, at) => at !== hole && sort === info.returnSort,
-    );
-    const value = [0, 1, 2].find((at) => at !== hole && at !== body);
-
-    if (hole >= 0 && body >= 0 && value !== undefined) {
-      found = { body, hole, term, value };
+      found = plain;
     }
-  }
 
-  substitutionCache.set(language, found);
+    canonicals.set(term, found);
+    canonicals.set(found, found);
+  }
 
   return found;
 }
 
-/**
- * Whether a body's subterm is an occurrence of the bound variable `name` at
- * `sort`: the variable, or the variable coerced into the sort (`v2t x`).
- */
-function isHole(
-  language: SurfaceLanguage,
-  node: Term,
-  name: string,
-  sort: string,
-): boolean {
-  let inner = node;
-
-  while (
-    inner.kind === "app" &&
-    inner.args.length === 1 &&
-    language.coercionNames.has(inner.term)
-  ) {
-    inner = inner.args[0] as Term;
-  }
-
-  return (
-    node.sort === sort &&
-    inner.kind === "variable" &&
-    !inner.binder &&
-    inner.name === name
-  );
-}
+const headCache = new WeakMap<SurfaceLanguage, ReadonlySet<string>>();
 
 /**
- * `body` with `by` at each free occurrence of the variable `name` at the
- * sort of `by`: one step of the theory's substitution.
+ * The terms that head a `@rewrite`'s left side: the ones the engine computes
+ * away, as `{x / te} ph` is. A rewrite is a statement so annotated with no
+ * hypotheses, stating its relation between two terms.
  */
-function substituteHole(
-  language: SurfaceLanguage,
-  body: Term,
-  name: string,
-  by: Term,
-): Term {
-  if (isHole(language, body, name, by.sort)) {
-    return by;
-  }
+export function rewriteHeads(language: SurfaceLanguage): ReadonlySet<string> {
+  let heads = headCache.get(language);
 
-  if (body.kind === "variable") {
-    return body;
-  }
+  if (heads === undefined) {
+    const found = new Set<string>();
 
-  let shadowed = false;
-  const args = body.args.map((argument) => {
-    if (argument.kind === "variable" && argument.binder) {
-      shadowed ||= argument.name === name;
-      return argument;
+    for (const statement of language.spec.statements) {
+      if (
+        (statement.kind !== "axiom" && statement.kind !== "theorem") ||
+        statement.hypotheses.some((hypothesis) => "text" in hypothesis) ||
+        statement.binders.some((binder) => "text" in binder.type) ||
+        !statement.annotations.some(
+          (annotation) =>
+            annotation.text.trim().split(/\s+/)[0] === "@rewrite",
+        )
+      ) {
+        continue;
+      }
+
+      const read = parseStatement(language, statement).conclusion.result;
+      const left =
+        read.ok && read.term.kind === "app"
+          ? (read.term.args[0] ?? null)
+          : null;
+
+      // Under the def it is headed by too: a pattern is looked at unfolded.
+      for (const head of left === null
+        ? []
+        : [left, unfolded(language, left)]) {
+        if (head.kind === "app") {
+          found.add(head.term);
+        }
+      }
     }
 
-    return shadowed ? argument : substituteHole(language, argument, name, by);
-  });
+    heads = found;
+    headCache.set(language, heads);
+  }
 
-  return { ...body, args };
+  return heads;
 }
 
 /**
- * A rule's template with its metavariables filled in, and the theory's
- * substitutions in it carried out: the row a step by the rule writes. Where
- * {@link instantiate} leaves `{x / b} (F x)` for the engine to compute, this
- * gives `F b`.
+ * The first term in a pattern, its defs unfolded, that heads a rewrite; null
+ * where there is none, and the pattern is rigid: matching it against a row's
+ * canonical form is then exact.
  */
-export function conclude(
+export function computedTerm(
   language: SurfaceLanguage,
-  template: Term,
-  bindings: Bindings,
-): Term {
-  const substitution = substitutionOf(language);
-  const walk = (node: Term): Term => {
+  pattern: Term,
+): string | null {
+  const heads = rewriteHeads(language);
+  const find = (node: Term): string | null => {
     if (node.kind === "variable") {
-      return bindings.get(node.name) ?? node;
+      return null;
     }
 
-    const args = node.args.map(walk);
-    const hole = substitution === null ? undefined : args[substitution.hole];
-    const value =
-      substitution === null ? undefined : args[substitution.value];
-    const body = substitution === null ? undefined : args[substitution.body];
-
-    if (
-      node.term === substitution?.term &&
-      hole?.kind === "variable" &&
-      value !== undefined &&
-      body !== undefined
-    ) {
-      return substituteHole(language, body, hole.name, value);
+    if (heads.has(node.term)) {
+      return node.term;
     }
 
-    return { ...node, args };
+    for (const argument of node.args) {
+      const found = find(argument);
+
+      if (found !== null) {
+        return found;
+      }
+    }
+
+    return null;
   };
 
-  return walk(template);
-}
-
-/** Whether every metavariable in a pattern is bound. */
-function filled(pattern: Term, metas: Metas, bindings: Bindings): boolean {
-  return pattern.kind === "variable"
-    ? !metas.has(pattern.name) || bindings.has(pattern.name)
-    : pattern.args.every((argument) => filled(argument, metas, bindings));
+  return find(unfolded(language, pattern));
 }
 
 /** A variable of `sort` named nowhere in `term`: `x0`, `x1`, … */
-function freshVariable(name: string, sort: string, term: Term): Term {
+function freshVariable(
+  name: string,
+  sort: string,
+  term: Term,
+): Term & { kind: "variable" } {
   const names = new Set<string>();
   const collect = (node: Term): void => {
     if (node.kind === "variable") {
@@ -367,189 +334,95 @@ function freshVariable(name: string, sort: string, term: Term): Term {
   };
 }
 
-/** `variable` coerced into `sort`, as a body holds it; null if it cannot be. */
-function coerced(
-  language: SurfaceLanguage,
-  variable: Term,
-  sort: string,
-): Term | null {
-  if (variable.sort === sort) {
-    return variable;
-  }
-
-  const coercion = language.spec.coercions.find(
-    (each) => each.from === variable.sort && each.to === sort,
-  );
-
-  return coercion === undefined
-    ? null
-    : {
-        args: [variable],
-        fixity: null,
-        grouped: false,
-        kind: "app",
-        prec: null,
-        sort,
-        span: { end: 0, start: 0 },
-        term: coercion.name,
-        token: null,
-      };
-}
-
-/** `term` with each subterm whose engine text is `key` replaced by `by`. */
-function abstractOut(
-  language: SurfaceLanguage,
-  term: Term,
-  key: string,
-  by: Term,
-): Term {
-  if (term.sort === by.sort && termKey(language, term) === key) {
-    return by;
-  }
-
-  return term.kind === "variable"
-    ? term
-    : {
-        ...term,
-        args: term.args.map((argument) =>
-          argument.kind === "variable" && argument.binder
-            ? argument
-            : abstractOut(language, argument, key, by),
-        ),
-      };
+/** The patterns a rule's rows are matched by: its view's, where it abstracts. */
+export function matchedBy(patterns: RulePatterns): RulePatterns {
+  return patterns.abstraction?.view ?? patterns;
 }
 
 /**
- * A substitution pattern `{x / te} ph` against a term, where its parts are
- * metavariables: undefined where they are not, for a literal match.
+ * A rule's bindings from its view's (`a`, `b`, `ps`), as the engine's
+ * `@abstract` builds them (`abstractContext`): the view's binders that are
+ * the rule's, the hole a variable named nowhere in `left`, and the target
+ * `left` with every site of the plug made the hole (`ps` `F a ∧ G a`, plug
+ * `a`, is `ph` `F x ∧ G x`; `a` sits in a term as `n2t a`, and the hole
+ * goes in as `v2t x`). Null where there is no site, where the rewrites the
+ * walk's retry normalizes by do not terminate, or where the rule's rows so
+ * filled in are not the view's.
  */
-function matchSubstitution(
+export function abstracted(
   language: SurfaceLanguage,
-  substitution: Substitution,
-  pattern: Term & { kind: "app" },
-  term: Term,
-  metas: Metas,
-  bindings: Bindings,
-): Bindings | null | undefined {
-  const hole = pattern.args[substitution.hole];
-  const value = pattern.args[substitution.value];
-  const body = pattern.args[substitution.body];
-
-  if (
-    hole?.kind !== "variable" ||
-    !metas.has(hole.name) ||
-    body?.kind !== "variable" ||
-    !metas.has(body.name) ||
-    value === undefined
-  ) {
-    return undefined;
-  }
-
-  if (body.sort !== term.sort) {
-    return null;
-  }
-
-  const known = bindings.get(body.name);
-
-  if (known !== undefined) {
-    const variable = bindings.get(hole.name);
-
-    return variable?.kind === "variable"
-      ? matchFilled(
-          language,
-          known,
-          variable.name,
-          value,
-          term,
-          metas,
-          bindings,
-        )
-      : null;
-  }
-
-  if (!filled(value, metas, bindings)) {
-    return null;
-  }
-
-  const key = termKey(language, instantiate(value, bindings));
-  const variable =
-    bindings.get(hole.name) ?? freshVariable(hole.name, hole.sort, term);
-  const occurrence =
-    variable.kind === "variable"
-      ? coerced(language, variable, value.sort)
-      : null;
-
-  if (occurrence === null) {
-    return null;
-  }
-
-  return new Map([
-    ...bindings,
-    [hole.name, variable],
-    [body.name, abstractOut(language, term, key, occurrence)],
-  ]);
-}
-
-/**
- * A known body against a term, where the term is the body with one term, the
- * `value` pattern's, at each occurrence of the variable `name`.
- */
-function matchFilled(
-  language: SurfaceLanguage,
-  body: Term,
-  name: string,
-  value: Term,
-  term: Term,
-  metas: Metas,
+  patterns: RulePatterns,
   bindings: Bindings,
 ): Bindings | null {
-  const walk = (
-    left: Term,
-    right: Term,
-    sofar: Bindings | null,
-  ): Bindings | null => {
-    if (sofar === null) {
-      return null;
+  const abstraction = patterns.abstraction;
+
+  if (abstraction === null) {
+    return bindings;
+  }
+
+  const { view } = abstraction;
+  const left = bindings.get(abstraction.left);
+  const plug = bindings.get(abstraction.plug);
+  const other = bindings.get(abstraction.other);
+  const declared = patterns.binders.find(
+    (binder) => binder.name === abstraction.hole,
+  );
+
+  if (
+    left === undefined ||
+    plug === undefined ||
+    other === undefined ||
+    declared === undefined ||
+    !("sort" in declared.type)
+  ) {
+    return null;
+  }
+
+  const hole = freshVariable(abstraction.hole, declared.type.sort, left);
+  let target: Term | null;
+
+  try {
+    target = abstractContext(language, {
+      hole,
+      left,
+      leftPlug: plug,
+      rightPlug: other,
+    });
+  } catch (error) {
+    // The engine refuses the line there, as rules that do not terminate.
+    if (!(error instanceof RewriteLimitError)) {
+      throw error;
     }
 
-    if (isHole(language, left, name, value.sort)) {
-      return right.sort === value.sort
-        ? matchTerm(language, value, right, metas, sofar)
-        : null;
-    }
+    target = null;
+  }
 
-    if (!occursFree(left, name)) {
-      const key = termKey(language, left);
-      return key === termKey(language, right) ? sofar : null;
-    }
+  if (target === null) {
+    return null;
+  }
 
-    if (
-      left.kind !== "app" ||
-      right.kind !== "app" ||
-      left.term !== right.term ||
-      left.args.length !== right.args.length
-    ) {
-      return null;
-    }
+  const found = new Map([
+    ...[...bindings].filter(([meta]) => patterns.metas.has(meta)),
+    [abstraction.target, target],
+    [abstraction.hole, hole],
+  ]);
+  const agrees =
+    patterns.focus.length === view.focus.length &&
+    patterns.focus.every(
+      (row, at) =>
+        termKey(language, instantiate(row, found)) ===
+        termKey(language, instantiate(view.focus[at] as Term, bindings)),
+    );
 
-    let result: Bindings | null = sofar;
-
-    for (const [at, argument] of left.args.entries()) {
-      result = walk(argument, right.args[at] as Term, result);
-    }
-
-    return result;
-  };
-
-  return walk(body, term, bindings);
+  return agrees ? found : null;
 }
 
 /**
- * A term's engine text: one canonical spelling, for identity, with each list
- * in it flattened.
+ * A term's engine text in canonical form: one spelling for every term the
+ * engine computes to the same, for identity.
  */
 export function termKey(language: SurfaceLanguage, term: Term): string {
-  return printTerm(language, normal(language, term), "engine");
+  return printTerm(language, canonical(language, term), "engine");
 }
 
 /**
@@ -578,8 +451,9 @@ export function matchTerm(
  * whole, `σ` `1` and `ρ` `wa`, and `σ` the whole, so a pattern after it that
  * needs `σ` to be `1` can have it. Each run is tried shortest first.
  *
- * Both sides are matched with their defs unfolded, as the engine matches
- * them: `a ≠ a` is the `¬ te = te` a closure rule asks for.
+ * The pattern is matched with its defs unfolded, the term in canonical
+ * form, as the engine compares them: `a ≠ a` is the `¬ te = te` a closure
+ * rule asks for.
  */
 export function* matchAll(
   language: SurfaceLanguage,
@@ -591,13 +465,16 @@ export function* matchAll(
   yield* matchUnfolded(
     language,
     unfolded(language, pattern),
-    unfolded(language, term),
+    canonical(language, term),
     metas,
     bindings,
   );
 }
 
-/** {@link matchAll} over terms whose defs are already unfolded. */
+/**
+ * {@link matchAll} of a pattern with its defs unfolded against a term in
+ * canonical form.
+ */
 function* matchUnfolded(
   language: SurfaceLanguage,
   pattern: Term,
@@ -627,28 +504,6 @@ function* matchUnfolded(
     }
 
     return;
-  }
-
-  const substitution =
-    pattern.kind === "app" ? substitutionOf(language) : null;
-
-  if (pattern.kind === "app" && pattern.term === substitution?.term) {
-    const matched = matchSubstitution(
-      language,
-      substitution,
-      pattern,
-      term,
-      metas,
-      bindings,
-    );
-
-    if (matched !== undefined) {
-      if (matched !== null) {
-        yield matched;
-      }
-
-      return;
-    }
   }
 
   const list =

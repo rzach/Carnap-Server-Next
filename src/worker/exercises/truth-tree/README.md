@@ -13,13 +13,13 @@ intuitionistic logic (`open-logic-intuitionistic`). The authoring contract is in
 
 ## Two layers
 
-1. **The tableau component, which knows no logic.** `src/tableau/` is its
+1. **The tableau component, which knows no logic.** `tableau/` here is its
    framework-free core (the document of nodes and rows, the edits, the
    shared-lines layout, the static markup, navigation and the key map), and
-   `src/client/tableau/view.tsx` is its Preact view. A row's `cites` and
+   `src/client/components/truth-tree-view.tsx` is its Preact view. A row's `cites` and
    `dev` are opaque to it; `kind` and `prefix` are there for the signed or
    world-labelled rows of a non-classical tableau. Boundary tests keep it
-   free of this type and of the kit (`tests/tableau.test.ts`).
+   free of this type and of the kit (`tests/truth-tree-tableau.test.ts`).
 2. **The judgement, from the theory.** A tree's rules are the theory's:
    `system=` names an MM0 file whose `@syntax role tree.*` annotations say
    what a row is, what closes a branch, and what each axiom develops, and
@@ -67,10 +67,22 @@ intuitionistic logic (`open-logic-intuitionistic`). The authoring contract is in
   every prefix that extends it, and terms are compared, and instances
   proposed, as lists. A list can match more than one way, so `matchAll`
   gives every way, and a rule's rows are matched together (`ruleMatches`):
-  a closure written `σ . ρ 𝔽 A ; σ 𝕋 A` finds `σ` from either row. With `tree.substitution` on its substitution term,
-  `patterns.ts` matches `{x / te} ph` as the substitution it denotes, which
-  is what lets UBC's identity rule (`tree.development.pairs`) be owed one
-  rewriting of each literal on its branch. A rule may write check marks
+  a closure written `σ . ρ 𝔽 A ; σ 𝕋 A` finds `σ` from either row. A row
+  is matched in canonical form: defs unfolded, then normalized by the
+  theory's rewrites and `@acui` laws as far as the engine can prove, with
+  `@aufbau/syntax`'s `engineForm`.
+  A pattern with no rewrite-headed term in it is rigid, and matching it
+  against a canonical form finds every instance the engine would accept;
+  the closure rows and the rows each rule develops must be rigid, and the
+  development reader reports one that is not (#478). A rule whose rows the
+  rewrites compute (the identity rule's partner `{x / a} ph`) is matched by
+  its `@view`, whose rows are rigid (`a = b ; ps`), and its `@abstract`
+  builds the rest as the engine's does (`abstracted`, by `@aufbau/syntax`'s
+  `abstractContext`): `ph` is `ps` with every site of `a` made a fresh `x`
+  (`n2t a` made `v2t x`). A closure the browser or
+  the server finds is confirmed by `sameTerm`, the engine's identity, and
+  `emit.ts` writes its line with every binding (`by tb_close (ga := …,
+  ph := …)`), so the engine infers nothing there. A rule may write check marks
   on its branches (`tree.mark`, `tree.mark.instance`, UBC's `✓ ρ` and
   `✓ᵢ ρ ↦ ψ`): the pattern reader sets them aside as not rows
   (`RulePatterns.marks`), and the emitter writes the ones a step's rule

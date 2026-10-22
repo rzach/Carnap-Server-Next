@@ -12,8 +12,8 @@
  */
 
 import type { SurfaceLanguage, Term } from "@aufbau/syntax";
-import type { TableauIndex, TableauRow } from "../../../../tableau/document";
 import type { RowMark } from "../report";
+import type { TableauIndex, TableauRow } from "../tableau/document";
 import type { DevelopmentRule, TreeDevelopment } from "./criteria";
 import { instanceShower } from "./criteria";
 import type { EmittedStep, TreeProof } from "./emit";

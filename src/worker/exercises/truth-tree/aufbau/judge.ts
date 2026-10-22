@@ -25,11 +25,6 @@
  */
 
 import type {
-  TableauDocument,
-  TableauNode,
-} from "../../../../tableau/document";
-import { TableauIndex } from "../../../../tableau/document";
-import type {
   BranchState,
   EndProblem,
   Missing,
@@ -38,6 +33,8 @@ import type {
   TreeProblem,
   TreeReport,
 } from "../report";
+import type { TableauDocument, TableauNode } from "../tableau/document";
+import { TableauIndex } from "../tableau/document";
 import type { TruthTreeFinish } from "../types";
 import { closing } from "./branch";
 import type { TreeDevelopment } from "./criteria";

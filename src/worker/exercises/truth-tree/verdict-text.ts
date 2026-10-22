@@ -8,14 +8,14 @@
  * which the browser fills from its hydration strings.
  */
 
-import type { TableauDocument } from "../../../tableau/document";
-import { TableauIndex } from "../../../tableau/document";
-import type { TableauLayout } from "../../../tableau/layout";
-import { layoutTableau } from "../../../tableau/layout";
 import type { MessageResolver } from "../../i18n/translator";
 import type { EngineFailure } from "./aufbau/judge";
 import type { TreeJudgement } from "./grading";
 import type { EndProblem, Missing, RowProblem, TreeProblem } from "./report";
+import type { TableauDocument } from "./tableau/document";
+import { TableauIndex } from "./tableau/document";
+import type { TableauLayout } from "./tableau/layout";
+import { layoutTableau } from "./tableau/layout";
 import type { TruthTreeVerdict } from "./types";
 
 export type TreeWords = MessageResolver;

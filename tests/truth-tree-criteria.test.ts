@@ -1,11 +1,23 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { compileCarnapMarkdown } from "../src/worker/application/content/compiler";
-import { readTreeDevelopment } from "../src/worker/exercises/truth-tree/aufbau/criteria";
-import { matchTerm } from "../src/worker/exercises/truth-tree/aufbau/patterns";
+import {
+  matchedRows,
+  readTreeDevelopment,
+} from "../src/worker/exercises/truth-tree/aufbau/criteria";
+import {
+  abstracted,
+  computedTerm,
+  matchTerm,
+} from "../src/worker/exercises/truth-tree/aufbau/patterns";
+import { readEngine } from "../src/worker/exercises/truth-tree/aufbau/rows";
+import {
+  isTreeTheory,
+  readTreeTheory,
+} from "../src/worker/exercises/truth-tree/aufbau/theory";
 import type { EndProblem } from "../src/worker/exercises/truth-tree/report";
 import { describeEndProblem } from "../src/worker/exercises/truth-tree/verdict-text";
-import { languageById } from "../src/worker/logic/specs";
+import { languageById, languageFromSource } from "../src/worker/logic/specs";
 import { theorySourceByFileName } from "../src/worker/logic/theories";
 import type { TreeExercise } from "./helpers/truth-tree";
 import {
@@ -109,6 +121,36 @@ describe("a general row", () => {
       type: "open-incomplete",
     });
     expect(await gradeAnswer(asked.item, answer)).toBe("incorrect");
+  });
+
+  // A rule that writes its instance in two rows, each through a
+  // substitution: each written row is the template it keys like at the
+  // instance, not the first.
+  test("links each row a general step writes to its own template", async () => {
+    const ubc = (theorySourceByFileName("forallx-ubc.mm0") ?? "")
+      .replace(
+        "(te: tm) (ph: wff x) (ps: wff): $ closes ga ; chki (∀ x ph) (ps) ; ps $",
+        "(te: tm) (ph: wff x) (ps: wff): $ closes ga ; chki (∀ x ph) (ps) ; ps ; ¬ ¬ ps $",
+      )
+      .replace(
+        "  $ closes ga ; chki (∀ x ph) ({x / te} ph) ; {x / te} ph $ > $ focus ga at (∀ x ph) $;",
+        "  $ closes ga ; chki (∀ x ph) ({x / te} ph) ; {x / te} ph ; ¬ ¬ {x / te} ph $ > $ focus ga at (∀ x ph) $;",
+      );
+    expect(ubc).toContain("; ps ; ¬ ¬ ps $");
+    expect(ubc).toContain("; {x / te} ph ; ¬ ¬ {x / te} ph $");
+    const asked = await lessonTree(
+      `:::aufbau-mm0{name="twice"}\n${ubc}\n:::\n\n::::truth-tree{#t system="twice" finish="one-open"}\nIs this set consistent?\n\n- ∀x Fx\n- Ga\n::::`,
+    );
+    const t = new TreeBuilder(asked.resolved.rootText);
+    const [fa, nnfa] = t.stack(t.rootNode, "r1", ["Fa", "¬¬Fa"], "∀");
+    t.open(t.rootNode);
+
+    const answer = await certify(asked, t);
+
+    expect(answer.instances).toEqual({
+      [fa as string]: "a",
+      [nnfa as string]: "a",
+    });
   });
 
   test("an instance the certificate does not prove fails verification", async () => {
@@ -740,15 +782,114 @@ describe("another calculus's roles", () => {
       expect(result.diagnostics).toEqual([]);
     });
 
-    test("a substitution that is not one", async () => {
-      const wrong = annotated.replace(
-        "--| @syntax role conjunction",
-        "--| @syntax role conjunction\n--| @syntax role tree.substitution",
+    test("a rule whose focus row the rewrites compute", async () => {
+      // `{x / te} ph` is computed away, so no row has it as its shape.
+      const ubc = `${theorySourceByFileName("forallx-ubc.mm0") ?? ""}
+--| @syntax alias sub
+axiom tb_sub {x: var} (ga: ctx) (te: tm) (ph: wff x):
+  $ closes ga ; chk ({x / te} ph) $ > $ focus ga at ({x / te} ph) $;
+`;
+      const result = await compileCarnapMarkdown(
+        `:::aufbau-mm0{name="computed"}\n${ubc}\n:::\n\n::::truth-tree{#t system="computed" finish="one-open"}\nIs this set consistent?\n\n- A\n::::`,
       );
 
-      expect(await said(wrong)).toEqual([
-        ["truth_tree_development", "and", null],
+      expect(
+        result.diagnostics.map((each) => [
+          each.code,
+          each.params?.rule,
+          each.params?.term,
+        ]),
+      ).toEqual([["truth_tree_development", "tb_sub", "sb_f"]]);
+    });
+
+    test("an identity partner whose rewrites do not terminate is no partner", () => {
+      // `zz ph` rewrites to `zz (¬ ph)` without end, so the walk's retry,
+      // which normalizes a partner with no site, gives up as the engine does.
+      const language = languageFromSource(
+        `${theorySourceByFileName("forallx-ubc.mm0") ?? ""}
+--| @syntax delimiter $ zz $
+term zz (ph: wff): wff;
+--| @rewrite
+axiom zz_grow (ph: wff): $ zz ph ⟺ zz (¬ ph) $;
+`,
+      );
+      const theory = language === null ? null : readTreeTheory(language);
+
+      if (language === null || theory === null || !isTreeTheory(theory)) {
+        throw new Error("the theory does not read");
+      }
+
+      const patterns = readTreeDevelopment(language, theory)
+        .rules.flatMap((rule) => rule.variants)
+        .find((each) => each.name === "tb_id_ab");
+      const read = (text: string, sort: string) =>
+        readEngine(language, text, sort);
+      const bindings = new Map([
+        ["a", read("a", "name")],
+        ["b", read("b", "name")],
+        ["ps", read("zz (P (snil))", "wff")],
       ]);
+
+      expect(patterns?.abstraction).not.toBeNull();
+      expect([...bindings.values()].every((value) => value !== null)).toBe(
+        true,
+      );
+      expect(
+        abstracted(
+          language,
+          patterns as NonNullable<typeof patterns>,
+          bindings as Map<string, NonNullable<ReturnType<typeof read>>>,
+        ),
+      ).toBeNull();
+    });
+
+    test("an identity rule with no view that abstracts its partner", async () => {
+      // Its partner row `{x / a} ph` is matched by the view `ps`, and `ph`
+      // built by `@abstract`; without them it is matched by its own shape.
+      const ubc = (theorySourceByFileName("forallx-ubc.mm0") ?? "").replace(
+        "--| @abstract ph ps ch x a b\n",
+        "",
+      );
+      const result = await compileCarnapMarkdown(
+        `:::aufbau-mm0{name="unviewed"}\n${ubc}\n:::\n\n::::truth-tree{#t system="unviewed" finish="one-open"}\nIs this set consistent?\n\n- A\n::::`,
+      );
+
+      expect(
+        result.diagnostics.map((each) => [
+          each.code,
+          each.params?.rule,
+          each.params?.term,
+        ]),
+      ).toEqual([["truth_tree_development", "tb_id_ab", "sb_f"]]);
+    });
+
+    test("a statement with a view is matched by its view only as a pair", async () => {
+      // Its own partner row `{x / a} ph` computes; its view's `ps` does not.
+      const { resolved } = await consistency("Fa");
+      const development = readTreeDevelopment(
+        resolved.language,
+        resolved.theory,
+      );
+      const rule = development.byAxiom.get("tb_id_ba");
+      const computed = (rows: ReturnType<typeof matchedRows>) =>
+        rows.map(([, row]) => computedTerm(resolved.language, row));
+
+      expect(rule?.patterns.abstraction).not.toBeNull();
+      expect(computed(matchedRows([], rule ? [rule] : []))).toEqual([
+        null,
+        null,
+        null,
+        null,
+      ]);
+      // As a closure, or a rule asking for no pairs, it is matched (or not)
+      // by its own rows.
+      expect(computed(matchedRows(rule ? [rule.patterns] : [], []))).toEqual([
+        null,
+        "sb_f",
+      ]);
+      expect(
+        matchedRows([], rule ? [{ ...rule, criterion: null }] : []),
+      ).toEqual([]);
     });
   });
 

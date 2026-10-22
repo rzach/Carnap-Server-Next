@@ -39,24 +39,6 @@
  */
 
 import { render } from "preact";
-import type { TableauDocument } from "../../tableau/document";
-import { TableauIndex } from "../../tableau/document";
-import {
-  insertRowAfter,
-  remint,
-  removeChildren,
-  removeRow,
-  setEnd,
-  setRowCites,
-  setRowText,
-  splitNode,
-  stackRows,
-} from "../../tableau/edit";
-import type { MarginField } from "../../tableau/html";
-import type { TableauLayout } from "../../tableau/layout";
-import { layoutTableau } from "../../tableau/layout";
-import type { TableauKeyAction } from "../../tableau/navigate";
-import { keyAction, moveCursor } from "../../tableau/navigate";
 import {
   isRootRow,
   treeAnnotations,
@@ -92,6 +74,27 @@ import {
 import { displayName } from "../../worker/exercises/truth-tree/labels";
 import type { TreeReport } from "../../worker/exercises/truth-tree/report";
 import type { TruthTreeStringId } from "../../worker/exercises/truth-tree/strings";
+import type { TableauDocument } from "../../worker/exercises/truth-tree/tableau/document";
+import { TableauIndex } from "../../worker/exercises/truth-tree/tableau/document";
+import {
+  insertRowAfter,
+  remint,
+  removeChildren,
+  removeRow,
+  setEnd,
+  setRowCites,
+  setRowText,
+  splitNode,
+  stackRows,
+} from "../../worker/exercises/truth-tree/tableau/edit";
+import type { MarginField } from "../../worker/exercises/truth-tree/tableau/html";
+import type { TableauLayout } from "../../worker/exercises/truth-tree/tableau/layout";
+import { layoutTableau } from "../../worker/exercises/truth-tree/tableau/layout";
+import type { TableauKeyAction } from "../../worker/exercises/truth-tree/tableau/navigate";
+import {
+  keyAction,
+  moveCursor,
+} from "../../worker/exercises/truth-tree/tableau/navigate";
 import type {
   TruthTreeAnswerData,
   TruthTreePublicData,
@@ -106,7 +109,6 @@ import {
   engineFailureText,
   layoutNumbers,
 } from "../../worker/exercises/truth-tree/verdict-text";
-import { TableauView } from "../tableau/view";
 import { mountActionButton } from "./action-bar";
 import { register } from "./base";
 import islandStyles from "./carnap-truth-tree-v1.css" with { type: "text" };
@@ -140,6 +142,7 @@ import {
   typeRule,
   withDrafts,
 } from "./truth-tree-margin";
+import { TableauView } from "./truth-tree-view";
 
 const HISTORY_LIMIT = 200;
 

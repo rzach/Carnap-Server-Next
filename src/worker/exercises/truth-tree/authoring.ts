@@ -519,14 +519,14 @@ function reportDevelopment(
           ),
         );
         break;
-      case "bad-substitution":
+      case "not-rigid":
         diagnostics.push(
           diagnostic(
             line,
             "truth_tree_development",
-            "The term “{rule}” has the role tree.substitution, but is not a substitution: it needs three arguments, a bound variable, a body of its own sort, and the term put for the variable.",
+            "The rule “{rule}” is matched against a branch by its row {row}, but the system's rewrites compute “{term}” in it, so Carnap cannot tell by their shape which rows the rule applies to.",
             {
-              params: { rule },
+              params: { row: problem.row, rule, term: problem.term },
             },
           ),
         );

@@ -12,10 +12,13 @@
  */
 
 import type { SurfaceLanguage, Term } from "@aufbau/syntax";
+import { printTerm, RewriteLimitError, sameTerm } from "@aufbau/syntax";
 import { roleIndex, sentenceSort } from "../../../logic/specs/roles";
 import type { TreeDevelopment } from "./criteria";
-import { ruleMatches, termKey } from "./patterns";
+import type { Bindings, RulePatterns } from "./patterns";
+import { instantiate, ruleMatches, termKey } from "./patterns";
 import type { RowSortReader } from "./rows";
+import { branchText, readEngine } from "./rows";
 
 /** A row on a branch, read. */
 export interface ReadRow {
@@ -88,15 +91,88 @@ export function isSelfIdentity(
   );
 }
 
+/** How a closure rule closes a branch: the statement, and what it binds. */
+export interface Closure {
+  readonly patterns: RulePatterns;
+  readonly bindings: Bindings;
+}
+
+/**
+ * How a closure rule closes a branch on these rows, in any order: the first
+ * statement of its chain, and the first of its matches that the engine takes
+ * for these rows when given every binding, as `./emit.ts` writes a closure
+ * (`sameTerm`, the engine's own identity). Null where none does.
+ *
+ * The match is on the rows' canonical forms (`./patterns.ts`), which finds
+ * every closure there is where the closure rule's rows are rigid; that the
+ * engine agrees is what makes a closure found here one it accepts.
+ */
+export function closureOn(
+  language: SurfaceLanguage,
+  development: TreeDevelopment,
+  terms: readonly Term[],
+): Closure | null {
+  const { theory } = development;
+  const join = (rows: readonly Term[]): Term | null =>
+    readEngine(
+      language,
+      branchText(
+        theory,
+        rows.map((row) => printTerm(language, row, "engine")),
+      ),
+      theory.branchSort,
+    );
+  // Joined only once a closure rule matches: most pairs of rows match none.
+  let stated: Term | null | undefined;
+
+  for (const patterns of development.closure) {
+    for (const bindings of ruleMatches(language, patterns, terms, [])) {
+      stated ??= join(terms);
+
+      if (stated === null) {
+        return null;
+      }
+
+      const derived = join(
+        patterns.focus.map((pattern) => instantiate(pattern, bindings)),
+      );
+
+      if (derived !== null && converts(language, derived, stated)) {
+        return { bindings, patterns };
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Whether the engine takes `derived` for `stated`; not where its rewrites do
+ * not terminate, where it refuses the line.
+ */
+function converts(
+  language: SurfaceLanguage,
+  derived: Term,
+  stated: Term,
+): boolean {
+  try {
+    return sameTerm(language, derived, stated);
+  } catch (error) {
+    if (error instanceof RewriteLimitError) {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
 /** Whether a closure rule closes a branch on these rows, in any order. */
 function closesOn(
   language: SurfaceLanguage,
   development: TreeDevelopment,
   terms: readonly Term[],
 ): boolean {
-  return development.closure.some(
-    (patterns) => !ruleMatches(language, patterns, terms, []).next().done,
-  );
+  return closureOn(language, development, terms) !== null;
 }
 
 /**

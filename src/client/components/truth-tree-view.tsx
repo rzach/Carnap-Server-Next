@@ -1,6 +1,6 @@
 /** @jsxImportSource preact */
 /**
- * The tableau, live: the same grid `src/tableau/html.ts` draws on the server,
+ * The tableau, live: the same grid `exercises/truth-tree/tableau/html.ts` draws on the server,
  * as a Preact view with a cursor, a roving tab stop and inline editing.
  *
  * It knows no logic. What a row means, what a key does and what is wrong
@@ -16,9 +16,15 @@
 
 import type { JSX } from "preact";
 import { useLayoutEffect, useRef } from "preact/hooks";
-import type { TableauDocument, TableauEnd } from "../../tableau/document";
-import { TableauIndex } from "../../tableau/document";
-import type { MarginField, TableauAnnotations } from "../../tableau/html";
+import type {
+  TableauDocument,
+  TableauEnd,
+} from "../../worker/exercises/truth-tree/tableau/document";
+import { TableauIndex } from "../../worker/exercises/truth-tree/tableau/document";
+import type {
+  MarginField,
+  TableauAnnotations,
+} from "../../worker/exercises/truth-tree/tableau/html";
 import {
   contentRow,
   END_SYMBOLS,
@@ -26,8 +32,11 @@ import {
   gridColumns,
   gridTemplate,
   guideRows,
-} from "../../tableau/html";
-import type { PlacedRow, TableauLayout } from "../../tableau/layout";
+} from "../../worker/exercises/truth-tree/tableau/html";
+import type {
+  PlacedRow,
+  TableauLayout,
+} from "../../worker/exercises/truth-tree/tableau/layout";
 
 export interface TableauViewProps {
   readonly document: TableauDocument;

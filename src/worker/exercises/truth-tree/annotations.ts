@@ -9,13 +9,13 @@
  */
 
 import type { SurfaceLanguage } from "@aufbau/syntax";
-import type { TableauDocument } from "../../../tableau/document";
-import { TableauIndex } from "../../../tableau/document";
-import type { MarginNote, TableauAnnotations } from "../../../tableau/html";
-import type { TableauLayout } from "../../../tableau/layout";
 import { markText } from "./labels";
 import type { TreeReport } from "./report";
 import { isCitationProblem, isIncomplete } from "./report";
+import type { TableauDocument } from "./tableau/document";
+import { TableauIndex } from "./tableau/document";
+import type { MarginNote, TableauAnnotations } from "./tableau/html";
+import type { TableauLayout } from "./tableau/layout";
 import type { TreeWords } from "./verdict-text";
 import { layoutNumbers } from "./verdict-text";
 

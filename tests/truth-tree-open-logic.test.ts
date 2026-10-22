@@ -240,7 +240,8 @@ describe("open-logic-tableaux", () => {
 
 // The chapter defines no complete open branch; the theory judges one by its
 // contents, as the modal chapters do, and sees a quantifier rule's instance
-// through the substitution it is written by (`tree.substitution`).
+// through the substitution it is written by, which the theory's rewrites
+// compute.
 describe("an open branch, by its contents", () => {
   async function open(...members: string[]): Promise<TreeReport> {
     const asked = await exercise(

@@ -41,10 +41,10 @@
     "validate": "bun run build:client && bun test && bun run check && bun run lint:check"
   },
   "dependencies": {
-    "@aufbau/compiler": "0.0.18",
-    "@aufbau/lsp": "0.0.18",
-    "@aufbau/syntax": "0.0.6-canary.20261020T111257Z.24.g93d8881c738e",
-    "@aufbau/verifier": "0.0.18",
+    "@aufbau/compiler": "0.0.18-canary.20261020T233803Z.92.geb0b7920d37f",
+    "@aufbau/lsp": "0.0.18-canary.20261020T233803Z.92.geb0b7920d37f",
+    "@aufbau/syntax": "0.0.6-canary.20261021T221349Z.26.gf33384f8ed77",
+    "@aufbau/verifier": "0.0.18-canary.20261020T233803Z.92.geb0b7920d37f",
     "@codemirror/commands": "^6.10.4",
     "@codemirror/language": "^6.12.4",
     "@codemirror/lint": "^6.9.7",

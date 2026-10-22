@@ -5361,6 +5361,10 @@ msgid "The rule “{rule}” has the development flag “{flag}”, which its ki
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
+msgid "The rule “{rule}” is matched against a branch by its row {row}, but the system's rewrites compute “{term}” in it, so Carnap cannot tell by their shape which rows the rule applies to."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
 msgid "The rule “{rule}” names “{binder}” as its instance, but has no binder of that name."
 msgstr ""
 
@@ -5486,10 +5490,6 @@ msgstr ""
 
 #: src/worker/exercises/world/strings.ts
 msgid "The table lists every block and can do everything the board does."
-msgstr ""
-
-#: src/worker/application/content/diagnostic-strings.ts
-msgid "The term “{rule}” has the role tree.substitution, but is not a substitution: it needs three arguments, a bound variable, a body of its own sort, and the term put for the variable."
 msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts

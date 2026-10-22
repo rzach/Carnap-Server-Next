@@ -52,22 +52,24 @@
  * DOM-free: the browser emits and compiles, the worker verifies.
  */
 
-import type { SurfaceLanguage } from "@aufbau/syntax";
+import type { SurfaceLanguage, Term } from "@aufbau/syntax";
+import { printTerm } from "@aufbau/syntax";
+import { languageRuleReader } from "../../../exercise-kit/proof/formulas";
+import type { EndProblem, Missing, RowProblem } from "../report";
 import type {
   TableauDocument,
   TableauNode,
   TableauRow,
-} from "../../../../tableau/document";
-import { TableauIndex } from "../../../../tableau/document";
-import { languageRuleReader } from "../../../exercise-kit/proof/formulas";
-import type { EndProblem, Missing, RowProblem } from "../report";
+} from "../tableau/document";
+import { TableauIndex } from "../tableau/document";
+import { closureOn } from "./branch";
 import type { TreeDevelopment } from "./criteria";
-import { rulePatterns, templateFor } from "./criteria";
+import { instanceRow, rulePatterns } from "./criteria";
 import type { Question } from "./developed";
 import { branchQuestions } from "./developed";
 import { okAxioms } from "./ok";
 import type { RulePatterns } from "./patterns";
-import { closedSubterms, instantiate, matchFocus, termKey } from "./patterns";
+import { closedSubterms, matchFocus, termKey } from "./patterns";
 import type { Member, RowSortReader } from "./rows";
 import { branchText, engineTokens, readEngine, rowSortReader } from "./rows";
 import type { TreeTheory } from "./theory";
@@ -263,6 +265,9 @@ export function emitTreeProof(
   const steps = new Map<string, EmittedStep>();
   const slots = new Map<string, readonly string[]>();
   const linked = new Map<string, readonly string[]>();
+  // Each row's chosen instance by key, as its candidates are: an answer
+  // stores engine text, which a change of key can respell.
+  const chosen = new Map<string, string>();
   const pairings = new Map<string, readonly string[]>();
   const reader = options.reader ?? rowSortReader(language, theory.rowSort);
   const resolve = languageRuleReader(language);
@@ -463,14 +468,21 @@ export function emitTreeProof(
       }
 
       const candidates = closedSubterms(language, read.term, slot.sort);
-      const chosen = options.instances?.get(row.id);
+      const stored = options.instances?.get(row.id);
+      const storedTerm =
+        stored === undefined ? null : readEngine(language, stored, slot.sort);
+      const key = storedTerm === null ? null : termKey(language, storedTerm);
       const asked = options.asking
         ? candidates
-        : chosen !== undefined && candidates.includes(chosen)
-          ? [chosen]
+        : key !== null && candidates.includes(key)
+          ? [key]
           : [];
 
       slots.set(row.id, candidates);
+
+      if (key !== null) {
+        chosen.set(row.id, key);
+      }
 
       for (const instance of asked) {
         if (stated > textCap) {
@@ -485,10 +497,7 @@ export function emitTreeProof(
 
         const written = termKey(
           language,
-          instantiate(
-            templateFor(language, developing, slot, bindings, read.term),
-            new Map([...bindings, [slot.binder, term]]),
-          ),
+          instanceRow(language, slot, bindings, read.term, term),
         );
         counter += 1;
         const name = `${TREE_THEOREM}_${counter}`;
@@ -604,7 +613,7 @@ export function emitTreeProof(
           // it is asked about, so its rows' candidates are in.
           instanceOf: (row) => {
             if (!options.asking) {
-              return options.instances?.get(row) ?? null;
+              return chosen.get(row) ?? null;
             }
 
             const candidates = slots.get(row);
@@ -668,6 +677,45 @@ export function emitTreeProof(
     }
   };
 
+  /**
+   * The rule a closure cites by, with every binding given where Carnap finds
+   * the closure (`./branch.ts`), so that the engine checks the line without
+   * inferring anything, by the identity Carnap decides an open branch with.
+   * The rule alone where it does not, for the engine to try.
+   */
+  const closureRule = (
+    state: readonly string[],
+    cites: readonly string[],
+  ): string => {
+    const development = options.development;
+    const terms = cites.map((cite) =>
+      readEngine(language, cite, theory.rowSort),
+    );
+
+    if (development === undefined || terms.some((term) => term === null)) {
+      return theory.closure;
+    }
+
+    const closure = closureOn(language, development, terms as Term[]);
+
+    if (closure === null) {
+      return theory.closure;
+    }
+
+    const { bindings, patterns } = closure;
+    const given = [
+      `${patterns.branch} := $ ${branch(state)} $`,
+      ...[...bindings]
+        .filter(([meta]) => meta !== patterns.branch)
+        .map(
+          ([meta, value]) =>
+            `${meta} := $ ${printTerm(language, value, "engine")} $`,
+        ),
+    ];
+
+    return `${patterns.name} (${given.join(", ")})`;
+  };
+
   /** The end of a branch: a closure, or a branch left open. */
   const end = (node: TableauNode, members: readonly Member[]): void => {
     const state = texts(members);
@@ -694,10 +742,16 @@ export function emitTreeProof(
       return;
     }
 
-    inference(state, [], cites as string[], theory.closure, (label) => ({
-      node: node.id,
-      type: label === "main" ? "closure" : "closure-citation",
-    }));
+    inference(
+      state,
+      [],
+      cites as string[],
+      closureRule(state, cites as string[]),
+      (label) => ({
+        node: node.id,
+        type: label === "main" ? "closure" : "closure-citation",
+      }),
+    );
   };
 
   /** Write down the branch `state`, from `start` in `node`, and below it. */

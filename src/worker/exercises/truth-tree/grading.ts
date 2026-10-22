@@ -12,12 +12,6 @@
  */
 
 import type { SurfaceLanguage } from "@aufbau/syntax";
-import type {
-  TableauDocument,
-  TableauEnd,
-  TableauNode,
-  TableauRow,
-} from "../../../tableau/document";
 import { languageFromSource } from "../../logic/specs/read";
 import type { TreeDevelopment } from "./aufbau/criteria";
 import { readTreeDevelopment } from "./aufbau/criteria";
@@ -31,6 +25,12 @@ import { displayRow, isDeclaredRoot, rowSortReader } from "./aufbau/rows";
 import type { TreeTheory } from "./aufbau/theory";
 import { isTreeTheory, readTreeTheory } from "./aufbau/theory";
 import type { TreeProblem, TreeReport } from "./report";
+import type {
+  TableauDocument,
+  TableauEnd,
+  TableauNode,
+  TableauRow,
+} from "./tableau/document";
 import type {
   TruthTreeAnswerData,
   TruthTreeFinish,

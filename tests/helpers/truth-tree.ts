@@ -1,13 +1,6 @@
 import { expect } from "bun:test";
 import type { LoadedCompiler } from "@aufbau/compiler";
 import { readCompileResult } from "../../src/client/proof-compiler";
-import type { TableauDocument, TableauEnd } from "../../src/tableau/document";
-import {
-  setEnd,
-  setRowCites,
-  splitNode,
-  stackRows,
-} from "../../src/tableau/edit";
 import { compileCarnapMarkdown } from "../../src/worker/application/content/compiler";
 import type { ExerciseManifestItem } from "../../src/worker/domain/content";
 import { verifyMmb } from "../../src/worker/exercise-kit/proof/verifier";
@@ -25,6 +18,16 @@ import {
   treeProofOf,
 } from "../../src/worker/exercises/truth-tree/grading";
 import type { TreeReport } from "../../src/worker/exercises/truth-tree/report";
+import type {
+  TableauDocument,
+  TableauEnd,
+} from "../../src/worker/exercises/truth-tree/tableau/document";
+import {
+  setEnd,
+  setRowCites,
+  splitNode,
+  stackRows,
+} from "../../src/worker/exercises/truth-tree/tableau/edit";
 import type {
   TruthTreeAnswerData,
   TruthTreePublicData,

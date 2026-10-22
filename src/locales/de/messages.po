@@ -5361,6 +5361,10 @@ msgid "The rule “{rule}” has the development flag “{flag}”, which its ki
 msgstr "Die Regel „{rule}“ hat das Entwicklungsmerkmal „{flag}“, das ihre Art nicht annimmt."
 
 #: src/worker/application/content/diagnostic-strings.ts
+msgid "The rule “{rule}” is matched against a branch by its row {row}, but the system's rewrites compute “{term}” in it, so Carnap cannot tell by their shape which rows the rule applies to."
+msgstr "Die Regel „{rule}“ wird über ihre Zeile {row} mit einem Ast abgeglichen, aber die Umschreibungen des Systems berechnen „{term}“ darin; deshalb kann Carnap nicht an ihrer Form erkennen, auf welche Zeilen die Regel anwendbar ist."
+
+#: src/worker/application/content/diagnostic-strings.ts
 msgid "The rule “{rule}” names “{binder}” as its instance, but has no binder of that name."
 msgstr "Die Regel „{rule}“ nennt „{binder}“ als ihre Instanz, hat aber keinen Binder dieses Namens."
 
@@ -5487,10 +5491,6 @@ msgstr "Das System hat keine @relation auf der Sorte „{sort}“, die Carnap br
 #: src/worker/exercises/world/strings.ts
 msgid "The table lists every block and can do everything the board does."
 msgstr "Die Tabelle führt jeden Block auf und kann alles, was das Brett kann."
-
-#: src/worker/application/content/diagnostic-strings.ts
-msgid "The term “{rule}” has the role tree.substitution, but is not a substitution: it needs three arguments, a bound variable, a body of its own sort, and the term put for the variable."
-msgstr "Der Term „{rule}“ hat die Rolle tree.substitution, ist aber keine Substitution: Er braucht drei Argumente, eine gebundene Variable, einen Rumpf seiner eigenen Sorte und den Term, der für die Variable eingesetzt wird."
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "The tree is missing a row of its root."

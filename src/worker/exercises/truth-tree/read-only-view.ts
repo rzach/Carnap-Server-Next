@@ -1,9 +1,3 @@
-import type { TableauDocument } from "../../../tableau/document";
-import { tableauGridHtml, tableauOutlineHtml } from "../../../tableau/html";
-import { layoutTableau } from "../../../tableau/layout";
-import tableauStyles from "../../../tableau/tableau.css" with {
-  type: "text",
-};
 import {
   type ExerciseElementMeta,
   escapeHtml,
@@ -35,6 +29,10 @@ import type { TreeReport } from "./report";
 import reviewStyles from "./review.css" with { type: "text" };
 import shadowStyles from "./shadow.css" with { type: "text" };
 import { buildTruthTreeStrings } from "./strings";
+import type { TableauDocument } from "./tableau/document";
+import { tableauGridHtml, tableauOutlineHtml } from "./tableau/html";
+import { layoutTableau } from "./tableau/layout";
+import tableauStyles from "./tableau/tableau.css" with { type: "text" };
 import type { TruthTreeAnswerData, TruthTreePublicData } from "./types";
 import { TRUTH_TREE_KIND, truthTreeName } from "./types";
 import type { TreeWords } from "./verdict-text";

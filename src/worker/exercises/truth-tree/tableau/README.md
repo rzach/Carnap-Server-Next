@@ -1,10 +1,10 @@
 # tableau
 
 A logic-free tableau: a tree of rows, the edits an editor makes to it, and
-where each row goes on the page. The truth-tree exercise type is its first
-consumer. It is kept apart so that a second (a Priest tree with world labels,
-a signed tableau) can reuse it, and so that it can become a package, as
-ProofML did, once that second consumer shows what the API has to be.
+where each row goes on the page. The truth-tree exercise type owns it, and is
+its only consumer. It knows nothing of the type's logic, so that it can be
+lifted out, to the exercise kit or a package as ProofML was, once a second
+consumer (a Priest tree with world labels, say) shows what the API has to be.
 
 - `document.ts`: the shape. A node is a run of rows with no branching; its
   children are the branches a split below it made; a leaf may be closed or
@@ -23,9 +23,10 @@ ProofML did, once that second consumer shows what the API has to be.
   Columns are leaves. The worker's read-only view and the browser editor
   both draw from it.
 
-The browser view is `src/client/tableau/`, a Preact island over this core.
+The browser view is `src/client/components/truth-tree-view.tsx`, a Preact
+island over this core.
 
-**Boundary.** Nothing here imports anything outside `src/tableau/`: no
-worker code, no exercise kit, no DOM, no framework
-(`tests/tableau.test.ts`). The view imports this and Preact, and nothing
-else.
+**Boundary.** Nothing here imports anything outside this folder: no other
+worker code, not even the rest of the truth tree, no exercise kit, no DOM, no
+framework (`tests/truth-tree-tableau.test.ts`). The view imports this and
+Preact, and nothing else.

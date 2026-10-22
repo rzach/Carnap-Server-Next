@@ -9,17 +9,17 @@
  */
 
 import type { SurfaceLanguage } from "@aufbau/syntax";
-import type { TableauIndex } from "../../tableau/document";
+import { ruleSpelling } from "../../worker/exercises/truth-tree/aufbau/theory";
+import type { TruthTreeStringId } from "../../worker/exercises/truth-tree/strings";
+import type { TableauIndex } from "../../worker/exercises/truth-tree/tableau/document";
 import type {
   MarginField,
   MarginNote,
   TableauAnnotations,
-} from "../../tableau/html";
-import type { TableauLayout } from "../../tableau/layout";
-import { rowAtLine } from "../../tableau/layout";
-import type { TableauKeyAction } from "../../tableau/navigate";
-import { ruleSpelling } from "../../worker/exercises/truth-tree/aufbau/theory";
-import type { TruthTreeStringId } from "../../worker/exercises/truth-tree/strings";
+} from "../../worker/exercises/truth-tree/tableau/html";
+import type { TableauLayout } from "../../worker/exercises/truth-tree/tableau/layout";
+import { rowAtLine } from "../../worker/exercises/truth-tree/tableau/layout";
+import type { TableauKeyAction } from "../../worker/exercises/truth-tree/tableau/navigate";
 
 /** The element's translator. */
 export type MarginWords = (

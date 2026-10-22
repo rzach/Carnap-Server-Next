@@ -1,6 +1,6 @@
-import type { TableauNode } from "../../../tableau/document";
 import type { ExerciseCapabilities } from "../../domain/exercises";
 import type { Translator } from "../../i18n/translator";
+import type { TableauNode } from "./tableau/document";
 
 /**
  * Constants and data shapes for the truth-tree exercise type. DOM-free; the

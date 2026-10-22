@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import type { SurfaceLanguage } from "@aufbau/syntax";
 import { stripSyntaxAnnotations } from "@aufbau/syntax";
 import { verifyMmb } from "../src/worker/exercise-kit/proof/verifier";
+import { readTreeDevelopment } from "../src/worker/exercises/truth-tree/aufbau/criteria";
 import type { TreeDiagnostic } from "../src/worker/exercises/truth-tree/aufbau/emit";
 import {
   emitTreeProof,
@@ -76,6 +77,7 @@ interface Checked {
 
 async function check(tree: TreeBuilder, system = UBC): Promise<Checked> {
   const proof = emitTreeProof(tree.tree, {
+    development: readTreeDevelopment(system.language, system.theory),
     language: system.language,
     rootRows: tree.root.length,
     rules: tree.rules,
@@ -177,6 +179,14 @@ describe("a sentential tree", () => {
     const checked = await check(chain().tree);
     expect(where(checked.errors)).toEqual([]);
     expect(checked.hypotheses).toBe(0);
+    expect(checked.verified).toBe(true);
+  });
+
+  test("a closure is written with every binding, so the engine infers none", async () => {
+    const checked = await check(chain().tree);
+    // `¬P` closes against `P`: the branch and `ph` are both given.
+    expect(checked.proof).toContain("by tb_close (ga := $ ");
+    expect(checked.proof).toContain(", ph := $ P (snil) $) []");
     expect(checked.verified).toBe(true);
   });
 

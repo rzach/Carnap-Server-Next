@@ -1,17 +1,23 @@
 import { describe, expect, test } from "bun:test";
 import { dirname, posix } from "node:path";
-import { TableauIndex } from "../src/tableau/document";
+import { TableauIndex } from "../src/worker/exercises/truth-tree/tableau/document";
 import {
   insertRowAfter,
   remint,
   removeChildren,
   removeRow,
   setRowCites,
-} from "../src/tableau/edit";
-import { guideRows } from "../src/tableau/html";
-import type { Guide } from "../src/tableau/layout";
-import { layoutTableau, rowAtLine } from "../src/tableau/layout";
-import { keyAction, moveCursor } from "../src/tableau/navigate";
+} from "../src/worker/exercises/truth-tree/tableau/edit";
+import { guideRows } from "../src/worker/exercises/truth-tree/tableau/html";
+import type { Guide } from "../src/worker/exercises/truth-tree/tableau/layout";
+import {
+  layoutTableau,
+  rowAtLine,
+} from "../src/worker/exercises/truth-tree/tableau/layout";
+import {
+  keyAction,
+  moveCursor,
+} from "../src/worker/exercises/truth-tree/tableau/navigate";
 import { TreeBuilder } from "./helpers/truth-tree";
 
 /**
@@ -306,10 +312,12 @@ describe("the key map", () => {
 });
 
 describe("the tableau core's import boundary", () => {
-  test("src/tableau imports nothing outside itself", async () => {
+  test("the core imports nothing outside itself", async () => {
     const outward: string[] = [];
 
-    for await (const path of new Bun.Glob("src/tableau/**/*.ts").scan(".")) {
+    for await (const path of new Bun.Glob(
+      "src/worker/exercises/truth-tree/tableau/**/*.ts",
+    ).scan(".")) {
       const source = await Bun.file(path).text();
 
       for (const match of source.matchAll(/from\s+["']([^"']+)["']/g)) {
@@ -318,7 +326,7 @@ describe("the tableau core's import boundary", () => {
 
         if (
           !specifier.startsWith(".") ||
-          !target.startsWith("src/tableau/")
+          !target.startsWith("src/worker/exercises/truth-tree/tableau/")
         ) {
           outward.push(`${path} → ${specifier}`);
         }
@@ -330,11 +338,11 @@ describe("the tableau core's import boundary", () => {
 });
 
 describe("the tableau view's import boundary", () => {
-  test("src/client/tableau imports the core and Preact, nothing else", async () => {
+  test("the view imports the core and Preact, nothing else", async () => {
     const outward: string[] = [];
 
     for await (const path of new Bun.Glob(
-      "src/client/tableau/**/*.{ts,tsx}",
+      "src/client/components/truth-tree-view.tsx",
     ).scan(".")) {
       const source = await Bun.file(path).text();
 
@@ -342,8 +350,7 @@ describe("the tableau view's import boundary", () => {
         const specifier = match[1] ?? "";
         const target = posix.normalize(posix.join(dirname(path), specifier));
         const allowed = specifier.startsWith(".")
-          ? target.startsWith("src/tableau/") ||
-            target.startsWith("src/client/tableau/")
+          ? target.startsWith("src/worker/exercises/truth-tree/tableau/")
           : specifier === "preact" || specifier.startsWith("preact/");
 
         if (!allowed) {

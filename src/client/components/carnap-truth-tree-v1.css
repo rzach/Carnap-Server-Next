@@ -2,7 +2,7 @@
  * The truth-tree editor's own styles, appended to its shadow root once the
  * island mounts: the cursor, the inline inputs, and the closing prompt and
  * note lines. The tree itself is the tableau component's
- * (`src/tableau/tableau.css`), already in the root.
+ * (`exercises/truth-tree/tableau/tableau.css`), already in the root.
  */
 
 .truth-tree-editor {

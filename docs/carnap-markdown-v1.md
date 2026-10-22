@@ -1100,13 +1100,17 @@ on, each role covering the whole `@fallback` chain:
   not, and a `general` row is owed only the instances whose conclusions are
   missing.
 - A rule applies to a row its focus pattern matches: `∀ x ph` matches any
-  universal. The match is syntactic, but for two things the theory can say
-  it computes: a list (`@acui assoc _ unit _`, above) and its substitution,
-  the term carrying `@syntax role tree.substitution` (`{x / te} ph`, three
-  arguments: the bound variable, the term, the body). `{x / te} ph` with
-  `ph` known matches `ph` with one term at every `x`; with `te` known and
-  `ph` not, as in an identity's `{x / a} ph`, `ph` is the row with every
-  `a` made `x`. Anything else the theory would compute matches nothing.
+  universal. The row is matched as the engine computes it: its defs
+  unfolded, then normalized by the theory's `@rewrite` rules and `@acui`
+  laws, so `a ≠ a` matches `¬ te = te` and a list (`@acui assoc _ unit _`,
+  above) matches however it is bracketed. A pattern is *rigid* when no
+  term in it, its defs unfolded, heads a `@rewrite`; the closure rules'
+  rows and the rows each rule develops must be rigid, since whether a
+  branch is closed or a row is owed a step is decided by them. A rule
+  whose rows the rewrites compute, as an identity's partner `{x / a} ph`
+  is, is matched by its `@view` (`a = b ; ps`), and its `@abstract` (with
+  bare-name plugs) builds the rest as the engine does: `ph` is the row with
+  every `a` made `x`, and a row with no `a` in it is no partner.
 - The engine is the judge. Carnap states, from the rules, when a row is
   developed (by its mark on the branch, or by the rows a premise writes)
   and asks it of every row of a branch marked open, of every `general` row
@@ -1122,16 +1126,17 @@ on, each role covering the whole `@fallback` chain:
   the steps. That needs the judgement sort's `@relation` to name a modus
   ponens rule, as `forallx-ubc`'s `jeq_mp` does.
 - A branch marked open is refused if the closure rule's focus matches one or
-  two of its rows.
+  two of its rows. A closed branch's × is written with every binding the
+  match found, so the engine checks the closure by the same identity.
 
 A theory with no development roles at all cannot be used with `finish`
 other than `closed`. When the lesson compiles, Carnap reports whatever it
 would otherwise pass over: a role that does not read (an unknown kind or
 flag, a binder the rule or one of its `@fallback` statements does not
-have), a `tree.` role it does not know (a misspelt `tree.mark`), a
-`tree.substitution` term without its three
-arguments, and a rule concluding `focus` whose premises are not rows written
-on the branch, which no row could ever be owed. It also reports a rule that writes no check mark in a theory
+have), a `tree.` role it does not know (a misspelt `tree.mark`), a closure
+row or a row a rule develops that is not rigid, and a rule concluding
+`focus` whose premises are not rows written on the branch, which no row
+could ever be owed. It also reports a rule that writes no check mark in a theory
 whose rules do, a rule that writes a new name without an `@view` saying
 where the name is in the rows it writes, and a sort without the `@relation`
 the engine needs to read a branch in any order: each would leave a row that

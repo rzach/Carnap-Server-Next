@@ -449,7 +449,6 @@ notation sb_t {x: var} (te: tm x) (ue: tm x): tm =
 term sb_s {x: var} (te: tm x) (sq: seq x): seq;
 notation sb_s {x: var} (te: tm x) (sq: seq x): seq =
   ($subst$:41) x ($/$:0) te sq;
---| @syntax role tree.substitution
 term sb_f {x: var} (te: tm x) (ph: wff x): wff;
 notation sb_f {x: var} (te: tm x) (ph: wff x): wff =
   (${$:41) x ($/$:0) te ($}$:0) ph;
@@ -861,8 +860,8 @@ axiom tb_nex1 {x: var} (ga: ctx x) (te: tm) (ph: wff x):
 -- From `a = b` and a row, the row with every `a` made `b` (`ph` may not
 -- mention `a`), or every `b` made `a`. An open branch is complete once each
 -- identity is substituted one way round into every atomic and negated atomic
--- row on it (`pairs`, `literals`); `sb_f`'s role lets the checker read the
--- substitution.
+-- row on it (`pairs`, `literals`); the `@view` and `@abstract` let the
+-- engine, and Carnap, read the substitution.
 --| @view {x: var} {a b: name} (ga: ctx x a b) (ph: wff x b) (ps ch: wff): $ closes ga ; ch $ > $ focus ga at (a = b ; ps) $
 --| @abstract ph ps ch x a b
 --| @fresh x

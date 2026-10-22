@@ -90,7 +90,6 @@ export const TREE_ROLES: ReadonlySet<string> = new Set([
   "tree.unfocus",
   "tree.closure",
   "tree.assert",
-  "tree.substitution",
   "tree.mark",
   "tree.mark.instance",
 ]);

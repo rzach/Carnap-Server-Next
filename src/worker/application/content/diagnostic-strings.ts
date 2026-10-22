@@ -416,10 +416,10 @@ export function buildDiagnosticStrings(i18n: Translator) {
         "The system gives “{rule}” the role “{role}”, which Carnap does not know.",
         placeholders("rule", "role"),
       ),
-    "The term “{rule}” has the role tree.substitution, but is not a substitution: it needs three arguments, a bound variable, a body of its own sort, and the term put for the variable.":
+    "The rule “{rule}” is matched against a branch by its row {row}, but the system's rewrites compute “{term}” in it, so Carnap cannot tell by their shape which rows the rule applies to.":
       i18n.t(
-        "The term “{rule}” has the role tree.substitution, but is not a substitution: it needs three arguments, a bound variable, a body of its own sort, and the term put for the variable.",
-        placeholders("rule"),
+        "The rule “{rule}” is matched against a branch by its row {row}, but the system's rewrites compute “{term}” in it, so Carnap cannot tell by their shape which rows the rule applies to.",
+        placeholders("row", "rule", "term"),
       ),
     "The rule “{rule}” writes no check mark on a branch it opens, though the system's rules write marks, so Carnap cannot tell from a branch whether a row was developed by it.":
       i18n.t(

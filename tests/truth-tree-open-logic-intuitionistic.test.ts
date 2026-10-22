@@ -7,6 +7,7 @@ import type {
 import { theorySourceByFileName } from "../src/worker/logic/theories";
 import {
   certifyAnswer,
+  gradeAnswer,
   judgeAsBrowser,
   lessonTree,
   problems,
@@ -436,6 +437,62 @@ describe("an open branch in intuitionistic logic", () => {
       missing: [{ kind: "general", names: ["1", "((1) . wa)"], row: "r1" }],
       type: "open-incomplete",
     });
+  }, 60_000);
+
+  // An answer stores each instance as engine text, keyed when it was saved;
+  // the extension ρ = 1.1.1 from 1 nested the other way is the same list.
+  test("counts a stored instance however its list is nested", async () => {
+    const asked = await exercise(
+      ["1 𝕋 A → B", "1 𝔽 C → (D → (E → G))"],
+      "one-open",
+    );
+    const tree = new TreeBuilder(asked.resolved.rootText);
+    let row = "r2";
+
+    for (const [prefix, antecedent, rest] of [
+      ["1.1", "C", "D → (E → G)"],
+      ["1.1.1", "D", "E → G"],
+      ["1.1.1.1", "E", "G"],
+    ] as const) {
+      row = tree.stack(
+        tree.rootNode,
+        row,
+        [`${prefix} T: ${antecedent}`, `${prefix} F: ${rest}`],
+        "→F",
+      )[1] as string;
+    }
+
+    let open = tree.rootNode;
+
+    for (const prefix of ["1.1.1.1", "1.1.1", "1.1", "1"]) {
+      open = tree.split(
+        open,
+        "r1",
+        [[`${prefix} F: A`], [`${prefix} T: B`]],
+        "→T",
+      ).nodes[0] as string;
+    }
+
+    tree.open(open);
+    const answer = await certifyAnswer(asked.publicData, tree.answer());
+    const deep = Object.entries(answer.instances ?? {}).filter(
+      ([, instance]) => instance === "(wa . (waa . waaa))",
+    );
+
+    expect(deep).toHaveLength(2);
+    expect(await gradeAnswer(asked.item, answer)).toBe("correct");
+
+    const respelled = {
+      ...answer,
+      instances: {
+        ...answer.instances,
+        ...Object.fromEntries(
+          deep.map(([row]) => [row, "((wa . waa) . waaa)"]),
+        ),
+      },
+    };
+
+    expect(await gradeAnswer(asked.item, respelled)).toBe("correct");
   }, 60_000);
 
   // `σ . ρ` against `1 . wa` is tried with σ empty first; with the 𝔽 row

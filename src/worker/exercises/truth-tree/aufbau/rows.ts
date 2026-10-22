@@ -11,9 +11,9 @@
 
 import type { Scope, SurfaceLanguage, Term } from "@aufbau/syntax";
 import { printTerm, UnprintableTermError } from "@aufbau/syntax";
-import type { TableauRow } from "../../../../tableau/document";
 import type { ParseError } from "../../../exercise-kit/formula";
 import { formulaParseErrors } from "../../../logic/specs/diagnostics";
+import type { TableauRow } from "../tableau/document";
 import type { TreeTheory } from "./theory";
 
 /** The most distinct texts a reader remembers before it starts again. */
