@@ -10,7 +10,7 @@
  * worker when they write a tree down.
  */
 
-import type { AppTerm, SurfaceLanguage } from "@aufbau/syntax";
+import type { SurfaceLanguage } from "@aufbau/syntax";
 import { printTerm } from "@aufbau/syntax";
 import {
   roleIndex,
@@ -244,25 +244,14 @@ function emptyBranch(
     join === null
       ? null
       : (language.spec.terms.get(join)?.acui?.unit ?? null);
-  const info = unit === null ? undefined : language.spec.terms.get(unit);
-
-  if (unit === null || info === undefined) {
+  if (unit === null || !language.spec.terms.has(unit)) {
     return null;
   }
 
-  const term: AppTerm = {
-    args: [],
-    fixity: null,
-    grouped: false,
-    kind: "app",
-    prec: null,
-    sort: info.returnSort,
-    span: { end: 0, start: 0 },
+  return {
+    engine: printTerm(language, language.app(unit, []), "engine"),
     term: unit,
-    token: null,
   };
-
-  return { engine: printTerm(language, term, "engine"), term: unit };
 }
 
 /** Whether a read is a theory or the list of what it lacks. */

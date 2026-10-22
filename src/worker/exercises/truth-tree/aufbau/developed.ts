@@ -20,6 +20,7 @@
  */
 
 import type { SurfaceLanguage, Term } from "@aufbau/syntax";
+import { freeVariables, substitute } from "@aufbau/syntax";
 import type { Missing } from "../report";
 import type { TableauIndex, TableauNode } from "../tableau/document";
 import { isLiteral, isSelfIdentity } from "./branch";
@@ -32,15 +33,13 @@ import {
   abstracted,
   canonical,
   closedSubterms,
-  instantiate,
   matchAll,
   matchedBy,
   matchFocus,
-  occursFree,
   termKey,
 } from "./patterns";
 import type { Member, RowSortReader } from "./rows";
-import { branchText, engineTokens, readEngine } from "./rows";
+import { branchText, engineTokens } from "./rows";
 import type { TreeTheory } from "./theory";
 import { axiomSpelling } from "./theory";
 
@@ -114,33 +113,19 @@ export interface QuestionsInput {
 }
 
 /**
- * A name of `sort` a branch does not mention: a token of the first pool that
- * reads at the sort, for a general row that must be developed at some term
- * on a branch with none (`nonempty`). Developed at a new name, it is
- * developed at one, vacuously; otherwise it is not.
+ * A name of `sort` a branch does not mention, keyed: a pool token, for a
+ * general row that must be developed at some term on a branch with none
+ * (`nonempty`). Developed at a new name, it is developed at one, vacuously;
+ * otherwise it is not.
  */
 function newName(
   language: SurfaceLanguage,
   sort: string,
   mentioned: ReadonlySet<string>,
 ): string | null {
-  for (const info of language.spec.sorts.values()) {
-    for (const token of info.vars) {
-      if (mentioned.has(token)) {
-        continue;
-      }
+  const name = language.freshName(sort, mentioned);
 
-      const read = readEngine(language, token, sort);
-
-      if (read === null) {
-        break;
-      }
-
-      return termKey(language, read);
-    }
-  }
-
-  return null;
+  return name === null ? null : termKey(language, name);
 }
 
 /**
@@ -153,19 +138,14 @@ function isVacuous(
   bindings: Bindings,
 ): boolean {
   // A name no row can spell, so it is in a written row only as the instance.
-  const probe: Term = {
-    binder: false,
-    grouped: false,
-    kind: "variable",
-    name: " instance",
-    sort: slot.sort,
-    span: { end: 0, start: 0 },
-  };
+  const probe = language.variable(" instance", slot.sort);
   const at = new Map([...bindings, [slot.binder, probe]]);
 
   return slot.templates.every(
     (template) =>
-      !occursFree(canonical(language, instantiate(template, at)), probe.name),
+      !freeVariables(canonical(language, substitute(template, at))).has(
+        probe.name,
+      ),
   );
 }
 
@@ -196,11 +176,6 @@ export function branchQuestions(
   });
   const paired = rules.filter((rule) => rule.criterion?.kind === "pairs");
 
-  // The tokens of every sort's pool: a variable the matcher made up is
-  // none of them.
-  const pooled = new Set(
-    [...language.spec.sorts.values()].flatMap((info) => info.vars),
-  );
   const branch = (rows: readonly string[]): string =>
     branchText(theory, rows);
   const texts = (members: readonly Member[]): string[] =>
@@ -223,20 +198,22 @@ export function branchQuestions(
 
     for (const value of bindings.values()) {
       for (const variable of variablesOf(value)) {
-        if (pooled.has(variable.name) || renames.has(variable.name)) {
+        // A variable the matcher made up is in no pool.
+        if (
+          language.sortOfName(variable.name) !== null ||
+          renames.has(variable.name)
+        ) {
           continue;
         }
 
-        const token = language.spec.sorts
-          .get(variable.sort)
-          ?.vars.find((each) => !taken.has(each));
+        const token = language.freshName(variable.sort, taken);
 
-        if (token === undefined) {
+        if (token?.kind !== "variable") {
           return null;
         }
 
-        taken.add(token);
-        renames.set(variable.name, { ...variable, name: token });
+        taken.add(token.name);
+        renames.set(variable.name, { ...variable, name: token.name });
       }
     }
 
@@ -244,7 +221,7 @@ export function branchQuestions(
       .filter(([meta]) => meta !== patterns.branch)
       .map(
         ([meta, value]) =>
-          `${meta} := $ ${termKey(language, instantiate(value, renames))} $`,
+          `${meta} := $ ${termKey(language, substitute(value, renames))} $`,
       )
       .join(", ");
   };
@@ -510,7 +487,7 @@ export function branchQuestions(
                   premise.every((each) =>
                     isSelfIdentity(
                       language,
-                      canonical(language, instantiate(each, bindings)),
+                      canonical(language, substitute(each, bindings)),
                     ),
                   ),
               );

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { SurfaceLanguage, Term } from "@aufbau/syntax";
-import { printTerm, sameTerm } from "@aufbau/syntax";
+import { printTerm, sameTerm, substitute } from "@aufbau/syntax";
 import { closureOn } from "../src/worker/exercises/truth-tree/aufbau/branch";
 import {
   matchedRows,
@@ -10,7 +10,6 @@ import type { RulePatterns } from "../src/worker/exercises/truth-tree/aufbau/pat
 import {
   canonical,
   computedTerm,
-  instantiate,
   matchAll,
 } from "../src/worker/exercises/truth-tree/aufbau/patterns";
 import { readEngine } from "../src/worker/exercises/truth-tree/aufbau/rows";
@@ -183,7 +182,7 @@ function rowsFor(
     );
     const row = readEngine(
       language,
-      printTerm(language, instantiate(pattern, spelled), "engine"),
+      printTerm(language, substitute(pattern, spelled), "engine"),
       pattern.sort,
     );
 
@@ -288,7 +287,7 @@ describe("a rigid pattern matches every row the engine takes for an instance", (
 
         const found = [
           ...matchAll(language, pattern, row, patterns.metas),
-        ].some((each) => sameTerm(language, instantiate(pattern, each), row));
+        ].some((each) => sameTerm(language, substitute(pattern, each), row));
 
         if (!found) {
           missed.push(`${patterns.name}: ${show([row])}`);

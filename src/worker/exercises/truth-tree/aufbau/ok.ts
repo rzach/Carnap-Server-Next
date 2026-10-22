@@ -404,14 +404,7 @@ function generate(
         continue;
       }
 
-      const variable: Term = {
-        binder: false,
-        grouped: false,
-        kind: "variable",
-        name: slot.binder,
-        sort: instance.type.sort,
-        span: { end: 0, start: 0 },
-      };
+      const variable = language.variable(slot.binder, instance.type.sort);
 
       for (let premise = 0; premise < patterns.written.length; premise += 1) {
         const parts = theory.byContents

@@ -39,13 +39,19 @@
  * DOM-free and free of i18n.
  */
 
-import type { AssertStatement, SurfaceLanguage, Term } from "@aufbau/syntax";
+import type {
+  AssertStatement,
+  SurfaceLanguage,
+  Term,
+  VariableTerm,
+} from "@aufbau/syntax";
 import {
   abstractContext,
   engineForm,
   parseStatement,
   printTerm,
   RewriteLimitError,
+  substitute,
   unfoldDefinitions,
 } from "@aufbau/syntax";
 
@@ -152,23 +158,19 @@ function members(list: List, term: Term): Term[] {
 }
 
 /** A list of `members`, nested to the left as the parser reads it: `1 . wa . waa`. */
-function listOf(list: List, sort: string, terms: readonly Term[]): Term {
-  const app = (name: string, args: readonly Term[]): Term => ({
-    args: [...args],
-    fixity: null,
-    grouped: false,
-    kind: "app",
-    prec: null,
-    sort,
-    span: { end: 0, start: 0 },
-    term: name,
-    token: null,
-  });
+function listOf(
+  language: SurfaceLanguage,
+  list: List,
+  terms: readonly Term[],
+): Term {
   const [first, ...rest] = terms;
 
   return first === undefined
-    ? app(list.unit, [])
-    : rest.reduce((left, right) => app(list.term, [left, right]), first);
+    ? language.app(list.unit, [])
+    : rest.reduce<Term>(
+        (left, right) => language.app(list.term, [left, right]),
+        first,
+      );
 }
 
 /** Each term read, with its defs unfolded; a term belongs to one language. */
@@ -301,12 +303,17 @@ export function computedTerm(
   return find(unfolded(language, pattern));
 }
 
-/** A variable of `sort` named nowhere in `term`: `x0`, `x1`, … */
+/**
+ * A variable of `sort` named nowhere in `term`: `x0`, `x1`, …, which no
+ * pool holds, so that it cannot be mistaken for a row's own variable; the
+ * engine is told a pool token in its place (`pairBindings`).
+ */
 function freshVariable(
+  language: SurfaceLanguage,
   name: string,
   sort: string,
   term: Term,
-): Term & { kind: "variable" } {
+): VariableTerm {
   const names = new Set<string>();
   const collect = (node: Term): void => {
     if (node.kind === "variable") {
@@ -324,14 +331,7 @@ function freshVariable(
     at += 1;
   }
 
-  return {
-    binder: false,
-    grouped: false,
-    kind: "variable",
-    name: `${name}${at}`,
-    sort,
-    span: { end: 0, start: 0 },
-  };
+  return language.variable(`${name}${at}`, sort);
 }
 
 /** The patterns a rule's rows are matched by: its view's, where it abstracts. */
@@ -378,7 +378,12 @@ export function abstracted(
     return null;
   }
 
-  const hole = freshVariable(abstraction.hole, declared.type.sort, left);
+  const hole = freshVariable(
+    language,
+    abstraction.hole,
+    declared.type.sort,
+    left,
+  );
   let target: Term | null;
 
   try {
@@ -410,8 +415,8 @@ export function abstracted(
     patterns.focus.length === view.focus.length &&
     patterns.focus.every(
       (row, at) =>
-        termKey(language, instantiate(row, found)) ===
-        termKey(language, instantiate(view.focus[at] as Term, bindings)),
+        termKey(language, substitute(row, found)) ===
+        termKey(language, substitute(view.focus[at] as Term, bindings)),
     );
 
   return agrees ? found : null;
@@ -654,49 +659,13 @@ function* matchList(
         end,
         new Map([
           ...sofar,
-          [pattern.name, listOf(list, sort, terms.slice(taken, end))],
+          [pattern.name, listOf(language, list, terms.slice(taken, end))],
         ]),
       );
     }
   };
 
   yield* from(0, 0, bindings);
-}
-
-/** `template` with each bound metavariable replaced by what it stands for. */
-export function instantiate(template: Term, bindings: Bindings): Term {
-  if (template.kind === "variable") {
-    return bindings.get(template.name) ?? template;
-  }
-
-  return {
-    ...template,
-    args: template.args.map((argument) => instantiate(argument, bindings)),
-  };
-}
-
-/** Whether a variable occurs free in a term: not in a binding slot, unbound. */
-export function occursFree(term: Term, name: string): boolean {
-  if (term.kind === "variable") {
-    return !term.binder && term.name === name;
-  }
-
-  // A binding occurrence scopes over the arguments after it.
-  for (const argument of term.args) {
-    if (argument.kind === "variable" && argument.binder) {
-      if (argument.name === name) {
-        return false;
-      }
-
-      continue;
-    }
-
-    if (occursFree(argument, name)) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 /**
@@ -740,7 +709,7 @@ export function closedSubterms(
             const run = parts.slice(start, end);
 
             if (run.every((part) => closed(part, bound))) {
-              add(listOf(list, sort, run));
+              add(listOf(language, list, run));
             }
           }
         }

@@ -271,7 +271,6 @@ export function emitTreeProof(
   const pairings = new Map<string, readonly string[]>();
   const reader = options.reader ?? rowSortReader(language, theory.rowSort);
   const resolve = languageRuleReader(language);
-  const sortOf = new Map<string, string>();
   let counter = 0;
   let hypotheses = 0;
   let stated = 0;
@@ -281,12 +280,6 @@ export function emitTreeProof(
     proofs.push(proof);
     stated += statement.length;
   };
-
-  for (const [sort, info] of language.spec.sorts) {
-    for (const token of info.vars) {
-      sortOf.set(token, sort);
-    }
-  }
 
   /** A row as engine text at the row sort, or null if it does not read. */
   const engineOf = (row: TableauRow): string | null => {
@@ -384,9 +377,9 @@ export function emitTreeProof(
     const bound = new Map<string, string[]>();
 
     for (const token of new Set(texts.flatMap(engineTokens))) {
-      const sort = sortOf.get(token);
+      const sort = language.sortOfName(token);
 
-      if (sort !== undefined) {
+      if (sort !== null) {
         bound.set(sort, [...(bound.get(sort) ?? []), token]);
       }
     }

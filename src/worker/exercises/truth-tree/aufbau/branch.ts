@@ -12,11 +12,16 @@
  */
 
 import type { SurfaceLanguage, Term } from "@aufbau/syntax";
-import { printTerm, RewriteLimitError, sameTerm } from "@aufbau/syntax";
+import {
+  printTerm,
+  RewriteLimitError,
+  sameTerm,
+  substitute,
+} from "@aufbau/syntax";
 import { roleIndex, sentenceSort } from "../../../logic/specs/roles";
 import type { TreeDevelopment } from "./criteria";
 import type { Bindings, RulePatterns } from "./patterns";
-import { instantiate, ruleMatches, termKey } from "./patterns";
+import { ruleMatches, termKey } from "./patterns";
 import type { RowSortReader } from "./rows";
 import { branchText, readEngine } from "./rows";
 
@@ -134,7 +139,7 @@ export function closureOn(
       }
 
       const derived = join(
-        patterns.focus.map((pattern) => instantiate(pattern, bindings)),
+        patterns.focus.map((pattern) => substitute(pattern, bindings)),
       );
 
       if (derived !== null && converts(language, derived, stated)) {

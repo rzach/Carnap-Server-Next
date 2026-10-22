@@ -220,27 +220,6 @@ export function hasFirstOrderSignature(
   );
 }
 
-/** Strip the coercion wrappers the parser inserts between sorts. */
-function bare(node: SurfaceTerm, lang: SurfaceLanguage): SurfaceTerm {
-  let current = node;
-
-  while (
-    current.kind === "app" &&
-    lang.coercionNames.has(current.term) &&
-    current.args.length === 1
-  ) {
-    const inner = current.args[0];
-
-    if (inner === undefined) {
-      break;
-    }
-
-    current = inner;
-  }
-
-  return current;
-}
-
 /**
  * The argument list of a symbol, from every one of its binders.
  *
@@ -263,7 +242,7 @@ function readArguments(
   const terms: Term[] = [];
 
   const visit = (node: SurfaceTerm): void => {
-    const inner = bare(node, lang);
+    const inner = lang.uncoerced(node);
 
     if (list !== undefined && inner.kind === "app" && inner.sort === list) {
       for (const argument of inner.args) {
@@ -284,7 +263,7 @@ function readArguments(
 }
 
 function readTerm(node: SurfaceTerm, lang: SurfaceLanguage): Term {
-  const inner = bare(node, lang);
+  const inner = lang.uncoerced(node);
 
   // A lexicon token of a sort no quantifier binds is a proper name, not a
   // variable. forallx: Calgary draws the two from separate `@vars` pools —
@@ -348,7 +327,7 @@ function operandTerm(
  * fixed handful of connectives the spec names.
  */
 function readFormula(node: SurfaceTerm, lang: SurfaceLanguage): Formula {
-  const inner = bare(node, lang);
+  const inner = lang.uncoerced(node);
 
   if (inner.kind === "variable") {
     throw malformed();
@@ -578,7 +557,7 @@ export function parseFormulaTree(
   const sentence = sort ?? lang.provableSort;
 
   const collect = (node: SurfaceTerm): FormulaNode[] => {
-    const inner = bare(node, lang);
+    const inner = lang.uncoerced(node);
 
     if (inner.kind === "variable") {
       return [];
@@ -610,91 +589,14 @@ export function parseFormulaTree(
 }
 
 /**
- * A node as the printer reads it. Where a node stood in the source, and how it
- * was spelled there, are a parse's to record; a tree built to be printed has
- * neither, and `printTerm` asks for neither.
- */
-function node(
-  term: string,
-  sort: string,
-  args: readonly SurfaceTerm[],
-): AppTerm {
-  return {
-    args,
-    fixity: null,
-    grouped: false,
-    kind: "app",
-    prec: null,
-    sort,
-    span: { end: 0, start: 0 },
-    term,
-    token: null,
-  };
-}
-
-/**
  * A tree this module was asked to build that the parser could never have
  * produced: a formula from somewhere other than this language, which is a
- * caller's bug. Thrown rather than printed as something plausible.
+ * caller's bug. Thrown rather than printed as something plausible, as
+ * `lang.app` throws for a mismatch it can see.
  */
 function unwritable(detail: string): Error {
   return new Error(
     `This formula cannot be written in this language: ${detail}`,
-  );
-}
-
-/**
- * A node read at `sort`, inside the coercions the parser would have put
- * around it there — `F(x)` is `F` over `t2s(v2t(x))` in forallx. The printer
- * writes a coercion as nothing, but reads the sort it lands on: that is how it
- * knows an argument list is juxtaposed, or a formula outermost.
- */
-function coerced(
-  term: SurfaceTerm,
-  sort: string,
-  lang: SurfaceLanguage,
-): SurfaceTerm {
-  const path = lang.coerce(term.sort, sort);
-
-  if (path === null) {
-    throw unwritable(`nothing takes ${term.sort} to ${sort}.`);
-  }
-
-  return path.reduce<SurfaceTerm>((inner, name) => {
-    const coercion = lang.spec.coercions.find((each) => each.name === name);
-
-    if (coercion === undefined) {
-      throw unwritable(`${name} is not a coercion.`);
-    }
-
-    return node(name, coercion.to, [inner]);
-  }, term);
-}
-
-/**
- * A constructor applied to argument trees, each read at its binder's sort.
- */
-function applied(
-  info: TermInfo,
-  args: readonly SurfaceTerm[],
-  lang: SurfaceLanguage,
-): AppTerm {
-  if (args.length !== info.binders.length) {
-    throw unwritable(
-      `${info.name} takes ${info.binders.length} arguments, not ${args.length}.`,
-    );
-  }
-
-  return node(
-    info.name,
-    info.returnSort,
-    args.map((arg, at) => {
-      const type = info.binders[at]?.type;
-
-      return type !== undefined && "sort" in type
-        ? coerced(arg, type.sort, lang)
-        : arg;
-    }),
   );
 }
 
@@ -724,13 +626,10 @@ function poolSort(
   bindable: boolean,
   lang: SurfaceLanguage,
 ): string {
-  for (const info of lang.spec.sorts.values()) {
-    if (
-      lang.bindableSorts.has(info.name) === bindable &&
-      info.vars.includes(name)
-    ) {
-      return info.name;
-    }
+  const sort = lang.sortOfName(name);
+
+  if (sort !== null && lang.bindableSorts.has(sort) === bindable) {
+    return sort;
   }
 
   const fallback = bindable ? [...lang.bindableSorts][0] : undefined;
@@ -742,32 +641,21 @@ function poolSort(
   return fallback;
 }
 
-function variable(name: string, sort: string, binds: boolean): SurfaceTerm {
-  return {
-    binder: binds,
-    grouped: false,
-    kind: "variable",
-    name,
-    sort,
-    span: { end: 0, start: 0 },
-  };
-}
-
 /**
  * Individuals as one argument list, the inverse of {@link readArguments}: the
  * spec's elided term for none, and otherwise the elements joined left to right
  * by the list sort's combiner — its `@syntax juxtaposed` term where it has one
  * (Magnus's `Rab`), else the one constructor joining two lists (Calgary's
  * comma). Left-nested, because that is the tree the parser builds and the one
- * the printer flattens back into `Rab` or `R(a,b)`.
+ * the printer flattens back into `Rab` or `R(a,b)`. Each element goes into the
+ * list sort through `lang.app`'s coercions.
  */
 function argumentList(
   items: readonly SurfaceTerm[],
   list: string,
   lang: SurfaceLanguage,
 ): SurfaceTerm {
-  const elements = items.map((item) => coerced(item, list, lang));
-  const [first, ...rest] = elements;
+  const [first, ...rest] = items;
 
   if (first === undefined) {
     const nil = lang.elidedOf.get(list);
@@ -776,7 +664,7 @@ function argumentList(
       throw unwritable(`it has no empty ${list}.`);
     }
 
-    return node(nil.name, list, []);
+    return lang.app(nil.name, []);
   }
 
   if (rest.length === 0) {
@@ -802,7 +690,7 @@ function argumentList(
   }
 
   return rest.reduce<SurfaceTerm>(
-    (left, right) => node(join.name, list, [left, right]),
+    (left, right) => lang.app(join.name, [left, right]),
     first,
   );
 }
@@ -833,7 +721,7 @@ function application(
   const [at, ...more] = lists;
 
   if (list === undefined || at === undefined) {
-    return applied(info, terms, lang);
+    return lang.app(name, terms);
   }
 
   if (more.length > 0) {
@@ -848,28 +736,24 @@ function application(
     );
   }
 
-  return applied(
-    info,
-    [
-      ...terms.slice(0, at),
-      argumentList(terms.slice(at, terms.length - after), list, lang),
-      ...terms.slice(terms.length - after),
-    ],
-    lang,
-  );
+  return lang.app(name, [
+    ...terms.slice(0, at),
+    argumentList(terms.slice(at, terms.length - after), list, lang),
+    ...terms.slice(terms.length - after),
+  ]);
 }
 
 function termTree(term: Term, lang: SurfaceLanguage): SurfaceTerm {
   switch (term.type) {
     case "variable":
-      return variable(term.name, poolSort(term.name, true, lang), false);
+      return lang.variable(term.name, poolSort(term.name, true, lang));
     case "function":
       return application(term.name, term.args, lang);
     case "constant":
       // A constant is a nullary constructor (`zero`) or a name from a pool.
       return lang.spec.terms.has(term.name)
         ? application(term.name, [], lang)
-        : variable(term.name, poolSort(term.name, false, lang), false);
+        : lang.variable(term.name, poolSort(term.name, false, lang));
   }
 }
 
@@ -881,7 +765,7 @@ function termTree(term: Term, lang: SurfaceLanguage): SurfaceTerm {
  */
 function formulaTree(formula: Formula, lang: SurfaceLanguage): AppTerm {
   const apply = (role: string, args: readonly SurfaceTerm[]): AppTerm =>
-    applied(constructorFor(role, lang), args, lang);
+    lang.app(constructorFor(role, lang).name, args);
 
   switch (formula.type) {
     case "predicate":
@@ -905,7 +789,7 @@ function formulaTree(formula: Formula, lang: SurfaceLanguage): AppTerm {
       }
 
       return apply(formula.type, [
-        variable(formula.variable, bound.type.sort, true),
+        lang.variable(formula.variable, bound.type.sort),
         formulaTree(formula.body, lang),
       ]);
     }

@@ -33,12 +33,12 @@ import {
   parseStatements,
   printTerm,
   statementScope,
+  substitute,
 } from "@aufbau/syntax";
 import { roleIndex } from "../../../logic/specs/roles";
 import type { Abstraction, Bindings, RulePatterns } from "./patterns";
 import {
   computedTerm,
-  instantiate,
   matchedBy,
   mentions,
   occurrence,
@@ -907,7 +907,7 @@ export function instanceRow(
   instance: Term,
 ): Term {
   const at = new Map([...bindings, [slot.binder, instance]]);
-  const rows = slot.templates.map((template) => instantiate(template, at));
+  const rows = slot.templates.map((template) => substitute(template, at));
   const key = termKey(language, row);
 
   return (
@@ -938,10 +938,7 @@ export function instanceShower(
       ? instance
       : termKey(
           language,
-          instantiate(
-            slot.shown,
-            new Map([...bindings, [slot.binder, read]]),
-          ),
+          substitute(slot.shown, new Map([...bindings, [slot.binder, read]])),
         );
   };
 }
@@ -988,7 +985,7 @@ export function witnesses(
       const value = bindings.get(slot.binder);
       const instance = value === undefined ? null : termKey(language, value);
       const side = patterns.side.map((pattern) =>
-        termKey(language, instantiate(pattern, bindings)),
+        termKey(language, substitute(pattern, bindings)),
       );
 
       if (instance !== null && !found.has(instance)) {
