@@ -133,6 +133,41 @@ describe("the live preview", () => {
         ?.dataset.mood,
     ).toBe("error");
   });
+
+  test("leaves an untouched prose starter unremarked, until the first edit", async () => {
+    const mounted = mount(
+      await translationExercise(PROP, '#t1 starter="People danced, and P"'),
+    );
+
+    expect(previewText(mounted)).toBe("");
+    expect(
+      mounted.root.querySelector<HTMLElement>('p[data-role="preview"]')
+        ?.dataset.mood,
+    ).toBeUndefined();
+
+    type(mounted, "People danced, and P!");
+
+    expect(previewText(mounted)).not.toBe("");
+    expect(
+      mounted.root.querySelector<HTMLElement>('p[data-role="preview"]')
+        ?.dataset.mood,
+    ).toBe("error");
+  });
+
+  test("reads back a starter that parses", async () => {
+    const mounted = mount(await translationExercise(PROP, '#t1 starter="P"'));
+
+    expect(previewText(mounted)).toBe("Reads as P");
+  });
+
+  test("words the complaint for a prior answer, even one equal to the starter", async () => {
+    const mounted = mount(
+      await translationExercise(PROP, '#t1 starter="P /\\"'),
+      { priorAnswer: { text: "P /\\" } },
+    );
+
+    expect(previewText(mounted)).toBe("Expected a formula.");
+  });
 });
 
 describe("checking", () => {

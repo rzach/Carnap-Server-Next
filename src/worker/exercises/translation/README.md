@@ -107,7 +107,9 @@ exercise can ask students to find an equivalent formula in a different form.
 
 The widget checks after a typing pause; Enter checks immediately. There is
 no separate Check button. A preview below the input shows canonical notation
-or a localized parser error.
+or a localized parser error. An untouched starter that does not parse gets
+no error: it may be prose for the student to rewrite. The first edit brings
+the error back.
 
 Submit waits for a pending check so the answer includes its certificate.
 An edit while waiting cancels that pending submission. Explicit checks show

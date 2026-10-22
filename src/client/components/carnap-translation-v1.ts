@@ -70,6 +70,13 @@ class CarnapTranslation extends CarnapExerciseElement<TranslationStringId> {
   /** The equivalence search now running for the current text, if any. */
   private inFlight: Promise<void> | null = null;
 
+  /**
+   * The input still holds the author's starter, untouched. A starter may be
+   * prose for the student to rewrite, so until the first edit the preview
+   * keeps the parser's complaint to itself: that text is not the student's.
+   */
+  private showingStarter = false;
+
   protected enhance(): void {
     const root = this.shadowRoot;
     const data = this.publicData;
@@ -99,6 +106,8 @@ class CarnapTranslation extends CarnapExerciseElement<TranslationStringId> {
     const prior = this.priorAnswer as { text?: unknown } | null;
     if (typeof prior?.text === "string") {
       input.value = prior.text;
+    } else {
+      this.showingStarter = data.starter !== undefined;
     }
 
     input.disabled = false;
@@ -179,6 +188,7 @@ class CarnapTranslation extends CarnapExerciseElement<TranslationStringId> {
     this.mmb = "";
     this.solutionIndex = null;
     this.inFlight = null;
+    this.showingStarter = false;
     this.dropHold();
     this.updatePreview();
     this.setCheckStatus("");
@@ -217,7 +227,8 @@ class CarnapTranslation extends CarnapExerciseElement<TranslationStringId> {
   /**
    * The live reading under the input. Not gated by `feedback`: everything on
    * this line is a function of the student's own keystrokes — there is no key
-   * to leak and no verdict to withhold.
+   * to leak and no verdict to withhold. An untouched starter is not, so it is
+   * read back when it parses and left unremarked when it does not.
    */
   private updatePreview(): void {
     const preview = this.preview;
@@ -225,7 +236,7 @@ class CarnapTranslation extends CarnapExerciseElement<TranslationStringId> {
       return;
     }
     const parsed = this.parseCurrent();
-    if (parsed === null) {
+    if (parsed === null || (!parsed.ok && this.showingStarter)) {
       preview.textContent = "";
       delete preview.dataset.mood;
       return;

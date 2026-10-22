@@ -760,7 +760,9 @@ Nothing is not bananas.
 ::::
 ```
 
-`starter` prefills the input and may contain incomplete text or prose.
+`starter` prefills the input and may contain incomplete text or prose. The
+preview under the input stays quiet about a starter that does not parse,
+until the student edits it.
 `options` accepts `nocheck` (equivalent to hiding feedback) and `checksyntax`
 (block submission of text that does not parse). Common attributes apply.
 `system` selects a theory block or built-in language; the default
