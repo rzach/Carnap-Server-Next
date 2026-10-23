@@ -1,18 +1,14 @@
 import { type Context, Hono } from "hono";
-import { getCookie } from "hono/cookie";
 
 import type {
   AuthenticatedActor,
   StartedNativeLogin,
 } from "../application/auth";
-import {
-  AuthService,
-  LOGIN_TTL_SECONDS,
-  SESSION_COOKIE_NAME,
-} from "../application/auth";
+import { AuthService, LOGIN_TTL_SECONDS } from "../application/auth";
 import { AppHttpError, badRequest } from "../application/errors";
 import {
   clearLocaleCookie,
+  readSessionCookie,
   setLocaleCookie,
   setProfilePromptDismissedCookie,
 } from "../cookies";
@@ -29,6 +25,7 @@ import { deferred } from "../i18n/deferred";
 import type { Translator } from "../i18n/translator";
 import { loginEmailSenderFromEnv } from "../infrastructure/email/resend";
 import { turnstileForContext } from "../infrastructure/turnstile";
+import { logSignInFailed } from "../request-log";
 import { storesForContext } from "../stores";
 import {
   renderLoginError,
@@ -42,7 +39,12 @@ import {
   renderEmailUndo,
 } from "../web/email-change";
 import { FAVICON_CACHE_CONTROL, FAVICON_SVG } from "../web/favicon";
-import { fieldValue, redirect, safeNext } from "../web/html";
+import {
+  enrollmentTokenOf,
+  fieldValue,
+  redirect,
+  safeNext,
+} from "../web/html";
 import { renderProfile } from "../web/profile";
 import {
   deliverEmailChangeRequest,
@@ -183,6 +185,8 @@ webRoutes.post("/login", async (context) => {
       delivery.delivered ? null : delivery.confirmationUrl,
     );
   } catch (error) {
+    logSignInFailed(context, "request", error, email);
+
     if (error instanceof AppHttpError) {
       if (error.retryAfterSeconds !== undefined) {
         context.header("Retry-After", String(error.retryAfterSeconds));
@@ -224,7 +228,9 @@ webRoutes.get("/login/confirm", async (context) => {
       );
     }
 
-    const confirmed = await authService(context).confirmNativeLogin(token);
+    const confirmed = await authService(context).confirmNativeLogin(token, {
+      enrollmentToken: enrollmentTokenOf(next),
+    });
 
     // An address a recent change moved its account away from opens only that
     // change's undo, which the page behind this link offers.
@@ -239,6 +245,8 @@ webRoutes.get("/login/confirm", async (context) => {
     if (!(error instanceof AppHttpError)) {
       throw error;
     }
+
+    logSignInFailed(context, "confirm", error);
 
     const i18n = context.get("i18n");
 
@@ -541,7 +549,7 @@ async function profileErrorOrThrow(
 }
 
 webRoutes.post("/logout", async (context) => {
-  const sessionToken = getCookie(context, SESSION_COOKIE_NAME);
+  const sessionToken = readSessionCookie(context);
 
   if (sessionToken !== undefined) {
     await authService(context).logout(sessionToken);

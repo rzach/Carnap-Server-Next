@@ -76,6 +76,7 @@ import type {
   SetContentItemTitleInput,
   SetCourseArchivedInput,
   SetGradesVisibleAtInput,
+  SiteSettingsStore,
   UnpublishAssignmentInput,
   UnpublishedAssignment,
   UpdateAssignmentInput,
@@ -142,6 +143,12 @@ import {
   type LtiResourceLink,
   ltiProviderSubject,
 } from "../../domain/lti";
+import {
+  DEFAULT_SITE_SETTINGS,
+  isNativeRegistration,
+  type SetNativeRegistrationInput,
+  type SiteSettings,
+} from "../../domain/site-settings";
 import type {
   EmailChangeToken,
   ExternalIdentity,
@@ -178,6 +185,7 @@ import {
   ltiResourceLinks,
   nativeLoginChallenges,
   platformCapabilityGrants,
+  siteSettings,
   submissions,
   users,
 } from "./schema";
@@ -3027,6 +3035,52 @@ class SqliteAdminAuditStore implements AdminAuditStore {
   }
 }
 
+const NATIVE_REGISTRATION_KEY = "native_registration";
+
+class SqliteSiteSettingsStore implements SiteSettingsStore {
+  constructor(private readonly db: AppDatabase) {}
+
+  async read(): Promise<SiteSettings> {
+    const rows = await this.db.select().from(siteSettings);
+    const stored = rows.find((row) => row.key === NATIVE_REGISTRATION_KEY);
+
+    if (stored === undefined) {
+      return DEFAULT_SITE_SETTINGS;
+    }
+
+    // A value this build does not know is a database written by another
+    // version, not a reason to open registration: refuse loudly instead.
+    if (!isNativeRegistration(stored.value)) {
+      throw new Error(
+        `Unknown native_registration setting: ${JSON.stringify(stored.value)}.`,
+      );
+    }
+
+    return { ...DEFAULT_SITE_SETTINGS, nativeRegistration: stored.value };
+  }
+
+  async setNativeRegistration(
+    input: SetNativeRegistrationInput,
+  ): Promise<void> {
+    await this.db
+      .insert(siteSettings)
+      .values({
+        key: NATIVE_REGISTRATION_KEY,
+        updatedAt: input.updatedAt,
+        updatedById: input.updatedById,
+        value: input.value,
+      })
+      .onConflictDoUpdate({
+        target: siteSettings.key,
+        set: {
+          updatedAt: input.updatedAt,
+          updatedById: input.updatedById,
+          value: input.value,
+        },
+      });
+  }
+}
+
 class SqliteAdminStatsStore implements AdminStatsStore {
   constructor(private readonly db: AppDatabase) {}
 
@@ -3904,6 +3958,7 @@ export function createStores(db: AppDatabase): AppStores {
     lti: new SqliteLtiStore(db),
     platformCapabilities: new SqlitePlatformCapabilityStore(db),
     scores: new SqliteScoreStore(db),
+    siteSettings: new SqliteSiteSettingsStore(db),
     users: new SqliteUserStore(db),
   };
 }

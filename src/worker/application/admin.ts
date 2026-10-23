@@ -8,8 +8,13 @@ import type {
 import type { CourseMembership } from "../domain/courses";
 import type { AppId } from "../domain/ids";
 import { createAppId } from "../domain/ids";
+import {
+  isNativeRegistration,
+  type SiteSettings,
+} from "../domain/site-settings";
 import type { User } from "../domain/users";
 import { deferred } from "../i18n/deferred";
+import { emailDomain } from "../log";
 import { appendAdminAudit, auditMoment } from "./admin-audit";
 import { type AuthenticatedActor, assertEmail, normalizeEmail } from "./auth";
 import { requirePlatformCapability } from "./authorization";
@@ -26,6 +31,7 @@ import {
   forbidden,
 } from "./errors";
 import type { AppStores } from "./stores";
+import { secretsMatch } from "./tokens";
 
 export interface AdminServiceOptions {
   /** Tells an address an administrator moved an account away from. */
@@ -77,6 +83,27 @@ function assertCapability(
   }
 }
 
+/**
+ * Whether this instance can bootstrap a site administrator at all: only with
+ * a non-empty `ADMIN_BOOTSTRAP_TOKEN`. The bootstrap page asks the same
+ * question, so it says so rather than offering a form that must fail.
+ */
+export function bootstrapConfigured(
+  token: string | undefined,
+): token is string {
+  return token !== undefined && token !== "";
+}
+
+function bootstrapNotConfigured(): AppHttpError {
+  return new AppHttpError(
+    403,
+    "bootstrap_not_configured",
+    deferred.i18n.t(
+      "Administrator bootstrap is not configured on this server. Set ADMIN_BOOTSTRAP_TOKEN and restart it.",
+    ),
+  );
+}
+
 function userNotFound(): AppHttpError {
   return new AppHttpError(
     404,
@@ -93,6 +120,12 @@ export class AdminService {
     command: BootstrapAdminCommand = {},
     expectedToken?: string,
   ): Promise<PlatformCapabilityGrant> {
+    // No configured token means no bootstrap at all: an instance that could
+    // be claimed by whoever signs in first is claimed by its first visitor.
+    if (!bootstrapConfigured(expectedToken)) {
+      throw bootstrapNotConfigured();
+    }
+
     const hasAdmin =
       await this.options.stores.platformCapabilities.hasAnyActiveSiteAdmin();
 
@@ -100,10 +133,7 @@ export class AdminService {
       throw forbidden("site_admin_already_bootstrapped");
     }
 
-    if (
-      expectedToken !== undefined &&
-      command.bootstrapToken !== expectedToken
-    ) {
+    if (!(await secretsMatch(command.bootstrapToken ?? "", expectedToken))) {
       throw forbidden("invalid_bootstrap_token");
     }
 
@@ -117,16 +147,59 @@ export class AdminService {
 
   async getDashboard(actor: AuthenticatedActor): Promise<{
     readonly auditEvents: readonly AdminAuditEvent[];
+    readonly settings: SiteSettings;
     readonly stats: AdminGlobalStats;
   }> {
     requirePlatformCapability(actor, ["site_admin", "support_operator"]);
 
-    const [stats, auditEvents] = await Promise.all([
+    const [stats, auditEvents, settings] = await Promise.all([
       this.options.stores.adminStats.getGlobalStats(),
       this.options.stores.adminAudit.listRecent(20),
+      this.options.stores.siteSettings.read(),
     ]);
 
-    return { auditEvents, stats };
+    return { auditEvents, settings, stats };
+  }
+
+  /**
+   * Change who may create an account by email sign-in. Site administrators
+   * only: support operators help people, they do not set the instance's
+   * policy. Setting the current value again is a no-op, not an audit row.
+   */
+  async setNativeRegistration(
+    actor: AuthenticatedActor,
+    value: string,
+  ): Promise<SiteSettings> {
+    requirePlatformCapability(actor, ["site_admin"]);
+
+    if (!isNativeRegistration(value)) {
+      throw badRequest(
+        "invalid_native_registration",
+        deferred.i18n.t("Registration setting is not supported."),
+      );
+    }
+
+    const settings = await this.options.stores.siteSettings.read();
+
+    if (settings.nativeRegistration === value) {
+      return settings;
+    }
+
+    const now = auditMoment(this.options.now);
+
+    await this.options.stores.siteSettings.setNativeRegistration({
+      updatedAt: now.timestamp,
+      updatedById: actor.user.id,
+      value,
+    });
+    await appendAdminAudit(this.options, {
+      action: "admin.change_native_registration",
+      actorUserId: actor.user.id,
+      metadata: { from: settings.nativeRegistration, to: value },
+      timestamp: now.timestamp,
+    });
+
+    return { ...settings, nativeRegistration: value };
   }
 
   async listAuditEvents(
@@ -357,6 +430,10 @@ export class AdminService {
       // Both addresses, because this is the record someone reads when an
       // account turns out to have been handed to the wrong mailbox.
       metadata: { from: user.email, to: email },
+      logMetadata: {
+        fromDomain: emailDomain(user.email) ?? null,
+        toDomain: emailDomain(email) ?? null,
+      },
       targetCourseId: null,
       targetUserId: user.id,
       timestamp: now.timestamp,

@@ -119,7 +119,8 @@ curl -i http://localhost:8787/auth/login/confirm \
   -d '{"loginToken":"alt_..."}'
 ```
 
-The confirm route sets `carnap_session` and `carnap_csrf` cookies. Unsafe
+The confirm route sets `carnap_session` and `carnap_csrf` cookies, named
+`__Host-carnap_session` and `__Host-carnap_csrf` over HTTPS. Unsafe
 session-authenticated requests must send `X-CSRF-Token` with the CSRF token.
 Both cookies are `HttpOnly`. API clients can use `csrfToken` from the login
 confirmation response; page scripts receive it through rendered markup.
@@ -146,9 +147,8 @@ show the newly created browser enrollment URL, and revoke active links.
 
 On a fresh database, first obtain administrator access: start the server with
 `ADMIN_BOOTSTRAP_TOKEN` set to a secret, sign in, and submit it at
-`/admin/bootstrap`. Remove the variable after setup. Configure the token
-before exposing a fresh instance; without it, any signed-in user can
-bootstrap while no active administrator exists.
+`/admin/bootstrap`. Remove the variable after setup. Without a token,
+bootstrap is refused.
 
 To test the student path, use a second browser profile or clear cookies, sign
 in as a different email address, and open the enrollment URL. The student can

@@ -52,6 +52,14 @@ export function cookieHeader(response: Response): string {
     .join("; ");
 }
 
+/**
+ * A plain-http `Cookie` header as an https request carries it: the session and
+ * CSRF cookies under their `__Host-` names (`cookies.ts`).
+ */
+export function secureCookieHeader(header: string): string {
+  return header.replace(/(^|; )(carnap_(?:session|csrf)=)/g, "$1__Host-$2");
+}
+
 /** The session cookie and CSRF token, as a signed-in request carries them. */
 export function authHeaders(login: LoginResult): Record<string, string> {
   return { Cookie: login.cookieHeader, "X-CSRF-Token": login.csrfToken };

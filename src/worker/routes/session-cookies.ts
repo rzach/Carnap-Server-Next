@@ -1,12 +1,12 @@
 import type { Context } from "hono";
 import { deleteCookie, setCookie } from "hono/cookie";
 
+import { SESSION_TTL_SECONDS } from "../application/auth";
 import {
+  authCookieOptions,
   CSRF_COOKIE_NAME,
   SESSION_COOKIE_NAME,
-  SESSION_TTL_SECONDS,
-} from "../application/auth";
-import { cookieSecure } from "../cookies";
+} from "../cookies";
 import type { AppBindings } from "../http";
 
 export interface SessionCookieOptions {
@@ -31,15 +31,16 @@ export function setSessionCookies(
   csrfToken: string,
   options: SessionCookieOptions = {},
 ): void {
-  const secure = cookieSecure(context);
-  const sameSite = options.sameSite === "None" && secure ? "None" : "Lax";
+  const cookieOptions = authCookieOptions(context);
+  const sameSite =
+    options.sameSite === "None" && cookieOptions.secure ? "None" : "Lax";
 
   setCookie(context, SESSION_COOKIE_NAME, sessionToken, {
     httpOnly: true,
     maxAge: SESSION_TTL_SECONDS,
     path: "/",
     sameSite,
-    secure,
+    ...cookieOptions,
   });
   // `httpOnly` even though this is the CSRF half, because nothing client-side
   // reads it: the token reaches a form as a server-rendered hidden input
@@ -54,11 +55,13 @@ export function setSessionCookies(
     maxAge: SESSION_TTL_SECONDS,
     path: "/",
     sameSite,
-    secure,
+    ...cookieOptions,
   });
 }
 
 export function clearSessionCookies(context: Context<AppBindings>): void {
-  deleteCookie(context, SESSION_COOKIE_NAME, { path: "/" });
-  deleteCookie(context, CSRF_COOKIE_NAME, { path: "/" });
+  const options = { path: "/", ...authCookieOptions(context) };
+
+  deleteCookie(context, SESSION_COOKIE_NAME, options);
+  deleteCookie(context, CSRF_COOKIE_NAME, options);
 }

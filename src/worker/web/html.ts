@@ -51,6 +51,39 @@ export function safeNext(value: string | null): string | null {
   return value;
 }
 
+/** Where an enrollment link points; `enrollmentTokenOf` reads one back. */
+export function enrollmentPath(token: string): string {
+  return `/enrollments/${encodeURIComponent(token)}`;
+}
+
+/**
+ * The enrollment token in a path `enrollmentPath` made, or null for any other
+ * path. A sign-in that began at an enrollment link carries that path as its
+ * `next`, which is how the confirmation learns which link the reader followed.
+ */
+export function enrollmentTokenOf(path: string | null): string | null {
+  if (path === null) {
+    return null;
+  }
+
+  const segments = new URL(path, "http://path.invalid").pathname.split("/");
+
+  if (
+    segments.length !== 3 ||
+    segments[1] !== "enrollments" ||
+    segments[2] === undefined ||
+    segments[2] === ""
+  ) {
+    return null;
+  }
+
+  try {
+    return decodeURIComponent(segments[2]);
+  } catch {
+    return null;
+  }
+}
+
 export function fieldValue(value: unknown): string {
   return typeof value === "string" ? value : "";
 }

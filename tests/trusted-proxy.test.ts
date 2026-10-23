@@ -52,10 +52,11 @@ async function startLogin(env: Env, headers: HeadersInit): Promise<string> {
   return loginLink(await response.text());
 }
 
+/** The session's `Set-Cookie`, under either name (`__Host-` on https). */
 function sessionCookie(response: Response): string {
   const cookie = response.headers
     .getSetCookie()
-    .find((entry) => entry.startsWith("carnap_session="));
+    .find((entry) => /^(__Host-)?carnap_session=/.test(entry));
 
   if (cookie === undefined) {
     throw new Error("Missing session cookie.");
@@ -129,6 +130,7 @@ describe("behind a trusted proxy", () => {
       );
 
       expect(confirm.status).toBe(303);
+      expect(sessionCookie(confirm)).toStartWith("__Host-carnap_session=");
       expect(sessionCookie(confirm)).toContain("Secure");
     });
   });
@@ -147,6 +149,7 @@ describe("behind a trusted proxy", () => {
       );
 
       expect(confirm.status).toBe(303);
+      expect(sessionCookie(confirm)).toStartWith("carnap_session=");
       expect(sessionCookie(confirm)).not.toContain("Secure");
     });
   });

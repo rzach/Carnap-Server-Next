@@ -835,6 +835,16 @@ export const ltiGradeJobs = sqliteTable(
   ],
 );
 
+/** Runtime settings, one row per key; see `0036_site_settings.sql`. */
+export const siteSettings = sqliteTable("site_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: text("updated_at").notNull(),
+  updatedById: text("updated_by_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+});
+
 export const adminAuditEvents = sqliteTable(
   "admin_audit_events",
   {

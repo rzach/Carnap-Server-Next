@@ -9,6 +9,7 @@ import type { Env } from "./env";
 import type { AppBindings } from "./http";
 import { AgsClient } from "./infrastructure/lti/ags-client";
 import { loadLtiToolKey } from "./infrastructure/lti/tool-key";
+import { errorMessage, logEvent } from "./log";
 import { storesForContext } from "./stores";
 
 const IDLE_SUMMARY: GradePassbackRunSummary = {
@@ -38,7 +39,7 @@ export async function runGradePassback(
   // message — the sender-null path below would misreport it as unconfigured
   // while jobs silently sat pending.
   if (toolKey === null) {
-    console.error("lti_tool_key_invalid", { requestId });
+    logEvent("error", "lti_tool_key_invalid", { requestId });
   }
 
   const sender = toolKey === null ? null : new AgsClient({ toolKey });
@@ -71,8 +72,8 @@ export function kickGradePassback(context: Context<AppBindings>): void {
     context.executionCtx.waitUntil(
       runGradePassback(context.env, stores, requestId).catch(
         (error: unknown) => {
-          console.error("lti_grade_passback_kick_failed", {
-            error: error instanceof Error ? error.message : String(error),
+          logEvent("error", "lti_grade_passback_kick_failed", {
+            error: errorMessage(error),
             requestId,
           });
         },

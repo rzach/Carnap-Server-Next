@@ -33,6 +33,7 @@ import {
   type Translator,
   translateMessage,
 } from "../i18n/translator";
+import { appendAdminAudit } from "./admin-audit";
 import type { AuthenticatedActor, AuthService, MintedSession } from "./auth";
 import { requireInstructor } from "./authorization";
 import { contentArtifactFromRevision } from "./content/artifact";
@@ -1804,20 +1805,24 @@ export class LtiService {
     // Course creation is otherwise capability-gated; here it rides on the
     // platform's say-so that the person is an instructor, so leave admins a
     // trail of what each registered LMS created.
-    await this.options.stores.adminAudit.append({
-      action: "lti.course_created",
-      actorUserId: user.id,
-      createdAt: now,
-      id: createAppId(nowDate.getTime()),
-      metadata: {
-        contextId: launch.context.id,
-        deploymentId: deploymentRowId,
-        title: course.title,
+    await appendAdminAudit(
+      {
+        requestId: this.options.requestId ?? "",
+        stores: this.options.stores,
       },
-      requestId: this.options.requestId ?? "",
-      targetCourseId: course.id,
-      targetUserId: user.id,
-    });
+      {
+        action: "lti.course_created",
+        actorUserId: user.id,
+        metadata: {
+          contextId: launch.context.id,
+          deploymentId: deploymentRowId,
+          title: course.title,
+        },
+        targetCourseId: course.id,
+        targetUserId: user.id,
+        timestamp: now,
+      },
+    );
 
     return course.id;
   }

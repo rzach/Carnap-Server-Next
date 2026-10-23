@@ -1,5 +1,39 @@
+import { expect } from "bun:test";
+
 import type { PlatformCapability } from "../../src/worker/domain/admin";
 import type { Env } from "../../src/worker/env";
+import { appRequest, createTestApp } from "./app";
+import { ACCEPT_JSON, jsonRequest, type LoginResult } from "./http";
+
+/** The bootstrap secret the tests configure; bootstrap refuses without one. */
+export const TEST_BOOTSTRAP_TOKEN = "test-bootstrap-token";
+
+/** Post to `/admin/bootstrap` as `login`, on an env with the token set. */
+export function bootstrapRequest(
+  env: Env,
+  login: LoginResult,
+  body: unknown,
+  overrides: Partial<Env> = { ADMIN_BOOTSTRAP_TOKEN: TEST_BOOTSTRAP_TOKEN },
+): Promise<Response> {
+  return appRequest(
+    createTestApp(),
+    "/admin/bootstrap",
+    jsonRequest(body, login, ACCEPT_JSON),
+    { ...env, ...overrides },
+  );
+}
+
+/** Make `admin` the site administrator, the way an operator does. */
+export async function bootstrapTestAdmin(
+  env: Env,
+  admin: LoginResult,
+): Promise<void> {
+  const response = await bootstrapRequest(env, admin, {
+    bootstrapToken: TEST_BOOTSTRAP_TOKEN,
+  });
+
+  expect(response.status).toBe(201);
+}
 
 export async function grantTestCapability(
   env: Env,

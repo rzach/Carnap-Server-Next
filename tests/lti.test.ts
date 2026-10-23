@@ -67,11 +67,14 @@ async function withLtiApp(
   await run(app, env, storage.stores, fixture);
 }
 
-/** The `Set-Cookie` header carrying the session, attributes and all. */
+/**
+ * The `Set-Cookie` header carrying the session, attributes and all, under
+ * either name: it is `__Host-carnap_session` over https.
+ */
 function sessionCookieAttributes(response: Response): string {
   return (
     setCookieHeaders(response).find((header) =>
-      header.startsWith("carnap_session="),
+      /^(__Host-)?carnap_session=/.test(header),
     ) ?? ""
   );
 }
@@ -249,12 +252,20 @@ describe("LTI 1.3 core launches", () => {
       const overHttp = await instructorLaunch(app, env);
 
       expect(overHttps.response.status).toBe(303);
+      // `__Host-` and `SameSite=None` go together: the prefix asks only for
+      // `Secure`, `Path=/` and no `Domain`, all of which `None` already has.
+      expect(sessionCookieAttributes(overHttps.response)).toStartWith(
+        "__Host-carnap_session=",
+      );
       expect(sessionCookieAttributes(overHttps.response)).toContain(
         "SameSite=None",
       );
       expect(sessionCookieAttributes(overHttps.response)).toContain("Secure");
       // Plain http cannot have it: browsers reject `None` without `Secure`,
       // and `Secure` over http is a cookie thrown away.
+      expect(sessionCookieAttributes(overHttp.response)).toStartWith(
+        "carnap_session=",
+      );
       expect(sessionCookieAttributes(overHttp.response)).toContain(
         "SameSite=Lax",
       );

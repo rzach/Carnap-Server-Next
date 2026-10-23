@@ -18,6 +18,7 @@ import {
   MEMBERSHIP_STATUSES,
   type MembershipStatus,
 } from "../domain/courses";
+import type { NativeRegistration } from "../domain/site-settings";
 import type { ExternalIdentityProvider } from "../domain/users";
 import type { Translator } from "../i18n/translator";
 
@@ -314,6 +315,8 @@ export function auditActionLabel(
   switch (action) {
     case "admin.bootstrap_site_admin":
       return i18n.t("First site administrator created");
+    case "admin.change_native_registration":
+      return i18n.t("Account registration changed");
     case "admin.change_course_membership":
       return i18n.t("Course membership changed");
     case "admin.grant_platform_capability":
@@ -336,8 +339,52 @@ export function auditActionLabel(
       return i18n.t("LTI deployment added");
     case "admin.lti_deployment_removed":
       return i18n.t("LTI deployment removed");
+    case "course.membership_role_changed":
+      return i18n.t("Course role changed");
+    case "course.membership_status_changed":
+      return i18n.t("Course membership status changed");
+    case "course.staff_added":
+      return i18n.t("Course staff added");
+    case "lti.course_created":
+      return i18n.t("Course created from the LMS");
     default:
       return null;
+  }
+}
+
+/** Who may create an account by email sign-in, as the admin page names it. */
+export function nativeRegistrationLabel(
+  i18n: Translator,
+  mode: NativeRegistration,
+): string {
+  switch (mode) {
+    case "public":
+      return i18n.t("Anyone with an email address");
+    case "link_only":
+      return i18n.t("Only through a course enrollment link");
+    case "lms_only":
+      return i18n.t("Only through the LMS");
+  }
+}
+
+/** What each registration setting means, for the note under its select. */
+export function nativeRegistrationHint(
+  i18n: Translator,
+  mode: NativeRegistration,
+): string {
+  switch (mode) {
+    case "public":
+      return i18n.t(
+        "The first email sign-in from a new address creates an account.",
+      );
+    case "link_only":
+      return i18n.t(
+        "A new address gets an account only when its owner signs in from a valid enrollment link. Anyone holding a link can create an account with it.",
+      );
+    case "lms_only":
+      return i18n.t(
+        "Email sign-in never creates an account. Accounts are created when someone opens Carnap from an LMS course.",
+      );
   }
 }
 

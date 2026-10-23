@@ -1,7 +1,12 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
 
 import type { Env } from "../src/worker/env";
-import { grantTestCourseCreator } from "./helpers/admin";
+import {
+  bootstrapRequest,
+  bootstrapTestAdmin,
+  grantTestCourseCreator,
+  TEST_BOOTSTRAP_TOKEN,
+} from "./helpers/admin";
 import { appRequest, createTestApp } from "./helpers/app";
 import {
   ACCEPT_JSON,
@@ -39,17 +44,6 @@ interface ErrorResponse {
 /** Signed in and asking for JSON: the admin routes answer HTML otherwise. */
 function adminHeaders(login: LoginResult): Record<string, string> {
   return { ...authHeaders(login), ...ACCEPT_JSON };
-}
-
-async function bootstrapAdmin(env: Env, admin: LoginResult): Promise<void> {
-  const response = await appRequest(
-    createTestApp(),
-    "/admin/bootstrap",
-    jsonRequest({}, admin, ACCEPT_JSON),
-    env,
-  );
-
-  expect(response.status).toBe(201);
 }
 
 async function grantCapability(
@@ -102,12 +96,71 @@ describe("platform administration", () => {
     });
   });
 
+  test("bootstrap refuses when no token is configured", async () => {
+    await withStorage(async (_storage, env) => {
+      const user = await login(env, "first@example.test");
+
+      for (const overrides of [{}, { ADMIN_BOOTSTRAP_TOKEN: "" }]) {
+        const response = await bootstrapRequest(
+          env,
+          user,
+          { bootstrapToken: "" },
+          overrides,
+        );
+        const body = (await response.json()) as ErrorResponse;
+
+        expect(response.status).toBe(403);
+        expect(body.error.code).toBe("bootstrap_not_configured");
+      }
+
+      const page = await appRequest(
+        createTestApp(),
+        "/admin/bootstrap",
+        { headers: authHeaders(user) },
+        env,
+      );
+      const html = await page.text();
+
+      expect(page.status).toBe(200);
+      expect(html).toContain("not configured on this server");
+      expect(html).not.toContain('name="bootstrapToken"');
+    });
+  });
+
+  test("bootstrap needs the token, and only works once", async () => {
+    await withStorage(async (_storage, env) => {
+      const first = await login(env, "first@example.test");
+      const second = await login(env, "second@example.test");
+      const wrong = await bootstrapRequest(env, first, {
+        bootstrapToken: "not-the-token",
+      });
+      const missing = await bootstrapRequest(env, first, {});
+
+      expect(wrong.status).toBe(403);
+      expect(((await wrong.json()) as ErrorResponse).error.code).toBe(
+        "invalid_bootstrap_token",
+      );
+      expect(missing.status).toBe(403);
+
+      await bootstrapTestAdmin(env, first);
+
+      const again = await bootstrapRequest(env, second, {
+        bootstrapToken: TEST_BOOTSTRAP_TOKEN,
+      });
+
+      expect(again.status).toBe(403);
+      expect(((await again.json()) as ErrorResponse).error.code).toBe(
+        "site_admin_already_bootstrapped",
+      );
+    });
+  });
+
   test("a site admin can grant and revoke course creator", async () => {
     await withStorage(async (_storage, env) => {
       const admin = await login(env, "admin@example.test");
       const target = await login(env, "teacher@example.test");
 
-      await bootstrapAdmin(env, admin);
+      await bootstrapTestAdmin(env, admin);
 
       const granted = await grantCapability(
         env,
@@ -147,7 +200,7 @@ describe("platform administration", () => {
       const support = await login(env, "support@example.test");
       const target = await login(env, "target@example.test");
 
-      await bootstrapAdmin(env, admin);
+      await bootstrapTestAdmin(env, admin);
       await grantCapability(env, admin, support.actorId, "support_operator");
 
       const denied = await appRequest(
@@ -180,7 +233,7 @@ describe("platform administration", () => {
       const admin = await login(env, "admin@example.test");
       const target = await login(env, "blocked@example.test");
 
-      await bootstrapAdmin(env, admin);
+      await bootstrapTestAdmin(env, admin);
 
       const suspendResponse = await appRequest(
         createTestApp(),
@@ -244,7 +297,7 @@ describe("platform administration", () => {
       const user = await login(env, "student@example.test");
       const instructor = await login(env, "instructor@example.test");
 
-      await bootstrapAdmin(env, admin);
+      await bootstrapTestAdmin(env, admin);
       await grantTestCourseCreator(env, instructor.actorId);
 
       const courseResponse = await appRequest(

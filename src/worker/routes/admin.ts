@@ -5,7 +5,8 @@ import {
   type PlatformCapabilityCommand,
   type SupportMembershipCommand,
 } from "../application/admin";
-import { badRequest } from "../application/errors";
+import { hasPlatformCapability } from "../application/authorization";
+import { AppHttpError, badRequest } from "../application/errors";
 import { resolveUsers } from "../application/users";
 import type {
   AdminAuditEvent,
@@ -15,6 +16,7 @@ import type {
 import type { CourseMembership } from "../domain/courses";
 import type { User } from "../domain/users";
 import { type AppBindings, requireAuthenticated } from "../http";
+import { logRequestEvent } from "../request-log";
 import { storesForContext } from "../stores";
 import {
   type AuditDirectory,
@@ -239,8 +241,10 @@ async function dashboardPage(
 
   return renderAdminDashboard(context, {
     auditEvents: dashboard.auditEvents,
+    canChangeSettings: hasPlatformCapability(actor, "site_admin"),
     directory: await auditDirectory(context, dashboard.auditEvents),
     saved: url.searchParams.has("saved"),
+    settings: dashboard.settings,
     stats: dashboard.stats,
   });
 }
@@ -341,6 +345,13 @@ adminRoutes.post("/bootstrap", async (context) => {
 
     return context.json({ capability: publicCapability(grant) }, 201);
   } catch (error) {
+    if (error instanceof AppHttpError) {
+      logRequestEvent(context, "warn", "bootstrap_refused", {
+        reason: error.code,
+        userId: actor.user.id,
+      });
+    }
+
     const i18n = context.get("i18n");
 
     return formErrorOrThrow(
@@ -450,6 +461,35 @@ adminRoutes.post("/users/:userId/capabilities/revoke", async (context) => {
       error,
       ADMIN_CHROME,
       i18n.t("Capability not revoked"),
+    );
+  }
+});
+
+adminRoutes.post("/settings/registration", async (context) => {
+  const actor = requireAuthenticated(context);
+
+  try {
+    const mode = isFormSubmission(context)
+      ? fieldValue((await context.req.raw.formData()).get("mode"))
+      : (await readJsonObject(context)).mode;
+    const settings = await adminService(context).setNativeRegistration(
+      actor,
+      typeof mode === "string" ? mode : "",
+    );
+
+    if (isFormSubmission(context)) {
+      return redirect("/admin?saved=1");
+    }
+
+    return context.json({ settings });
+  } catch (error) {
+    const i18n = context.get("i18n");
+
+    return formErrorOrThrow(
+      context,
+      error,
+      ADMIN_CHROME,
+      i18n.t("Registration setting not changed"),
     );
   }
 });

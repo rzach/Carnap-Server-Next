@@ -129,6 +129,76 @@ describe("native authentication", () => {
     });
   });
 
+  // `__Host-` is what stops a sibling site under a shared parent domain, or a
+  // plain-http response, planting a session cookie the browser would send us:
+  // the browser refuses a `__Host-` cookie with a `Domain` or without `Secure`.
+  test("over https the cookies carry the __Host- prefix, and a bare one is not read", async () => {
+    await withStorage(async (_storage, env) => {
+      const app = createTestApp();
+      const origin = "https://carnap.test";
+      const start = await appRequest(
+        app,
+        `${origin}/auth/login/start`,
+        jsonRequest({ email: "ada@example.test" }),
+        env,
+      );
+      const { login: started } = (await start.json()) as StartLoginResponse;
+      const confirm = await appRequest(
+        app,
+        `${origin}/auth/login/confirm`,
+        jsonRequest({ loginToken: started.loginToken }),
+        env,
+      );
+      const { csrfToken } = (await confirm.json()) as ConfirmLoginResponse;
+      const session = findSetCookie(confirm, "__Host-carnap_session");
+      const csrf = findSetCookie(confirm, "__Host-carnap_csrf");
+
+      for (const cookie of [session, csrf]) {
+        expect(cookie).toContain("Secure");
+        expect(cookie).toContain("Path=/");
+        expect(cookie).not.toContain("Domain");
+      }
+
+      const sessionToken = session.slice(
+        "__Host-carnap_session=".length,
+        session.indexOf(";"),
+      );
+      const bare = await appRequest(
+        app,
+        `${origin}/auth/me`,
+        { headers: { Cookie: `carnap_session=${sessionToken}` } },
+        env,
+      );
+      const prefixed = await appRequest(
+        app,
+        `${origin}/auth/me`,
+        { headers: { Cookie: cookieHeader(confirm) } },
+        env,
+      );
+
+      expect(bare.status).toBe(401);
+      expect(prefixed.status).toBe(200);
+
+      const logout = await appRequest(
+        app,
+        `${origin}/auth/logout`,
+        {
+          headers: {
+            Cookie: cookieHeader(confirm),
+            "X-CSRF-Token": csrfToken,
+          },
+          method: "POST",
+        },
+        env,
+      );
+      const cleared = findSetCookie(logout, "__Host-carnap_session");
+
+      expect(logout.status).toBe(204);
+      expect(cleared).toContain("Max-Age=0");
+      expect(cleared).toContain("Secure");
+    });
+  });
+
   test("a logged-in request resolves the current actor", async () => {
     await withStorage(async (_storage, env) => {
       const result = await login(env);

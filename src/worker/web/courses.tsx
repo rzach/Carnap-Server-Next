@@ -46,6 +46,7 @@ import {
   Time,
   TimestampInput,
 } from "./components";
+import { enrollmentPath } from "./html";
 import {
   AccessibilityIcon,
   CopyIcon,
@@ -1719,7 +1720,7 @@ export function renderEnrollmentPage(
       <p>
         {i18n.t("You are about to join a course with an enrollment link.")}
       </p>
-      <form action={`/enrollments/${token}`} method="post">
+      <form action={enrollmentPath(token)} method="post">
         <CsrfInput context={context} />
         <button type="submit">{i18n.t("Join course")}</button>
       </form>

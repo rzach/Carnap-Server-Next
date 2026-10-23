@@ -93,7 +93,7 @@ export class LocalClient {
     );
     this.absorb(confirm);
 
-    if (!this.jar.has("carnap_session")) {
+    if (this.authCookie("carnap_session") === undefined) {
       throw new Error(
         `Login did not set a session cookie (status ${confirm.status}).`,
       );
@@ -144,7 +144,7 @@ export class LocalClient {
         Accept: "application/json",
         "Content-Type": "application/json",
         Cookie: this.cookieHeader(),
-        "X-CSRF-Token": this.jar.get("carnap_csrf") ?? "",
+        "X-CSRF-Token": this.authCookie("carnap_csrf") ?? "",
       },
       method: "POST",
       redirect: "manual",
@@ -191,6 +191,11 @@ export class LocalClient {
         this.jar.set(pair.slice(0, eq).trim(), pair.slice(eq + 1).trim());
       }
     }
+  }
+
+  /** A session or CSRF cookie, which over https carries `__Host-`. */
+  private authCookie(name: string): string | undefined {
+    return this.jar.get(`__Host-${name}`) ?? this.jar.get(name);
   }
 
   private cookieHeader(): string {

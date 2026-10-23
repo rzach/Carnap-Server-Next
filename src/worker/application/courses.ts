@@ -10,8 +10,15 @@ import {
 } from "../domain/courses";
 import type { AppId } from "../domain/ids";
 import { createAppId } from "../domain/ids";
-import { addSeconds, isTimestamp, timestampNow } from "../domain/time";
+import type { JsonValue } from "../domain/json";
+import {
+  addSeconds,
+  isTimestamp,
+  type Timestamp,
+  timestampNow,
+} from "../domain/time";
 import { deferred } from "../i18n/deferred";
+import { appendAdminAudit, auditMoment } from "./admin-audit";
 import type { AuthenticatedActor } from "./auth";
 import {
   requireCourseRole,
@@ -108,6 +115,8 @@ export interface ClonedCourseResult {
 export interface CourseServiceOptions {
   readonly stores: AppStores;
   readonly now?: () => Date;
+  /** Names the request in the audit rows staff changes leave. */
+  readonly requestId: string;
 }
 
 function normalizeTitle(title: string): string {
@@ -519,11 +528,12 @@ export class CourseService {
       );
     }
 
+    const now = auditMoment(this.options.now);
     const updated = await this.options.stores.courses.updateMembershipStatus({
       courseId,
       membershipId,
       status: command.status,
-      updatedAt: timestampNow(this.options.now?.() ?? new Date()),
+      updatedAt: now.timestamp,
     });
 
     if (updated === null) {
@@ -532,6 +542,17 @@ export class CourseService {
         "course_membership_not_found",
         deferred.i18n.t("The course membership was not found."),
       );
+    }
+
+    if (existing.status !== updated.status) {
+      await this.auditMembership(actor, updated, now.timestamp, {
+        action: "course.membership_status_changed",
+        metadata: {
+          from: existing.status,
+          role: updated.role,
+          to: updated.status,
+        },
+      });
     }
 
     return updated;
@@ -579,11 +600,12 @@ export class CourseService {
       }
     }
 
+    const now = auditMoment(this.options.now);
     const updated = await this.options.stores.courses.updateMembershipRole({
       courseId,
       membershipId,
       role: command.role,
-      updatedAt: timestampNow(this.options.now?.() ?? new Date()),
+      updatedAt: now.timestamp,
     });
 
     if (updated === null) {
@@ -592,6 +614,13 @@ export class CourseService {
         "course_membership_not_found",
         deferred.i18n.t("The course membership was not found."),
       );
+    }
+
+    if (existing.role !== updated.role) {
+      await this.auditMembership(actor, updated, now.timestamp, {
+        action: "course.membership_role_changed",
+        metadata: { from: existing.role, to: updated.role },
+      });
     }
 
     return updated;
@@ -680,16 +709,42 @@ export class CourseService {
       });
     }
 
-    const nowDate = this.options.now?.() ?? new Date();
-    const now = timestampNow(nowDate);
-
-    return this.options.stores.courses.addMembership({
+    const now = auditMoment(this.options.now);
+    const membership = await this.options.stores.courses.addMembership({
       courseId,
-      createdAt: now,
-      id: createAppId(nowDate.getTime()),
+      createdAt: now.timestamp,
+      id: createAppId(now.date.getTime()),
       role,
       status: "active",
       userId,
+    });
+
+    await this.auditMembership(actor, membership, now.timestamp, {
+      action: "course.staff_added",
+      metadata: { role },
+    });
+
+    return membership;
+  }
+
+  /**
+   * An audit row for a change to who staffs a course or how, which is a
+   * change of privilege inside it: the admin audit log shows it beside the
+   * platform-level grants, and it is written to the log like them.
+   */
+  private async auditMembership(
+    actor: AuthenticatedActor,
+    membership: CourseMembership,
+    timestamp: Timestamp,
+    event: { readonly action: string; readonly metadata: JsonValue },
+  ): Promise<void> {
+    await appendAdminAudit(this.options, {
+      action: event.action,
+      actorUserId: actor.user.id,
+      metadata: event.metadata,
+      targetCourseId: membership.courseId,
+      targetUserId: membership.userId,
+      timestamp,
     });
   }
 

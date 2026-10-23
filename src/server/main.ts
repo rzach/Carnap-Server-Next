@@ -12,6 +12,7 @@ import {
   openLibSqlStorage,
 } from "../worker/infrastructure/database/libsql";
 import { applyPendingMigrations } from "../worker/infrastructure/database/migrate";
+import { errorMessage, logEvent } from "../worker/log";
 import { NOSNIFF_HEADER } from "../worker/middleware/security-headers";
 import { runGradePassback } from "../worker/passback";
 import { FONT_CACHE_CONTROL, FONT_ROUTE_PREFIX } from "../worker/web/fonts";
@@ -98,17 +99,18 @@ const storage = await openLibSqlStorage(
 const applied = await applyPendingMigrations(storage.db);
 
 if (applied.length > 0) {
-  console.log(`migrations applied: ${applied.join(", ")}`);
+  logEvent("info", "migrations_applied", { migrations: applied });
 }
 
 if (env.CARNAP_ENV !== "local" && env.RESEND_API_KEY === undefined) {
   // Login delivery fails closed outside `local`, and it fails at the moment
   // someone tries to sign in rather than at boot — so say it now, while there
   // is still an operator looking.
-  console.warn(
-    "RESEND_API_KEY is not set: nobody will be able to sign in. " +
+  logEvent("warn", "login_email_not_configured", {
+    message:
+      "RESEND_API_KEY is not set: nobody will be able to sign in. " +
       "Set it and AUTH_LOGIN_EMAIL_FROM, or run with CARNAP_ENV=local.",
-  );
+  });
 }
 
 /**
@@ -134,8 +136,8 @@ const executionCtx = {
 
     void promise
       .catch((error: unknown) => {
-        console.error("background_task_failed", {
-          error: error instanceof Error ? error.message : String(error),
+        logEvent("error", "background_task_failed", {
+          error: errorMessage(error),
         });
       })
       .finally(() => {
@@ -202,8 +204,8 @@ async function sweepGradePassback(stores: AppStores): Promise<void> {
   try {
     await runGradePassback(env, stores, `sweep-${Date.now()}`);
   } catch (error: unknown) {
-    console.error("lti_grade_passback_sweep_failed", {
-      error: error instanceof Error ? error.message : String(error),
+    logEvent("error", "lti_grade_passback_sweep_failed", {
+      error: errorMessage(error),
     });
   } finally {
     sweeping = false;
@@ -219,13 +221,13 @@ const server = Bun.serve({
   port,
 });
 
-console.log(
-  `carnap listening on http://localhost:${server.port} ` +
-    `(${env.CARNAP_ENV}, ${databaseUrl})`,
-);
+logEvent("info", "server_started", {
+  environment: env.CARNAP_ENV,
+  port: server.port ?? port,
+});
 
 async function shutdown(signal: string): Promise<void> {
-  console.log(`${signal}: shutting down`);
+  logEvent("info", "server_stopping", { signal });
 
   clearInterval(sweep);
   await server.stop();

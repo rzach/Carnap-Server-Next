@@ -609,7 +609,13 @@ export async function collectFixtures(
 ): Promise<Fixture[]> {
   const headers = options.headers ?? {};
   const storage = await createTestStorage();
-  const env: Env = { CARNAP_ENV: "local", DB: storage.db };
+  // The bootstrap token is set so the bootstrap fixture renders its form,
+  // not the "not configured" paragraph.
+  const env: Env = {
+    ADMIN_BOOTSTRAP_TOKEN: "a11y-bootstrap-token",
+    CARNAP_ENV: "local",
+    DB: storage.db,
+  };
   await assertEveryKind();
   const instructor = await login(env, "a11y-instructor@example.test");
   const student = await login(env, "a11y-student@example.test");

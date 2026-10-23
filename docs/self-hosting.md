@@ -152,11 +152,37 @@ administrative access:
 3. Open `/admin/bootstrap` and submit the token.
 4. Remove the variable from the deployment and restart.
 
-This grants `site_admin`. The bootstrap service refuses further grants while
-any active site administrator exists. Set the token before exposing a fresh
-instance: if no token is configured and no administrator exists, any signed-in
-user can bootstrap themselves. Remove the secret after setup and use the
-administration interface for later capability grants.
+This grants `site_admin` and records `admin.bootstrap_site_admin` in the
+audit log. Bootstrap is refused while no token is configured (an empty value
+counts as none), and refused again once any active site administrator exists,
+whatever the token. Remove the secret after setup and use the administration
+interface for later capability grants.
+
+## Account registration
+
+The admin page's **Account registration** setting decides who can create an
+account by signing in with an email link. Only a site administrator can change
+it, and each change is recorded in the audit log as
+`admin.change_native_registration`.
+
+- **Anyone with an email address** (the default): the first email sign-in from
+  a new address creates its account.
+- **Only through a course enrollment link**: a new address gets an account only
+  when its owner signs in from a valid enrollment link. Anyone holding a link
+  can create an account with it, so revoke a link that has been shared beyond
+  its course.
+- **Only through the LMS**: email sign-in never creates an account. Accounts
+  are created when someone opens Carnap from an LMS course.
+
+Under every setting, an existing account, including one an LMS launch created,
+can still sign in by email, and LMS launches still create accounts. The login
+form answers every address in the same way. A refused sign-in is reported only
+after the emailed link is opened, so the form cannot be used to find out which
+addresses have accounts.
+
+The default is open because the first administrator signs in by email before
+anyone can invite them. Change the setting after
+[becoming the site administrator](#first-run-becoming-the-site-administrator).
 
 ## Configuration
 
@@ -171,7 +197,8 @@ variable to disable it; an empty value is not always equivalent to absence.
 - `CARNAP_DATABASE_URL`: defaults to `file:./data/carnap.db`. Accepts a local
   file URL or a remote URL supported by libsql.
 - `CARNAP_DATABASE_AUTH_TOKEN`: authentication for a remote libsql database.
-- `ADMIN_BOOTSTRAP_TOKEN`: administrator setup secret; remove after use.
+- `ADMIN_BOOTSTRAP_TOKEN`: administrator setup secret; required to bootstrap
+  the first site administrator, and to be removed after use.
 - `CARNAP_TRUST_PROXY`: set to `1` when a trusted reverse proxy supplies the
   public scheme and host. See [Reverse proxy setup](#behind-a-reverse-proxy).
 
@@ -356,6 +383,14 @@ the pod instead of 8787 on the container.
 
 Cookie `Secure` follows the resolved request scheme, not `CARNAP_ENV`.
 HTTP can support ordinary sign-in but does not protect sessions in transit.
+
+Over HTTPS the session and CSRF cookies are named `__Host-carnap_session` and
+`__Host-carnap_csrf`. Browsers accept a `__Host-` cookie only from this exact
+host, with `Secure`, `Path=/` and no `Domain`, so another site under the same
+parent domain cannot plant a session cookie on Carnap's host. Over plain HTTP
+the cookies keep the bare names `carnap_session` and `carnap_csrf`. Both
+cookies are `HttpOnly` and last 14 days; the database stores only hashes of
+the session and CSRF tokens.
 Embedded LTI also needs an HTTPS `SameSite=None` session cookie; a launch in
 a separate window does not have the same cross-site-cookie requirement.
 
@@ -372,6 +407,55 @@ the rest of your domain.
 `frame-ancestors` policy permits its own pages to frame content, and permits
 the launching LMS for LTI-created sessions. `X-Frame-Options: SAMEORIGIN`
 cannot express that LMS exception and will break embedded launches.
+
+## Logging
+
+The application writes one JSON object per line: errors to stderr, everything
+else to stdout. Every line has `time` (UTC, ISO 8601), `level` (`info`,
+`warn` or `error`) and `event`, plus fields that depend on the event. Lines
+carry request IDs, user IDs and, for sign-ins, an address's domain. They never
+carry tokens, keys, JWTs or whole email addresses.
+
+```json
+{"time":"2026-10-22T14:03:11.204Z","level":"warn","event":"sign_in_failed","ip":"203.0.113.7","requestId":"0b5c…","reason":"invalid_login_token","stage":"confirm"}
+```
+
+`ip` is the address the request reports: `CF-Connecting-IP`, or else the first
+`X-Forwarded-For` entry. Off Cloudflare, without a proxy that sets those
+headers, treat it as client-supplied.
+
+### Security and audit events
+
+| Event | Level | Written when | Fields |
+| --- | --- | --- | --- |
+| `audit` | info | Any audited action: platform capability grants and revocations, the first administrator, account suspension and email changes, admin course-membership changes, the registration setting, LTI platform and deployment changes, courses an LMS creates, and staff changes instructors make (`course.staff_added`, `course.membership_role_changed`, `course.membership_status_changed`). The same event appears in the admin audit log, except that an email change's line carries the two addresses' domains (`fromDomain`, `toDomain`) where the audit row keeps the addresses. | `action`, `actorUserId`, `targetUserId`, `targetCourseId`, `metadata`, `auditEventId`, `requestId` |
+| `sign_in_failed` | warn | An email sign-in is refused: at `stage: "request"` for an invalid address, the throttle (`login_rate_limited`) or the human check; at `stage: "confirm"` for an expired or used link (`invalid_login_token`), a suspended account (`disabled_user`) or closed registration (`registration_closed`). | `stage`, `reason`, `emailDomain` (request stage only), `ip`, `requestId` |
+| `csrf_rejected` | warn | A signed-in, state-changing request fails the CSRF check. | `userId`, `method`, `path`, `ip`, `requestId` |
+| `bootstrap_refused` | warn | `/admin/bootstrap` refuses: no token configured, a wrong token, or an administrator already exists. | `reason`, `userId`, `ip`, `requestId` |
+| `lti_launch_failed` | warn | An LTI login, launch, deep-linking or link step is refused. | `code`, `issuer` and related identifiers, `ip`, `requestId` |
+
+Operational events include `request_failed` (an unexpected server error, with
+its stack), the `lti_grade_passback_*` events, `lti_tool_key_invalid`,
+`email_change_notice_failed`, and, for the standalone server,
+`server_started`, `migrations_applied` and `server_stopping`.
+
+### Collecting the logs
+
+Under Docker or Podman, the container's output is the log: `docker logs
+<container>` or `podman logs <container>`. The default `json-file` driver
+keeps everything and does not rotate, so limit it:
+
+```sh
+docker run --log-opt max-size=50m --log-opt max-file=5 …
+```
+
+To send the lines to a SIEM, choose a logging driver that forwards them, such
+as `syslog`, `journald`, `fluentd`, `gelf` or `splunk`, with `--log-driver`
+and its `--log-opt` settings, or point a collector at the `journald` or
+`json-file` output. Each line is a complete JSON object, so the collector can
+parse it without a custom pattern. On Cloudflare Workers, the lines appear in
+Workers Logs (observability is enabled in `wrangler.jsonc`), and Logpush can
+export them.
 
 ## The database
 

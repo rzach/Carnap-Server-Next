@@ -10,6 +10,7 @@ import type {
 import { addSeconds, type Timestamp, timestampNow } from "../domain/time";
 import type { User } from "../domain/users";
 import { deferred } from "../i18n/deferred";
+import { logEvent } from "../log";
 import type { AuthenticatedActor } from "./auth";
 import { requireInstructor } from "./authorization";
 import { AppHttpError, badRequest } from "./errors";
@@ -234,7 +235,7 @@ export class GradePassbackService {
     // pending (rather than burning their retry budget) means configuring the
     // key later releases the backlog untouched.
     if (this.options.sender === null) {
-      console.error("lti_grade_passback_skipped", {
+      logEvent("error", "lti_grade_passback_skipped", {
         reason: "tool_key_not_configured",
         requestId: this.options.requestId ?? "",
       });
@@ -260,7 +261,7 @@ export class GradePassbackService {
     }
 
     if (summary.claimed > 0) {
-      console.log("lti_grade_passback_run", {
+      logEvent("info", "lti_grade_passback_run", {
         ...summary,
         requestId: this.options.requestId ?? "",
       });
@@ -468,7 +469,7 @@ export class GradePassbackService {
     detail: string | null,
     disposition: "permanent" | "retry_scheduled",
   ): void {
-    console.error("lti_grade_passback_failed", {
+    logEvent("error", "lti_grade_passback_failed", {
       attemptCount: job.attemptCount + 1,
       detail: detail ?? "",
       disposition,

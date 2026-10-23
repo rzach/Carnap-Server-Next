@@ -8,7 +8,12 @@ import type { AppBindings, WorkerApp } from "../src/worker/http";
 import { matchSupportedLocale } from "../src/worker/i18n/locales";
 import { localeDetectorMiddleware } from "../src/worker/middleware/locale";
 import { appRequest, createTestApp } from "./helpers/app";
-import { login, setCookieHeaders, withStorage } from "./helpers/http";
+import {
+  login,
+  secureCookieHeader,
+  setCookieHeaders,
+  withStorage,
+} from "./helpers/http";
 import {
   beginTestLogin,
   createLtiTestApp,
@@ -111,7 +116,11 @@ function saveProfile(
       body: new URLSearchParams({ name: "Ada", ...fields }),
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Cookie: session.cookieHeader,
+        // Over https the session's cookies carry `__Host-`; a browser that
+        // signed in there would hold them under those names.
+        Cookie: origin.startsWith("https:")
+          ? secureCookieHeader(session.cookieHeader)
+          : session.cookieHeader,
         "X-CSRF-Token": session.csrfToken,
       },
       method: "POST",

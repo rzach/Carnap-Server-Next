@@ -1096,6 +1096,31 @@ export function describeStorageContract(
       });
     });
 
+    test("site settings read their default until set, and keep the last write", async () => {
+      await withStorage(async ({ stores }) => {
+        const admin = await createUser(stores, "admin-1");
+
+        await expect(stores.siteSettings.read()).resolves.toEqual({
+          nativeRegistration: "public",
+        });
+
+        await stores.siteSettings.setNativeRegistration({
+          updatedAt: NOW,
+          updatedById: admin.id,
+          value: "link_only",
+        });
+        await stores.siteSettings.setNativeRegistration({
+          updatedAt: LATER,
+          updatedById: admin.id,
+          value: "lms_only",
+        });
+
+        await expect(stores.siteSettings.read()).resolves.toEqual({
+          nativeRegistration: "lms_only",
+        });
+      });
+    });
+
     test("courses and memberships can be created and read", async () => {
       await withStorage(async ({ stores }) => {
         const { course, instructor, student } =

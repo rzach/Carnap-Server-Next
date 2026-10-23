@@ -1,6 +1,7 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
 
 import type { Env } from "../src/worker/env";
+import { bootstrapTestAdmin } from "./helpers/admin";
 import { appRequest, createTestApp } from "./helpers/app";
 import {
   ACCEPT_JSON,
@@ -71,16 +72,10 @@ async function adminRequest(
   );
 }
 
-async function bootstrapAdmin(env: Env, admin: LoginResult): Promise<void> {
-  const response = await adminRequest(env, admin, "/admin/bootstrap", {});
-
-  expect(response.status).toBe(201);
-}
-
 async function siteAdmin(env: Env): Promise<LoginResult> {
   const admin = await login(env, "admin@example.test");
 
-  await bootstrapAdmin(env, admin);
+  await bootstrapTestAdmin(env, admin);
 
   return admin;
 }

@@ -176,7 +176,10 @@ function contentService(context: Context<AppBindings>): ContentService {
 }
 
 function courseService(context: Context<AppBindings>): CourseService {
-  return new CourseService({ stores: storesForContext(context) });
+  return new CourseService({
+    requestId: context.get("requestId"),
+    stores: storesForContext(context),
+  });
 }
 
 function attemptService(context: Context<AppBindings>): AttemptService {

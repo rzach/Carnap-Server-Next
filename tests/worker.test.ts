@@ -78,10 +78,9 @@ describe("worker app", () => {
       });
       const response = await appRequest(app, "/boom?token=not-in-the-log");
       const body = (await response.json()) as ErrorEnvelope;
-      const line = logged.mock.calls.find(
-        ([label]) => label === "request_failed",
-      );
-      const context = line?.[1] as Record<string, unknown>;
+      const context = logged.mock.calls
+        .map(([line]) => JSON.parse(String(line)) as Record<string, unknown>)
+        .find((line) => line.event === "request_failed");
 
       expect(context?.requestId).toBe(body.error.requestId);
       expect(context?.message).toBe("boom");

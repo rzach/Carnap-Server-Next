@@ -450,6 +450,10 @@ msgstr "A model exercise requires at least one formula."
 msgid "A multiple-choice exercise requires at least two options."
 msgstr "A multiple-choice exercise requires at least two options."
 
+#: src/worker/web/labels.ts
+msgid "A new address gets an account only when its owner signs in from a valid enrollment link. Anyone holding a link can create an account with it."
+msgstr "A new address gets an account only when its owner signs in from a valid enrollment link. Anyone holding a link can create an account with it."
+
 #: src/worker/application/attempts.ts
 msgid "A new attempt cannot be started for this assignment."
 msgstr "A new attempt cannot be started for this assignment."
@@ -653,6 +657,14 @@ msgstr "Account access"
 msgid "Account reactivated"
 msgstr "Account reactivated"
 
+#: src/worker/web/admin.tsx
+msgid "Account registration"
+msgstr "Account registration"
+
+#: src/worker/web/labels.ts
+msgid "Account registration changed"
+msgstr "Account registration changed"
+
 #: src/worker/web/labels.ts
 msgid "Account suspended"
 msgstr "Account suspended"
@@ -811,6 +823,11 @@ msgstr "Admin"
 msgid "Admin audit log"
 msgstr "Admin audit log"
 
+#: src/worker/application/admin.ts
+#: src/worker/web/admin.tsx
+msgid "Administrator bootstrap is not configured on this server. Set ADMIN_BOOTSTRAP_TOKEN and restart it."
+msgstr "Administrator bootstrap is not configured on this server. Set ADMIN_BOOTSTRAP_TOKEN and restart it."
+
 #: src/worker/web/assignment-detail.tsx
 msgid "All ({count})"
 msgstr "All ({count})"
@@ -900,6 +917,10 @@ msgstr "Answers are not recorded here."
 #: src/worker/web/content.tsx
 msgid "Anyone on the site who can author content and has the link can view this revision"
 msgstr "Anyone on the site who can author content and has the link can view this revision"
+
+#: src/worker/web/labels.ts
+msgid "Anyone with an email address"
+msgstr "Anyone with an email address"
 
 #: src/worker/web/content.tsx
 msgid "Anyone with the link"
@@ -1187,8 +1208,8 @@ msgid "Bootstrap site administrator"
 msgstr "Bootstrap site administrator"
 
 #: src/worker/web/admin.tsx
-msgid "Bootstrap token, if configured"
-msgstr "Bootstrap token, if configured"
+msgid "Bootstrap token"
+msgstr "Bootstrap token"
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Branch {position} of {count}"
@@ -1742,6 +1763,10 @@ msgstr "Course archived."
 msgid "Course cloned."
 msgstr "Course cloned."
 
+#: src/worker/web/labels.ts
+msgid "Course created from the LMS"
+msgstr "Course created from the LMS"
+
 #: src/worker/routes/courses.ts
 msgid "Course created."
 msgstr "Course created."
@@ -1761,6 +1786,10 @@ msgstr "Course gradebook"
 #: src/worker/web/labels.ts
 msgid "Course membership changed"
 msgstr "Course membership changed"
+
+#: src/worker/web/labels.ts
+msgid "Course membership status changed"
+msgstr "Course membership status changed"
 
 #: src/worker/web/admin.tsx
 msgid "Course memberships"
@@ -1790,6 +1819,10 @@ msgstr "Course owner"
 msgid "Course record"
 msgstr "Course record"
 
+#: src/worker/web/labels.ts
+msgid "Course role changed"
+msgstr "Course role changed"
+
 #: src/worker/application/courses.ts
 msgid "Course role is not supported."
 msgstr "Course role is not supported."
@@ -1801,6 +1834,10 @@ msgstr "Course roles and membership states. The course owner is marked with a cr
 #: src/worker/web/gradebook.tsx
 msgid "Course scores across published assignments."
 msgstr "Course scores across published assignments."
+
+#: src/worker/web/labels.ts
+msgid "Course staff added"
+msgstr "Course staff added"
 
 #: src/worker/web/courses.tsx
 msgid "Course status"
@@ -2197,6 +2234,10 @@ msgstr "Email delivery is not configured for this environment."
 #: src/worker/application/auth.ts
 msgid "Email sign-in cannot be removed from an account."
 msgstr "Email sign-in cannot be removed from an account."
+
+#: src/worker/web/labels.ts
+msgid "Email sign-in never creates an account. Accounts are created when someone opens Carnap from an LMS course."
+msgstr "Email sign-in never creates an account. Accounts are created when someone opens Carnap from an LMS course."
 
 #: src/worker/exercise-kit/assessment.ts
 msgid "Empty response"
@@ -2697,8 +2738,8 @@ msgid "Identities"
 msgstr "Identities"
 
 #: src/worker/web/admin.tsx
-msgid "If no site administrator exists, you can bootstrap this account."
-msgstr "If no site administrator exists, you can bootstrap this account."
+msgid "If no site administrator exists, you can bootstrap this account with the server's bootstrap token."
+msgstr "If no site administrator exists, you can bootstrap this account with the server's bootstrap token."
 
 #: src/worker/infrastructure/email/resend.ts
 msgid "If this was you, sign in with this address to reach the account that has it. If not, you can ignore this email."
@@ -3227,6 +3268,10 @@ msgstr "Needs review ({count})"
 msgid "Never"
 msgstr "Never"
 
+#: src/worker/web/admin.tsx
+msgid "New accounts by email"
+msgstr "New accounts by email"
+
 #: src/worker/web/assignments.tsx
 msgid "New assignment title"
 msgstr "New assignment title"
@@ -3626,6 +3671,14 @@ msgstr "Only the end of a branch can be closed or marked open."
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Only the root's rows may follow the first of them."
 msgstr "Only the root's rows may follow the first of them."
+
+#: src/worker/web/labels.ts
+msgid "Only through a course enrollment link"
+msgstr "Only through a course enrollment link"
+
+#: src/worker/web/labels.ts
+msgid "Only through the LMS"
+msgstr "Only through the LMS"
 
 #: src/worker/web/content.tsx
 msgid "Only you"
@@ -4055,6 +4108,14 @@ msgstr "Register platform"
 #: src/worker/web/admin.tsx
 msgid "Register the LMS platforms and deployments that launch into Carnap"
 msgstr "Register the LMS platforms and deployments that launch into Carnap"
+
+#: src/worker/application/admin.ts
+msgid "Registration setting is not supported."
+msgstr "Registration setting is not supported."
+
+#: src/worker/routes/admin.ts
+msgid "Registration setting not changed"
+msgstr "Registration setting not changed"
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Release grades"
@@ -5118,6 +5179,10 @@ msgstr "The fill attribute must be all, connectives, or main."
 msgid "The finish attribute must be closed, complete, or one-open."
 msgstr "The finish attribute must be closed, complete, or one-open."
 
+#: src/worker/web/labels.ts
+msgid "The first email sign-in from a new address creates an account."
+msgstr "The first email sign-in from a new address creates an account."
+
 #: src/worker/exercises/world/strings.ts
 msgid "The game"
 msgstr "The game"
@@ -5570,6 +5635,14 @@ msgstr "Theory"
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "There is already a given for “{field}”."
 msgstr "There is already a given for “{field}”."
+
+#: src/worker/application/auth.ts
+msgid "There is no account for this email address. Accounts on this site are created when you open Carnap from your course in your learning management system."
+msgstr "There is no account for this email address. Accounts on this site are created when you open Carnap from your course in your learning management system."
+
+#: src/worker/application/auth.ts
+msgid "There is no account for this email address. To create one, open the enrollment link your instructor gave you and sign in from there."
+msgstr "There is no account for this email address. To create one, open the enrollment link your instructor gave you and sign in from there."
 
 #: src/worker/application/manual-grading.ts
 msgid "There is no autograded score to approve on this submission."
@@ -6322,6 +6395,10 @@ msgstr "When I release them"
 #: src/worker/exercises/world/strings.ts
 msgid "When the game asks for a block, click or tap it on the board."
 msgstr "When the game asks for a block, click or tap it on the board."
+
+#: src/worker/web/admin.tsx
+msgid "Who can create an account by signing in with an email link. Existing accounts can always sign in by email, and LMS launches always create accounts."
+msgstr "Who can create an account by signing in with an email link. Existing accounts can always sign in by email, and LMS launches always create accounts."
 
 #: src/worker/web/content.tsx
 msgid "Whoever names this from a lesson freezes its text into that lesson, and their students read it there. Sharing a theory to be named is sharing what it says."

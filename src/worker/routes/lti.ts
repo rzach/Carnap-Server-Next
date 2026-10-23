@@ -12,6 +12,7 @@ import {
 import { hasLocaleCookie, setLocaleCookie } from "../cookies";
 import {
   type AppBindings,
+  clientIpAddress,
   publicRequestUrl,
   requireAuthenticated,
 } from "../http";
@@ -24,6 +25,7 @@ import {
   loadLtiToolKey,
   ltiToolKeyConfigured,
 } from "../infrastructure/lti/tool-key";
+import { logEvent } from "../log";
 import { applyLocale } from "../middleware/locale";
 import { allowFrameAncestor } from "../middleware/security-headers";
 import { kickGradePassback } from "../passback";
@@ -66,8 +68,9 @@ function renderLaunchFailure(
   error: unknown,
 ): Response {
   if (error instanceof LtiLaunchError) {
-    console.error("lti_launch_failed", {
+    logEvent("warn", "lti_launch_failed", {
       code: error.code,
+      ip: clientIpAddress(context) ?? undefined,
       requestId: context.get("requestId"),
       ...error.logContext,
     });
@@ -80,8 +83,9 @@ function renderLaunchFailure(
   }
 
   if (error instanceof AppHttpError) {
-    console.error("lti_launch_failed", {
+    logEvent("warn", "lti_launch_failed", {
       code: error.code,
+      ip: clientIpAddress(context) ?? undefined,
       requestId: context.get("requestId"),
     });
 
@@ -625,7 +629,7 @@ ltiRoutes.get("/jwks", async (context) => {
 
   if (toolKey === null) {
     if (ltiToolKeyConfigured(configured)) {
-      console.error("lti_tool_key_invalid", {
+      logEvent("error", "lti_tool_key_invalid", {
         requestId: context.get("requestId"),
       });
     }

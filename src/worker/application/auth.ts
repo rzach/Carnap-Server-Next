@@ -25,8 +25,6 @@ import {
 import type { AppStores } from "./stores";
 import { createAuthToken, hashAuthToken } from "./tokens";
 
-export const SESSION_COOKIE_NAME = "carnap_session";
-export const CSRF_COOKIE_NAME = "carnap_csrf";
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 14;
 export const LOGIN_TTL_SECONDS = 60 * 10;
 
@@ -132,6 +130,15 @@ export interface StartedNativeLogin {
    */
   readonly locale: string | null;
   readonly loginToken: string;
+}
+
+export interface ConfirmNativeLoginOptions {
+  /**
+   * The enrollment link the sign-in started from, when it did. Under the
+   * `link_only` registration setting, a valid one is what lets an address with
+   * no account create one.
+   */
+  readonly enrollmentToken?: string | null;
 }
 
 export interface MintedSession {
@@ -282,7 +289,10 @@ export class AuthService {
     };
   }
 
-  async confirmNativeLogin(token: string): Promise<ConfirmedNativeLogin> {
+  async confirmNativeLogin(
+    token: string,
+    options: ConfirmNativeLoginOptions = {},
+  ): Promise<ConfirmedNativeLogin> {
     if (token.trim().length === 0) {
       throw badRequest(
         "invalid_login_token",
@@ -313,7 +323,11 @@ export class AuthService {
       return { kind: "undo", undoToken: held };
     }
 
-    const user = await this.resolveNativeUser(challenge.email, nowDate);
+    const user = await this.resolveNativeUser(
+      challenge.email,
+      nowDate,
+      options.enrollmentToken ?? null,
+    );
 
     return { kind: "session", ...(await this.mintSession(user)) };
   }
@@ -573,6 +587,7 @@ export class AuthService {
   private async resolveNativeUser(
     email: string,
     nowDate: Date,
+    enrollmentToken: string | null,
   ): Promise<User> {
     const identity = await this.options.stores.users.getExternalIdentity(
       "native",
@@ -591,6 +606,11 @@ export class AuthService {
 
     const existingUser = await this.options.stores.users.getByEmail(email);
     const now = timestampNow(nowDate);
+
+    if (existingUser === null) {
+      await this.assertRegistrationAllowed(enrollmentToken, now);
+    }
+
     const user =
       existingUser ??
       (await this.options.stores.users.create({
@@ -610,6 +630,48 @@ export class AuthService {
     });
 
     return this.withVerifiedEmail(user, nowDate);
+  }
+
+  /**
+   * Whether an email sign-in from an address with no account may create one,
+   * by the instance's `nativeRegistration` setting. Asked only here, after the
+   * link was consumed: the login form answers every address alike, so it
+   * cannot be used to learn which addresses have accounts, and the one person
+   * who learns it here is the mailbox's owner.
+   */
+  private async assertRegistrationAllowed(
+    enrollmentToken: string | null,
+    now: Timestamp,
+  ): Promise<void> {
+    const { nativeRegistration } =
+      await this.options.stores.siteSettings.read();
+
+    if (nativeRegistration === "public") {
+      return;
+    }
+
+    if (nativeRegistration === "link_only" && enrollmentToken !== null) {
+      const link = await this.options.stores.courses.getValidEnrollmentLink(
+        await hashAuthToken(enrollmentToken),
+        now,
+      );
+
+      if (link !== null) {
+        return;
+      }
+    }
+
+    throw new AppHttpError(
+      403,
+      "registration_closed",
+      nativeRegistration === "link_only"
+        ? deferred.i18n.t(
+            "There is no account for this email address. To create one, open the enrollment link your instructor gave you and sign in from there.",
+          )
+        : deferred.i18n.t(
+            "There is no account for this email address. Accounts on this site are created when you open Carnap from your course in your learning management system.",
+          ),
+    );
   }
 
   /**

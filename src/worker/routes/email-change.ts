@@ -18,6 +18,7 @@ import {
   emailChangeNoticeSenderFromEnv,
   emailTakenSenderFromEnv,
 } from "../infrastructure/email/resend";
+import { errorMessage, logEvent } from "../log";
 import { storesForContext } from "../stores";
 
 /**
@@ -89,7 +90,7 @@ export function emailChangeNotifierForContext(
           : emailLinkUrl(context, "/profile/email/undo", notice.undoToken);
 
       if (sender === null) {
-        console.info("email_change_notice_local", { undoUrl });
+        logEvent("info", "email_change_notice_local", { undoUrl });
 
         return;
       }
@@ -108,8 +109,8 @@ export function emailChangeNotifierForContext(
           undoUrl,
         })
         .catch((error: unknown) => {
-          console.error("email_change_notice_failed", {
-            error: error instanceof Error ? error.message : String(error),
+          logEvent("error", "email_change_notice_failed", {
+            error: errorMessage(error),
             requestId,
           });
         });

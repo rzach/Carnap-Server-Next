@@ -1,6 +1,7 @@
 import { type AppId, createAppId } from "../domain/ids";
 import { assertJsonValue, type JsonValue } from "../domain/json";
 import { type Timestamp, timestampNow } from "../domain/time";
+import { logEvent } from "../log";
 import type { AppStores } from "./stores";
 
 /**
@@ -23,11 +24,22 @@ export interface AdminAuditInput {
   readonly action: string;
   readonly actorUserId: AppId;
   readonly metadata: JsonValue;
+  /**
+   * What the `audit` log line carries in place of `metadata`, when the row
+   * names a person in a way a log must not: the table is read by admins on
+   * this server, the log goes to whatever collects it.
+   */
+  readonly logMetadata?: JsonValue;
   readonly targetCourseId?: AppId | null;
   readonly targetUserId?: AppId | null;
   readonly timestamp: Timestamp;
 }
 
+/**
+ * Record an audited action: the row the admin pages read, and the same event
+ * as an `audit` log line for an institution's log collector. Every audited
+ * action comes through here, so neither half can be forgotten.
+ */
 export async function appendAdminAudit(
   options: {
     readonly requestId: string;
@@ -37,7 +49,11 @@ export async function appendAdminAudit(
 ): Promise<void> {
   assertJsonValue(input.metadata);
 
-  await options.stores.adminAudit.append({
+  if (input.logMetadata !== undefined) {
+    assertJsonValue(input.logMetadata);
+  }
+
+  const event = await options.stores.adminAudit.append({
     action: input.action,
     actorUserId: input.actorUserId,
     createdAt: input.timestamp,
@@ -46,5 +62,15 @@ export async function appendAdminAudit(
     requestId: options.requestId,
     targetCourseId: input.targetCourseId ?? null,
     targetUserId: input.targetUserId ?? null,
+  });
+
+  logEvent("info", "audit", {
+    action: event.action,
+    actorUserId: event.actorUserId,
+    auditEventId: event.id,
+    metadata: input.logMetadata ?? event.metadata,
+    requestId: event.requestId,
+    targetCourseId: event.targetCourseId,
+    targetUserId: event.targetUserId,
   });
 }

@@ -1,5 +1,6 @@
 import type { Context } from "hono";
 import type { FC } from "hono/jsx";
+import { bootstrapConfigured } from "../application/admin";
 import type { UserDirectory } from "../application/users";
 import type {
   AdminAuditEvent,
@@ -9,12 +10,17 @@ import type {
 } from "../domain/admin";
 import type { Course } from "../domain/courses";
 import type { JsonValue } from "../domain/json";
+import {
+  NATIVE_REGISTRATION_MODES,
+  type SiteSettings,
+} from "../domain/site-settings";
 import type { EmailAuthority, User } from "../domain/users";
 import type { AppBindings } from "../http";
 import { splitAtValue, type Translator, VALUE } from "../i18n/translator";
 import { adminCrumb } from "./breadcrumbs";
 import {
   BarField,
+  ChoiceNotes,
   CreateBar,
   CsrfInput,
   LinkStrip,
@@ -32,6 +38,8 @@ import {
   courseRoleOptions,
   identityProviderLabel,
   membershipStatusOptions,
+  nativeRegistrationHint,
+  nativeRegistrationLabel,
   type SelectOption,
 } from "./labels";
 import { renderShell, useI18n } from "./layout";
@@ -635,12 +643,68 @@ const AuditTable: FC<{
   );
 };
 
+/**
+ * Who may create an account by email sign-in. Only a site administrator gets
+ * the form; a support operator sees the setting, since it explains why
+ * someone's sign-in was refused, but cannot change it.
+ */
+const RegistrationSheet: FC<{
+  readonly canChange: boolean;
+  readonly context: Context<AppBindings>;
+  readonly settings: SiteSettings;
+}> = ({ canChange, context, settings }) => {
+  const i18n = useI18n();
+  const current = settings.nativeRegistration;
+
+  return (
+    <Sheet
+      description={i18n.t(
+        "Who can create an account by signing in with an email link. Existing accounts can always sign in by email, and LMS launches always create accounts.",
+      )}
+      title={i18n.t("Account registration")}
+    >
+      {canChange ? (
+        <form action="/admin/settings/registration" method="post">
+          <CsrfInput context={context} />
+          <label>
+            {i18n.t("New accounts by email")}
+            <br />
+            <select data-choice-notes="nativeRegistration" name="mode">
+              {NATIVE_REGISTRATION_MODES.map((mode) => (
+                <option selected={mode === current} value={mode}>
+                  {nativeRegistrationLabel(i18n, mode)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <ChoiceNotes
+            group="nativeRegistration"
+            notes={NATIVE_REGISTRATION_MODES.map((mode) => ({
+              note: nativeRegistrationHint(i18n, mode),
+              value: mode,
+            }))}
+            selected={current}
+          />
+          <button type="submit">{i18n.t("Save")}</button>
+        </form>
+      ) : (
+        <>
+          <p>{nativeRegistrationLabel(i18n, current)}</p>
+          <p class="small">{nativeRegistrationHint(i18n, current)}</p>
+        </>
+      )}
+    </Sheet>
+  );
+};
+
 export function renderAdminDashboard(
   context: Context<AppBindings>,
   model: {
     readonly auditEvents: readonly AdminAuditEvent[];
+    readonly canChangeSettings: boolean;
     readonly directory: AuditDirectory;
     readonly saved: boolean;
+    readonly settings: SiteSettings;
     readonly stats: AdminGlobalStats;
   },
 ): Response {
@@ -683,6 +747,11 @@ export function renderAdminDashboard(
       >
         <SearchForm />
       </Sheet>
+      <RegistrationSheet
+        canChange={model.canChangeSettings}
+        context={context}
+        settings={model.settings}
+      />
       <Sheet
         description={i18n.t(
           "Recent administrative actions with request IDs.",
@@ -842,20 +911,34 @@ export function renderBootstrap(context: Context<AppBindings>): Response {
     context,
     { title },
     <Sheet title={title}>
-      <p>
-        {i18n.t(
-          "If no site administrator exists, you can bootstrap this account.",
-        )}
-      </p>
-      <form action="/admin/bootstrap" method="post">
-        <CsrfInput context={context} />
-        <label>
-          {i18n.t("Bootstrap token, if configured")}
-          <br />
-          <input name="bootstrapToken" />
-        </label>
-        <button type="submit">{title}</button>
-      </form>
+      {bootstrapConfigured(context.env.ADMIN_BOOTSTRAP_TOKEN) ? (
+        <>
+          <p>
+            {i18n.t(
+              "If no site administrator exists, you can bootstrap this account with the server's bootstrap token.",
+            )}
+          </p>
+          <form action="/admin/bootstrap" method="post">
+            <CsrfInput context={context} />
+            <label>
+              {i18n.t("Bootstrap token")}
+              <br />
+              <input
+                autocomplete="off"
+                name="bootstrapToken"
+                type="password"
+              />
+            </label>
+            <button type="submit">{title}</button>
+          </form>
+        </>
+      ) : (
+        <p>
+          {i18n.t(
+            "Administrator bootstrap is not configured on this server. Set ADMIN_BOOTSTRAP_TOKEN and restart it.",
+          )}
+        </p>
+      )}
     </Sheet>,
   );
 }

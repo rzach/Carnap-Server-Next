@@ -42,3 +42,29 @@ export async function hashAuthToken(token: string): Promise<string> {
 
   return base64Url(digest);
 }
+
+/**
+ * Whether a submitted secret equals a configured one, in time that does not
+ * depend on where they first differ. Both sides are hashed first, so the
+ * comparison runs over two equal-length digests and the configured secret's
+ * length does not leak either.
+ */
+export async function secretsMatch(
+  submitted: string,
+  expected: string,
+): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const [left, right] = await Promise.all([
+    crypto.subtle.digest("SHA-256", encoder.encode(submitted)),
+    crypto.subtle.digest("SHA-256", encoder.encode(expected)),
+  ]);
+  const a = new Uint8Array(left);
+  const b = new Uint8Array(right);
+  let difference = 0;
+
+  for (let index = 0; index < a.length; index += 1) {
+    difference |= (a[index] ?? 0) ^ (b[index] ?? 0);
+  }
+
+  return difference === 0;
+}

@@ -33,6 +33,7 @@ import {
   renderEnrollmentPage,
 } from "../web/courses";
 import {
+  enrollmentPath,
   fieldValue,
   isFormSubmission,
   redirect,
@@ -89,7 +90,10 @@ function assignmentService(context: Context<AppBindings>): AssignmentService {
 }
 
 function courseService(context: Context<AppBindings>): CourseService {
-  return new CourseService({ stores: storesForContext(context) });
+  return new CourseService({
+    requestId: context.get("requestId"),
+    stores: storesForContext(context),
+  });
 }
 
 /** A failed course form answers under the course-list crumb. */
@@ -146,7 +150,7 @@ function publicEnrollmentLink(
     id: enrollmentLink.id,
     courseId: enrollmentLink.courseId,
     token,
-    enrollmentPath: token === undefined ? undefined : `/enrollments/${token}`,
+    enrollmentPath: token === undefined ? undefined : enrollmentPath(token),
     createdById: enrollmentLink.createdById,
     createdAt: enrollmentLink.createdAt,
     expiresAt: enrollmentLink.expiresAt,
@@ -364,7 +368,7 @@ async function courseDetailPage(
     const newEnrollmentLinkUrl =
       token === null
         ? null
-        : new URL(`/enrollments/${token}`, publicRequestUrl(context)).href;
+        : new URL(enrollmentPath(token), publicRequestUrl(context)).href;
     const enrollmentLinks = isInstructor
       ? await service.listEnrollmentLinks(actor, detail.course.id)
       : [];

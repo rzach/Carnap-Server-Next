@@ -1,15 +1,12 @@
 import type { MiddlewareHandler } from "hono";
-import { getCookie } from "hono/cookie";
 
-import {
-  AuthService,
-  CSRF_COOKIE_NAME,
-  SESSION_COOKIE_NAME,
-} from "../application/auth";
+import { AuthService } from "../application/auth";
 import { AppHttpError } from "../application/errors";
 import { hashAuthToken } from "../application/tokens";
+import { readCsrfCookie, readSessionCookie } from "../cookies";
 import { type AppBindings, publicRequestUrl } from "../http";
 import { deferred } from "../i18n/deferred";
+import { logRequestEvent } from "../request-log";
 import { optionalStoresForContext } from "../stores";
 
 const CSRF_HEADER_NAME = "X-CSRF-Token";
@@ -85,7 +82,7 @@ export function actorMiddleware(): MiddlewareHandler<AppBindings> {
 
     const service = new AuthService({ stores });
     const result = await service.resolveActor(
-      getCookie(context, SESSION_COOKIE_NAME) ?? null,
+      readSessionCookie(context) ?? null,
     );
 
     context.set("actor", result.actor);
@@ -149,7 +146,7 @@ export function csrfMiddleware(): MiddlewareHandler<AppBindings> {
     }
 
     const submittedToken = await submittedCsrfToken(context);
-    const csrfCookie = getCookie(context, CSRF_COOKIE_NAME);
+    const csrfCookie = readCsrfCookie(context);
 
     if (
       submittedToken === undefined ||
@@ -157,6 +154,12 @@ export function csrfMiddleware(): MiddlewareHandler<AppBindings> {
       submittedToken !== csrfCookie ||
       (await hashAuthToken(submittedToken)) !== actor.session.csrfTokenHash
     ) {
+      logRequestEvent(context, "warn", "csrf_rejected", {
+        method: context.req.method,
+        path: new URL(context.req.url).pathname,
+        userId: actor.user.id,
+      });
+
       throw new AppHttpError(
         403,
         "csrf_token_invalid",

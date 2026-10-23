@@ -450,6 +450,10 @@ msgstr "Eine Modellaufgabe braucht mindestens eine Formel."
 msgid "A multiple-choice exercise requires at least two options."
 msgstr "Eine Multiple-Choice-Übung braucht mindestens zwei Optionen."
 
+#: src/worker/web/labels.ts
+msgid "A new address gets an account only when its owner signs in from a valid enrollment link. Anyone holding a link can create an account with it."
+msgstr "Eine neue Adresse erhält nur dann ein Konto, wenn sich ihre Inhaberin oder ihr Inhaber über einen gültigen Einschreibelink anmeldet. Wer einen Link besitzt, kann damit ein Konto anlegen."
+
 #: src/worker/application/attempts.ts
 msgid "A new attempt cannot be started for this assignment."
 msgstr "Für diese Aufgabe kann kein neuer Versuch begonnen werden."
@@ -653,6 +657,14 @@ msgstr "Kontozugang"
 msgid "Account reactivated"
 msgstr "Konto reaktiviert"
 
+#: src/worker/web/admin.tsx
+msgid "Account registration"
+msgstr "Kontoregistrierung"
+
+#: src/worker/web/labels.ts
+msgid "Account registration changed"
+msgstr "Kontoregistrierung geändert"
+
 #: src/worker/web/labels.ts
 msgid "Account suspended"
 msgstr "Konto gesperrt"
@@ -811,6 +823,11 @@ msgstr "Verwaltung"
 msgid "Admin audit log"
 msgstr "Administratives Prüfprotokoll"
 
+#: src/worker/application/admin.ts
+#: src/worker/web/admin.tsx
+msgid "Administrator bootstrap is not configured on this server. Set ADMIN_BOOTSTRAP_TOKEN and restart it."
+msgstr "Die Einrichtung des ersten Administrators ist auf diesem Server nicht konfiguriert. Setzen Sie ADMIN_BOOTSTRAP_TOKEN und starten Sie den Server neu."
+
 #: src/worker/web/assignment-detail.tsx
 msgid "All ({count})"
 msgstr "Alle ({count})"
@@ -900,6 +917,10 @@ msgstr "Antworten werden hier nicht erfasst."
 #: src/worker/web/content.tsx
 msgid "Anyone on the site who can author content and has the link can view this revision"
 msgstr "Alle auf dieser Website, die Inhalte erstellen dürfen und den Link haben, können diese Revision ansehen"
+
+#: src/worker/web/labels.ts
+msgid "Anyone with an email address"
+msgstr "Alle mit einer E-Mail-Adresse"
 
 #: src/worker/web/content.tsx
 msgid "Anyone with the link"
@@ -1187,8 +1208,8 @@ msgid "Bootstrap site administrator"
 msgstr "Ersten Site-Administrator einrichten"
 
 #: src/worker/web/admin.tsx
-msgid "Bootstrap token, if configured"
-msgstr "Einrichtungstoken, falls konfiguriert"
+msgid "Bootstrap token"
+msgstr "Einrichtungstoken"
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Branch {position} of {count}"
@@ -1742,6 +1763,10 @@ msgstr "Kurs archiviert."
 msgid "Course cloned."
 msgstr "Kurs dupliziert."
 
+#: src/worker/web/labels.ts
+msgid "Course created from the LMS"
+msgstr "Kurs aus dem LMS angelegt"
+
 #: src/worker/routes/courses.ts
 msgid "Course created."
 msgstr "Kurs angelegt."
@@ -1761,6 +1786,10 @@ msgstr "Notenbuch des Kurses"
 #: src/worker/web/labels.ts
 msgid "Course membership changed"
 msgstr "Kursmitgliedschaft geändert"
+
+#: src/worker/web/labels.ts
+msgid "Course membership status changed"
+msgstr "Status der Kursmitgliedschaft geändert"
 
 #: src/worker/web/admin.tsx
 msgid "Course memberships"
@@ -1790,6 +1819,10 @@ msgstr "Kursinhaber"
 msgid "Course record"
 msgstr "Kursdatensatz"
 
+#: src/worker/web/labels.ts
+msgid "Course role changed"
+msgstr "Kursrolle geändert"
+
 #: src/worker/application/courses.ts
 msgid "Course role is not supported."
 msgstr "Diese Kursrolle wird nicht unterstützt."
@@ -1801,6 +1834,10 @@ msgstr "Kursrollen und Mitgliedschaftsstatus. Der Kursinhaber ist mit einer Kron
 #: src/worker/web/gradebook.tsx
 msgid "Course scores across published assignments."
 msgstr "Kurspunktzahlen über alle veröffentlichten Aufgaben."
+
+#: src/worker/web/labels.ts
+msgid "Course staff added"
+msgstr "Lehrpersonal zum Kurs hinzugefügt"
 
 #: src/worker/web/courses.tsx
 msgid "Course status"
@@ -2197,6 +2234,10 @@ msgstr "Der E-Mail-Versand ist für diese Umgebung nicht eingerichtet."
 #: src/worker/application/auth.ts
 msgid "Email sign-in cannot be removed from an account."
 msgstr "Die Anmeldung per E-Mail kann nicht von einem Konto entfernt werden."
+
+#: src/worker/web/labels.ts
+msgid "Email sign-in never creates an account. Accounts are created when someone opens Carnap from an LMS course."
+msgstr "Die Anmeldung per E-Mail legt nie ein Konto an. Konten entstehen, wenn jemand Carnap aus einem LMS-Kurs heraus öffnet."
 
 #: src/worker/exercise-kit/assessment.ts
 msgid "Empty response"
@@ -2697,8 +2738,8 @@ msgid "Identities"
 msgstr "Identitäten"
 
 #: src/worker/web/admin.tsx
-msgid "If no site administrator exists, you can bootstrap this account."
-msgstr "Wenn es noch keinen Site-Administrator gibt, können Sie dieses Konto dazu machen."
+msgid "If no site administrator exists, you can bootstrap this account with the server's bootstrap token."
+msgstr "Wenn noch kein Site-Administrator existiert, können Sie dieses Konto mit dem Einrichtungstoken des Servers dazu machen."
 
 #: src/worker/infrastructure/email/resend.ts
 msgid "If this was you, sign in with this address to reach the account that has it. If not, you can ignore this email."
@@ -3227,6 +3268,10 @@ msgstr "Prüfung erforderlich ({count})"
 msgid "Never"
 msgstr "Nie"
 
+#: src/worker/web/admin.tsx
+msgid "New accounts by email"
+msgstr "Neue Konten per E-Mail"
+
 #: src/worker/web/assignments.tsx
 msgid "New assignment title"
 msgstr "Titel der neuen Aufgabe"
@@ -3626,6 +3671,14 @@ msgstr "Nur das Ende eines Asts kann geschlossen oder als offen markiert werden.
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Only the root's rows may follow the first of them."
 msgstr "Nach der ersten Zeile der Wurzel dürfen nur weitere Zeilen der Wurzel folgen."
+
+#: src/worker/web/labels.ts
+msgid "Only through a course enrollment link"
+msgstr "Nur über einen Einschreibelink eines Kurses"
+
+#: src/worker/web/labels.ts
+msgid "Only through the LMS"
+msgstr "Nur über das LMS"
 
 #: src/worker/web/content.tsx
 msgid "Only you"
@@ -4055,6 +4108,14 @@ msgstr "Plattform registrieren"
 #: src/worker/web/admin.tsx
 msgid "Register the LMS platforms and deployments that launch into Carnap"
 msgstr "Die LMS-Plattformen und Deployments registrieren, die in Carnap starten"
+
+#: src/worker/application/admin.ts
+msgid "Registration setting is not supported."
+msgstr "Diese Registrierungseinstellung wird nicht unterstützt."
+
+#: src/worker/routes/admin.ts
+msgid "Registration setting not changed"
+msgstr "Registrierungseinstellung nicht geändert"
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Release grades"
@@ -5118,6 +5179,10 @@ msgstr "Das Attribut fill muss all, connectives oder main sein."
 msgid "The finish attribute must be closed, complete, or one-open."
 msgstr "Das Attribut finish muss closed, complete oder one-open sein."
 
+#: src/worker/web/labels.ts
+msgid "The first email sign-in from a new address creates an account."
+msgstr "Die erste Anmeldung per E-Mail von einer neuen Adresse legt ein Konto an."
+
 #: src/worker/exercises/world/strings.ts
 msgid "The game"
 msgstr "Das Spiel"
@@ -5570,6 +5635,14 @@ msgstr "Theorie"
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "There is already a given for “{field}”."
 msgstr "Für „{field}“ gibt es schon eine Vorgabe."
+
+#: src/worker/application/auth.ts
+msgid "There is no account for this email address. Accounts on this site are created when you open Carnap from your course in your learning management system."
+msgstr "Für diese E-Mail-Adresse gibt es kein Konto. Konten auf dieser Website entstehen, wenn Sie Carnap aus Ihrem Kurs in Ihrer Lernplattform (LMS) heraus öffnen."
+
+#: src/worker/application/auth.ts
+msgid "There is no account for this email address. To create one, open the enrollment link your instructor gave you and sign in from there."
+msgstr "Für diese E-Mail-Adresse gibt es kein Konto. Um eines anzulegen, öffnen Sie den Einschreibelink, den Sie von Ihrer Lehrperson erhalten haben, und melden Sie sich von dort aus an."
 
 #: src/worker/application/manual-grading.ts
 msgid "There is no autograded score to approve on this submission."
@@ -6322,6 +6395,10 @@ msgstr "Wenn ich sie freigebe"
 #: src/worker/exercises/world/strings.ts
 msgid "When the game asks for a block, click or tap it on the board."
 msgstr "Wenn das Spiel nach einem Block fragt, klicken oder tippen Sie ihn auf dem Brett an."
+
+#: src/worker/web/admin.tsx
+msgid "Who can create an account by signing in with an email link. Existing accounts can always sign in by email, and LMS launches always create accounts."
+msgstr "Wer durch die Anmeldung über einen E-Mail-Link ein Konto anlegen kann. Bestehende Konten können sich immer per E-Mail anmelden, und Starts aus dem LMS legen immer Konten an."
 
 #: src/worker/web/content.tsx
 msgid "Whoever names this from a lesson freezes its text into that lesson, and their students read it there. Sharing a theory to be named is sharing what it says."

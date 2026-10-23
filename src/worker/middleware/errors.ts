@@ -3,6 +3,7 @@ import type { ErrorHandler, NotFoundHandler } from "hono";
 import { type AppErrorStatus, AppHttpError } from "../application/errors";
 import type { AppBindings } from "../http";
 import type { Translator } from "../i18n/translator";
+import { errorMessage, logEvent } from "../log";
 import { renderErrorPage } from "../web/errors";
 import { wantsHtmlErrorPage } from "../web/html";
 
@@ -97,9 +98,9 @@ function logServerError(
   code: string,
   error: unknown,
 ): void {
-  console.error("request_failed", {
+  logEvent("error", "request_failed", {
     code,
-    message: error instanceof Error ? error.message : String(error),
+    message: errorMessage(error),
     method: context.req.method,
     path: new URL(context.req.url).pathname,
     requestId: requestId(context),

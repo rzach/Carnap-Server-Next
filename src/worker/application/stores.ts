@@ -47,6 +47,10 @@ import type {
   LtiPlatform,
   LtiResourceLink,
 } from "../domain/lti";
+import type {
+  SetNativeRegistrationInput,
+  SiteSettings,
+} from "../domain/site-settings";
 import type { Timestamp } from "../domain/time";
 import type {
   EmailChangeToken,
@@ -1394,6 +1398,15 @@ export interface AdminStatsStore {
   getGlobalStats(): Promise<AdminGlobalStats>;
 }
 
+/**
+ * The instance's runtime settings. `read` fills in the default for any
+ * setting never changed, so callers always get a whole `SiteSettings`.
+ */
+export interface SiteSettingsStore {
+  read(): Promise<SiteSettings>;
+  setNativeRegistration(input: SetNativeRegistrationInput): Promise<void>;
+}
+
 export interface AppStores {
   readonly adminAudit: AdminAuditStore;
   readonly adminStats: AdminStatsStore;
@@ -1406,5 +1419,6 @@ export interface AppStores {
   readonly lti: LtiStore;
   readonly platformCapabilities: PlatformCapabilityStore;
   readonly scores: ScoreStore;
+  readonly siteSettings: SiteSettingsStore;
   readonly users: UserStore;
 }

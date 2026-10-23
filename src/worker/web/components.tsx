@@ -1,9 +1,8 @@
 import type { Context } from "hono";
-import { getCookie } from "hono/cookie";
 import { raw } from "hono/html";
 import type { Child, FC } from "hono/jsx";
 
-import { CSRF_COOKIE_NAME } from "../application/auth";
+import { readCsrfCookie } from "../cookies";
 import type { StoredPointsDrift } from "../domain/assessment";
 import type { ExerciseAnswerReview } from "../domain/content";
 import type { AppBindings } from "../http";
@@ -745,7 +744,7 @@ export const ChoiceNotes: FC<{
 export const CsrfInput: FC<{ readonly context: Context<AppBindings> }> = ({
   context,
 }) => {
-  const csrfToken = getCookie(context, CSRF_COOKIE_NAME);
+  const csrfToken = readCsrfCookie(context);
 
   if (csrfToken === undefined) {
     return null;

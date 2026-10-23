@@ -32,6 +32,52 @@ export function cookieSecure(context: Context<AppBindings>): boolean {
   return requestIsSecure(context);
 }
 
+/**
+ * The session and CSRF cookies' base names. On a secure request each carries
+ * the `__Host-` prefix (`authCookiePrefix`), so read and write them only
+ * through `readSessionCookie`, `readCsrfCookie` and `session-cookies.ts`.
+ */
+export const SESSION_COOKIE_NAME = "carnap_session";
+export const CSRF_COOKIE_NAME = "carnap_csrf";
+
+/**
+ * `"host"` whenever the cookies can be `Secure`: the session and CSRF cookies
+ * are then named `__Host-carnap_session` and `__Host-carnap_csrf`. A browser
+ * accepts a `__Host-` cookie only if it is `Secure`, has `Path=/`, and names
+ * no `Domain`, and only from the host itself — so a sibling site under a
+ * shared parent domain, or a plain-http response, cannot plant one for us.
+ * Without the prefix such a site could set a domain-wide session cookie and
+ * sign a reader in as someone else (session fixation). Plain-http local
+ * development keeps the bare names, since there is no `Secure` to require.
+ */
+export function authCookiePrefix(
+  context: Context<AppBindings>,
+): "host" | undefined {
+  return cookieSecure(context) ? "host" : undefined;
+}
+
+/** The `secure` and `prefix` options every write of those cookies carries. */
+export function authCookieOptions(context: Context<AppBindings>): {
+  readonly prefix?: "host";
+  readonly secure: boolean;
+} {
+  return cookieSecure(context)
+    ? { prefix: "host", secure: true }
+    : { secure: false };
+}
+
+export function readSessionCookie(
+  context: Context<AppBindings>,
+): string | undefined {
+  return getCookie(context, SESSION_COOKIE_NAME, authCookiePrefix(context));
+}
+
+export function readCsrfCookie(
+  context: Context<AppBindings>,
+): string | undefined {
+  return getCookie(context, CSRF_COOKIE_NAME, authCookiePrefix(context));
+}
+
 /** Whether the request already carries a chosen locale. */
 export function hasLocaleCookie(context: Context<AppBindings>): boolean {
   return getCookie(context, LOCALE_COOKIE_NAME) !== undefined;
