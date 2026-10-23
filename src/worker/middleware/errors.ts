@@ -104,6 +104,8 @@ function logServerError(
     method: context.req.method,
     path: new URL(context.req.url).pathname,
     requestId: requestId(context),
+    // Unset when the request failed before the actor was resolved.
+    userId: context.get("actor")?.user.id,
     ...(error instanceof Error && error.stack !== undefined
       ? { stack: error.stack }
       : {}),

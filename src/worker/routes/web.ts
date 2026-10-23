@@ -4,7 +4,7 @@ import type {
   AuthenticatedActor,
   StartedNativeLogin,
 } from "../application/auth";
-import { AuthService, LOGIN_TTL_SECONDS } from "../application/auth";
+import { LOGIN_TTL_SECONDS } from "../application/auth";
 import { AppHttpError, badRequest } from "../application/errors";
 import {
   clearLocaleCookie,
@@ -25,8 +25,6 @@ import { deferred } from "../i18n/deferred";
 import type { Translator } from "../i18n/translator";
 import { loginEmailSenderFromEnv } from "../infrastructure/email/resend";
 import { turnstileForContext } from "../infrastructure/turnstile";
-import { logSignInFailed } from "../request-log";
-import { storesForContext } from "../stores";
 import {
   renderLoginError,
   renderLoginPage,
@@ -46,6 +44,7 @@ import {
   safeNext,
 } from "../web/html";
 import { renderProfile } from "../web/profile";
+import { authServiceForContext } from "./auth";
 import {
   deliverEmailChangeRequest,
   emailChangeServiceForContext,
@@ -56,10 +55,6 @@ import { webActorOrLogin } from "./support";
 interface LoginDeliveryResult {
   readonly confirmationUrl: string;
   readonly delivered: boolean;
-}
-
-function authService(context: Context<AppBindings>): AuthService {
-  return new AuthService({ stores: storesForContext(context) });
 }
 
 function loginConfirmUrl(
@@ -172,7 +167,7 @@ webRoutes.post("/login", async (context) => {
   const turnstileToken = fieldValue(form.get("cf-turnstile-response"));
 
   try {
-    const started = await authService(context).startNativeLogin({
+    const started = await authServiceForContext(context).startNativeLogin({
       email,
       ipAddress: clientIpAddress(context),
       turnstile: turnstileForContext(context),
@@ -185,8 +180,6 @@ webRoutes.post("/login", async (context) => {
       delivery.delivered ? null : delivery.confirmationUrl,
     );
   } catch (error) {
-    logSignInFailed(context, "request", error, email);
-
     if (error instanceof AppHttpError) {
       if (error.retryAfterSeconds !== undefined) {
         context.header("Retry-After", String(error.retryAfterSeconds));
@@ -228,9 +221,12 @@ webRoutes.get("/login/confirm", async (context) => {
       );
     }
 
-    const confirmed = await authService(context).confirmNativeLogin(token, {
-      enrollmentToken: enrollmentTokenOf(next),
-    });
+    const confirmed = await authServiceForContext(context).confirmNativeLogin(
+      token,
+      {
+        enrollmentToken: enrollmentTokenOf(next),
+      },
+    );
 
     // An address a recent change moved its account away from opens only that
     // change's undo, which the page behind this link offers.
@@ -245,8 +241,6 @@ webRoutes.get("/login/confirm", async (context) => {
     if (!(error instanceof AppHttpError)) {
       throw error;
     }
-
-    logSignInFailed(context, "confirm", error);
 
     const i18n = context.get("i18n");
 
@@ -275,7 +269,8 @@ webRoutes.get("/profile", async (context) => {
   }
 
   const actor = requireAuthenticated(context);
-  const account = await authService(context).describeOwnAccount(actor);
+  const account =
+    await authServiceForContext(context).describeOwnAccount(actor);
   const url = new URL(context.req.url);
   const i18n = context.get("i18n");
   const notice = url.searchParams.has("saved")
@@ -318,7 +313,7 @@ webRoutes.post("/profile", async (context) => {
   const locale = fieldValue(form.get("locale"));
 
   try {
-    await authService(context).updateOwnProfile(actor, {
+    await authServiceForContext(context).updateOwnProfile(actor, {
       locale: locale === "" ? null : locale,
       name,
     });
@@ -334,7 +329,8 @@ webRoutes.post("/profile", async (context) => {
     return context.redirect("/profile?saved=1", 303);
   } catch (error) {
     if (error instanceof AppHttpError) {
-      const account = await authService(context).describeOwnAccount(actor);
+      const account =
+        await authServiceForContext(context).describeOwnAccount(actor);
 
       return renderProfile(context, actor, account, {
         error: error.localize(context.get("i18n")),
@@ -374,7 +370,7 @@ webRoutes.post("/profile/identities/remove", async (context) => {
   const identityId = fieldValue(form.get("identityId"));
 
   try {
-    await authService(context).removeOwnIdentity(actor, identityId);
+    await authServiceForContext(context).removeOwnIdentity(actor, identityId);
 
     return redirect("/profile?unlinked=1", 303);
   } catch (error) {
@@ -424,7 +420,8 @@ webRoutes.post("/profile/email", async (context) => {
       return redirect("/profile?sent=1", 303);
     }
 
-    const account = await authService(context).describeOwnAccount(actor);
+    const account =
+      await authServiceForContext(context).describeOwnAccount(actor);
 
     return renderProfile(context, actor, account, {
       localEmailLink: localLink,
@@ -539,7 +536,8 @@ async function profileErrorOrThrow(
     throw error;
   }
 
-  const account = await authService(context).describeOwnAccount(actor);
+  const account =
+    await authServiceForContext(context).describeOwnAccount(actor);
 
   return renderProfile(context, actor, account, {
     ...values,
@@ -552,7 +550,10 @@ webRoutes.post("/logout", async (context) => {
   const sessionToken = readSessionCookie(context);
 
   if (sessionToken !== undefined) {
-    await authService(context).logout(sessionToken);
+    await authServiceForContext(context).logout(
+      sessionToken,
+      context.get("actor"),
+    );
   }
 
   clearSessionCookies(context);

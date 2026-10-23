@@ -10,7 +10,7 @@ import {
 } from "../http";
 import { deferred } from "../i18n/deferred";
 import { turnstileForContext } from "../infrastructure/turnstile";
-import { logSignInFailed } from "../request-log";
+import { requestLog } from "../request-log";
 import { storesForContext } from "../stores";
 import { clearSessionCookies, setSessionCookies } from "./session-cookies";
 import { readJsonObject } from "./support";
@@ -26,8 +26,17 @@ interface ConfirmLoginBody {
   readonly loginToken?: unknown;
 }
 
-function authService(context: Context<AppBindings>): AuthService {
-  return new AuthService({ stores: storesForContext(context) });
+/**
+ * The auth service for a request: its stores, and its sign-in lines bound to
+ * the request's address and ID.
+ */
+export function authServiceForContext(
+  context: Context<AppBindings>,
+): AuthService {
+  return new AuthService({
+    log: requestLog(context),
+    stores: storesForContext(context),
+  });
 }
 
 function publicUser(actor: AuthenticatedActor) {
@@ -50,22 +59,16 @@ authRoutes.post("/login/start", async (context) => {
     );
   }
 
-  const email = body.email;
-  const started = await authService(context)
-    .startNativeLogin({
-      email,
-      ipAddress: clientIpAddress(context),
-      turnstile: turnstileForContext(context),
-      turnstileToken:
-        typeof body.turnstileToken === "string" &&
-        body.turnstileToken.length > 0
-          ? body.turnstileToken
-          : null,
-    })
-    .catch((error: unknown) => {
-      logSignInFailed(context, "request", error, email);
-      throw error;
-    });
+  const started = await authServiceForContext(context).startNativeLogin({
+    email: body.email,
+    ipAddress: clientIpAddress(context),
+    turnstile: turnstileForContext(context),
+    turnstileToken:
+      typeof body.turnstileToken === "string" &&
+      body.turnstileToken.length > 0
+        ? body.turnstileToken
+        : null,
+  });
   const includeLoginToken = context.env.CARNAP_ENV === "local";
 
   return context.json(
@@ -90,17 +93,15 @@ authRoutes.post("/login/confirm", async (context) => {
     );
   }
 
-  const confirmed = await authService(context)
-    .confirmNativeLogin(body.loginToken, {
+  const confirmed = await authServiceForContext(context).confirmNativeLogin(
+    body.loginToken,
+    {
       enrollmentToken:
         typeof body.enrollmentToken === "string"
           ? body.enrollmentToken
           : null,
-    })
-    .catch((error: unknown) => {
-      logSignInFailed(context, "confirm", error);
-      throw error;
-    });
+    },
+  );
 
   // The address was moved off its account recently; it opens that change's
   // undo, which is a page, not a session.
@@ -127,12 +128,11 @@ authRoutes.get("/me", (context) => {
 });
 
 authRoutes.post("/logout", async (context) => {
-  requireAuthenticated(context);
-
+  const actor = requireAuthenticated(context);
   const sessionToken = readSessionCookie(context);
 
   if (sessionToken !== undefined) {
-    await authService(context).logout(sessionToken);
+    await authServiceForContext(context).logout(sessionToken, actor);
   }
 
   clearSessionCookies(context);

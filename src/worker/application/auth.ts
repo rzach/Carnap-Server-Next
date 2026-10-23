@@ -12,6 +12,7 @@ import {
 import { deferred } from "../i18n/deferred";
 import { isSelectableLocale } from "../i18n/locales";
 import type { Translator } from "../i18n/translator";
+import { type EventLog, logEvent } from "../log";
 import {
   emailAuthority,
   identityPlatformId,
@@ -141,6 +142,33 @@ export interface ConfirmNativeLoginOptions {
   readonly enrollmentToken?: string | null;
 }
 
+/**
+ * How a session was earned, for the `sign_in` log line: an email link, an
+ * LMS launch, or the link that confirms or undoes an address change.
+ */
+export type SignInMethod = "email" | "email_change" | "email_undo" | "lti";
+
+export interface MintSessionOptions {
+  readonly method: SignInMethod;
+  /**
+   * Who may frame the session. Absent or null for every sign-in that is not
+   * a launch: the session is then framable by nobody but us.
+   */
+  readonly frameAncestorOrigin?: string | null;
+  /**
+   * For a launch: the LMS, and its own ID for the user, so the `sign_in` line
+   * can be matched against the LMS's logs.
+   */
+  readonly lms?: { readonly issuer: string; readonly subject: string };
+}
+
+/**
+ * Where an email sign-in was refused: asking for the link, opening it, or —
+ * for any method — at the session itself, which a suspended account cannot
+ * have.
+ */
+type SignInStage = "confirm" | "request" | "session";
+
 export interface MintedSession {
   readonly actor: AuthenticatedActor;
   readonly csrfToken: string;
@@ -194,6 +222,11 @@ export interface AuthServiceOptions {
    * had — leaving `POST /login` an open mail relay for anyone who found it.)
    */
   readonly loginRateLimiter?: LoginRateLimiter;
+  /**
+   * Where the `sign_in`, `sign_in_failed` and `sign_out` lines go. Routes pass
+   * `requestLog(context)`, which adds the client's address and the request ID.
+   */
+  readonly log?: EventLog;
   readonly now?: () => Date;
 }
 
@@ -242,6 +275,18 @@ export class AuthService {
   ): Promise<StartedNativeLogin> {
     const email = normalizeEmail(input.email);
 
+    try {
+      return await this.issueLoginLink(email, input);
+    } catch (error) {
+      await this.logRefusedSignIn("request", error, email);
+      throw error;
+    }
+  }
+
+  private async issueLoginLink(
+    email: string,
+    input: StartNativeLoginInput,
+  ): Promise<StartedNativeLogin> {
     assertEmail(email);
 
     // Before the rate limiter, so a botted request is refused by the challenge
@@ -293,6 +338,43 @@ export class AuthService {
     token: string,
     options: ConfirmNativeLoginOptions = {},
   ): Promise<ConfirmedNativeLogin> {
+    const nowDate = this.options.now?.() ?? new Date();
+    // The address the link was sent to, once the link is found, for the
+    // refusal line. The session itself is outside the `try`: `mintSession`
+    // logs its own refusal.
+    let email: string | undefined;
+    let user: User;
+
+    try {
+      email = await this.consumeLoginLink(token, timestampNow(nowDate));
+
+      const held = await this.reissueHeldAddressUndo(email, nowDate);
+
+      if (held !== null) {
+        return { kind: "undo", undoToken: held };
+      }
+
+      user = await this.resolveNativeUser(
+        email,
+        nowDate,
+        options.enrollmentToken ?? null,
+      );
+    } catch (error) {
+      await this.logRefusedSignIn("confirm", error, email);
+      throw error;
+    }
+
+    return {
+      kind: "session",
+      ...(await this.mintSession(user, { method: "email" })),
+    };
+  }
+
+  /** Spend a login link, returning the address it was sent to. */
+  private async consumeLoginLink(
+    token: string,
+    now: Timestamp,
+  ): Promise<string> {
     if (token.trim().length === 0) {
       throw badRequest(
         "invalid_login_token",
@@ -300,12 +382,9 @@ export class AuthService {
       );
     }
 
-    const nowDate = this.options.now?.() ?? new Date();
-    const now = timestampNow(nowDate);
-    const tokenHash = await hashAuthToken(token);
     const challenge =
       await this.options.stores.auth.consumeNativeLoginChallenge(
-        tokenHash,
+        await hashAuthToken(token),
         now,
       );
 
@@ -317,19 +396,7 @@ export class AuthService {
       );
     }
 
-    const held = await this.reissueHeldAddressUndo(challenge.email, nowDate);
-
-    if (held !== null) {
-      return { kind: "undo", undoToken: held };
-    }
-
-    const user = await this.resolveNativeUser(
-      challenge.email,
-      nowDate,
-      options.enrollmentToken ?? null,
-    );
-
-    return { kind: "session", ...(await this.mintSession(user)) };
+    return challenge.email;
   }
 
   /**
@@ -366,19 +433,27 @@ export class AuthService {
   /**
    * Create an application session for a user whose identity has already been
    * proven — by a consumed native login challenge or a validated LTI launch.
+   * Every session starts here, so this is where `sign_in` is logged, and where
+   * a suspended account's refusal is, whichever way it came.
    *
-   * `frameAncestorOrigin` defaults to null, which is the answer for every
-   * sign-in that is not a launch: the session is framable by nobody but us.
-   * It is a property of the session rather than of the user because the same
-   * person can hold both kinds at once — an instructor signed in directly in
-   * one tab and launched into the LMS in another — and the LMS's permission
-   * belongs only to the second.
+   * `frameAncestorOrigin` is a property of the session rather than of the
+   * user because the same person can hold both kinds at once — an instructor
+   * signed in directly in one tab and launched into the LMS in another — and
+   * the LMS's permission belongs only to the second.
    */
   async mintSession(
     user: User,
-    frameAncestorOrigin: string | null = null,
+    options: MintSessionOptions,
   ): Promise<MintedSession> {
     if (user.disabledAt !== null) {
+      this.log("warn", "sign_in_failed", {
+        email: user.email,
+        method: options.method,
+        reason: "disabled_user",
+        stage: "session",
+        userId: user.id,
+      });
+
       throw forbidden("disabled_user");
     }
 
@@ -392,7 +467,15 @@ export class AuthService {
       csrfTokenHash: await hashAuthToken(csrfToken),
       createdAt: now,
       expiresAt: addSeconds(nowDate, SESSION_TTL_SECONDS),
-      frameAncestorOrigin,
+      frameAncestorOrigin: options.frameAncestorOrigin ?? null,
+    });
+
+    this.log("info", "sign_in", {
+      email: user.email,
+      issuer: options.lms?.issuer,
+      method: options.method,
+      subject: options.lms?.subject,
+      userId: user.id,
     });
 
     return {
@@ -434,7 +517,11 @@ export class AuthService {
     };
   }
 
-  async logout(sessionToken: string): Promise<void> {
+  /** End the session `sessionToken` names; `actor` is who held it, if known. */
+  async logout(
+    sessionToken: string,
+    actor: AuthenticatedActor | null,
+  ): Promise<void> {
     const tokenHash = await hashAuthToken(sessionToken);
     const nowDate = this.options.now?.() ?? new Date();
 
@@ -442,6 +529,10 @@ export class AuthService {
       tokenHash,
       timestampNow(nowDate),
     );
+
+    if (actor !== null) {
+      this.log("info", "sign_out", { userId: actor.user.id });
+    }
   }
 
   /**
@@ -630,6 +721,42 @@ export class AuthService {
     });
 
     return this.withVerifiedEmail(user, nowDate);
+  }
+
+  private log(...line: Parameters<EventLog>): void {
+    (this.options.log ?? logEvent)(...line);
+  }
+
+  /**
+   * A refused email sign-in, as a `sign_in_failed` line: the address asked
+   * for, and the account it belongs to when there is one, so an operator can
+   * tell an attack on one person from a typo. Only the reply to the requester
+   * must answer every address alike; the log is the operator's. Anything but
+   * an `AppHttpError` is a fault, which `request_failed` reports instead.
+   */
+  private async logRefusedSignIn(
+    stage: SignInStage,
+    error: unknown,
+    email?: string,
+  ): Promise<void> {
+    if (!(error instanceof AppHttpError)) {
+      return;
+    }
+
+    // A refused address may be anything a requester typed: keep what fits in
+    // an address, and look up only what could be one.
+    const address = email?.slice(0, EMAIL_MAX_LENGTH);
+    const account =
+      address === undefined || error.code === "invalid_email"
+        ? null
+        : await this.options.stores.users.getByEmail(address);
+
+    this.log("warn", "sign_in_failed", {
+      email: address,
+      reason: error.code,
+      stage,
+      userId: account?.id,
+    });
   }
 
   /**

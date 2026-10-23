@@ -1,6 +1,5 @@
 import { type Context, Hono } from "hono";
 
-import { AuthService } from "../application/auth";
 import { AppHttpError } from "../application/errors";
 import { GradePassbackService } from "../application/grade-passback";
 import {
@@ -12,7 +11,6 @@ import {
 import { hasLocaleCookie, setLocaleCookie } from "../cookies";
 import {
   type AppBindings,
-  clientIpAddress,
   publicRequestUrl,
   requireAuthenticated,
 } from "../http";
@@ -29,6 +27,7 @@ import { logEvent } from "../log";
 import { applyLocale } from "../middleware/locale";
 import { allowFrameAncestor } from "../middleware/security-headers";
 import { kickGradePassback } from "../passback";
+import { logRequestEvent, requestLog } from "../request-log";
 import { storesForContext } from "../stores";
 import { renderFormError } from "../web/errors";
 import { fieldValue, redirect } from "../web/html";
@@ -40,6 +39,7 @@ import {
   renderLtiLinkConfirmed,
   renderLtiLinkPending,
 } from "../web/lti";
+import { authServiceForContext } from "./auth";
 import { emailChangeNotifierForContext } from "./email-change";
 import { setSessionCookies } from "./session-cookies";
 
@@ -49,9 +49,10 @@ export function ltiServiceForContext(
   const stores = storesForContext(context);
 
   return new LtiService({
-    auth: new AuthService({ stores }),
+    auth: authServiceForContext(context),
     emailNotifier: emailChangeNotifierForContext(context),
     keyResolver: context.get("ltiKeyResolver") ?? remoteLtiKeyResolver,
+    log: requestLog(context),
     requestId: context.get("requestId"),
     stores,
   });
@@ -68,10 +69,8 @@ function renderLaunchFailure(
   error: unknown,
 ): Response {
   if (error instanceof LtiLaunchError) {
-    logEvent("warn", "lti_launch_failed", {
+    logRequestEvent(context, "warn", "lti_launch_failed", {
       code: error.code,
-      ip: clientIpAddress(context) ?? undefined,
-      requestId: context.get("requestId"),
       ...error.logContext,
     });
 
@@ -83,10 +82,8 @@ function renderLaunchFailure(
   }
 
   if (error instanceof AppHttpError) {
-    logEvent("warn", "lti_launch_failed", {
+    logRequestEvent(context, "warn", "lti_launch_failed", {
       code: error.code,
-      ip: clientIpAddress(context) ?? undefined,
-      requestId: context.get("requestId"),
     });
 
     return renderLtiError(context, {

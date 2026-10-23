@@ -16,7 +16,7 @@ import type {
 import type { CourseMembership } from "../domain/courses";
 import type { User } from "../domain/users";
 import { type AppBindings, requireAuthenticated } from "../http";
-import { logRequestEvent } from "../request-log";
+import { logRequestEvent, requestLog } from "../request-log";
 import { storesForContext } from "../stores";
 import {
   type AuditDirectory,
@@ -64,6 +64,7 @@ interface MembershipBody {
 function adminService(context: Context<AppBindings>): AdminService {
   return new AdminService({
     emailNotifier: emailChangeNotifierForContext(context),
+    log: requestLog(context),
     requestId: context.get("requestId"),
     stores: storesForContext(context),
   });

@@ -10,15 +10,29 @@ import type { JsonValue } from "./domain/json";
  *
  * Errors go to stderr and everything else to stdout. Docker collects both.
  *
- * Never put a token, a key, a whole JWT or an email address in `fields`. The
- * event names and their fields are listed in docs/self-hosting.md (Logging),
- * because operators build alerts on them.
+ * Never put a secret in `fields`: a login, session, CSRF or bootstrap token,
+ * a key, a whole JWT. People are named by user ID; the sign-in and
+ * address-change lines also carry the email address, because that is what an
+ * institution's security team searches by. The event names and their fields
+ * are listed in docs/self-hosting.md (Logging), because operators build
+ * alerts on them.
  */
 
 export type LogLevel = "error" | "info" | "warn";
 
 /** `undefined` fields are dropped, so a caller can pass optional values. */
 export type LogFields = Readonly<Record<string, JsonValue | undefined>>;
+
+/**
+ * Somewhere a service writes its lines: `logEvent` itself, or one a route
+ * binds to its request (`requestLog`), which adds the client's address and
+ * the request ID the service does not know.
+ */
+export type EventLog = (
+  level: LogLevel,
+  event: string,
+  fields?: LogFields,
+) => void;
 
 export function logEvent(
   level: LogLevel,
@@ -44,14 +58,4 @@ export function logEvent(
 /** An error's message for a log field, whatever was thrown. */
 export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
-}
-
-/**
- * The domain of an address, the most of it a log line carries: enough to see
- * an attack aimed at one institution, without writing addresses into logs.
- */
-export function emailDomain(email: string): string | undefined {
-  const at = email.lastIndexOf("@");
-
-  return at < 0 ? undefined : email.slice(at + 1).toLowerCase();
 }

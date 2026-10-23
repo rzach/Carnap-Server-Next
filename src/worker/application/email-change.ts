@@ -6,6 +6,7 @@ import {
 } from "../domain/users";
 import { deferred } from "../i18n/deferred";
 import type { Translator } from "../i18n/translator";
+import { type EventLog, logEvent } from "../log";
 import {
   type AuthenticatedActor,
   type AuthService,
@@ -90,6 +91,30 @@ export interface SendEmailTakenInput {
   readonly email: string;
   readonly i18n: Translator;
   readonly locale: string;
+}
+
+/** Who moved an account's address, as its `email_changed` line says. */
+export type EmailChangedBy = "admin" | "lms" | "undo" | "user";
+
+/**
+ * Log an address change as an `email_changed` line. Every way an address can
+ * move writes the same line, so one search finds them all: the address is
+ * how an account signs in, and moving it is how an account is taken over.
+ */
+export function logEmailChanged(
+  log: EventLog | undefined,
+  change: {
+    readonly by: EmailChangedBy;
+    readonly from: string;
+    readonly to: string;
+    readonly userId: string;
+    /** Who made the change, when it was not the account's holder. */
+    readonly actorUserId?: string;
+    /** The LMS that asserted the address, for `by: "lms"`. */
+    readonly platformId?: string | null;
+  },
+): void {
+  (log ?? logEvent)("info", "email_changed", { ...change });
 }
 
 /**
@@ -194,6 +219,8 @@ export interface EmailChangeServiceOptions {
   readonly auth: AuthService;
   /** As `AuthService`'s: omitting it means the real limiter, never none. */
   readonly loginRateLimiter?: LoginRateLimiter;
+  /** Where the `email_changed` lines go; see `AuthServiceOptions.log`. */
+  readonly log?: EventLog;
   readonly notifier: EmailChangeNotifier | null;
   readonly now?: () => Date;
   readonly stores: AppStores;
@@ -337,8 +364,14 @@ export class EmailChangeService {
     }
 
     await this.announce(before, after, nowDate);
+    logEmailChanged(this.options.log, {
+      by: "user",
+      from: before.email,
+      to: after.email,
+      userId: after.id,
+    });
 
-    return this.options.auth.mintSession(after);
+    return this.options.auth.mintSession(after, { method: "email_change" });
   }
 
   async describeUndo(token: string): Promise<PendingEmailUndo> {
@@ -381,8 +414,14 @@ export class EmailChangeService {
     }
 
     await this.options.stores.auth.revokeSessionsForUser(restored.id, now);
+    logEmailChanged(this.options.log, {
+      by: "undo",
+      from: pending.toEmail,
+      to: restored.email,
+      userId: restored.id,
+    });
 
-    return this.options.auth.mintSession(restored);
+    return this.options.auth.mintSession(restored, { method: "email_undo" });
   }
 
   /**

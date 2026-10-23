@@ -14,7 +14,7 @@ import {
 } from "../domain/site-settings";
 import type { User } from "../domain/users";
 import { deferred } from "../i18n/deferred";
-import { emailDomain } from "../log";
+import type { EventLog } from "../log";
 import { appendAdminAudit, auditMoment } from "./admin-audit";
 import { type AuthenticatedActor, assertEmail, normalizeEmail } from "./auth";
 import { requirePlatformCapability } from "./authorization";
@@ -23,6 +23,7 @@ import { emailChangeRefusal, loadEmailAuthority } from "./email-authority";
 import {
   announceEmailChange,
   type EmailChangeNotifier,
+  logEmailChanged,
 } from "./email-change";
 import {
   AppHttpError,
@@ -36,6 +37,8 @@ import { secretsMatch } from "./tokens";
 export interface AdminServiceOptions {
   /** Tells an address an administrator moved an account away from. */
   readonly emailNotifier?: EmailChangeNotifier | null;
+  /** Where the `email_changed` lines go; see `AuthServiceOptions.log`. */
+  readonly log?: EventLog;
   readonly now?: () => Date;
   readonly requestId: string;
   readonly stores: AppStores;
@@ -430,13 +433,16 @@ export class AdminService {
       // Both addresses, because this is the record someone reads when an
       // account turns out to have been handed to the wrong mailbox.
       metadata: { from: user.email, to: email },
-      logMetadata: {
-        fromDomain: emailDomain(user.email) ?? null,
-        toDomain: emailDomain(email) ?? null,
-      },
       targetCourseId: null,
       targetUserId: user.id,
       timestamp: now.timestamp,
+    });
+    logEmailChanged(this.options.log, {
+      actorUserId: actor.user.id,
+      by: "admin",
+      from: user.email,
+      to: changed.email,
+      userId: user.id,
     });
 
     await announceEmailChange(

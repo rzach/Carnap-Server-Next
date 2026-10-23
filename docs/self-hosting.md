@@ -413,12 +413,19 @@ cannot express that LMS exception and will break embedded launches.
 The application writes one JSON object per line: errors to stderr, everything
 else to stdout. Every line has `time` (UTC, ISO 8601), `level` (`info`,
 `warn` or `error`) and `event`, plus fields that depend on the event. Lines
-carry request IDs, user IDs and, for sign-ins, an address's domain. They never
-carry tokens, keys, JWTs or whole email addresses.
+name people by Carnap user ID, which the admin page resolves at
+`/admin/users/<id>`. The sign-in lines and the address-change lines also carry
+the email address, since that is what a security team searches by. No line
+carries a secret: login links, session and CSRF tokens, the bootstrap token,
+keys and JWTs never reach the log.
 
 ```json
-{"time":"2026-10-22T14:03:11.204Z","level":"warn","event":"sign_in_failed","ip":"203.0.113.7","requestId":"0b5c…","reason":"invalid_login_token","stage":"confirm"}
+{"time":"2026-10-22T14:03:11.204Z","level":"warn","event":"sign_in_failed","ip":"203.0.113.7","requestId":"0b5c…","email":"ada@example.edu","reason":"login_rate_limited","stage":"request","userId":"01a1…"}
 ```
+
+Because these lines hold email addresses, the logs are personal data. Who can
+read them, and how long they are kept, is yours to set, as for any other
+system's authentication logs.
 
 `ip` is the address the request reports: `CF-Connecting-IP`, or else the first
 `X-Forwarded-For` entry. Off Cloudflare, without a proxy that sets those
@@ -428,16 +435,20 @@ headers, treat it as client-supplied.
 
 | Event | Level | Written when | Fields |
 | --- | --- | --- | --- |
-| `audit` | info | Any audited action: platform capability grants and revocations, the first administrator, account suspension and email changes, admin course-membership changes, the registration setting, LTI platform and deployment changes, courses an LMS creates, and staff changes instructors make (`course.staff_added`, `course.membership_role_changed`, `course.membership_status_changed`). The same event appears in the admin audit log, except that an email change's line carries the two addresses' domains (`fromDomain`, `toDomain`) where the audit row keeps the addresses. | `action`, `actorUserId`, `targetUserId`, `targetCourseId`, `metadata`, `auditEventId`, `requestId` |
-| `sign_in_failed` | warn | An email sign-in is refused: at `stage: "request"` for an invalid address, the throttle (`login_rate_limited`) or the human check; at `stage: "confirm"` for an expired or used link (`invalid_login_token`), a suspended account (`disabled_user`) or closed registration (`registration_closed`). | `stage`, `reason`, `emailDomain` (request stage only), `ip`, `requestId` |
+| `sign_in` | info | A session starts: by email link (`method: "email"`), by LMS launch (`"lti"`), or by the link that confirms or undoes an address change (`"email_change"`, `"email_undo"`). | `userId`, `email`, `method`, `issuer` and `subject` (the LMS's own ID for the user; LTI only), `ip`, `requestId` |
+| `sign_out` | info | A signed-in user signs out. | `userId`, `ip`, `requestId` |
+| `sign_in_failed` | warn | A sign-in is refused: at `stage: "request"` for an invalid address, the throttle (`login_rate_limited`) or the human check; at `stage: "confirm"` for an expired or used link (`invalid_login_token`) or closed registration (`registration_closed`); at `stage: "session"` for a suspended account (`disabled_user`), whichever way it signed in. | `stage`, `reason`, `email` (the address asked for or the link was sent to, when known), `userId` (when the address has an account), `method` (session stage), `ip`, `requestId` |
+| `email_changed` | info | An account's address changes, however it was made: the holder's confirmed request (`by: "user"`), its undo (`"undo"`), the LMS (`"lms"`), or an administrator (`"admin"`, which also writes an `audit` line). | `userId`, `from`, `to`, `by`, `actorUserId` (admin), `platformId` (LMS), `ip`, `requestId` |
+| `audit` | info | Any audited action: platform capability grants and revocations, the first administrator, account suspension and email changes, admin course-membership changes, the registration setting, LTI platform and deployment changes, courses an LMS creates, and staff changes instructors make (`course.staff_added`, `course.membership_role_changed`, `course.membership_status_changed`). The same event appears in the admin audit log. | `action`, `actorUserId`, `targetUserId`, `targetCourseId`, `metadata`, `auditEventId`, `requestId` |
 | `csrf_rejected` | warn | A signed-in, state-changing request fails the CSRF check. | `userId`, `method`, `path`, `ip`, `requestId` |
 | `bootstrap_refused` | warn | `/admin/bootstrap` refuses: no token configured, a wrong token, or an administrator already exists. | `reason`, `userId`, `ip`, `requestId` |
-| `lti_launch_failed` | warn | An LTI login, launch, deep-linking or link step is refused. | `code`, `issuer` and related identifiers, `ip`, `requestId` |
+| `lti_launch_failed` | warn | An LTI login, launch, deep-linking or link step is refused. Once the platform's token has been verified, the line names the LMS user (`subject`), and a suspended account also its `userId`. | `code`, `issuer` and related identifiers, `subject`, `ip`, `requestId` |
 
 Operational events include `request_failed` (an unexpected server error, with
-its stack), the `lti_grade_passback_*` events, `lti_tool_key_invalid`,
-`email_change_notice_failed`, and, for the standalone server,
-`server_started`, `migrations_applied` and `server_stopping`.
+its stack and the signed-in user's `userId`), the `lti_grade_passback_*`
+events, `lti_tool_key_invalid`, `email_change_notice_failed`, and, for the
+standalone server, `server_started`, `migrations_applied` and
+`server_stopping`.
 
 ### Collecting the logs
 

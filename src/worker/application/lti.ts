@@ -33,6 +33,7 @@ import {
   type Translator,
   translateMessage,
 } from "../i18n/translator";
+import type { EventLog } from "../log";
 import { appendAdminAudit } from "./admin-audit";
 import type { AuthenticatedActor, AuthService, MintedSession } from "./auth";
 import { requireInstructor } from "./authorization";
@@ -40,6 +41,7 @@ import { contentArtifactFromRevision } from "./content/artifact";
 import {
   announceEmailChange,
   type EmailChangeNotifier,
+  logEmailChanged,
 } from "./email-change";
 import { badRequest, forbidden } from "./errors";
 import { planGradeJob, planGradeJobForSubject } from "./grade-passback";
@@ -114,6 +116,14 @@ export class LtiLaunchError extends Error {
     super(typeof message === "string" ? message : resolveMessage(message));
     this.name = "LtiLaunchError";
     this.translatable = typeof message === "string" ? undefined : message;
+  }
+
+  /** The same refusal, with `fields` added to its log line. */
+  withLogContext(fields: Record<string, string | null>): LtiLaunchError {
+    return new LtiLaunchError(this.code, this.translatable ?? this.message, {
+      ...this.logContext,
+      ...fields,
+    });
   }
 
   /**
@@ -223,6 +233,8 @@ export interface LtiServiceOptions {
    * an administrator.
    */
   readonly emailNotifier?: EmailChangeNotifier | null;
+  /** Where the `email_changed` lines go; see `AuthServiceOptions.log`. */
+  readonly log?: EventLog;
   readonly now?: () => Date;
   readonly requestId?: string;
 }
@@ -482,12 +494,33 @@ export class LtiService {
 
     const payload = await this.verifyToken(input.idToken, platform);
 
+    // From here the token is the platform's own word, so a refusal can name
+    // the LMS user it was about.
+    try {
+      return await this.handleVerifiedLaunch(
+        input,
+        platform,
+        stateRow.nonceHash,
+        payload,
+        nowDate,
+      );
+    } catch (error) {
+      throw error instanceof LtiLaunchError
+        ? error.withLogContext({ subject: stringClaim(payload, "sub") })
+        : error;
+    }
+  }
+
+  private async handleVerifiedLaunch(
+    input: HandleLtiLaunchInput,
+    platform: LtiPlatform,
+    nonceHash: string,
+    payload: JWTPayload,
+    nowDate: Date,
+  ): Promise<LtiLaunchOutcome> {
     const nonce = stringClaim(payload, "nonce");
 
-    if (
-      nonce === null ||
-      (await hashAuthToken(nonce)) !== stateRow.nonceHash
-    ) {
+    if (nonce === null || (await hashAuthToken(nonce)) !== nonceHash) {
       throw new LtiLaunchError(
         "lti_nonce_mismatch",
         deferred.i18n.t(
@@ -562,7 +595,7 @@ export class LtiService {
       throw new LtiLaunchError(
         "lti_user_disabled",
         deferred.i18n.t("Your Carnap account is disabled."),
-        { issuer: platform.issuer },
+        { issuer: platform.issuer, userId: user.id },
       );
     }
 
@@ -587,6 +620,7 @@ export class LtiService {
         courseId,
         role,
         user,
+        launch.subject,
         nowDate,
         input.frameAncestorOrigin,
       );
@@ -600,10 +634,11 @@ export class LtiService {
       user.id,
       nowDate,
     );
-    const session = await this.options.auth.mintSession(
-      user,
-      input.frameAncestorOrigin,
-    );
+    const session = await this.options.auth.mintSession(user, {
+      frameAncestorOrigin: input.frameAncestorOrigin,
+      lms: { issuer: platform.issuer, subject: launch.subject },
+      method: "lti",
+    });
 
     return { kind: "session", locale: launch.locale, redirectPath, session };
   }
@@ -622,6 +657,7 @@ export class LtiService {
     courseId: string,
     role: CourseRole,
     user: User,
+    subject: string,
     nowDate: Date,
     frameAncestorOrigin: string | null,
   ): Promise<LtiLaunchOutcome> {
@@ -678,10 +714,11 @@ export class LtiService {
       expiresAt: addSeconds(nowDate, LTI_DEEP_LINK_TTL_SECONDS),
     });
 
-    const session = await this.options.auth.mintSession(
-      user,
+    const session = await this.options.auth.mintSession(user, {
       frameAncestorOrigin,
-    );
+      lms: { issuer: platform.issuer, subject },
+      method: "lti",
+    });
 
     return {
       kind: "deep-linking",
@@ -1538,12 +1575,13 @@ export class LtiService {
     }
 
     const now = timestampNow(nowDate);
+    const platformId =
+      parseLtiProviderSubject(identity.providerSubject)?.platformId ?? null;
     const updated = await this.options.stores.users.changeEmail(user.id, {
       from: user.email,
       to: asserted,
       source: "lti",
-      sourcePlatformId:
-        parseLtiProviderSubject(identity.providerSubject)?.platformId ?? null,
+      sourcePlatformId: platformId,
       verifiedAt: null,
       updatedAt: now,
       pendingUndo: "carry",
@@ -1567,6 +1605,14 @@ export class LtiService {
 
       return user;
     }
+
+    logEmailChanged(this.options.log, {
+      by: "lms",
+      from: user.email,
+      platformId,
+      to: updated.email,
+      userId: user.id,
+    });
 
     // Told only when the old address was proven a mailbox its holder reads: an
     // address the LMS asserted and nobody ever signed in with is the LMS's own

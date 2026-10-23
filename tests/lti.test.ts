@@ -2920,7 +2920,9 @@ describe("who may frame a launch", () => {
         throw new Error("Expected the launched user to exist.");
       }
 
-      const minted = await new AuthService({ stores }).mintSession(user);
+      const minted = await new AuthService({ stores }).mintSession(user, {
+        method: "email",
+      });
       const page = await app.request(
         "/courses",
         {

@@ -1,6 +1,5 @@
 import type { Context } from "hono";
 
-import { AuthService } from "../application/auth";
 import {
   EMAIL_CHANGE_CONFIRM_TTL_SECONDS,
   EMAIL_CHANGE_UNDO_TTL_SECONDS,
@@ -19,7 +18,9 @@ import {
   emailTakenSenderFromEnv,
 } from "../infrastructure/email/resend";
 import { errorMessage, logEvent } from "../log";
+import { requestLog } from "../request-log";
 import { storesForContext } from "../stores";
+import { authServiceForContext } from "./auth";
 
 /**
  * The language to write to an account's holder in: the one they stored, else
@@ -126,7 +127,8 @@ export function emailChangeServiceForContext(
   const stores = storesForContext(context);
 
   return new EmailChangeService({
-    auth: new AuthService({ stores }),
+    auth: authServiceForContext(context),
+    log: requestLog(context),
     notifier: emailChangeNotifierForContext(context),
     stores,
   });

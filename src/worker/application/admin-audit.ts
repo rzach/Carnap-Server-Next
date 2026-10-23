@@ -24,12 +24,6 @@ export interface AdminAuditInput {
   readonly action: string;
   readonly actorUserId: AppId;
   readonly metadata: JsonValue;
-  /**
-   * What the `audit` log line carries in place of `metadata`, when the row
-   * names a person in a way a log must not: the table is read by admins on
-   * this server, the log goes to whatever collects it.
-   */
-  readonly logMetadata?: JsonValue;
   readonly targetCourseId?: AppId | null;
   readonly targetUserId?: AppId | null;
   readonly timestamp: Timestamp;
@@ -49,10 +43,6 @@ export async function appendAdminAudit(
 ): Promise<void> {
   assertJsonValue(input.metadata);
 
-  if (input.logMetadata !== undefined) {
-    assertJsonValue(input.logMetadata);
-  }
-
   const event = await options.stores.adminAudit.append({
     action: input.action,
     actorUserId: input.actorUserId,
@@ -68,7 +58,7 @@ export async function appendAdminAudit(
     action: event.action,
     actorUserId: event.actorUserId,
     auditEventId: event.id,
-    metadata: input.logMetadata ?? event.metadata,
+    metadata: event.metadata,
     requestId: event.requestId,
     targetCourseId: event.targetCourseId,
     targetUserId: event.targetUserId,

@@ -11,7 +11,11 @@ import {
 import { LOGIN_RATE_LIMIT_PER_EMAIL } from "../src/worker/application/login-rate-limit";
 import type { Env } from "../src/worker/env";
 import { logEvent } from "../src/worker/log";
-import { bootstrapRequest, bootstrapTestAdmin } from "./helpers/admin";
+import {
+  bootstrapRequest,
+  bootstrapTestAdmin,
+  TEST_BOOTSTRAP_TOKEN,
+} from "./helpers/admin";
 import { appRequest, createTestApp } from "./helpers/app";
 import {
   ACCEPT_JSON,
@@ -22,13 +26,20 @@ import {
   login,
   withStorage,
 } from "./helpers/http";
+import {
+  createLtiTestApp,
+  INSTRUCTOR_ROLE,
+  performLaunch,
+  registerTestPlatform,
+  TEST_ISSUER,
+} from "./helpers/lti";
 
 setDefaultTimeout(30_000);
 
 /**
  * What an institution's log collector receives: one JSON object per line,
- * audit events mirrored from the audit table, and the refusals worth an
- * alert. Every console method is captured, so a line written any other way
+ * audit events mirrored from the audit table, every sign-in and the refusals
+ * worth an alert, each naming the account it concerns. Every console method is captured, so a line written any other way
  * would show up here as unparseable.
  */
 
@@ -55,6 +66,42 @@ afterEach(() => {
 
 function events(name: string): Line[] {
   return lines.filter((line) => line.event === name);
+}
+
+/** The cookie values in a `Cookie` header: the session and CSRF tokens. */
+function secretsIn(cookieHeader: string): string[] {
+  return cookieHeader
+    .split(";")
+    .map((pair) => pair.split("=")[1]?.trim() ?? "")
+    .filter((value) => value.length > 0);
+}
+
+/** A browser form post, signed in as `session` when given. */
+function formPost(
+  env: Env,
+  path: string,
+  fields: Record<string, string>,
+  session?: LoginResult,
+): Promise<Response> {
+  return appRequest(
+    createTestApp(),
+    path,
+    {
+      body: new URLSearchParams(fields),
+      headers: {
+        Accept: "text/html",
+        "Content-Type": "application/x-www-form-urlencoded",
+        ...(session === undefined
+          ? {}
+          : {
+              Cookie: session.cookieHeader,
+              "X-CSRF-Token": session.csrfToken,
+            }),
+      },
+      method: "POST",
+    },
+    env,
+  );
 }
 
 async function auditActions(env: Env, admin: LoginResult): Promise<Line[]> {
@@ -97,6 +144,37 @@ describe("structured logs", () => {
         targetUserId: admin.actorId,
       });
       expect(audit?.requestId).toBeString();
+    });
+  });
+
+  test("a sign-in and a sign-out name the account, and no secret is written", async () => {
+    await withStorage(async (_storage, env) => {
+      const ada = await login(env, "ada@example.test");
+      const out = await appRequest(
+        createTestApp(),
+        "/auth/logout",
+        jsonRequest({}, ada),
+        env,
+      );
+
+      expect(out.status).toBe(204);
+      expect(events("sign_in")).toEqual([
+        expect.objectContaining({
+          email: "ada@example.test",
+          level: "info",
+          method: "email",
+          userId: ada.actorId,
+        }),
+      ]);
+      expect(events("sign_out")).toEqual([
+        expect.objectContaining({ userId: ada.actorId }),
+      ]);
+      expect(events("sign_in")[0]?.requestId).toBeString();
+
+      // The session and CSRF tokens unlock the account; neither is logged.
+      for (const secret of [...secretsIn(ada.cookieHeader), ada.csrfToken]) {
+        expect(JSON.stringify(lines)).not.toContain(secret);
+      }
     });
   });
 
@@ -144,43 +222,82 @@ describe("structured logs", () => {
           userId: user.actorId,
         }),
       ]);
-      // Neither the token tried nor the address belongs in a log.
       expect(JSON.stringify(lines)).not.toContain("alt_not-a-real-token");
-      expect(JSON.stringify(lines)).not.toContain("ada@example.test");
+      expect(JSON.stringify(lines)).not.toContain(TEST_BOOTSTRAP_TOKEN);
     });
   });
 
-  test("a refused login request names the address's domain, not the address", async () => {
+  test("a refused login request names the address, and its account when there is one", async () => {
     await withStorage(async (_storage, env) => {
+      const target = await login(env, "target@example.test");
       const app = createTestApp();
 
       // The address throttle answers 429 once one mailbox has asked too often.
-      for (
-        let attempt = 0;
-        attempt <= LOGIN_RATE_LIMIT_PER_EMAIL;
-        attempt += 1
-      ) {
-        await appRequest(
-          app,
-          "/auth/login/start",
-          jsonRequest({ email: "target@Example.TEST" }),
-          env,
-        );
+      for (const email of ["target@Example.TEST", "nobody@example.test"]) {
+        for (
+          let attempt = 0;
+          attempt <= LOGIN_RATE_LIMIT_PER_EMAIL;
+          attempt += 1
+        ) {
+          await appRequest(
+            app,
+            "/auth/login/start",
+            jsonRequest({ email }),
+            env,
+          );
+        }
       }
 
       const refused = events("sign_in_failed");
 
-      expect(refused.length).toBeGreaterThan(0);
-      expect(refused[0]).toMatchObject({
-        emailDomain: "example.test",
+      expect(
+        refused.find((line) => line.email === "target@example.test"),
+      ).toMatchObject({
         reason: "login_rate_limited",
         stage: "request",
+        userId: target.actorId,
       });
-      expect(JSON.stringify(lines)).not.toContain("target@");
+
+      const stranger = refused.find(
+        (line) => line.email === "nobody@example.test",
+      );
+
+      expect(stranger).toMatchObject({ reason: "login_rate_limited" });
+      expect(stranger).not.toHaveProperty("userId");
     });
   });
 
-  test("an admin's email change logs the domains, and keeps the addresses in the audit table", async () => {
+  test("a suspended account's sign-in is refused at the session, by name", async () => {
+    await withStorage(async (_storage, env) => {
+      const admin = await login(env, "admin@example.test");
+      const ada = await login(env, "ada@example.test");
+
+      await bootstrapTestAdmin(env, admin);
+      expect(
+        (
+          await appRequest(
+            createTestApp(),
+            `/admin/users/${ada.actorId}/suspend`,
+            jsonRequest({}, admin, ACCEPT_JSON),
+            env,
+          )
+        ).status,
+      ).toBe(200);
+      await expect(login(env, "ada@example.test")).rejects.toThrow();
+
+      expect(events("sign_in_failed")).toEqual([
+        expect.objectContaining({
+          email: "ada@example.test",
+          method: "email",
+          reason: "disabled_user",
+          stage: "session",
+          userId: ada.actorId,
+        }),
+      ]);
+    });
+  });
+
+  test("address changes are logged with both addresses, however they are made", async () => {
     await withStorage(async ({ stores }, env) => {
       const admin = await login(env, "admin@example.test");
       const ada = await login(env, "ada@old.example.test");
@@ -201,19 +318,92 @@ describe("structured logs", () => {
         ),
       ).toMatchObject({
         metadata: {
-          fromDomain: "old.example.test",
-          toDomain: "new.example.test",
+          from: "ada@old.example.test",
+          to: "ada@new.example.test",
         },
         targetUserId: ada.actorId,
       });
-      expect(JSON.stringify(lines)).not.toContain("ada@");
 
-      const [row] = await stores.adminAudit.listRecent(1);
+      // The holder's own change, confirmed from the link the local page shows.
+      const grace = await login(env, "grace@old.example.test");
+      const requested = await formPost(
+        env,
+        "/profile/email",
+        { email: "grace@new.example.test" },
+        grace,
+      );
+      const token = /\/profile\/email\/confirm\?token=([^"&]+)/.exec(
+        await requested.text(),
+      )?.[1];
 
-      expect(row?.metadata).toEqual({
-        from: "ada@old.example.test",
-        to: "ada@new.example.test",
+      expect(token).toBeDefined();
+      expect(
+        (
+          await formPost(env, "/profile/email/confirm", {
+            token: token ?? "",
+          })
+        ).status,
+      ).toBe(303);
+      expect(events("email_changed")).toEqual([
+        expect.objectContaining({
+          actorUserId: admin.actorId,
+          by: "admin",
+          from: "ada@old.example.test",
+          to: "ada@new.example.test",
+          userId: ada.actorId,
+        }),
+        expect.objectContaining({
+          by: "user",
+          from: "grace@old.example.test",
+          to: "grace@new.example.test",
+          userId: grace.actorId,
+        }),
+      ]);
+      expect(events("sign_in").at(-1)).toMatchObject({
+        email: "grace@new.example.test",
+        method: "email_change",
+        userId: grace.actorId,
       });
+      await expect(
+        stores.users.getById(grace.actorId),
+      ).resolves.toMatchObject({ email: "grace@new.example.test" });
+    });
+  });
+
+  test("an LMS launch's sign-in names the platform, and a refused launch names the LMS user", async () => {
+    await withStorage(async ({ stores }, env) => {
+      const app = await createLtiTestApp();
+
+      await registerTestPlatform(stores);
+
+      const launched = await performLaunch(app, env, {
+        email: "ida@example.test",
+        roles: [INSTRUCTOR_ROLE],
+        sub: "lms-user-7",
+      });
+      const refused = await performLaunch(app, env, {
+        deploymentId: "not-registered",
+        sub: "lms-user-8",
+      });
+
+      expect(launched.response.status).toBe(303);
+      expect(refused.response.status).toBe(400);
+      expect(events("sign_in")).toEqual([
+        expect.objectContaining({
+          email: "ida@example.test",
+          issuer: TEST_ISSUER,
+          method: "lti",
+          subject: "lms-user-7",
+        }),
+      ]);
+      expect(events("lti_launch_failed")).toEqual([
+        expect.objectContaining({
+          code: "lti_deployment_unknown",
+          issuer: TEST_ISSUER,
+          subject: "lms-user-8",
+        }),
+      ]);
+      expect(events("lti_launch_failed")[0]?.requestId).toBeString();
     });
   });
 
