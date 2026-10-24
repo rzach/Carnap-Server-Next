@@ -11,8 +11,9 @@ import {
 /**
  * `<carnap-syntax-tree>`'s side of the widget: that it enables the sentence's
  * connectives, grows the tree under each right pick, starts over on a wrong
- * one under `whole` and shows the true split under `partial`, takes a typed
- * connective, replays a prior answer, and mirrors the picks into the form.
+ * one under `whole` and shows the true split under `partial`, links variables
+ * at `depth="terms"`, replays a prior answer, mirrors the picks into the form,
+ * and puts its instructions behind the (?).
  *
  * The server draws the tree as a string and the element rebuilds it with DOM
  * calls, so this also holds the class and `data-` names the two share.
@@ -62,27 +63,6 @@ function mouseClick(button: HTMLElement): void {
   );
 }
 
-function field(mounted: MountedExercise): HTMLInputElement {
-  const input = mounted.root.querySelector<HTMLInputElement>(
-    '[data-role="typed"]',
-  );
-
-  if (input === null) {
-    throw new Error("No typed field.");
-  }
-
-  return input;
-}
-
-function splitButton(mounted: MountedExercise): HTMLButtonElement | null {
-  return mounted.root.querySelector<HTMLButtonElement>('[data-role="split"]');
-}
-
-function type(mounted: MountedExercise, text: string): void {
-  field(mounted).value = text;
-  splitButton(mounted)?.click();
-}
-
 function states(mounted: MountedExercise): Record<string, string> {
   return Object.fromEntries(
     [...mounted.root.querySelectorAll<HTMLElement>(".st-node")].map(
@@ -116,11 +96,6 @@ describe("the syntax-tree element", () => {
       ["1", false],
       ["1.1", false],
     ]);
-    expect(
-      mounted.root
-        .querySelector(".st-node[data-target]")
-        ?.getAttribute("data-path"),
-    ).toBe("");
   });
 
   test("a right pick splits the sentence, and the last one checks the mark", async () => {
@@ -193,20 +168,6 @@ describe("the syntax-tree element", () => {
     expect(markState(mounted)).toBe("idle");
   });
 
-  test("a typed connective answers the marked sentence; a non-connective is a slip", async () => {
-    const mounted = mountExercise(await syntaxTree(PROP));
-
-    type(mounted, "Q");
-    expect(message(mounted)).toBe(
-      "“Q” is not a connective of this language.",
-    );
-    expect(states(mounted)).toEqual({ "": "open" });
-
-    type(mounted, "/\\");
-    expect(states(mounted)).toMatchObject({ "": "split", "1": "open" });
-    expect(picks(mounted)).toEqual([{ named: "and", node: [] }]);
-  });
-
   test("a prior answer is replayed, and a stored run that went wrong starts over", async () => {
     const fixture = await syntaxTree(PROP);
     const restored = mountExercise(fixture, {
@@ -232,7 +193,7 @@ describe("the syntax-tree element", () => {
     expect(states(wrong)).toEqual({ "": "open" });
   });
 
-  test("a connective pressed from the keyboard hands focus to the next sentence's; a typed one keeps it in the field", async () => {
+  test("a connective pressed from the keyboard hands focus to the next sentence's", async () => {
     const mounted = mountExercise(await syntaxTree(PROP));
     const root = connective(mounted, "");
 
@@ -240,12 +201,6 @@ describe("the syntax-tree element", () => {
     root.click();
 
     expect(mounted.root.activeElement?.getAttribute("data-node")).toBe("1");
-
-    field(mounted).focus();
-    type(mounted, "->");
-
-    expect(states(mounted)).toMatchObject({ "1": "split" });
-    expect(mounted.root.activeElement).toBe(field(mounted));
   });
 
   test("a mouse click moves no focus, finished tree or not", async () => {
@@ -262,7 +217,7 @@ describe("the syntax-tree element", () => {
     expect(mounted.root.activeElement).toBe(before);
   });
 
-  test("a tree finished from the keyboard disables the field and moves focus to the message", async () => {
+  test("a tree finished from the keyboard moves focus to the message", async () => {
     const mounted = mountExercise(await syntaxTree(PROP));
 
     click(mounted, "");
@@ -276,8 +231,33 @@ describe("the syntax-tree element", () => {
     expect(mounted.root.activeElement?.getAttribute("data-role")).toBe(
       "message",
     );
-    expect(field(mounted).disabled).toBe(true);
-    expect(splitButton(mounted)?.disabled).toBe(true);
+  });
+
+  test("the instructions and keys are behind a (?) in the action bar", async () => {
+    const mounted = mountExercise(await syntaxTree(PROP));
+    const trigger = mounted.element.querySelector(
+      ".exercise-actions .help-trigger",
+    );
+    const help = mounted.root.querySelector("dialog.help-dialog");
+
+    expect(trigger?.getAttribute("aria-label")).toBe(
+      "Usage and keyboard shortcuts",
+    );
+    expect(help?.textContent).toContain(
+      "Pick the main connective of each sentence until only atomic sentences remain.",
+    );
+    expect(help?.textContent).toContain("A wrong pick starts the tree over.");
+    expect(
+      [...(help?.querySelectorAll("kbd") ?? [])].map(
+        (key) => key.textContent,
+      ),
+    ).toEqual(["Tab", "Shift-Tab", "Enter", "Space", "?"]);
+  });
+
+  test("in review mode there is no (?)", async () => {
+    const mounted = mountExercise(await syntaxTree(PROP), { mode: "review" });
+
+    expect(mounted.element.querySelector(".help-trigger")).toBeNull();
   });
 
   test("a second wrong pick in a row is said again, not left unchanged", async () => {
@@ -301,5 +281,190 @@ describe("the syntax-tree element", () => {
         ...mounted.root.querySelectorAll<HTMLButtonElement>("button.st-op"),
       ].every((button) => button.disabled),
     ).toBe(true);
+  });
+});
+
+/** `∀x(F(x) ∧ ∃x G(x))` through its terms: the splits, root first. */
+const TERMS = "- Ax(F(x) & Ex G(x))";
+const TERM_ATTRS = '#t1 system="forallx-calgary" depth="terms"';
+const OUTER_X = "1.0.0.0.0";
+const INNER_X = "1.1.1.0.0.0";
+
+function splitAll(mounted: MountedExercise): void {
+  for (const key of ["", "1", "1.0", "1.1", "1.1.1"]) {
+    click(mounted, key);
+  }
+}
+
+function variable(mounted: MountedExercise, key: string): HTMLButtonElement {
+  const button = mounted.root.querySelector<HTMLButtonElement>(
+    `button.st-var[data-node="${key}"]`,
+  );
+
+  if (button === null) {
+    throw new Error(`No variable button for “${key}”.`);
+  }
+
+  return button;
+}
+
+function shadowButton(
+  mounted: MountedExercise,
+  selector: string,
+): HTMLElement {
+  const button = mounted.root.querySelector<HTMLElement>(selector);
+
+  if (button === null) {
+    throw new Error(`No button “${selector}”.`);
+  }
+
+  return button;
+}
+
+function binders(mounted: MountedExercise): string[] {
+  return [
+    ...mounted.root.querySelectorAll<HTMLButtonElement>("button.st-bind"),
+  ].map((button) => `${button.dataset.node}:${button.textContent}`);
+}
+
+function freeButton(mounted: MountedExercise): HTMLElement | null {
+  return mounted.root.querySelector<HTMLElement>('[data-role="free"]');
+}
+
+describe("the syntax-tree element through its terms", () => {
+  test("a variable appears once its atom is split, and pressing it offers the quantifiers above it", async () => {
+    const mounted = mountExercise(await syntaxTree(TERMS, TERM_ATTRS));
+
+    splitAll(mounted);
+    expect(states(mounted)).toMatchObject({
+      [OUTER_X]: "unlinked",
+      [INNER_X]: "unlinked",
+    });
+    expect(freeButton(mounted)?.hidden).toBe(true);
+
+    mouseClick(variable(mounted, INNER_X));
+
+    expect(variable(mounted, INNER_X).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(binders(mounted)).toEqual([":∀x", "1.1:∃x"]);
+    expect(freeButton(mounted)?.hidden).toBe(false);
+    expect(message(mounted)).toBe(
+      "Pick the quantifier that binds x, or Free.",
+    );
+  });
+
+  test("its help says how to link, and lists Escape", async () => {
+    const mounted = mountExercise(await syntaxTree(TERMS, TERM_ATTRS));
+    const help = mounted.root.querySelector("dialog.help-dialog");
+
+    expect(help?.textContent).toContain(
+      "To link a variable, press it, then press the quantifier that binds it, or Free if none does.",
+    );
+    expect(
+      [...(help?.querySelectorAll("kbd") ?? [])].map(
+        (key) => key.textContent,
+      ),
+    ).toContain("Esc");
+  });
+
+  test("Escape lets the variable go, and focus goes back to it", async () => {
+    const mounted = mountExercise(await syntaxTree(TERMS, TERM_ATTRS));
+    const view = mounted.root.ownerDocument.defaultView;
+
+    splitAll(mounted);
+    variable(mounted, OUTER_X).click();
+    mounted.root.activeElement?.dispatchEvent(
+      new (view as Window & typeof globalThis).KeyboardEvent("keydown", {
+        bubbles: true,
+        composed: true,
+        key: "Escape",
+      }),
+    );
+
+    expect(binders(mounted)).toEqual([]);
+    expect(freeButton(mounted)?.hidden).toBe(true);
+    expect(mounted.root.activeElement?.getAttribute("data-node")).toBe(
+      OUTER_X,
+    );
+  });
+
+  test("linking each variable to its quantifier finishes the tree", async () => {
+    const mounted = mountExercise(await syntaxTree(TERMS, TERM_ATTRS));
+
+    splitAll(mounted);
+    mouseClick(variable(mounted, OUTER_X));
+    mouseClick(shadowButton(mounted, 'button.st-bind[data-node=""]'));
+    mouseClick(variable(mounted, INNER_X));
+    mouseClick(shadowButton(mounted, 'button.st-bind[data-node="1.1"]'));
+
+    expect(states(mounted)).toMatchObject({
+      [OUTER_X]: "linked",
+      [INNER_X]: "linked",
+    });
+    expect(
+      mounted.root
+        .querySelector(`.st-node[data-path="${INNER_X}"]`)
+        ?.getAttribute("data-bound-by"),
+    ).toBe("1.1");
+    expect(markState(mounted)).toBe("ok");
+    expect(message(mounted)).toBe("Every split and link is correct.");
+    // One bus per quantifier, whatever it binds.
+    expect(
+      mounted.root.querySelectorAll("svg.st-lines path.st-link"),
+    ).toHaveLength(2);
+    expect(picks(mounted)).toContainEqual({
+      linked: [1, 1],
+      node: [1, 1, 1, 0, 0, 0],
+    });
+  });
+
+  test("whole: linking to the wrong quantifier starts the tree over", async () => {
+    const mounted = mountExercise(await syntaxTree(TERMS, TERM_ATTRS));
+
+    splitAll(mounted);
+    mouseClick(variable(mounted, INNER_X));
+    mouseClick(shadowButton(mounted, 'button.st-bind[data-node=""]'));
+
+    expect(states(mounted)).toEqual({ "": "open" });
+    expect(message(mounted)).toBe(
+      "That is not how this variable is bound. The tree starts over.",
+    );
+  });
+
+  test("partial: Free for a bound variable stands, and the true link is drawn", async () => {
+    const mounted = mountExercise(
+      await syntaxTree(TERMS, `${TERM_ATTRS} scoring="partial"`),
+    );
+
+    splitAll(mounted);
+    mouseClick(variable(mounted, OUTER_X));
+    mouseClick(shadowButton(mounted, '[data-role="free"]'));
+
+    expect(
+      mounted.root
+        .querySelector(`.st-node[data-path="${OUTER_X}"]`)
+        ?.getAttribute("data-bound-by"),
+    ).toBe("");
+    expect(message(mounted)).toBe(
+      "That is not how this variable is bound. Here is how it is.",
+    );
+    expect(picks(mounted)).toContainEqual({
+      linked: null,
+      node: [1, 0, 0, 0, 0],
+    });
+  });
+
+  test("from the keyboard, a pressed variable hands focus to its outermost quantifier, and a link to the next variable", async () => {
+    const mounted = mountExercise(await syntaxTree(TERMS, TERM_ATTRS));
+
+    splitAll(mounted);
+    variable(mounted, OUTER_X).click();
+    expect(mounted.root.activeElement?.getAttribute("data-node")).toBe("");
+
+    (mounted.root.activeElement as HTMLElement | null)?.click();
+    expect(mounted.root.activeElement?.getAttribute("data-node")).toBe(
+      INNER_X,
+    );
   });
 });

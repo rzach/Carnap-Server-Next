@@ -19,7 +19,13 @@ import {
 import { parseSystemAttribute } from "../../exercise-kit/systems/attribute";
 import type { ExerciseCompileContext } from "../../exercise-kit/type";
 import { formulaParseErrors } from "../../logic/specs/diagnostics";
-import { pickableCount, sentenceSortOf, syntaxTree } from "./logic/tree";
+import type { SyntaxTreeDepth } from "./logic/tree";
+import {
+  pickableCount,
+  readingSort,
+  SYNTAX_TREE_DEPTHS,
+  syntaxTree,
+} from "./logic/tree";
 import type { SyntaxTreePublicData, SyntaxTreeScoring } from "./types";
 import {
   SYNTAX_TREE_ANSWER_KIND,
@@ -36,6 +42,7 @@ const SENTENCE_LINE = /^\s*-\s+(.+?)\s*$/;
 /** What `:::syntax-tree{…}` accepts beyond the shared exercise set. */
 const SYNTAX_TREE_ATTRIBUTES = [
   ...COMMON_EXERCISE_ATTRIBUTES,
+  "depth",
   "scoring",
   "system",
 ] as const;
@@ -67,6 +74,32 @@ function parseScoring(
   );
 
   return "whole";
+}
+
+function parseDepth(
+  value: string | undefined,
+  line: number,
+  diagnostics: CompilerDiagnostic[],
+): SyntaxTreeDepth {
+  const depth = value?.trim();
+
+  if (depth === undefined || depth === "") {
+    return "connectives";
+  }
+
+  if (SYNTAX_TREE_DEPTHS.includes(depth as SyntaxTreeDepth)) {
+    return depth as SyntaxTreeDepth;
+  }
+
+  diagnostics.push(
+    diagnostic(
+      line,
+      "invalid_syntax_tree_depth",
+      "The depth attribute must be connectives or terms.",
+    ),
+  );
+
+  return "connectives";
 }
 
 /**
@@ -128,6 +161,7 @@ export async function compileSyntaxTree(
   const exam = parseExamAttribute(block.attrs.exam, block.line, diagnostics);
   const feedback = reconcileFeedback(block, undefined, diagnostics);
   const scoring = parseScoring(block.attrs.scoring, block.line, diagnostics);
+  const depth = parseDepth(block.attrs.depth, block.line, diagnostics);
   const before = diagnostics.length;
   const { language, system } = parseSystemAttribute(
     block,
@@ -144,16 +178,18 @@ export async function compileSyntaxTree(
 
   validateExerciseId(block, id, diagnostics);
 
-  // The tree's nodes are the nodes of this sort, and the stored sentence is
-  // read back at it: without one there is nothing to draw.
-  const sort = sentenceSortOf(language);
+  // Down to the atoms, the tree's nodes are the nodes of this sort, and the
+  // stored sentence is read back at it: without one there is nothing to draw.
+  // Through the terms every node is drawn, so any sort the text reads at will
+  // do, and a language of terms alone has trees too.
+  const sort = readingSort(language, depth);
 
   if (sort === null) {
     diagnostics.push(
       diagnostic(
         block.line,
         "missing_syntax_tree_sentence_sort",
-        "System “{system}” declares no “@syntax role sentence”, which a syntax tree needs to tell its sentences from their parts. Put the annotation on the sort of formulas.",
+        'System “{system}” declares no “@syntax role sentence”, which a syntax tree needs to tell its sentences from their parts. Put the annotation on the sort of formulas, or draw the tree through its terms with depth="terms", which needs none.',
         { params: { system } },
       ),
     );
@@ -161,7 +197,10 @@ export async function compileSyntaxTree(
     return null;
   }
 
-  const parsed = language.parse(body.sentence.text, { sort });
+  const parsed = language.parse(
+    body.sentence.text,
+    sort === undefined ? {} : { sort },
+  );
 
   if (!parsed.ok) {
     diagnostics.push(
@@ -186,7 +225,7 @@ export async function compileSyntaxTree(
   let tree: ReturnType<typeof syntaxTree>;
 
   try {
-    tree = syntaxTree(language, parsed.term);
+    tree = syntaxTree(language, parsed.term, depth);
   } catch (error) {
     // A term the language reads but cannot write back has no lines to draw.
     if (error instanceof UnprintableTermError) {
@@ -219,6 +258,7 @@ export async function compileSyntaxTree(
   }
 
   const publicData: SyntaxTreePublicData = {
+    depth,
     promptHtml: await renderMarkdownSource(body.promptLines.join("\n"), {
       ...renderOptions,
       lineOffset: block.bodyStartLine - 1,

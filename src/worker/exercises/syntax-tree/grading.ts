@@ -10,12 +10,19 @@
 
 import type { SurfaceLanguage } from "@aufbau/syntax";
 import { languageFromSource } from "../../logic/specs/read";
-import type { NodePath, Pick, SyntaxTree } from "./logic/tree";
+import type {
+  NodePath,
+  Pick,
+  SyntaxTree,
+  SyntaxTreeDepth,
+} from "./logic/tree";
 import {
+  asksFor,
   isRightPick,
   pathKey,
   pickableCount,
   readSentence,
+  SYNTAX_TREE_DEPTHS,
   syntaxTree,
 } from "./logic/tree";
 import type {
@@ -48,12 +55,13 @@ export function isPick(value: unknown): value is Pick {
 
   const pick = value as Record<string, unknown>;
 
-  // Exactly one of the two: a click or a name, never both.
+  // Exactly one of the two: a click or a link (`null` is free), never both.
   return (
     isPath(pick.node) &&
-    (pick.named === undefined
+    (pick.linked === undefined
       ? isPath(pick.clicked)
-      : pick.clicked === undefined && typeof pick.named === "string")
+      : pick.clicked === undefined &&
+        (pick.linked === null || isPath(pick.linked)))
   );
 }
 
@@ -70,7 +78,8 @@ export function isSyntaxTreePublicData(
     typeof data.promptHtml === "string" &&
     typeof data.system === "string" &&
     typeof data.sentence === "string" &&
-    SYNTAX_TREE_SCORINGS.includes(data.scoring as SyntaxTreeScoring)
+    SYNTAX_TREE_SCORINGS.includes(data.scoring as SyntaxTreeScoring) &&
+    SYNTAX_TREE_DEPTHS.includes(data.depth as SyntaxTreeDepth)
   );
 }
 
@@ -104,17 +113,22 @@ export function resolveSyntaxTree(
     return null;
   }
 
-  const sentence = readSentence(language, publicData.sentence);
+  const sentence = readSentence(
+    language,
+    publicData.sentence,
+    publicData.depth,
+  );
 
   return sentence === null
     ? null
-    : { language, tree: syntaxTree(language, sentence) };
+    : { language, tree: syntaxTree(language, sentence, publicData.depth) };
 }
 
 /**
  * The picks that count: one per node, the first made there, and only at a
- * node of this tree that has something to pick. A pick anywhere else is not
- * a wrong answer but no answer, and dropping it keeps a crafted payload from
+ * node of this tree that asks for that kind of answer — a split where there
+ * is something beneath, a link at a variable. A pick anywhere else is not a
+ * wrong answer but no answer, and dropping it keeps a crafted payload from
  * padding the count.
  */
 export function countedPicks(
@@ -125,8 +139,9 @@ export function countedPicks(
 
   return picks.filter((pick) => {
     const key = pathKey(pick.node);
+    const node = tree.byPath.get(key);
 
-    if (tree.byPath.get(key)?.atom !== false || seen.has(key)) {
+    if (node === undefined || !asksFor(node, pick) || seen.has(key)) {
       return false;
     }
 
@@ -137,7 +152,7 @@ export function countedPicks(
 }
 
 export interface SyntaxTreeVerdict {
-  /** Every node with something to pick was picked right. */
+  /** Every node with something to pick — a split or a link — was picked right. */
   readonly ok: boolean;
   /** Nodes picked at all, and picked right, of `total`. */
   readonly picked: number;

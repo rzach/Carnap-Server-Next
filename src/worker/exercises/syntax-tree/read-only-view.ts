@@ -12,18 +12,36 @@ import {
   exerciseGroupLabel,
   exerciseLegendHtml,
 } from "../../exercise-kit/group";
+import { reviewHydrationScript } from "../../exercise-kit/hydration";
 import { EXERCISE_TOKEN_STYLES } from "../../exercise-kit/tokens";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
 import type { Translator } from "../../i18n/translator";
 import { stringsResolver } from "../../i18n/translator";
-import type { DrawnNode, SentenceRun, SyntaxTreeWords } from "./display";
-import { drawnTree, RUN_CLASS, splitNodes } from "./display";
+import type {
+  DrawnNode,
+  SentenceRun,
+  ShownAnswers,
+  SyntaxTreeWords,
+} from "./display";
+import { drawnTree, RUN_CLASS, shownAnswers } from "./display";
 import type { ResolvedSyntaxTree, SyntaxTreeVerdict } from "./grading";
 import { isSyntaxTreePublicData, resolveSyntaxTree } from "./grading";
+import type { SyntaxTreeDepth } from "./logic/tree";
 import shadowStyles from "./shadow.css" with { type: "text" };
 import { buildSyntaxTreeStrings } from "./strings";
 import type { SyntaxTreeAnswerData, SyntaxTreePublicData } from "./types";
-import { SYNTAX_TREE_KIND, syntaxTreeName } from "./types";
+import {
+  SYNTAX_TREE_COMPONENT_METADATA,
+  SYNTAX_TREE_KIND,
+  syntaxTreeName,
+} from "./types";
+import { SYNTAX_TREE_DEPTH_WORDS } from "./words";
+
+/**
+ * The element's module, which the review loads too: the tree's lines are
+ * SVG measured from the laid-out nodes, so only the element can draw them.
+ */
+const SYNTAX_TREE_ASSET_URL = `/assets/components/${SYNTAX_TREE_COMPONENT_METADATA.assetId}.js`;
 
 const SYNTAX_TREE_SHADOW_STYLES = [
   EXERCISE_GROUP_SHADOW_STYLES,
@@ -35,14 +53,22 @@ const SYNTAX_TREE_REVIEW_STYLES = [
   shadowStyles,
 ].join("\n");
 
+function labelHtml(label: string | null): string {
+  return label === null ? "" : ` aria-label="${escapeHtml(label)}"`;
+}
+
 function runHtml(run: SentenceRun): string {
   const text = escapeHtml(run.text);
 
   switch (run.kind) {
     case "mark":
       return text;
+    case "binder":
+      return `<button class="${RUN_CLASS.binder}" data-main data-node="${escapeHtml(run.node)}" type="button"${labelHtml(run.label)} disabled>${text}</button>`;
     case "connective":
-      return `<button class="${RUN_CLASS.connective}" data-node="${escapeHtml(run.node)}" type="button"${run.label === null ? "" : ` aria-label="${escapeHtml(run.label)}"`} disabled>${text}</button>`;
+      return `<button class="${RUN_CLASS.connective}" data-node="${escapeHtml(run.node)}" type="button"${labelHtml(run.label)} disabled>${text}</button>`;
+    case "variable":
+      return `<button aria-pressed="${run.pressed}" class="${RUN_CLASS.variable}" data-node="${escapeHtml(run.node)}" type="button"${labelHtml(run.label)} disabled>${text}</button>`;
     case "main":
       return `<span class="${RUN_CLASS.main}" data-main>${text}</span>`;
     default:
@@ -50,41 +76,64 @@ function runHtml(run: SentenceRun): string {
   }
 }
 
+/**
+ * A linked variable's words: shown when it is free, and for a screen reader
+ * only when bound, since the line drawn to its quantifier shows the rest.
+ */
+function linkNoteHtml(node: DrawnNode): string {
+  if (node.link === null) {
+    return "";
+  }
+
+  const hidden = node.link.boundBy === null ? "" : " visually-hidden";
+
+  return `<span class="st-link-note${hidden}">${escapeHtml(node.link.note)}</span>`;
+}
+
 function nodeHtml(node: DrawnNode): string {
   const children =
     node.state === "split"
       ? `<ul class="st-children">${node.children.map(nodeHtml).join("")}</ul>`
       : "";
+  const boundBy =
+    node.link?.boundBy == null
+      ? ""
+      : ` data-bound-by="${escapeHtml(node.link.boundBy)}"`;
 
-  return `<li class="st-node" data-path="${escapeHtml(node.key)}" data-state="${node.state}"><div class="st-sentence">${node.runs.map(runHtml).join("")}</div>${children}</li>`;
+  return `<li class="st-node"${boundBy} data-path="${escapeHtml(node.key)}" data-state="${node.state}"><div class="st-sentence">${node.runs.map(runHtml).join("")}</div>${linkNoteHtml(node)}${children}</li>`;
 }
 
 /**
- * The tree as far as `split` has split it, inert: the element enables its
- * connectives, and a review never does.
+ * The tree as far as `shown` has split and linked it, inert: the element
+ * enables its buttons and draws its lines, and a review only draws.
  */
 function treeHtml(
   resolved: ResolvedSyntaxTree | null,
-  split: ReadonlySet<string>,
+  shown: ShownAnswers,
   words: SyntaxTreeWords,
 ): string {
   return resolved === null
     ? ""
-    : `<div class="st-scroll"><ul class="st-tree">${nodeHtml(drawnTree(resolved, split, words))}</ul></div>`;
+    : `<div class="st-scroll"><ul class="st-tree">${nodeHtml(drawnTree(resolved, shown, words))}</ul></div>`;
 }
+
+const NOTHING_SHOWN: ShownAnswers = { links: new Map(), split: new Set() };
 
 /** The count a verdict comes to, in words. */
 export function describeSyntaxTreeVerdict(
   verdict: SyntaxTreeVerdict,
+  depth: SyntaxTreeDepth,
   words: SyntaxTreeWords,
 ): string {
+  const depthWords = SYNTAX_TREE_DEPTH_WORDS[depth];
+
   if (verdict.ok) {
-    return words("Every connective picked correctly.");
+    return words(depthWords.allRight);
   }
 
   return verdict.picked < verdict.total && verdict.right === verdict.picked
     ? words("The tree is not finished.")
-    : words("Main connectives found: {right} of {total}", {
+    : words(depthWords.count, {
         right: String(verdict.right),
         total: String(verdict.total),
       });
@@ -111,6 +160,12 @@ export function renderSyntaxTreeElement(
   const legend = exerciseLegendHtml(
     exerciseGroupLabel(syntaxTreeName(meta.i18n), meta),
   );
+  // Free is shown only while a variable is being linked, beside the sentence
+  // that asks for the link. The instructions are in the element's (?) panel.
+  const free =
+    publicData.depth === "terms"
+      ? `<button class="st-free" data-role="free" hidden type="button">${escapeHtml(words("Free"))}</button>`
+      : "";
 
   return `<carnap-syntax-tree${exerciseRootAttributes(meta)}>
         <template shadowrootmode="open">
@@ -119,10 +174,8 @@ export function renderSyntaxTreeElement(
             ${legend}
             <slot name="prompt"></slot>
             <div class="syntax-tree-body" data-role="body">
-              <p class="st-instructions">${escapeHtml(words("Pick the main connective of each sentence until only atomic sentences remain."))}</p>
-              <div data-role="tree">${treeHtml(resolved, new Set(), words)}</div>
-              <div class="st-typed"><label for="st-typed">${escapeHtml(words("Main connective"))}</label><input autocomplete="off" data-role="typed" disabled id="st-typed" spellcheck="false" type="text"><button data-role="split" disabled type="button">${escapeHtml(words("Split"))}</button></div>
-              <p aria-live="polite" class="st-message" data-role="message" tabindex="-1"></p>
+              <div data-role="tree">${treeHtml(resolved, NOTHING_SHOWN, words)}</div>
+              <div class="st-status"><p aria-live="polite" class="st-message" data-role="message" tabindex="-1"></p>${free}</div>
             </div>
             <slot name="exercise-actions"></slot>
           </fieldset>
@@ -154,19 +207,22 @@ export function renderSyntaxTreeReview(
   const verdict =
     resolved === null || !reveal
       ? ""
-      : describeSyntaxTreeVerdict(review.verdict, words);
-  const split =
+      : describeSyntaxTreeVerdict(review.verdict, publicData.depth, words);
+  const shown =
     resolved === null
-      ? new Set<string>()
-      : splitNodes(resolved, publicData, review.answer.picks);
+      ? NOTHING_SHOWN
+      : shownAnswers(resolved, publicData, review.answer.picks);
 
+  // The hydration payload says `review`, so the element only draws the lines
+  // over the tree drawn here.
   return `<carnap-syntax-tree data-exercise-id="${escapeHtml(review.exerciseId)}" data-review>
         <template shadowrootmode="open">
           <style>${SYNTAX_TREE_REVIEW_STYLES}</style>
           ${verdict.length === 0 ? "" : `<p class="syntax-tree-review-verdict">${escapeHtml(verdict)}</p>`}
-          <div class="syntax-tree syntax-tree-review">${treeHtml(resolved, split, words)}</div>
+          <div class="syntax-tree syntax-tree-review" data-role="tree">${treeHtml(resolved, shown, words)}</div>
         </template>
-      </carnap-syntax-tree>`;
+        ${reviewHydrationScript(buildSyntaxTreeStrings(i18n))}
+      </carnap-syntax-tree><script type="module" src="${SYNTAX_TREE_ASSET_URL}"></script>`;
 }
 
 export function renderSyntaxTree(

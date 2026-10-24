@@ -1,23 +1,33 @@
 /**
  * `<carnap-syntax-tree>` — split a sentence by its main connectives until only
- * atomic sentences remain (gh #38, old Carnap's `.SynChecker .Match`).
+ * atomic sentences remain (gh #38, old Carnap's `.SynChecker .Match`); at
+ * `depth="terms"`, on through the atoms' terms to variables and names, linking
+ * each variable to the quantifier that binds it.
  *
  * The server renders the sentence into a Declarative Shadow Root with its
  * connectives as disabled buttons (`renderSyntaxTreeElement`). On connect this
  * element replays the prior picks, enables the buttons of every sentence still
- * to split, and redraws the tree after each pick. A student may click a
- * connective in any unsplit sentence, or type one for the first unsplit
- * sentence, which is marked as the one the field answers.
+ * to split, and redraws the tree after each pick. A student presses a
+ * connective in any unsplit sentence, with the mouse or from the keyboard;
+ * the instructions, and the keys, are in the (?) panel in the action bar.
+ *
+ * A variable still to link is a button too. Pressing it makes the quantifiers
+ * above it buttons, and shows Free; pressing one of those links it, and
+ * Escape, or the variable again, lets it go.
  *
  * Under `scoring="whole"` a wrong pick starts the tree over: the rule that
  * keeps a student from clicking every connective in turn. The restart is
  * itself a verdict, so it happens under every `feedback`; only the sentence
  * explaining it is withheld under `none`. Under `scoring="partial"` each
- * sentence takes one pick and then shows its true split, right or wrong.
+ * sentence takes one pick and then shows its true split, right or wrong. A
+ * link is a pick like any other.
  *
  * The tree, the picks and their verdicts all come from the same DOM-free core
  * the server grades with (`exercises/syntax-tree/logic/tree.ts`), and what is
- * drawn from `display.ts`, which the server view writes out too.
+ * drawn from `display.ts`, which the server view writes out too. The lines
+ * joining the nodes, and each variable to its quantifier, are the one thing
+ * only the element draws (`syntax-tree-lines.ts`), so a review loads this
+ * module to draw them over the tree the server wrote.
  */
 
 import type {
@@ -26,9 +36,8 @@ import type {
 } from "../../worker/exercises/syntax-tree/display";
 import {
   drawnTree,
-  firstOpen,
   RUN_CLASS,
-  splitNodes,
+  shownAnswers,
 } from "../../worker/exercises/syntax-tree/display";
 import {
   isPick,
@@ -39,21 +48,33 @@ import {
 } from "../../worker/exercises/syntax-tree/grading";
 import type { Pick } from "../../worker/exercises/syntax-tree/logic/tree";
 import {
+  asksFor,
   isRightPick,
   nodeAt,
   parsePathKey,
   pathKey,
-  typedPick,
 } from "../../worker/exercises/syntax-tree/logic/tree";
 import type { SyntaxTreeStringId } from "../../worker/exercises/syntax-tree/strings";
 import type { SyntaxTreePublicData } from "../../worker/exercises/syntax-tree/types";
+import { SYNTAX_TREE_DEPTH_WORDS } from "../../worker/exercises/syntax-tree/words";
 import { CarnapExerciseElement, register } from "./base";
+import {
+  createHelpDialog,
+  HELP_DIALOG_STYLES,
+  type HelpShortcut,
+  mountHelpTrigger,
+  openHelpDialog,
+} from "./help-dialog";
+import { drawLines } from "./syntax-tree-lines";
 
 /**
  * How long a repeated message stays cleared before it is said again: long
  * enough for a screen reader to take the empty region as a change.
  */
 const REPEAT_DELAY_MS = 100;
+
+/** Every button that answers something, in the order a keyboard meets them. */
+const ANSWER_BUTTONS = `button.${RUN_CLASS.connective}, button.${RUN_CLASS.variable}`;
 
 /** A click made by Enter or Space on a button, which reports no click count. */
 function fromKeyboard(event: MouseEvent): boolean {
@@ -66,11 +87,11 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
   private picks: Pick[] = [];
   private treeHost: HTMLElement | null = null;
   private message: HTMLElement | null = null;
-  private typed: HTMLInputElement | null = null;
-  private splitButton: HTMLButtonElement | null = null;
+  private freeButton: HTMLButtonElement | null = null;
+  private helpDialog: HTMLDialogElement | null = null;
   private interactive = false;
-  /** The key of the sentence a typed connective answers, as last drawn. */
-  private targetKey: string | null = null;
+  /** The key of the variable being linked, between its press and its link. */
+  private linking: string | null = null;
   private repeatHandle: ReturnType<typeof setTimeout> | null = null;
 
   protected override get gradesLocally(): boolean {
@@ -79,48 +100,44 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
 
   protected enhance(): void {
     const root = this.shadowRoot;
+
+    if (root === null) {
+      return;
+    }
+
+    this.treeHost = root.querySelector<HTMLElement>('[data-role="tree"]');
+    this.watchLayout();
+
     const data = this.publicData;
 
-    if (root === null || !isSyntaxTreePublicData(data)) {
+    // A review sends no public data: the server drew the tree as submitted,
+    // and the lines are all there is to add.
+    if (!isSyntaxTreePublicData(data)) {
+      this.redrawLines();
+      this.dataset.enhanced = "true";
+
       return;
     }
 
     this.data = data;
     this.resolved = resolveSyntaxTree(data);
-    this.treeHost = root.querySelector<HTMLElement>('[data-role="tree"]');
     this.message = root.querySelector<HTMLElement>('[data-role="message"]');
-    this.typed = root.querySelector<HTMLInputElement>('[data-role="typed"]');
-    this.splitButton = root.querySelector<HTMLButtonElement>(
-      '[data-role="split"]',
+    this.freeButton = root.querySelector<HTMLButtonElement>(
+      '[data-role="free"]',
     );
     this.interactive = this.mode === "answer" && this.resolved !== null;
 
     if (this.interactive) {
-      this.typed?.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          this.submitTyped(true);
-        }
-      });
-      this.splitButton?.addEventListener("click", (event) =>
-        this.submitTyped(fromKeyboard(event)),
+      this.treeHost?.addEventListener("click", (event) =>
+        this.onTreeClick(event),
       );
-      this.treeHost?.addEventListener("click", (event) => {
-        const button = (event.target as Element | null)?.closest<HTMLElement>(
-          "button.st-op",
-        );
-        const owner = button?.closest<HTMLElement>(".st-node");
-
-        if (button?.dataset.node !== undefined && owner != null) {
-          this.pick(
-            {
-              clicked: parsePathKey(button.dataset.node),
-              node: parsePathKey(owner.dataset.path ?? ""),
-            },
-            fromKeyboard(event),
-          );
-        }
-      });
+      this.freeButton?.addEventListener("click", (event) =>
+        this.link(null, fromKeyboard(event)),
+      );
+      root.addEventListener("keydown", (event) =>
+        this.onKey(event as KeyboardEvent),
+      );
+      this.mountHelp(root, data);
     }
 
     this.restorePriorAnswer();
@@ -132,6 +149,202 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
 
   protected getAnswer(): { picks: Pick[] } {
     return { picks: this.picks };
+  }
+
+  /**
+   * Redraw the lines whenever the tree's box changes: a web font arriving,
+   * a narrower window, the tree coming into view from a closed `<details>`.
+   */
+  private watchLayout(): void {
+    const host = this.treeHost;
+
+    if (host === null || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    new ResizeObserver(() => this.redrawLines()).observe(host);
+  }
+
+  private redrawLines(): void {
+    const scroll = this.treeHost?.querySelector<HTMLElement>(".st-scroll");
+
+    if (scroll != null) {
+      drawLines(scroll);
+    }
+  }
+
+  /**
+   * Escape lets go of the variable being linked; a bare `?` opens the help.
+   * Neither while the help is open, whose own Escape closes it.
+   */
+  private onKey(event: KeyboardEvent): void {
+    if (this.helpDialog?.open === true) {
+      return;
+    }
+
+    if (event.key === "Escape" && this.linking !== null) {
+      event.preventDefault();
+      this.stopLinking(true);
+    } else if (
+      event.key === "?" &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey &&
+      this.helpDialog !== null
+    ) {
+      event.preventDefault();
+      openHelpDialog(this.helpDialog, event.target as HTMLElement);
+    }
+  }
+
+  /**
+   * The (?) in the action bar, and the panel it opens: what to do, how a
+   * wrong pick is scored, and the keys. Only where there is something to do.
+   */
+  private mountHelp(root: ShadowRoot, data: SyntaxTreePublicData): void {
+    const words = SYNTAX_TREE_DEPTH_WORDS[data.depth];
+    const terms = data.depth === "terms";
+    const shortcuts: readonly {
+      readonly action: SyntaxTreeStringId;
+      readonly keys: readonly string[];
+    }[] = [
+      { action: "Move between the buttons", keys: ["Tab", "Shift-Tab"] },
+      { action: "Press the button under focus", keys: ["Enter", "Space"] },
+      ...(terms
+        ? [
+            {
+              action: "Let go of the variable being linked" as const,
+              keys: ["Esc"],
+            },
+          ]
+        : []),
+      { action: "Open this help", keys: ["?"] },
+    ];
+    const style = document.createElement("style");
+
+    style.textContent = HELP_DIALOG_STYLES;
+    this.helpDialog = createHelpDialog({
+      close: this.t("Close help"),
+      intro: [
+        words.instructions,
+        words.boxes,
+        ...(terms
+          ? [
+              "To link a variable, press it, then press the quantifier that binds it, or Free if none does." as const,
+            ]
+          : []),
+        data.scoring === "partial"
+          ? ("Each sentence takes one pick. After a wrong one, the tree shows how it really splits." as const)
+          : ("A wrong pick starts the tree over." as const),
+      ].map((id) => this.t(id)),
+      keyboard: this.t("Keyboard"),
+      shortcuts: shortcuts.map(
+        (shortcut): HelpShortcut => ({
+          action: this.t(shortcut.action),
+          keys: shortcut.keys,
+        }),
+      ),
+      title: this.t("Splitting a syntax tree"),
+    });
+    root.append(style, this.helpDialog);
+    mountHelpTrigger(
+      this,
+      this.t("Usage and keyboard shortcuts"),
+      (trigger) => {
+        if (this.helpDialog !== null) {
+          openHelpDialog(this.helpDialog, trigger);
+        }
+      },
+    );
+  }
+
+  private onTreeClick(event: MouseEvent): void {
+    const button = (event.target as Element | null)?.closest<HTMLElement>(
+      "button[data-node]",
+    );
+    const key = button?.dataset.node;
+
+    if (button == null || key === undefined) {
+      return;
+    }
+
+    const keyboard = fromKeyboard(event);
+
+    if (button.classList.contains(RUN_CLASS.variable)) {
+      if (this.linking === key) {
+        this.stopLinking(keyboard);
+      } else {
+        this.startLinking(key, keyboard);
+      }
+    } else if (button.classList.contains(RUN_CLASS.binder)) {
+      this.link(parsePathKey(key), keyboard);
+    } else {
+      const owner = button.closest<HTMLElement>(".st-node");
+
+      this.pick(
+        {
+          clicked: parsePathKey(key),
+          node: parsePathKey(owner?.dataset.path ?? ""),
+        },
+        keyboard,
+      );
+    }
+  }
+
+  /** Press a variable: its quantifiers become buttons, and Free appears. */
+  private startLinking(key: string, keyboard: boolean): void {
+    const variable = this.resolved?.tree.byPath.get(key);
+
+    if (variable === undefined) {
+      return;
+    }
+
+    this.linking = key;
+    this.draw();
+    this.say(
+      this.t("Pick the quantifier that binds {variable}, or Free.", {
+        variable: variable.text,
+      }),
+    );
+
+    // From the keyboard, to the outermost quantifier, or to Free when the
+    // variable has none above it.
+    if (keyboard) {
+      (
+        this.treeHost?.querySelector<HTMLButtonElement>(
+          `button.${RUN_CLASS.binder}`,
+        ) ?? this.freeButton
+      )?.focus();
+    }
+  }
+
+  /** Let the variable go unlinked; from the keyboard, back to its button. */
+  private stopLinking(keyboard: boolean): void {
+    const key = this.linking;
+
+    this.linking = null;
+    this.draw();
+    this.say("");
+
+    if (keyboard && key !== null) {
+      this.treeHost
+        ?.querySelector<HTMLButtonElement>(
+          `button.${RUN_CLASS.variable}[data-node="${key}"]`,
+        )
+        ?.focus();
+    }
+  }
+
+  /** Link the variable being linked to a quantifier node, or to none. */
+  private link(binder: number[] | null, keyboard: boolean): void {
+    const key = this.linking;
+
+    if (key === null) {
+      return;
+    }
+
+    this.linking = null;
+    this.pick({ linked: binder, node: parsePathKey(key) }, keyboard);
   }
 
   /** Replay the stored picks, so a stored run that went wrong restarts. */
@@ -156,9 +369,9 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
 
   /**
    * Take one pick into the run: under `whole` a right one is kept and a wrong
-   * one clears the run; under `partial` each sentence keeps its first. Says
+   * one clears the run; under `partial` each node keeps its first. Says
    * whether the pick was right, or `null` when there was nothing to take — a
-   * sentence already split, an atom, or no such sentence.
+   * node already answered, one that asks for no such answer, or no node.
    */
   private apply(pick: Pick): boolean | null {
     if (this.resolved === null || this.data === null) {
@@ -167,10 +380,12 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
 
     const tree = this.resolved.tree;
     const key = pathKey(pick.node);
+    const node = nodeAt(tree, pick.node);
 
-    // Every pick the run holds has split its sentence, under either scoring.
+    // Every pick the run holds has settled its node, under either scoring.
     if (
-      nodeAt(tree, pick.node)?.atom !== false ||
+      node === undefined ||
+      !asksFor(node, pick) ||
       this.picks.some((one) => pathKey(one.node) === key)
     ) {
       return null;
@@ -195,16 +410,18 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
   private pick(pick: Pick, keyboard: boolean): void {
     const right = this.apply(pick);
 
+    // Drawn either way: a link that took nothing still ended the linking.
+    this.draw();
+
     if (right === null) {
       return;
     }
 
-    this.draw();
     this.syncAnswer();
 
     if (this.reflectVerdict() === "done") {
-      // The connectives are gone and the field is disabled, so focus goes to
-      // the message saying the tree is done, from where Tab reaches Submit.
+      // The buttons are gone and the field is disabled, so focus goes to the
+      // message saying the tree is done, from where Tab reaches Submit.
       if (keyboard) {
         this.message?.focus();
       }
@@ -212,62 +429,34 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
       return;
     }
 
-    if (right || this.feedback === "none") {
-      this.say("");
-    } else {
-      this.say(
-        this.data?.scoring === "partial"
-          ? this.t(
-              "That is not the main connective. Here is how the sentence splits.",
-            )
-          : this.t("That is not the main connective. The tree starts over."),
-      );
-    }
+    this.say(
+      right || this.feedback === "none" ? "" : this.wrongMessage(pick),
+    );
 
-    // A connective pressed in the tree was redrawn away, so focus moves on to
-    // the next sentence's. A typed answer leaves focus where it was.
-    if (keyboard && "clicked" in pick) {
+    // The button pressed was redrawn away, so focus moves on to the next
+    // thing to answer.
+    if (keyboard) {
       this.treeHost
-        ?.querySelector<HTMLButtonElement>(
-          ".st-node[data-target] > .st-sentence > button.st-op",
-        )
+        ?.querySelector<HTMLButtonElement>(ANSWER_BUTTONS)
         ?.focus();
     }
   }
 
-  /** The typed answer, for the sentence marked as the field's target. */
-  private submitTyped(keyboard: boolean): void {
-    const resolved = this.resolved;
-    const input = this.typed;
-    const target =
-      resolved === null || this.targetKey === null
-        ? undefined
-        : nodeAt(resolved.tree, parsePathKey(this.targetKey));
+  /** What a wrong pick is told, by what it was and how the tree is scored. */
+  private wrongMessage(pick: Pick): string {
+    const partial = this.data?.scoring === "partial";
 
-    if (resolved === null || input === null || target === undefined) {
-      return;
+    if ("linked" in pick) {
+      return partial
+        ? this.t("That is not how this variable is bound. Here is how it is.")
+        : this.t(
+            "That is not how this variable is bound. The tree starts over.",
+          );
     }
 
-    const text = input.value.trim();
+    const words = SYNTAX_TREE_DEPTH_WORDS[this.data?.depth ?? "connectives"];
 
-    if (text === "") {
-      return;
-    }
-
-    const pick = typedPick(resolved.language, target, text);
-
-    if (pick === null) {
-      // Naming no connective at all is a slip, not a guess: nothing is lost,
-      // and saying so gives nothing away.
-      this.say(
-        this.t("“{text}” is not a connective of this language.", { text }),
-      );
-
-      return;
-    }
-
-    input.value = "";
-    this.pick(pick, keyboard);
+    return this.t(partial ? words.wrongPartial : words.wrongWhole);
   }
 
   /** Set the mark, and say so when the tree is finished. */
@@ -284,13 +473,15 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
       return "open";
     }
 
+    const words = SYNTAX_TREE_DEPTH_WORDS[this.resolved.tree.depth];
+
     this.setMark(verdict.ok ? "ok" : "idle");
     this.say(
       this.feedback === "none"
         ? this.t("The tree is complete.")
         : verdict.ok
-          ? this.t("Every connective picked correctly.")
-          : this.t("Main connectives found: {right} of {total}", {
+          ? this.t(words.allRight)
+          : this.t(words.count, {
               right: String(verdict.right),
               total: String(verdict.total),
             }),
@@ -330,8 +521,8 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
   }
 
   /**
-   * Draw the tree as the picks have split it, mark the sentence the field
-   * answers, and leave the field usable only while one is left to answer.
+   * Draw the tree as the picks have split and linked it, and show Free only
+   * while a variable is being linked.
    */
   private draw(): void {
     const host = this.treeHost;
@@ -344,27 +535,22 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
 
     const drawn = drawnTree(
       resolved,
-      splitNodes(resolved, data, this.picks),
+      shownAnswers(resolved, data, this.picks),
       (id, values) => this.t(id, values),
+      this.linking,
     );
     const scroll = document.createElement("div");
     const tree = document.createElement("ul");
 
-    this.targetKey = firstOpen(drawn);
     scroll.className = "st-scroll";
     tree.className = "st-tree";
     tree.append(this.nodeElement(drawn));
     scroll.append(tree);
     host.replaceChildren(scroll);
+    drawLines(scroll);
 
-    const answerable = this.interactive && this.targetKey !== null;
-
-    if (this.typed !== null) {
-      this.typed.disabled = !answerable;
-    }
-
-    if (this.splitButton !== null) {
-      this.splitButton.disabled = !answerable;
+    if (this.freeButton !== null) {
+      this.freeButton.hidden = this.linking === null;
     }
   }
 
@@ -376,10 +562,25 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
     item.className = "st-node";
     item.dataset.path = node.key;
     item.dataset.state = node.state;
-    item.toggleAttribute("data-target", node.key === this.targetKey);
+
+    if (node.link?.boundBy != null) {
+      item.dataset.boundBy = node.link.boundBy;
+    }
+
     line.className = "st-sentence";
     line.append(...node.runs.map((run) => this.runNode(run)));
     item.append(line);
+
+    if (node.link !== null) {
+      const note = document.createElement("span");
+
+      note.className =
+        node.link.boundBy === null
+          ? "st-link-note"
+          : "st-link-note visually-hidden";
+      note.textContent = node.link.note;
+      item.append(note);
+    }
 
     if (node.state === "split") {
       const children = document.createElement("ul");
@@ -399,14 +600,23 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
       return document.createTextNode(run.text);
     }
 
-    if (run.kind === "connective") {
+    if (
+      run.kind === "binder" ||
+      run.kind === "connective" ||
+      run.kind === "variable"
+    ) {
       const button = document.createElement("button");
 
-      button.className = RUN_CLASS.connective;
+      button.className = RUN_CLASS[run.kind];
       button.type = "button";
       button.dataset.node = run.node;
       button.disabled = !this.interactive;
       button.textContent = run.text;
+      button.toggleAttribute("data-main", run.kind === "binder");
+
+      if (run.kind === "variable") {
+        button.setAttribute("aria-pressed", String(run.pressed));
+      }
 
       if (run.label !== null) {
         button.setAttribute("aria-label", run.label);

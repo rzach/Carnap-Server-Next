@@ -101,6 +101,20 @@ const RIGHT = [
   { clicked: [1, 1], node: [1, 1] },
 ];
 
+/** `∀x(F(x) ∧ ∃x G(x))` through its terms: five splits and two links. */
+const TERMS = directive(
+  '#st points="7" system="forallx-calgary" depth="terms" scoring="partial"',
+  "- Ax(F(x) & Ex G(x))",
+);
+const TERM_SPLITS = [[], [1], [1, 0], [1, 1], [1, 1, 1]].map((path) => ({
+  clicked: path,
+  node: path,
+}));
+const TERM_LINKS = [
+  { linked: [], node: [1, 0, 0, 0, 0] },
+  { linked: [1, 1], node: [1, 1, 1, 0, 0, 0] },
+];
+
 describe("the directive", () => {
   test("stores the sentence as engine text, with its prompt and scoring", async () => {
     const item = await declaration(PROP);
@@ -136,7 +150,10 @@ describe("the directive", () => {
       await compileCodes(directive('#s1 scoring="most"', "- P /\\ Q")),
     ).toContain("invalid_syntax_tree_scoring");
     expect(
-      await compileCodes(directive('#s1 depth="terms"', "- P /\\ Q")),
+      await compileCodes(directive('#s1 depth="atoms"', "- P /\\ Q")),
+    ).toContain("invalid_syntax_tree_depth");
+    expect(
+      await compileCodes(directive('#s1 order="any"', "- P /\\ Q")),
     ).toContain("unknown_attribute");
   });
 
@@ -153,6 +170,21 @@ ${directive('#s1 system="bare"', "- ~ a")}`;
     expect(await compileCodes(bare)).toEqual([
       "missing_syntax_tree_sentence_sort",
     ]);
+    // Through its terms it needs none: every node is drawn, whatever its sort.
+    expect(
+      await compileCodes(
+        bare.replace('system="bare"', 'system="bare" depth="terms"'),
+      ),
+    ).toEqual([]);
+  });
+
+  test("stores the depth, which is connectives unless asked", async () => {
+    expect((await declaration(PROP)).publicData).toMatchObject({
+      depth: "connectives",
+    });
+    expect((await declaration(TERMS)).publicData).toMatchObject({
+      depth: "terms",
+    });
   });
 
   test("any language: a quantified sentence in forallx", async () => {
@@ -199,14 +231,6 @@ describe("grading", () => {
     expect(result.summary).toBe("Main connectives found: 2 of 3");
   });
 
-  test("a typed pick counts by the constructor it names", async () => {
-    const result = await grade(await declaration(PROP), {
-      picks: [{ named: "and", node: [] }, ...RIGHT.slice(1)],
-    });
-
-    expect(result.status).toBe("correct");
-  });
-
   test("a pick at no node, or a second at one, is not counted", async () => {
     const item = await declaration(PARTIAL);
     const padded = await grade(item, {
@@ -223,6 +247,37 @@ describe("grading", () => {
     expect(padded.score).toBeCloseTo((4 * 2) / 3);
   });
 
+  test("terms: splits and links are scored alike", async () => {
+    const item = await declaration(TERMS);
+    const all = await grade(item, { picks: [...TERM_SPLITS, ...TERM_LINKS] });
+    const oneFree = await grade(item, {
+      picks: [
+        ...TERM_SPLITS,
+        { linked: null, node: [1, 0, 0, 0, 0] },
+        ...TERM_LINKS.slice(1),
+      ],
+    });
+
+    expect(all).toMatchObject({ score: 7, status: "correct" });
+    expect(all.summary).toBe("Every split and link is correct.");
+    expect(oneFree.score).toBeCloseTo(6);
+    expect(oneFree.summary).toBe("Splits and links right: 6 of 7");
+  });
+
+  test("a link at a node with no variable, or a split at a variable, is not counted", async () => {
+    const item = await declaration(TERMS);
+    const result = await grade(item, {
+      picks: [
+        { linked: null, node: [] },
+        { clicked: [1, 0, 0, 0, 0], node: [1, 0, 0, 0, 0] },
+        ...TERM_SPLITS,
+        ...TERM_LINKS,
+      ],
+    });
+
+    expect(result.status).toBe("correct");
+  });
+
   test("only JSON that is not a list of picks is refused", async () => {
     const item = await declaration(PROP);
 
@@ -230,8 +285,9 @@ describe("grading", () => {
       {},
       { picks: "all" },
       { picks: [{ node: [] }] },
-      { picks: [{ clicked: [], named: "and", node: [] }] },
       { picks: [{ clicked: [-1], node: [] }] },
+      { picks: [{ clicked: [], linked: null, node: [] }] },
+      { picks: [{ linked: "x", node: [] }] },
     ]) {
       expect(
         SYNTAX_TREE_EXERCISE.normalizeAnswer(
@@ -267,6 +323,20 @@ describe("review and rendering", () => {
     expect(html).toContain('data-path="" data-state="split"');
   });
 
+  test("terms: a linked variable carries its quantifier, for the line and in words", async () => {
+    const { html } = await grade(await declaration(TERMS), {
+      picks: [...TERM_SPLITS, ...TERM_LINKS],
+    });
+
+    expect(html).toContain('data-bound-by="1.1" data-path="1.1.1.0.0.0"');
+    expect(html).toContain(
+      '<span class="st-link-note visually-hidden">bound by ∃x</span>',
+    );
+    // The lines are measured, so the review loads the element to draw them.
+    expect(html).toContain('"mode":"review"');
+    expect(html).toContain("/assets/components/carnap-syntax-tree-v1.js");
+  });
+
   test("a sealed review keeps the tree and drops the verdict", async () => {
     const { html, summary } = await grade(
       await declaration(PROP),
@@ -274,8 +344,10 @@ describe("review and rendering", () => {
       false,
     );
 
+    // The element's strings ride along for drawing the lines; the verdict
+    // paragraph is what a sealed review leaves out.
     expect(summary).toBe("Syntax tree");
-    expect(html).not.toContain("Every connective picked correctly.");
+    expect(html).not.toContain('class="syntax-tree-review-verdict"');
     expect(html).toContain('data-state="split"');
   });
 

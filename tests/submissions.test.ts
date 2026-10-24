@@ -3469,7 +3469,7 @@ Split the sentence.
             data: {
               picks: [
                 { clicked: [], node: [] },
-                { named: "not", node: [1] },
+                { clicked: [1], node: [1] },
               ],
             },
             kind: "syntax-tree-answer@1",

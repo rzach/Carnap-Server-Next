@@ -5,16 +5,17 @@ import { printTerm } from "@aufbau/syntax";
 import type {
   SentenceSegment,
   SyntaxTree,
+  SyntaxTreeDepth,
 } from "../src/worker/exercises/syntax-tree/logic/tree";
 import {
+  asksFor,
   isRightPick,
   pickableCount,
+  readingSort,
   readSentence,
-  sentenceSortOf,
   syntaxTree,
-  typedPick,
 } from "../src/worker/exercises/syntax-tree/logic/tree";
-import { languageById } from "../src/worker/logic/specs";
+import { languageById, readLanguage } from "../src/worker/logic/specs";
 
 /**
  * The tree is the parse's, in any language: no connective is named here that
@@ -32,16 +33,45 @@ function language(id: string): SurfaceLanguage {
   return lang;
 }
 
-function treeOf(id: string, text: string): SyntaxTree {
-  const lang = language(id);
-  const sort = sentenceSortOf(lang);
-  const parsed = lang.parse(text, sort === null ? {} : { sort });
+/**
+ * A language of numerals alone: no sentences at all, so no sentence sort,
+ * which only `depth="terms"` can draw.
+ */
+const NUMERALS = `delimiter $ ( ) $;
+sort nat;
+term zero: nat;
+term suc: nat > nat;
+term plus: nat > nat > nat;
+notation zero: nat = ($0$:max);
+prefix suc: $S$ prec 100;
+infixl plus: $+$ prec 50;
+`;
+
+function numerals(): SurfaceLanguage {
+  const read = readLanguage(NUMERALS).language;
+
+  if (read === null) {
+    throw new Error("the numerals do not read");
+  }
+
+  return read;
+}
+
+/** The tree of `text` in `lang`, a built-in language by id or one read here. */
+function treeOf(
+  lang: string | SurfaceLanguage,
+  text: string,
+  depth: SyntaxTreeDepth = "connectives",
+): SyntaxTree {
+  const surface = typeof lang === "string" ? language(lang) : lang;
+  const sort = readingSort(surface, depth);
+  const parsed = surface.parse(text, sort == null ? {} : { sort });
 
   if (!parsed.ok) {
     throw new Error(`${text}: ${parsed.diagnostics[0]?.message}`);
   }
 
-  return syntaxTree(lang, parsed.term);
+  return syntaxTree(surface, parsed.term, depth);
 }
 
 /** Each node as its text, then its children's, indented. */
@@ -160,54 +190,96 @@ describe("picks", () => {
     expect(isRightPick(tree, { clicked: [0], node: [0] })).toBe(false);
     expect(isRightPick(tree, { clicked: [9], node: [9] })).toBe(false);
   });
+});
 
-  test("typing takes any spelling the language has, and names the constructor", () => {
-    const forallx = language("forallx-calgary");
-    const first = treeOf("forallx-calgary", "P -> (Q & R)");
-    const root = first.nodes[0];
+describe("the tree through its terms", () => {
+  test("splits an atom at its predicate, = and function symbols, down to variables and names", () => {
+    const tree = treeOf("forallx-calgary", "Ax(F(x,a) -> x = f(b))", "terms");
 
-    if (root === undefined) {
-      throw new Error("no root");
-    }
-
-    for (const spelling of ["->", "→", " -> "]) {
-      expect(typedPick(forallx, root, spelling)).toEqual({
-        named: root.head,
-        node: [],
-      });
-    }
-
-    const wrong = typedPick(forallx, root, "&");
-
-    expect(wrong).not.toBeNull();
-    expect(wrong === null ? true : isRightPick(first, wrong)).toBe(false);
+    expect(outline(tree)).toEqual([
+      "∀x(F(x,a) → x = f(b))",
+      "  F(x,a) → x = f(b)",
+      "    F(x,a)",
+      "      x ·",
+      "      a ·",
+      "    x = f(b)",
+      "      x ·",
+      "      f(b)",
+      "        b ·",
+    ]);
+    // The argument list's comma is no one's to pick; the predicate is.
+    expect(show(tree.nodes[2]?.segments ?? [])).toEqual([
+      "![F@]",
+      "(",
+      "[x@0.0.0.0]",
+      ",",
+      "[a@0.1.0.0]",
+      ")",
+    ]);
   });
 
-  test("typing what is no connective is a slip, not a wrong answer", () => {
-    const forallx = language("forallx-calgary");
-    const root = treeOf("forallx-calgary", "P -> Q").nodes[0];
+  test("links each variable to the quantifier that binds it, the innermost one", () => {
+    const tree = treeOf("forallx-calgary", "Ax(F(x) & Ex G(x))", "terms");
+    const links = tree.nodes.flatMap((node) =>
+      node.link === null
+        ? []
+        : [[node.path.join("."), node.link.boundBy?.join(".") ?? null]],
+    );
 
-    if (root === undefined) {
-      throw new Error("no root");
-    }
-
-    for (const text of ["", "P", "⊥", "%%"]) {
-      expect(typedPick(forallx, root, text)).toBeNull();
-    }
+    expect(links).toEqual([
+      ["1.0.0.0.0", ""],
+      ["1.1.1.0.0.0", "1.1"],
+    ]);
+    // Five splits (∀x, ∧, F, ∃x, G) and two links.
+    expect(pickableCount(tree)).toBe(7);
   });
 
-  test("an elab spelling counts: Calgary's A is ∀ where the head is ∀", () => {
-    const forallx = language("forallx-calgary");
-    const tree = treeOf("forallx-calgary", "AxF(x)");
-    const root = tree.nodes[0];
+  test("a link is right only to the binding quantifier, and a split pick is no link", () => {
+    const tree = treeOf("forallx-calgary", "Ax(F(x) & Ex G(x))", "terms");
+    const inner = { node: [1, 1, 1, 0, 0, 0] };
+    const leaf = tree.byPath.get("1.1.1.0.0.0");
 
-    if (root === undefined) {
-      throw new Error("no root");
+    expect(isRightPick(tree, { ...inner, linked: [1, 1] })).toBe(true);
+    expect(isRightPick(tree, { ...inner, linked: [] })).toBe(false);
+    expect(isRightPick(tree, { ...inner, linked: null })).toBe(false);
+    expect(
+      leaf === undefined ? true : asksFor(leaf, { ...inner, clicked: [] }),
+    ).toBe(false);
+    // A link at a node that is no variable asks for nothing.
+    expect(isRightPick(tree, { linked: null, node: [] })).toBe(false);
+  });
+
+  test("names, sentence letters and sentence-sorted leaves have no link", () => {
+    const tree = treeOf("forallx-calgary", "Ax(F(x) -> P) & G(a)", "terms");
+
+    expect(
+      tree.nodes
+        .filter((node) => node.link !== null)
+        .map((node) => node.text),
+    ).toEqual(["x"]);
+  });
+
+  test("draws a language with no sentence sort, and reads it back", () => {
+    const lang = numerals();
+    const parsed = lang.parse("S(0) + 0");
+
+    if (!parsed.ok) {
+      throw new Error("the numeral does not read");
     }
 
-    const pick = typedPick(forallx, root, "A");
+    const back = readSentence(
+      lang,
+      printTerm(lang, parsed.term, "engine"),
+      "terms",
+    );
 
-    expect(pick === null ? false : isRightPick(tree, pick)).toBe(true);
-    expect(typedPick(forallx, root, "∀")).toEqual(pick);
+    expect(readingSort(lang, "connectives")).toBeNull();
+    expect(outline(treeOf(lang, "S(0) + 0", "terms"))).toEqual([
+      "S 0 + 0",
+      "  S 0",
+      "    0 ·",
+      "  0 ·",
+    ]);
+    expect(back === null ? null : printTerm(lang, back)).toBe("S 0 + 0");
   });
 });

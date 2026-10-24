@@ -97,10 +97,6 @@ msgstr "“{symbol}” has the role “{role}” but does not take individuals a
 msgid "“{symbol}” with {arity} arguments has no meaning in a {world} world. Give it one of the world's roles in the language, or leave it out."
 msgstr "“{symbol}” with {arity} arguments has no meaning in a {world} world. Give it one of the world's roles in the language, or leave it out."
 
-#: src/worker/exercises/syntax-tree/strings.ts
-msgid "“{text}” is not a connective of this language."
-msgstr "“{text}” is not a connective of this language."
-
 #: src/worker/application/content/diagnostic-strings.ts
 #: src/worker/logic/specs/strings.ts
 msgid "“{token}” binds too loosely here; parenthesize it."
@@ -640,6 +636,10 @@ msgstr "A world may hold at most {max} blocks."
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A world may hold at most {max} objects."
 msgstr "A world may hold at most {max} objects."
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "A wrong pick starts the tree over."
+msgstr "A wrong pick starts the tree over."
 
 #: src/worker/application/lti-admin.ts
 #: src/worker/web/admin-lti.tsx
@@ -1240,6 +1240,10 @@ msgstr "Bootstrap site administrator"
 #: src/worker/web/admin.tsx
 msgid "Bootstrap token"
 msgstr "Bootstrap token"
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "bound by {quantifier}"
+msgstr "bound by {quantifier}"
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Branch {position} of {count}"
@@ -2192,6 +2196,18 @@ msgstr "Due extension minutes"
 msgid "Due time cannot be after available-until."
 msgstr "Due time cannot be after available-until."
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Each sentence or term still to split is boxed, and its symbols are buttons."
+msgstr "Each sentence or term still to split is boxed, and its symbols are buttons."
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Each sentence still to split is boxed, and its connectives are buttons."
+msgstr "Each sentence still to split is boxed, and its connectives are buttons."
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Each sentence takes one pick. After a wrong one, the tree shows how it really splits."
+msgstr "Each sentence takes one pick. After a wrong one, the tree shows how it really splits."
+
 #: src/worker/web/courses.tsx
 msgid "Edit {title}"
 msgstr "Edit {title}"
@@ -2382,6 +2398,10 @@ msgstr "Every proof starts from assumptions. New assumption puts one in the work
 #: src/worker/exercises/world/strings.ts
 msgid "Every sentence is marked correctly."
 msgstr "Every sentence is marked correctly."
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Every split and link is correct."
+msgstr "Every split and link is correct."
 
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/ui-strings.ts
@@ -2586,6 +2606,16 @@ msgstr "Formula"
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Formula {index} needs {expected} cell tokens; found {found}."
 msgstr "Formula {index} needs {expected} cell tokens; found {found}."
+
+#. Disambiguating id; only the word Free is shown. A button: the variable being linked is bound by no quantifier.
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Free (syntax-tree button)"
+msgstr "Free"
+
+#. Disambiguating id; only the word free is shown. Written under a variable that no quantifier binds.
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "free (syntax-tree variable)"
+msgstr "free"
 
 #: src/worker/exercises/free-response/types.ts
 msgid "Free-response question"
@@ -2967,6 +2997,10 @@ msgstr "Leave the field and go back to the line"
 msgid "Lesson"
 msgstr "Lesson"
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Let go of the variable being linked"
+msgstr "Let go of the variable being linked"
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Line “{label}” cites “{reference}”, which is not a line above it."
 msgstr "Line “{label}” cites “{reference}”, which is not a line above it."
@@ -2991,6 +3025,10 @@ msgstr "line {line}: {id} — {status}"
 #: src/worker/web/courses.tsx
 msgid "Link"
 msgstr "Link"
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Link {variable}"
+msgstr "Link {variable}"
 
 #: src/worker/web/lti.tsx
 msgid "Link accounts"
@@ -3087,10 +3125,6 @@ msgstr "LTI platform registered"
 #: src/worker/web/admin.tsx
 msgid "LTI platforms"
 msgstr "LTI platforms"
-
-#: src/worker/exercises/syntax-tree/strings.ts
-msgid "Main connective"
-msgstr "Main connective"
 
 #: src/worker/exercises/syntax-tree/strings.ts
 msgid "Main connectives found: {right} of {total}"
@@ -3250,6 +3284,10 @@ msgstr "Move between rows"
 #: src/worker/exercises/world/strings.ts
 msgid "Move between squares"
 msgstr "Move between squares"
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Move between the buttons"
+msgstr "Move between the buttons"
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Move to a row with the arrow keys or by clicking it; each action works on the row or branch there."
@@ -3760,6 +3798,7 @@ msgstr "Open the link from your email and use its button."
 
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
+#: src/worker/exercises/syntax-tree/strings.ts
 msgid "Open this help"
 msgstr "Open this help"
 
@@ -3860,6 +3899,10 @@ msgstr "person@example.edu"
 #: src/worker/exercises/syntax-tree/strings.ts
 msgid "Pick the main connective of each sentence until only atomic sentences remain."
 msgstr "Pick the main connective of each sentence until only atomic sentences remain."
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Pick the quantifier that binds {variable}, or Free."
+msgstr "Pick the quantifier that binds {variable}, or Free."
 
 #: src/worker/exercises/world/strings.ts
 msgid "Pick up or drop a block"
@@ -3982,6 +4025,10 @@ msgstr "Premise {order}"
 #: src/worker/web/assignment-detail.tsx
 msgid "Presentation"
 msgstr "Presentation"
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Press the button under focus"
+msgstr "Press the button under focus"
 
 #: src/worker/routes/content.ts
 #: src/worker/web/content.tsx
@@ -4804,11 +4851,6 @@ msgstr "Source"
 msgid "Split"
 msgstr "Split"
 
-#. Disambiguating id; only the word Split is shown. A button: split the sentence at the main connective just typed.
-#: src/worker/exercises/syntax-tree/strings.ts
-msgid "Split (syntax-tree button)"
-msgstr "Split"
-
 #. Disambiguating id; only the word Split is shown. Beside Stack: the step's rows branch the tree rather than extend the branch. Not the editor's split view.
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Split (truth-tree rows)"
@@ -4818,6 +4860,10 @@ msgstr "Split"
 msgid "Split below row {row}: two new branches."
 msgstr "Split below row {row}: two new branches."
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Split each sentence and term at its main symbol until only variables and names remain, and link each variable to the quantifier that binds it."
+msgstr "Split each sentence and term at its main symbol until only variables and names remain, and link each variable to the quantifier that binds it."
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Split taken back."
 msgstr "Split taken back."
@@ -4825,6 +4871,14 @@ msgstr "Split taken back."
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Split the branch in two"
 msgstr "Split the branch in two"
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Splits and links right: {right} of {total}"
+msgstr "Splits and links right: {right} of {total}"
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Splitting a syntax tree"
+msgstr "Splitting a syntax tree"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Square"
@@ -4993,8 +5047,8 @@ msgid "System “{system}” declares no “@syntax role {role}”, which a Fitc
 msgstr "System “{system}” declares no “@syntax role {role}”, which a Fitch or Prawitz proof needs to write its lines. Put the annotation on the declaration that plays that part."
 
 #: src/worker/application/content/diagnostic-strings.ts
-msgid "System “{system}” declares no “@syntax role sentence”, which a syntax tree needs to tell its sentences from their parts. Put the annotation on the sort of formulas."
-msgstr "System “{system}” declares no “@syntax role sentence”, which a syntax tree needs to tell its sentences from their parts. Put the annotation on the sort of formulas."
+msgid "System “{system}” declares no “@syntax role sentence”, which a syntax tree needs to tell its sentences from their parts. Put the annotation on the sort of formulas, or draw the tree through its terms with depth=\"terms\", which needs none."
+msgstr "System “{system}” declares no “@syntax role sentence”, which a syntax tree needs to tell its sentences from their parts. Put the annotation on the sort of formulas, or draw the tree through its terms with depth=\"terms\", which needs none."
 
 #: src/worker/exercises/world/strings.ts
 msgid "Table"
@@ -5049,12 +5103,28 @@ msgid "That is not a sharing setting this site has."
 msgstr "That is not a sharing setting this site has."
 
 #: src/worker/exercises/syntax-tree/strings.ts
+msgid "That is not how this variable is bound. Here is how it is."
+msgstr "That is not how this variable is bound. Here is how it is."
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "That is not how this variable is bound. The tree starts over."
+msgstr "That is not how this variable is bound. The tree starts over."
+
+#: src/worker/exercises/syntax-tree/strings.ts
 msgid "That is not the main connective. Here is how the sentence splits."
 msgstr "That is not the main connective. Here is how the sentence splits."
 
 #: src/worker/exercises/syntax-tree/strings.ts
 msgid "That is not the main connective. The tree starts over."
 msgstr "That is not the main connective. The tree starts over."
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "That is not the main symbol. Here is how it splits."
+msgstr "That is not the main symbol. Here is how it splits."
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "That is not the main symbol. The tree starts over."
+msgstr "That is not the main symbol. The tree starts over."
 
 #: src/worker/application/auth.ts
 msgid "That language is not available."
@@ -5222,6 +5292,10 @@ msgstr "The course membership was not found."
 #: src/worker/application/errors.ts
 msgid "The course was not found."
 msgstr "The course was not found."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The depth attribute must be connectives or terms."
+msgstr "The depth attribute must be connectives or terms."
 
 #: src/worker/exercises/model/strings.ts
 msgid "The domain cannot be empty."
@@ -6176,6 +6250,10 @@ msgstr "To apply a rule, tick the dot under each premise in the order the rule t
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "To discharge an assumption, give it a label and write the same label on the rule that discharges it. Both boxes appear on a line once it is selected."
 msgstr "To discharge an assumption, give it a label and write the same label on the rule that discharges it. Both boxes appear on a line once it is selected."
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "To link a variable, press it, then press the quantifier that binds it, or Free if none does."
+msgstr "To link a variable, press it, then press the quantifier that binds it, or Free if none does."
 
 #: src/worker/web/errors.tsx
 msgid "Too large"

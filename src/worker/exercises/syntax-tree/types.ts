@@ -1,6 +1,6 @@
 import type { ExerciseCapabilities } from "../../domain/exercises";
 import type { Translator } from "../../i18n/translator";
-import type { Pick } from "./logic/tree";
+import type { Pick, SyntaxTreeDepth } from "./logic/tree";
 
 /**
  * Constants and data shapes for the syntax-tree exercise type. DOM-free; the
@@ -52,12 +52,15 @@ export interface SyntaxTreePublicData {
   /** The sentence to decompose, as engine text. */
   readonly sentence: string;
   readonly scoring: SyntaxTreeScoring;
+  /** How far down it is decomposed: to atoms, or through their terms. */
+  readonly depth: SyntaxTreeDepth;
 }
 
 /**
  * A submitted answer: the picks the tree was built from, in the order they
- * were made. Under `whole` a wrong pick restarts the tree, so what is sent is
- * the run since the last restart; under `partial`, each node's one pick.
+ * were made, its links among them. Under `whole` a wrong pick restarts the
+ * tree, so what is sent is the run since the last restart; under `partial`,
+ * each node's one pick.
  */
 export interface SyntaxTreeAnswerData {
   readonly picks: readonly Pick[];

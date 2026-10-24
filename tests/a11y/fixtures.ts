@@ -215,7 +215,7 @@ Find each sentence's main connective.
 - P /\\ (R -> ~Q)
 ::::
 
-::::syntax-tree{#sy system="forallx-calgary" scoring="partial" points="1"}
+::::syntax-tree{#sy system="forallx-calgary" depth="terms" scoring="partial" points="1"}
 - ∀x(F(x) → ∃y G(y))
 ::::`;
 

@@ -1331,10 +1331,8 @@ grade is the engine's. Trees are capped at 200 rows.
 A syntax tree asks for a sentence's main connective, splits the sentence at
 it into its immediate subsentences, and asks again of each, until only
 atomic sentences remain (old Carnap's `.SynChecker .Match`). The student
-clicks a connective in any sentence still to split, or types it for the
-sentence the field is marked against; any spelling the language accepts
-counts, so `->`, `→` and `>` are one answer where the language reads all
-three.
+presses a connective in any sentence still to split, with the mouse or from
+the keyboard; the instructions and the keys are in the exercise's (?) panel.
 
 ```md
 ::::syntax-tree{#st1 points="1"}
@@ -1346,19 +1344,36 @@ Find each sentence's main connective.
 ::::syntax-tree{#st2 system="forallx-calgary" scoring="partial"}
 - ∀x(F(x) → ∃y G(y))
 ::::
+
+::::syntax-tree{#st3 system="forallx-calgary" depth="terms"}
+- ∀x(F(x,a) → ∃y R(x,y))
+::::
 ```
 
 The body is the prompt, then the sentence as one list item. Nothing may
 follow it, and an atomic sentence is refused, since there is nothing to
-split. So is a language that marks no sort `@syntax role sentence`, since
-the tree's nodes are the parts of that sort.
+split. So, down to the atoms, is a language that marks no sort `@syntax
+role sentence`, since the tree's nodes are the parts of that sort; through
+the terms it needs none.
 
 - `system` names the language, and defaults to `carnap-prop`. Any language
   works with nothing to declare: a node of the tree is any part of the
   sentence of its sort, and its connective is whatever it prints that its
   subsentences do not. So `∀x` splits off its scope, `□` off its operand,
   and an atomic sentence, `F(a)`, `a = b` or `⊥`, is a leaf.
-- `scoring` is `whole` (the default) or `partial`.
+- `depth` is `connectives` (the default) or `terms`. At `terms` the tree
+  goes on below the atomic sentences: an atom splits at its predicate, `=`
+  or function symbol, down to variables and names, and every variable a
+  quantifier could bind is a leaf with one more question, which quantifier
+  binds it. The student presses the variable, and the quantifiers on the
+  lines above it become buttons, with Free beside them for a variable no
+  quantifier binds; Escape lets it go. A predicate's argument list is not a
+  node — its terms are the atom's children — and a quantifier keeps its
+  variable, so `∀x` still splits off its scope as one symbol. Any sort the
+  sentence reads at will do, so a language of terms alone (numerals, say)
+  can be drawn too.
+- `scoring` is `whole` (the default) or `partial`. A link is scored like a
+  split.
   - `whole` is all or nothing, and a wrong pick starts the whole tree over,
     as old Carnap's checker did: it is what keeps a student from clicking
     every connective in turn. The restart is itself a verdict, so it happens
@@ -1366,9 +1381,6 @@ the tree's nodes are the parts of that sort.
     that says why.
   - `partial` takes one pick per sentence and then shows its true split,
     right or wrong. The score is the share of sentences picked right.
-
-A typed answer that names no connective of the language (`P`, a typo) is a
-slip: it is pointed out, and starts nothing over.
 
 ## Aufbau-proof directive
 
@@ -2341,8 +2353,9 @@ out. See [the truth-tree reference](../src/worker/exercises/truth-tree/README.md
 for the limits on a tree's size.
 
 A syntax-tree answer is the picks the tree was built from, in order: each
-names its node, and either the node whose connective was clicked or the
-constructor a typed connective named. This one splits `P ∧ ¬Q`:
+names its node, and either the node whose connective was clicked or — for
+a variable, at `depth="terms"` — the quantifier node it was `linked` to
+(`null` for free). This one splits `P ∧ ¬Q`:
 
 ```json
 {
@@ -2351,7 +2364,7 @@ constructor a typed connective named. This one splits `P ∧ ¬Q`:
   "data": {
     "picks": [
       { "node": [], "clicked": [] },
-      { "node": [1], "named": "not" }
+      { "node": [1], "clicked": [1] }
     ]
   }
 }
@@ -2359,7 +2372,8 @@ constructor a typed connective named. This one splits `P ∧ ¬Q`:
 
 A node is the path of argument indices from the sentence down to it, as the
 parse has it (`[]` is the sentence itself). A pick is right when it clicked
-the node's own connective, or named the node's constructor. Only a node's
+the node's own connective, or linked the variable to the quantifier that
+binds it, the innermost. Only a node's
 first pick counts, and a pick at no node is not counted.
 
 See each exercise package's reference for its full answer schema. The

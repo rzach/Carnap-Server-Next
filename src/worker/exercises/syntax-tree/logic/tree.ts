@@ -11,17 +11,37 @@
  * a modal box, or a connective an author declares in their own language
  * decomposes the same way `∧` does, with nothing to register.
  *
+ * At `depth="terms"` the tree goes on below the atoms: every node of the parse
+ * is a node, whatever its sort, so an atom splits at its predicate, `=` or
+ * function symbol, down to variables and names. Three kinds of parse node are
+ * looked through rather than drawn, because a reader sees nothing of them: a
+ * coercion, a node of the argument-list sort (a predicate's arguments are its
+ * children, not a list), and the variable a quantifier binds, which is part of
+ * its operator (`∀x`). A variable a quantifier could bind is a leaf with one
+ * more question: which quantifier binds it, or none.
+ *
  * Each node's sentence is printed on its own, as the language prints it, so a
  * child appears without the brackets it needed in its parent, and the student
  * reads every line of the tree the way the language writes a sentence.
  */
 
-import type { SurfaceLanguage, Term } from "@aufbau/syntax";
-import { printPieces, printTerm, spellingMeanings } from "@aufbau/syntax";
-import { sentenceSort } from "../../../logic/specs/roles";
+import type { AppTerm, SurfaceLanguage, Term } from "@aufbau/syntax";
+import { bindingSites, printPieces, printTerm } from "@aufbau/syntax";
+import { argumentListSort, sentenceSort } from "../../../logic/specs/roles";
 
 /** Argument indices from the root sentence down, as `printPieces` paths run. */
 export type NodePath = readonly number[];
+
+/**
+ * How far the tree goes: to the atomic sentences, or on through their terms
+ * to variables and names, with each variable linked to its quantifier.
+ */
+export type SyntaxTreeDepth = "connectives" | "terms";
+
+export const SYNTAX_TREE_DEPTHS: readonly SyntaxTreeDepth[] = [
+  "connectives",
+  "terms",
+];
 
 /**
  * A run of a node's printed sentence. An `operator` run is the operator of
@@ -45,8 +65,16 @@ export interface SyntaxTreeNode {
   readonly head: string;
   /** Indices into {@link SyntaxTree.nodes} of the immediate subsentences. */
   readonly children: readonly number[];
-  /** True for a node with no subsentences: nothing left to pick. */
+  /** True for a node with nothing beneath it: nothing left to split. */
   readonly atom: boolean;
+  /** True for a node that binds a variable: a quantifier, at any depth. */
+  readonly binds: boolean;
+  /**
+   * For a variable a quantifier could bind, at `depth="terms"`: the path of
+   * the node that binds it, `null` when it is free. `null` for every other
+   * node, which has no link to make.
+   */
+  readonly link: { readonly boundBy: NodePath | null } | null;
   /** The node's sentence printed on its own. */
   readonly text: string;
   /** {@link text} in runs, each operator attributed to its node. */
@@ -55,6 +83,7 @@ export interface SyntaxTreeNode {
 
 /** The nodes in preorder: the root first, each node before its subsentences. */
 export interface SyntaxTree {
+  readonly depth: SyntaxTreeDepth;
   readonly nodes: readonly SyntaxTreeNode[];
   /** Each node by its {@link pathKey}. */
   readonly byPath: ReadonlyMap<string, SyntaxTreeNode>;
@@ -114,6 +143,30 @@ function subsentencePaths(term: Term, sort: string): NodePath[] {
   );
 }
 
+/**
+ * The paths below `term` of its nearest drawn descendants at `depth="terms"`:
+ * every argument, except that a binding occurrence belongs to its parent's
+ * operator, and a node `hidden` says is looked through to its own arguments.
+ */
+function termPaths(
+  term: Term,
+  hidden: (node: AppTerm) => boolean,
+): NodePath[] {
+  if (term.kind !== "app") {
+    return [];
+  }
+
+  return term.args.flatMap((arg, at): NodePath[] => {
+    if (arg.kind === "variable") {
+      return arg.binder ? [] : [[at]];
+    }
+
+    return hidden(arg)
+      ? termPaths(arg, hidden).map((path) => [at, ...path])
+      : [[at]];
+  });
+}
+
 function subterm(term: Term, path: NodePath): Term {
   let at = term;
 
@@ -130,31 +183,61 @@ function subterm(term: Term, path: NodePath): Term {
   return at;
 }
 
+/** How a tree of one depth finds a node's children, and what it hides. */
+interface TreeShape {
+  /** The paths, below a node, of its immediate children in the tree. */
+  readonly children: (term: Term) => NodePath[];
+  /** Whether a printed piece of this node belongs to no one: a list's comma. */
+  readonly hidden: (term: Term) => boolean;
+}
+
+function treeShape(
+  lang: SurfaceLanguage,
+  depth: SyntaxTreeDepth,
+  sort: string,
+): TreeShape {
+  if (depth === "connectives") {
+    return {
+      children: (term) => subsentencePaths(term, sort),
+      hidden: () => false,
+    };
+  }
+
+  const coercions = new Set(lang.spec.coercions.map((info) => info.name));
+  const list = argumentListSort(lang);
+  const hidden = (term: Term): boolean =>
+    term.kind === "app" && (coercions.has(term.term) || term.sort === list);
+
+  return { children: (term) => termPaths(term, hidden), hidden };
+}
+
 /**
- * The sentence's own subsentence paths, every depth, relative to it:
- * `[]` for itself, then its descendants. What a printed piece is attributed
- * to, by the longest of these its path begins with.
+ * A node's own drawn descendants, every depth, relative to it: `[]` for
+ * itself, then theirs. What a printed piece is attributed to, by the longest
+ * of these its path begins with.
  */
-function sentencePathsWithin(term: Term, sort: string): NodePath[] {
+function nodePathsWithin(term: Term, shape: TreeShape): NodePath[] {
   return [
     [],
-    ...subsentencePaths(term, sort).flatMap((path) =>
-      sentencePathsWithin(subterm(term, path), sort).map((inner) => [
-        ...path,
-        ...inner,
-      ]),
-    ),
+    ...shape
+      .children(term)
+      .flatMap((path) =>
+        nodePathsWithin(subterm(term, path), shape).map((inner) => [
+          ...path,
+          ...inner,
+        ]),
+      ),
   ];
 }
 
 function segmentsOf(
   lang: SurfaceLanguage,
   term: Term,
-  sort: string,
+  shape: TreeShape,
 ): SentenceSegment[] {
-  const owners = sentencePathsWithin(term, sort);
+  const owners = nodePathsWithin(term, shape);
   const atoms = owners.filter(
-    (path) => subsentencePaths(subterm(term, path), sort).length === 0,
+    (path) => shape.children(subterm(term, path)).length === 0,
   );
   const out: SentenceSegment[] = [];
 
@@ -170,7 +253,9 @@ function segmentsOf(
     const atom = atoms.some((path) => samePath(path, owner));
     const kind = atom
       ? "atom"
-      : piece.kind === "bracket" || piece.kind === "space"
+      : piece.kind === "bracket" ||
+          piece.kind === "space" ||
+          shape.hidden(subterm(term, piece.path))
         ? "mark"
         : "operator";
     const last = out.at(-1);
@@ -194,27 +279,68 @@ function segmentsOf(
   return out;
 }
 
-/** The syntax tree of a sentence `lang` read at its sentence sort. */
+/**
+ * The sorts some constructor of `lang` binds a variable of: a variable of any
+ * other sort (a sentence letter, a name) is never bound, so has no link.
+ */
+function bindableSorts(lang: SurfaceLanguage): Set<string> {
+  const sorts = new Set<string>();
+
+  for (const info of lang.spec.terms.values()) {
+    for (const binding of info.bindings) {
+      const type = info.binders[binding.binder]?.type;
+
+      if (type !== undefined && "sort" in type) {
+        sorts.add(type.sort);
+      }
+    }
+  }
+
+  return sorts;
+}
+
+/** The syntax tree of `sentence`, as deep as `depth`. */
 export function syntaxTree(
   lang: SurfaceLanguage,
   sentence: Term,
+  depth: SyntaxTreeDepth = "connectives",
 ): SyntaxTree {
   const sort = sentence.sort;
+  const shape = treeShape(lang, depth, sort);
   const nodes: SyntaxTreeNode[] = [];
+  // Where each variable occurrence is bound: the binding occurrence's parent
+  // is the quantifier, which is the node a student links to.
+  const boundBy = new Map(
+    depth === "terms"
+      ? bindingSites(sentence).map((site) => [
+          pathKey(site.path),
+          site.binder === null ? null : site.binder.slice(0, -1),
+        ])
+      : [],
+  );
+  const bindable = depth === "terms" ? bindableSorts(lang) : new Set();
 
   const visit = (path: NodePath): number => {
     const term = subterm(sentence, path);
     const index = nodes.length;
-    const below = subsentencePaths(term, sort);
+    const below = shape.children(term);
+    const bound = boundBy.get(pathKey(path));
     // Filled after the push, so the node keeps its preorder place.
     const children: number[] = [];
 
     nodes.push({
       atom: below.length === 0,
+      binds: term.kind === "app" && term.bindings.length > 0,
       children,
       head: term.kind === "app" ? term.term : term.name,
+      link:
+        term.kind === "variable" &&
+        bindable.has(term.sort) &&
+        bound !== undefined
+          ? { boundBy: bound }
+          : null,
       path,
-      segments: segmentsOf(lang, term, sort),
+      segments: segmentsOf(lang, term, shape),
       text: printTerm(lang, term),
     });
     children.push(...below.map((relative) => visit([...path, ...relative])));
@@ -226,8 +352,24 @@ export function syntaxTree(
 
   return {
     byPath: new Map(nodes.map((node) => [pathKey(node.path), node])),
+    depth,
     nodes,
   };
+}
+
+/**
+ * The sort a sentence is read at: the language's sentence sort, or — at
+ * `depth="terms"`, which needs none — `undefined` for any sort the text reads
+ * at, so a language of terms alone can be drawn. `null` when connectives need
+ * a sentence sort and the language has none.
+ */
+export function readingSort(
+  lang: SurfaceLanguage,
+  depth: SyntaxTreeDepth,
+): string | undefined | null {
+  const sort = sentenceSortOf(lang);
+
+  return sort ?? (depth === "terms" ? undefined : null);
 }
 
 /**
@@ -237,86 +379,65 @@ export function syntaxTree(
 export function readSentence(
   lang: SurfaceLanguage,
   engine: string,
+  depth: SyntaxTreeDepth = "connectives",
 ): Term | null {
-  const sort = sentenceSortOf(lang);
+  const sort = readingSort(lang, depth);
 
   if (sort === null) {
     return null;
   }
 
-  const result = lang.parse(engine, { lints: false, mode: "engine", sort });
+  const result = lang.parse(engine, {
+    lints: false,
+    mode: "engine",
+    ...(sort === undefined ? {} : { sort }),
+  });
 
   return result.ok ? result.term : null;
 }
 
 /**
  * One answer at one node: the operator the student clicked, by the path of the
- * node it belongs to, or the constructor they named by typing. Both are kept
- * by structure, never by spelling, so a typed `->` and a clicked `→` are the
- * same answer.
+ * node it belongs to; or, at a variable, the quantifier node they linked it
+ * to, `null` for free. Both are kept by structure, never by spelling.
  */
 export type Pick =
   | { readonly node: NodePath; readonly clicked: NodePath }
-  | { readonly node: NodePath; readonly named: string };
+  | { readonly node: NodePath; readonly linked: NodePath | null };
 
-/** Whether a pick names its node's main connective. */
+/**
+ * Whether `pick` is the kind of answer `node` asks for: a split at a node
+ * with something beneath it, a link at a variable a quantifier could bind.
+ */
+export function asksFor(node: SyntaxTreeNode, pick: Pick): boolean {
+  return "linked" in pick ? node.link !== null : !node.atom;
+}
+
+/** Whether a pick names its node's main connective, or its true binder. */
 export function isRightPick(tree: SyntaxTree, pick: Pick): boolean {
   const node = nodeAt(tree, pick.node);
 
-  if (node === undefined || node.atom) {
+  if (node === undefined || !asksFor(node, pick)) {
     return false;
   }
 
-  return "clicked" in pick
-    ? samePath(pick.clicked, pick.node)
-    : pick.named === node.head;
+  if ("linked" in pick) {
+    const truth = node.link?.boundBy ?? null;
+
+    return pick.linked === null || truth === null
+      ? pick.linked === truth
+      : samePath(pick.linked, truth);
+  }
+
+  return samePath(pick.clicked, pick.node);
 }
 
-/**
- * What a typed answer at `node` comes to: the pick it records, or `null` when
- * the text names no connective of the language at all (a letter, a typo),
- * which is a slip to point out rather than a wrong answer.
- *
- * A spelling can stand for more than one constructor (Calgary's `E` is a
- * predicate letter and, through an elab rule, `∃`), so the node's own head
- * wins when it is among them; otherwise the first connective it can mean is
- * the one named. A connective is a constructor of the sentence sort taking a
- * sentence — so `⊥`, which takes none, is no more an answer than `P` is.
- */
-export function typedPick(
-  lang: SurfaceLanguage,
-  node: SyntaxTreeNode,
-  text: string,
-): Pick | null {
-  const spelled = text.replace(/\s+/gu, "");
-  const sort = node.atom ? null : sentenceSortOf(lang);
-
-  if (spelled === "" || sort === null) {
-    return null;
-  }
-
-  const meanings = spellingMeanings(lang, spelled).terms;
-
-  if (meanings.includes(node.head)) {
-    return { named: node.head, node: node.path };
-  }
-
-  const named = meanings.find((name) => {
-    const info = lang.spec.terms.get(name);
-
-    return (
-      info !== undefined &&
-      info.returnSort === sort &&
-      info.binders.some(
-        (binder) => "sort" in binder.type && binder.type.sort === sort,
-      )
-    );
-  });
-
-  return named === undefined ? null : { named, node: node.path };
+/** Whether a node asks for an answer at all: a split or a link. */
+function isPickable(node: SyntaxTreeNode): boolean {
+  return !node.atom || node.link !== null;
 }
 
 /** How many of the tree's nodes have something to pick. */
 export function pickableCount(tree: SyntaxTree): number {
-  return tree.nodes.filter((node) => !node.atom).length;
+  return tree.nodes.filter(isPickable).length;
 }

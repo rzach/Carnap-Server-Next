@@ -897,6 +897,9 @@ export function buildDiagnosticStrings(i18n: Translator) {
     "The scoring attribute must be whole or partial.": i18n.t(
       "The scoring attribute must be whole or partial.",
     ),
+    "The depth attribute must be connectives or terms.": i18n.t(
+      "The depth attribute must be connectives or terms.",
+    ),
     "A syntax tree exercise takes one sentence, as a list item, and nothing after it.":
       i18n.t(
         "A syntax tree exercise takes one sentence, as a list item, and nothing after it.",
@@ -915,9 +918,9 @@ export function buildDiagnosticStrings(i18n: Translator) {
         "The sentence “{formula}” is atomic, so there is nothing to decompose.",
         placeholders("formula"),
       ),
-    "System “{system}” declares no “@syntax role sentence”, which a syntax tree needs to tell its sentences from their parts. Put the annotation on the sort of formulas.":
+    'System “{system}” declares no “@syntax role sentence”, which a syntax tree needs to tell its sentences from their parts. Put the annotation on the sort of formulas, or draw the tree through its terms with depth="terms", which needs none.':
       i18n.t(
-        "System “{system}” declares no “@syntax role sentence”, which a syntax tree needs to tell its sentences from their parts. Put the annotation on the sort of formulas.",
+        'System “{system}” declares no “@syntax role sentence”, which a syntax tree needs to tell its sentences from their parts. Put the annotation on the sort of formulas, or draw the tree through its terms with depth="terms", which needs none.',
         placeholders("system"),
       ),
   };

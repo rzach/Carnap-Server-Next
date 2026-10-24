@@ -2,8 +2,9 @@
  * Shadow-DOM styles for the syntax-tree element, server-rendered into its
  * Declarative Shadow Root and shared by the review. The tree grows down from
  * the root, each sentence joined to its immediate subsentences by lines, as
- * a syntax tree is drawn on a board. Colours come from the exercise tokens and
- * nothing else.
+ * a syntax tree is drawn on a board. The lines are an SVG the element draws
+ * under the laid-out nodes; these rules only lay the nodes out and give the
+ * lines room. Colours come from the exercise tokens and nothing else.
  */
 
 .syntax-tree-body {
@@ -12,14 +13,10 @@
   margin-top: 0.5rem;
 }
 
-.st-instructions {
-  color: var(--_text-muted);
-  margin: 0;
-}
-
 .st-scroll {
   overflow-x: auto;
   padding-bottom: 0.25rem;
+  position: relative;
 }
 
 .st-tree,
@@ -31,66 +28,66 @@
   padding: 0;
 }
 
+/* Above the lines, which run between the nodes and under a crossing link. */
 .st-tree {
   min-width: max-content;
+  position: relative;
+  z-index: 1;
 }
 
 .st-node {
   align-items: center;
   display: flex;
   flex-direction: column;
-  padding: 0 0.4rem;
-  position: relative;
+  padding: 0 0.6rem;
 }
 
-/* The lines: a stub up from each child, and a bar across the siblings. */
+/*
+ * The room the lines from a sentence down to its children are drawn in,
+ * grown by the element when more links run across one gap than fit.
+ */
 .st-children {
-  padding-top: 1rem;
-  position: relative;
+  padding-top: 1.5rem;
 }
 
-.st-children::before {
-  border-left: 1px solid var(--_scope-line);
-  content: "";
-  height: 0.5rem;
-  left: 50%;
+.st-lines {
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
   position: absolute;
   top: 0;
 }
 
-.st-children > .st-node {
-  padding-top: 0.5rem;
+.st-edge {
+  stroke: var(--_scope-line);
+  stroke-width: 1;
 }
 
-.st-children > .st-node::before,
-.st-children > .st-node::after {
-  border-top: 1px solid var(--_scope-line);
-  content: "";
-  position: absolute;
-  top: 0;
-  width: 50%;
+/*
+ * A quantifier's links: one bus, run only through the gutter and the gaps
+ * between rows (`syntax-tree-lines.ts`), with a dot where a variable's branch
+ * leaves it, so a join is told from a crossing.
+ */
+.st-link {
+  fill: none;
+  stroke: var(--_accent);
+  stroke-width: 1.25;
 }
 
-.st-children > .st-node::before {
-  border-left: 1px solid var(--_scope-line);
-  height: 0.5rem;
-  left: 50%;
+.st-link-join {
+  fill: var(--_accent);
 }
 
-.st-children > .st-node::after {
-  right: 50%;
+/* Drawn under each bus, so what it crosses breaks around it. */
+.st-link-halo {
+  fill: none;
+  stroke: var(--_surface);
+  stroke-width: 5;
 }
 
-.st-children > .st-node:first-child::after,
-.st-children > .st-node:last-child::before {
-  border-top: 0;
-}
-
-.st-children > .st-node:only-child::after {
-  display: none;
-}
-
+/* Opaque, so a line that does pass behind a sentence is hidden by it. */
 .st-sentence {
+  background: var(--_surface);
   border: 1px solid var(--_border);
   border-radius: 0.3rem;
   font-family: var(--_mono-font);
@@ -98,54 +95,88 @@
   white-space: nowrap;
 }
 
-.st-node[data-state="split"] > .st-sentence,
-.st-node[data-state="atom"] > .st-sentence {
+/* Only a sentence still to split is boxed; a leaf's button is its own box. */
+.st-node:not([data-state="open"]) > .st-sentence {
   border-color: transparent;
 }
 
-.st-op {
+/*
+ * The buttons in a line: a connective, a variable to link, and while one is
+ * being linked, its quantifiers. Kept narrow, since a line's own spaces
+ * already part them from what they join; 1.5rem is the 24px a target needs.
+ */
+.st-op,
+.st-var,
+.st-bind {
   background: var(--_field-bg);
   border: 1px solid var(--_border);
   border-radius: 0.25rem;
   color: inherit;
   cursor: pointer;
   font: inherit;
-  margin: 0 0.05rem;
-  min-height: 1.75rem;
-  min-width: 1.75rem;
-  padding: 0 0.2rem;
+  margin: 0;
+  min-height: 1.5rem;
+  min-width: 1.5rem;
+  padding: 0 0.15rem;
 }
 
-.st-op:disabled {
+.st-op:disabled,
+.st-var:disabled,
+.st-bind:disabled {
   cursor: default;
 }
 
-.st-op:not(:disabled):hover {
+.st-op:not(:disabled):hover,
+.st-var:not(:disabled):hover,
+.st-bind:not(:disabled):hover {
   background: var(--_accent-bg);
   border-color: var(--_accent);
 }
 
-.st-op:focus-visible {
+.st-op:focus-visible,
+.st-var:focus-visible,
+.st-bind:focus-visible {
   outline: 2px solid var(--_accent);
   outline-offset: 1px;
 }
 
-/* A split node's own connective, once found, stays marked in its line. */
-.st-op[data-main] {
+/* A variable still to link reads as a leaf, not a connective: dashed. */
+.st-var {
+  border-style: dashed;
+}
+
+/*
+ * A split node's own connective, once found, stays marked in its line; a
+ * quantifier offered as a link target, and the variable being linked, are
+ * marked the same way, as the two ends of the line about to be drawn.
+ */
+.st-op[data-main],
+.st-bind,
+.st-var[aria-pressed="true"] {
   background: var(--_accent-bg);
   border-color: var(--_accent);
 }
 
-.st-typed {
-  align-items: center;
+.st-bind {
+  border-width: 2px;
+}
+
+/* Under a variable no quantifier binds; a bound one has its line instead. */
+.st-link-note {
+  color: var(--_text-muted);
+  font-size: 0.85em;
+  font-style: italic;
+}
+
+/*
+ * What the tree says: a wrong pick, a finished tree, or — while a variable is
+ * being linked — the question, with Free beside it as one of the answers.
+ */
+.st-status {
+  align-items: baseline;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-}
-
-.st-typed input {
-  font-family: var(--_mono-font);
-  width: 6rem;
 }
 
 .st-message:empty {
@@ -156,12 +187,27 @@
   margin: 0;
 }
 
-.syntax-tree-review-verdict {
-  margin: 0 0 0.5rem;
+/* Drawn as the tree's buttons are, since it answers the same question. */
+.st-free {
+  background: var(--_accent-bg);
+  border: 1px solid var(--_accent);
+  border-radius: 0.25rem;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  min-height: 1.5rem;
+  padding: 0 0.5rem;
 }
 
-/* The sentence the typed field answers. */
-.st-node[data-target] > .st-sentence {
-  border-color: var(--_accent);
-  box-shadow: 0 0 0 1px var(--_accent);
+.st-free:focus-visible {
+  outline: 2px solid var(--_accent);
+  outline-offset: 1px;
+}
+
+.st-free[hidden] {
+  display: none;
+}
+
+.syntax-tree-review-verdict {
+  margin: 0 0 0.5rem;
 }

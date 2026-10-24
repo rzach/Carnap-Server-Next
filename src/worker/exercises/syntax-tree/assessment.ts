@@ -182,7 +182,11 @@ export const SYNTAX_TREE_ASSESSMENT = {
     // the review recomputes, and sealing the evaluation alone would leave the
     // verdict on the page.
     const reveal = context.revealCorrectness !== false;
-    const summary = describeSyntaxTreeVerdict(verdict, words);
+    const summary = describeSyntaxTreeVerdict(
+      verdict,
+      declaration.publicData.depth,
+      words,
+    );
 
     return {
       ...(reveal

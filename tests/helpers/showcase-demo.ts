@@ -771,6 +771,20 @@ Find each sentence's main connective.
 - P /\\ (R -> ~Q)
 :::
 
+With \`depth="terms"\` the tree goes on through the atoms, to their
+predicates, function symbols and terms, and the student links each variable
+to the quantifier that binds it.
+
+\`\`\`md
+:::syntax-tree{id="st_terms" title="Terms and binding" system="forallx-calgary" depth="terms" points="1"}
+- ∀x(F(x,a) → ∃y R(x,y))
+:::
+\`\`\`
+
+:::syntax-tree{id="st_terms" title="Terms and binding" system="forallx-calgary" depth="terms" points="1"}
+- ∀x(F(x,a) → ∃y R(x,y))
+:::
+
 ## What else the format does
 
 - \`points\` on any exercise, and \`exam="true"\` when a submission should be

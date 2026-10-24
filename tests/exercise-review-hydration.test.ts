@@ -71,7 +71,6 @@ const ANSWERS: Readonly<Record<string, JsonValue>> = {
 /** The reviews that carry no payload because nothing in them runs. */
 const SERVER_DRAWN: ReadonlySet<string> = new Set([
   "model@1",
-  "syntax-tree@1",
   "translation@1",
   "truth-tree@1",
   "world@1",
