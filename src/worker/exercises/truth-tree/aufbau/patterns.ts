@@ -51,6 +51,7 @@ import {
   parseStatement,
   printTerm,
   RewriteLimitError,
+  scopeOf,
   substitute,
   unfoldDefinitions,
   variables,
@@ -715,16 +716,9 @@ export function closedSubterms(
         continue;
       }
 
-      let inner = bound;
-
-      for (const argument of part.args) {
-        if (argument.kind === "variable" && argument.binder) {
-          inner = new Set([...inner, argument.name]);
-          continue;
-        }
-
-        visit(argument, inner);
-      }
+      part.args.forEach((argument, at) => {
+        visit(argument, scopeOf(part, at, bound));
+      });
     }
   };
 

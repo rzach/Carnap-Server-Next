@@ -1681,6 +1681,9 @@ sentence P ∨ ¬Q.
 - Identity accepts `=` and inequality accepts `!=` or `≠`.
 - A quantifier scopes over the next sentence, not the rest of the line.
   `AxF(x) -> G(a)` is a conditional.
+- A quantifier may re-bind its variable or bind nothing, so `∀x∃xF(x)` and
+  `∀xF(a)` are formulas. The book drops the restriction its source,
+  *forall x: Cambridge*, places on both.
 - Conjunction and disjunction share left-associative precedence. Conditionals
   and biconditionals do not chain or mix unparenthesized with other binary
   connectives: `P -> Q -> R` and `P /\ Q -> R` need parentheses.
@@ -1700,6 +1703,9 @@ sentence P ∨ ¬Q.
 - Canonical conjunction is `&`.
 - Conjunction/disjunction bind more tightly than conditional/biconditional.
   Parentheses around an atom, such as `(P)`, are allowed.
+- As in the book's wff rules, a quantifier must bind something and may not
+  re-bind a variable a quantifier around it binds: `∀xFa` and `∀x∃xFx` are
+  both refused.
 - There is no `⊥`. Reductio uses an explicit contradictory pair.
   Disjunction elimination uses disjunction plus a negated disjunct rather
   than Calgary's two-case rule.
@@ -1718,9 +1724,11 @@ sentence P ∨ ¬Q.
   but the two never mix. `⊃` and `≡` take no unbracketed binary operand, so
   `P & Q ⊃ R` is refused. Brackets around anything but a binary sentence,
   such as `(¬A)` or `∀x(Fx)`, are refused.
-- Two of the book's rules are not enforced: a doubled pair such as
-  `((A & B))`, and a quantifier over a variable already bound inside it,
-  such as `∀x∃xFx`, both read.
+- A quantifier may not re-bind a variable a quantifier around it binds:
+  `∀x∃xFx` and `∀x(Fx & ∃xGx)` are refused. A vacuous quantifier such as
+  `∀xFa` is a sentence, as in the book.
+- One of the book's rules is not enforced: a doubled pair such as
+  `((A & B))` reads.
 
 All three forallx languages declare the `closed-sentences` lint, so their model
 and translation sentences must be closed: unbound variables are rejected. The declared vocabularies are finite. Undeclared subscripted names

@@ -141,6 +141,11 @@ const SAID: Readonly<
     message: "“{token}” binds too loosely here; parenthesize it.",
     params: { token: params.token ?? "" },
   }),
+  rebound_variable: (params) => ({
+    message:
+      "“{name}” is already bound by a quantifier around this one; use another variable.",
+    params: { name: params.name ?? "" },
+  }),
   sort_mismatch: (params) => ({
     message: "This is a {actual} where a {expected} is needed.",
     params: { actual: word(params.actual), expected: word(params.expected) },
@@ -156,6 +161,11 @@ const SAID: Readonly<
   unrecognized_chunk: (params) => ({
     message: "“{chunk}” is not part of this language.",
     params: { chunk: params.chunk ?? "" },
+  }),
+  vacuous_binder: (params) => ({
+    message:
+      "“{name}” does not occur in this quantifier's scope, so it binds nothing.",
+    params: { name: params.name ?? "" },
   }),
 };
 

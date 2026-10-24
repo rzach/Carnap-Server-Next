@@ -319,6 +319,11 @@ describe("language specs", () => {
       expect(refusal(id, "F(x)")).toContain("free_variable");
     });
 
+    test("a quantifier may re-bind its variable, or bind nothing, as the book allows", () => {
+      expect(display(id, "AxExF(x)")).toBe("∀x∃xF(x)");
+      expect(display(id, "AxF(a)")).toBe("∀xF(a)");
+    });
+
     /**
      * The whole reason one file can be both a language and a proof system. The
      * theory's judgements live in a sort of their own, student input is read
@@ -419,6 +424,13 @@ describe("language specs", () => {
       expect(refusal(id, "Fx")).toContain("free_variable");
     });
 
+    test("a quantifier neither re-binds its variable nor binds nothing (rules 7–8)", () => {
+      expect(refusal(id, "∀x∃xFx")).toContain("rebound_variable");
+      expect(refusal(id, "∀x(Fx & ∃xGx)")).toEqual(["rebound_variable"]);
+      expect(refusal(id, "∀xFa")).toEqual(["vacuous_binder"]);
+      expect(display(id, "∀xFx & ∃xGx")).toBe("∀xFx & ∃xGx");
+    });
+
     test("a sequent is not a sentence, and the spec says which sort is", () => {
       const lang = language(id);
 
@@ -511,6 +523,13 @@ describe("language specs", () => {
 
     test("every sentence is closed", () => {
       expect(refusal(id, "Fx")).toContain("free_variable");
+    });
+
+    test("a quantifier does not re-bind its variable, but may bind nothing (§8 rules 7–8)", () => {
+      expect(refusal(id, "∀x∃xFx")).toEqual(["rebound_variable"]);
+      expect(refusal(id, "∀x(Fx & ∃xGx)")).toEqual(["rebound_variable"]);
+      expect(display(id, "∀xFa")).toBe("∀xFa");
+      expect(display(id, "∀xFx & ∃xGx")).toBe("∀xFx & ∃xGx");
     });
 
     test("the generated lexicon is current", () => {

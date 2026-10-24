@@ -1,5 +1,5 @@
 import type { SurfaceLanguage, Term } from "@aufbau/syntax";
-import { printTerm, walkTerm } from "@aufbau/syntax";
+import { freeVariables, printTerm, variables } from "@aufbau/syntax";
 import {
   type CompilerDiagnostic,
   diagnostic,
@@ -206,30 +206,13 @@ function readRootRow(
  * free. Names are variables to the engine too, but no term binds their sort.
  */
 function hasFreeVariable(language: SurfaceLanguage, term: Term): boolean {
-  const bindable = new Set<string>();
+  const sorts = variables(term);
 
-  for (const info of language.spec.terms.values()) {
-    for (const binder of info.binders) {
-      if (binder.binds && "sort" in binder.type) {
-        bindable.add(binder.type.sort);
-      }
-    }
-  }
+  return [...freeVariables(term)].some((name) => {
+    const sort = sorts.get(name);
 
-  let free = false;
-
-  walkTerm(term, (node, bound) => {
-    if (
-      node.kind === "variable" &&
-      !node.binder &&
-      bindable.has(node.sort) &&
-      !bound.has(node.name)
-    ) {
-      free = true;
-    }
+    return sort !== undefined && language.bindableSorts.has(sort);
   });
-
-  return free;
 }
 
 /** Each thing a theory lacks to be a tree theory, as an author reads it. */

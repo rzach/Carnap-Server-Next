@@ -984,17 +984,11 @@ function realize(
   scope: readonly string[],
   declare: (decl: Omit<Decl, "name"> & { base: string }) => string,
 ): Term {
-  const span = { end: 0, start: 0 };
-
   if (shape.kind === "any") {
-    return {
-      binder: false,
-      grouped: false,
-      kind: "variable",
-      name: declare({ base, binds: false, deps: scope, sort }),
+    return language.variable(
+      declare({ base, binds: false, deps: scope, sort }),
       sort,
-      span,
-    };
+    );
   }
 
   const info = language.spec.terms.get(shape.term) as TermInfo;
@@ -1010,14 +1004,7 @@ function realize(
         sort: argSort,
       });
       local.set(binder.name, name);
-      return {
-        binder: true,
-        grouped: false,
-        kind: "variable",
-        name,
-        sort: argSort,
-        span,
-      };
+      return language.variable(name, argSort);
     }
 
     const deps =
@@ -1038,15 +1025,5 @@ function realize(
     );
   });
 
-  return {
-    args,
-    fixity: null,
-    grouped: false,
-    kind: "app",
-    prec: null,
-    sort: info.returnSort,
-    span,
-    term: shape.term,
-    token: null,
-  };
+  return language.app(shape.term, args);
 }

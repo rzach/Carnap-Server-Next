@@ -43,7 +43,7 @@
   "dependencies": {
     "@aufbau/compiler": "0.0.18-canary.20261020T233803Z.92.geb0b7920d37f",
     "@aufbau/lsp": "0.0.18-canary.20261020T233803Z.92.geb0b7920d37f",
-    "@aufbau/syntax": "0.0.6-canary.20261022T113326Z.29.g088eb62ff624",
+    "@aufbau/syntax": "0.0.6-canary.20261024T184311Z.30.ga241c8a9cf95",
     "@aufbau/verifier": "0.0.18-canary.20261020T233803Z.92.geb0b7920d37f",
     "@codemirror/commands": "^6.10.4",
     "@codemirror/language": "^6.12.4",

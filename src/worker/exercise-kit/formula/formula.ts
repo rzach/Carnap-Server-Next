@@ -48,7 +48,7 @@ import type {
   Term as SurfaceTerm,
   TermInfo,
 } from "@aufbau/syntax";
-import { printTerm, unfoldDefinitions } from "@aufbau/syntax";
+import { bindsAt, printTerm, unfoldDefinitions } from "@aufbau/syntax";
 import type { BinaryConnective } from "../../logic/specs/connectives";
 import {
   binaryConnectiveForRole,
@@ -782,9 +782,14 @@ function formulaTree(formula: Formula, lang: SurfaceLanguage): AppTerm {
       return apply("negation", [formulaTree(formula.operand, lang)]);
     case "forall":
     case "exists": {
-      const bound = constructorFor(formula.type, lang).binders[0];
+      const quantifier = constructorFor(formula.type, lang);
+      const bound = quantifier.binders[0];
 
-      if (bound?.binds !== true || !("sort" in bound.type)) {
+      if (
+        !bindsAt(quantifier.bindings, 0) ||
+        bound === undefined ||
+        !("sort" in bound.type)
+      ) {
         throw unwritable(`its ${formula.type} binds no variable first.`);
       }
 

@@ -39,9 +39,10 @@
 --
 --   Brackets come only from the binary rules, so `(¬A)`, `(Fa)` and `∀x(Fx)`
 --   are refused (`lint parenthesize-binary-only`), and every formula is a
---   sentence (`lint closed-sentences`). Two of the book's rules are not
---   enforced: a doubled pair `((A & B))` reads, and so does `∀x∃xFx`, where
---   the book forbids a quantifier over a variable already bound inside it.
+--   sentence (`lint closed-sentences`). No quantifier re-binds a variable a
+--   quantifier around it binds (`lint distinct-binders`), so `∀x∃xFx` is
+--   refused; a vacuous `∀xFa` is a wff, as the book allows. One of the
+--   book's rules is not enforced: a doubled pair `((A & B))` reads.
 --
 -- **`a ≠ b` is the book's preferred spelling of `¬a = b`**: a `def`, which
 -- reads `a ≠ b` and unfolds to the negated identity wherever a rule needs it.
@@ -280,6 +281,7 @@
 --| @syntax brackets ( ) [ ]
 --| @syntax lint closed-sentences
 --| @syntax lint parenthesize-binary-only
+--| @syntax lint distinct-binders
 --| @syntax display drop-outer-parens
 -- The comma and the context join are right delimiters only: a chunk breaks
 -- before one, not after, which is MM0's reading and also the display

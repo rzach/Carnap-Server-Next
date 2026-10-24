@@ -125,6 +125,10 @@
 --| @syntax delimiter $ :|-: ⊢ $
 --| @syntax brackets ( ) [ ]
 --| @syntax lint closed-sentences
+-- QL's wff rules 7–8 (forallx 1.4, ch. 4): ∀xA is a wff only if A contains
+-- x and no x-quantifier, so neither `∀x∃xDx` nor `∀xDw` is one.
+--| @syntax lint distinct-binders
+--| @syntax lint non-vacuous-binders
 --| @syntax display drop-outer-parens
 -- The engine's own delimiters, a separate matter: these split MM0 tokens in the
 -- math strings above and in a proof's goal declaration. `/` is deliberately

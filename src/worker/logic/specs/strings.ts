@@ -69,10 +69,20 @@ export function buildFormulaParserStrings(i18n: Translator) {
       "“{chunk}” is not part of this language.",
       placeholders("chunk"),
     ),
+    "“{name}” does not occur in this quantifier's scope, so it binds nothing.":
+      i18n.t(
+        "“{name}” does not occur in this quantifier's scope, so it binds nothing.",
+        placeholders("name"),
+      ),
     "“{name}” is a free variable; every formula must be a sentence.": i18n.t(
       "“{name}” is a free variable; every formula must be a sentence.",
       placeholders("name"),
     ),
+    "“{name}” is already bound by a quantifier around this one; use another variable.":
+      i18n.t(
+        "“{name}” is already bound by a quantifier around this one; use another variable.",
+        placeholders("name"),
+      ),
     "“{operator}” cannot be chained; add parentheses to group it.": i18n.t(
       "“{operator}” cannot be chained; add parentheses to group it.",
       placeholders("operator"),
