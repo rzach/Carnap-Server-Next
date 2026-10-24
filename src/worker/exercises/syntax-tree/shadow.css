@@ -1,0 +1,167 @@
+/*
+ * Shadow-DOM styles for the syntax-tree element, server-rendered into its
+ * Declarative Shadow Root and shared by the review. The tree grows down from
+ * the root, each sentence joined to its immediate subsentences by lines, as
+ * a syntax tree is drawn on a board. Colours come from the exercise tokens and
+ * nothing else.
+ */
+
+.syntax-tree-body {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.st-instructions {
+  color: var(--_text-muted);
+  margin: 0;
+}
+
+.st-scroll {
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.st-tree,
+.st-children {
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.st-tree {
+  min-width: max-content;
+}
+
+.st-node {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0.4rem;
+  position: relative;
+}
+
+/* The lines: a stub up from each child, and a bar across the siblings. */
+.st-children {
+  padding-top: 1rem;
+  position: relative;
+}
+
+.st-children::before {
+  border-left: 1px solid var(--_scope-line);
+  content: "";
+  height: 0.5rem;
+  left: 50%;
+  position: absolute;
+  top: 0;
+}
+
+.st-children > .st-node {
+  padding-top: 0.5rem;
+}
+
+.st-children > .st-node::before,
+.st-children > .st-node::after {
+  border-top: 1px solid var(--_scope-line);
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 50%;
+}
+
+.st-children > .st-node::before {
+  border-left: 1px solid var(--_scope-line);
+  height: 0.5rem;
+  left: 50%;
+}
+
+.st-children > .st-node::after {
+  right: 50%;
+}
+
+.st-children > .st-node:first-child::after,
+.st-children > .st-node:last-child::before {
+  border-top: 0;
+}
+
+.st-children > .st-node:only-child::after {
+  display: none;
+}
+
+.st-sentence {
+  border: 1px solid var(--_border);
+  border-radius: 0.3rem;
+  font-family: var(--_mono-font);
+  padding: 0.2rem 0.45rem;
+  white-space: nowrap;
+}
+
+.st-node[data-state="split"] > .st-sentence,
+.st-node[data-state="atom"] > .st-sentence {
+  border-color: transparent;
+}
+
+.st-op {
+  background: var(--_field-bg);
+  border: 1px solid var(--_border);
+  border-radius: 0.25rem;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  margin: 0 0.05rem;
+  min-height: 1.75rem;
+  min-width: 1.75rem;
+  padding: 0 0.2rem;
+}
+
+.st-op:disabled {
+  cursor: default;
+}
+
+.st-op:not(:disabled):hover {
+  background: var(--_accent-bg);
+  border-color: var(--_accent);
+}
+
+.st-op:focus-visible {
+  outline: 2px solid var(--_accent);
+  outline-offset: 1px;
+}
+
+/* A split node's own connective, once found, stays marked in its line. */
+.st-op[data-main] {
+  background: var(--_accent-bg);
+  border-color: var(--_accent);
+}
+
+.st-typed {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.st-typed input {
+  font-family: var(--_mono-font);
+  width: 6rem;
+}
+
+.st-message:empty {
+  display: none;
+}
+
+.st-message {
+  margin: 0;
+}
+
+.syntax-tree-review-verdict {
+  margin: 0 0 0.5rem;
+}
+
+/* The sentence the typed field answers. */
+.st-node[data-target] > .st-sentence {
+  border-color: var(--_accent);
+  box-shadow: 0 0 0 1px var(--_accent);
+}

@@ -893,6 +893,33 @@ export function buildDiagnosticStrings(i18n: Translator) {
       "In the starter, assumption line “{line}” can't have premises.",
       placeholders("line"),
     ),
+    // The syntax-tree exercise (`exercises/syntax-tree/authoring.ts`).
+    "The scoring attribute must be whole or partial.": i18n.t(
+      "The scoring attribute must be whole or partial.",
+    ),
+    "A syntax tree exercise takes one sentence, as a list item, and nothing after it.":
+      i18n.t(
+        "A syntax tree exercise takes one sentence, as a list item, and nothing after it.",
+      ),
+    "A syntax tree exercise needs a sentence to decompose, written as a list item: “- P ∧ Q”.":
+      i18n.t(
+        "A syntax tree exercise needs a sentence to decompose, written as a list item: “- P ∧ Q”.",
+      ),
+    "The sentence “{formula}” reads, but the language cannot print all of its parts, so its tree cannot be drawn.":
+      i18n.t(
+        "The sentence “{formula}” reads, but the language cannot print all of its parts, so its tree cannot be drawn.",
+        placeholders("formula"),
+      ),
+    "The sentence “{formula}” is atomic, so there is nothing to decompose.":
+      i18n.t(
+        "The sentence “{formula}” is atomic, so there is nothing to decompose.",
+        placeholders("formula"),
+      ),
+    "System “{system}” declares no “@syntax role sentence”, which a syntax tree needs to tell its sentences from their parts. Put the annotation on the sort of formulas.":
+      i18n.t(
+        "System “{system}” declares no “@syntax role sentence”, which a syntax tree needs to tell its sentences from their parts. Put the annotation on the sort of formulas.",
+        placeholders("system"),
+      ),
   };
 }
 

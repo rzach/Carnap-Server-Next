@@ -61,6 +61,7 @@ const ANSWERS: Readonly<Record<string, JsonValue>> = {
     tree: { formula: "P", hyp: 1, id: "n1", premises: [], rule: "" },
   },
   "model@1": { domain: "1", fields: {} },
+  "syntax-tree@1": { picks: [{ clicked: [], node: [] }] },
   "translation@1": { text: "F(a)" },
   "truth-table@1": { cells: [], reference: [] },
   "truth-tree@1": { nodes: [] },
@@ -70,6 +71,7 @@ const ANSWERS: Readonly<Record<string, JsonValue>> = {
 /** The reviews that carry no payload because nothing in them runs. */
 const SERVER_DRAWN: ReadonlySet<string> = new Set([
   "model@1",
+  "syntax-tree@1",
   "translation@1",
   "truth-tree@1",
   "world@1",

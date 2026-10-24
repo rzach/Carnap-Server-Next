@@ -7,6 +7,7 @@ import { FREE_RESPONSE_EXERCISE } from "./free-response";
 import { MODEL_EXERCISE } from "./model";
 import { MULTIPLE_CHOICE_EXERCISE } from "./multiple-choice";
 import { SHORT_ANSWER_EXERCISE } from "./short-answer";
+import { SYNTAX_TREE_EXERCISE } from "./syntax-tree";
 import { TRANSLATION_EXERCISE } from "./translation";
 import { TRUTH_TABLE_EXERCISE } from "./truth-table";
 import { TRUTH_TREE_EXERCISE } from "./truth-tree";
@@ -37,4 +38,5 @@ export const EXERCISE_TYPES: readonly ExerciseType[] = [
   TRANSLATION_EXERCISE,
   WORLD_EXERCISE,
   TRUTH_TREE_EXERCISE,
+  SYNTAX_TREE_EXERCISE,
 ];

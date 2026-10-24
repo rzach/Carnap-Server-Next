@@ -51,6 +51,7 @@ describe("widget string maps", () => {
       "aufbau-proof-prawitz",
       "aufbau-proof-tree",
       "model",
+      "syntax-tree",
       "translation",
       "truth-table",
       "truth-tree",

@@ -97,6 +97,10 @@ msgstr ""
 msgid "“{symbol}” with {arity} arguments has no meaning in a {world} world. Give it one of the world's roles in the language, or leave it out."
 msgstr ""
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "“{text}” is not a connective of this language."
+msgstr ""
+
 #: src/worker/application/content/diagnostic-strings.ts
 #: src/worker/logic/specs/strings.ts
 msgid "“{token}” binds too loosely here; parenthesize it."
@@ -341,6 +345,10 @@ msgstr ""
 msgid "{state} · {type}"
 msgstr ""
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "{symbol}, {role}"
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 msgid "{title} content"
 msgstr ""
@@ -534,6 +542,14 @@ msgstr ""
 
 #: src/worker/application/submissions.ts
 msgid "A submission cannot be accepted for this attempt."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A syntax tree exercise needs a sentence to decompose, written as a list item: “- P ∧ Q”."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A syntax tree exercise takes one sentence, as a list item, and nothing after it."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -1200,6 +1216,10 @@ msgstr ""
 msgid "Before you start"
 msgstr ""
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "biconditional (connective name)"
+msgstr ""
+
 #. An unfilled truth-table cell, spoken as part of the cell's accessible name: “Q, row 3: blank”. Lowercase, mid-sentence.
 #: src/worker/exercises/truth-table/strings.ts
 msgid "blank"
@@ -1534,6 +1554,10 @@ msgstr ""
 msgid "Conclusion"
 msgstr ""
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "conditional (connective name)"
+msgstr ""
+
 #: src/worker/web/lti.tsx
 msgid "Confirm account link"
 msgstr ""
@@ -1552,6 +1576,10 @@ msgstr ""
 
 #: src/worker/infrastructure/email/resend.ts
 msgid "Confirm your new Carnap email address"
+msgstr ""
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "conjunction (connective name)"
 msgstr ""
 
 #: src/worker/infrastructure/email/resend.ts
@@ -2075,6 +2103,10 @@ msgstr ""
 msgid "Discharged labels"
 msgstr ""
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "disjunction (connective name)"
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Display order"
 msgstr ""
@@ -2315,6 +2347,10 @@ msgstr ""
 msgid "Every administrative action, with request IDs"
 msgstr ""
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Every connective picked correctly."
+msgstr ""
+
 #: src/worker/web/courses.tsx
 msgid "Every course you are enrolled in has been archived."
 msgstr ""
@@ -2411,6 +2447,10 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Exercise to excuse"
+msgstr ""
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "existential quantifier (connective name)"
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -3048,6 +3088,14 @@ msgstr ""
 msgid "LTI platforms"
 msgstr ""
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Main connective"
+msgstr ""
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Main connectives found: {right} of {total}"
+msgstr ""
+
 #: src/worker/web/layout.tsx
 msgid "Main navigation"
 msgstr ""
@@ -3258,12 +3306,20 @@ msgstr ""
 msgid "Names for {block}"
 msgstr ""
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "necessity (connective name)"
+msgstr ""
+
 #: src/worker/web/labels.ts
 msgid "Needs review"
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Needs review ({count})"
+msgstr ""
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "negation (connective name)"
 msgstr ""
 
 #: src/worker/web/labels.ts
@@ -3801,6 +3857,10 @@ msgstr ""
 msgid "person@example.edu"
 msgstr ""
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Pick the main connective of each sentence until only atomic sentences remain."
+msgstr ""
+
 #: src/worker/exercises/world/strings.ts
 msgid "Pick up or drop a block"
 msgstr ""
@@ -3871,6 +3931,10 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Policy and grading controls"
+msgstr ""
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "possibility (connective name)"
 msgstr ""
 
 #: src/worker/web/labels.ts
@@ -4218,6 +4282,7 @@ msgid "Response"
 msgstr ""
 
 #: src/worker/exercises/model/assessment.ts
+#: src/worker/exercises/syntax-tree/assessment.ts
 #: src/worker/exercises/truth-table/assessment.ts
 #: src/worker/exercises/truth-tree/assessment.ts
 #: src/worker/exercises/world/assessment.ts
@@ -4739,6 +4804,11 @@ msgstr ""
 msgid "Split"
 msgstr ""
 
+#. Disambiguating id; only the word Split is shown. A button: split the sentence at the main connective just typed.
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "Split (syntax-tree button)"
+msgstr ""
+
 #. Disambiguating id; only the word Split is shown. Beside Stack: the step's rows branch the tree rather than extend the branch. Not the editor's split view.
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Split (truth-tree rows)"
@@ -4914,8 +4984,16 @@ msgstr ""
 msgid "syntax error"
 msgstr ""
 
+#: src/worker/exercises/syntax-tree/types.ts
+msgid "Syntax tree"
+msgstr ""
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "System “{system}” declares no “@syntax role {role}”, which a Fitch or Prawitz proof needs to write its lines. Put the annotation on the declaration that plays that part."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "System “{system}” declares no “@syntax role sentence”, which a syntax tree needs to tell its sentences from their parts. Put the annotation on the sort of formulas."
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
@@ -4968,6 +5046,14 @@ msgstr ""
 
 #: src/worker/application/content.ts
 msgid "That is not a sharing setting this site has."
+msgstr ""
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "That is not the main connective. Here is how the sentence splits."
+msgstr ""
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "That is not the main connective. The tree starts over."
 msgstr ""
 
 #: src/worker/application/auth.ts
@@ -5479,6 +5565,18 @@ msgstr ""
 msgid "The saved form of this revision does not match what the compiler produces, so the content cannot be shown or answered."
 msgstr ""
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The scoring attribute must be whole or partial."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The sentence “{formula}” is atomic, so there is nothing to decompose."
+msgstr ""
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The sentence “{formula}” reads, but the language cannot print all of its parts, so its tree cannot be drawn."
+msgstr ""
+
 #: src/worker/exercises/world/strings.ts
 msgid "The sentence does not tell the two worlds apart."
 msgstr ""
@@ -5575,6 +5673,10 @@ msgstr ""
 msgid "The table lists every block and can do everything the board does."
 msgstr ""
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "The tree is complete."
+msgstr ""
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "The tree is missing a row of its root."
 msgstr ""
@@ -5585,6 +5687,10 @@ msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "The tree is not finished: close every branch."
+msgstr ""
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "The tree is not finished."
 msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts
@@ -6221,6 +6327,10 @@ msgstr ""
 
 #: src/worker/web/ui-strings.ts
 msgid "Unfold this block"
+msgstr ""
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "universal quantifier (connective name)"
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts

@@ -207,6 +207,16 @@ Decide whether these sentences are consistent.
 
 - ∃xFx
 - ∀x¬Fx
+::::
+
+::::syntax-tree{#sx points="1"}
+Find each sentence's main connective.
+
+- P /\\ (R -> ~Q)
+::::
+
+::::syntax-tree{#sy system="forallx-calgary" scoring="partial" points="1"}
+- ∀x(F(x) → ∃y G(y))
 ::::`;
 
 /**

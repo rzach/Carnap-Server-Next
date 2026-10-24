@@ -15,8 +15,9 @@ This reference follows the compiler in
   [free response](#free-response-directive), and
   [short answer](#short-answer-directive)
 - [Truth tables](#truth-table-directive), [models](#model-directive),
-  [translation](#translation-directive), [worlds](#world-directive), and
-  [truth trees](#truth-tree-directive)
+  [translation](#translation-directive), [worlds](#world-directive),
+  [truth trees](#truth-tree-directive), and
+  [syntax trees](#syntax-tree-directive)
 - [Linear proofs](#aufbau-proof-directive),
   [languages and theories](#languages-and-theories),
   [proof trees](#aufbau-proof-tree-directive),
@@ -1325,6 +1326,50 @@ says what can be seen without the engine (an unfinished tree, a misplaced
 end), with its marks only where its verdict may name the first problem; the
 grade is the engine's. Trees are capped at 200 rows.
 
+## Syntax-tree directive
+
+A syntax tree asks for a sentence's main connective, splits the sentence at
+it into its immediate subsentences, and asks again of each, until only
+atomic sentences remain (old Carnap's `.SynChecker .Match`). The student
+clicks a connective in any sentence still to split, or types it for the
+sentence the field is marked against; any spelling the language accepts
+counts, so `->`, `→` and `>` are one answer where the language reads all
+three.
+
+```md
+::::syntax-tree{#st1 points="1"}
+Find each sentence's main connective.
+
+- P /\ (R -> ~Q)
+::::
+
+::::syntax-tree{#st2 system="forallx-calgary" scoring="partial"}
+- ∀x(F(x) → ∃y G(y))
+::::
+```
+
+The body is the prompt, then the sentence as one list item. Nothing may
+follow it, and an atomic sentence is refused, since there is nothing to
+split. So is a language that marks no sort `@syntax role sentence`, since
+the tree's nodes are the parts of that sort.
+
+- `system` names the language, and defaults to `carnap-prop`. Any language
+  works with nothing to declare: a node of the tree is any part of the
+  sentence of its sort, and its connective is whatever it prints that its
+  subsentences do not. So `∀x` splits off its scope, `□` off its operand,
+  and an atomic sentence, `F(a)`, `a = b` or `⊥`, is a leaf.
+- `scoring` is `whole` (the default) or `partial`.
+  - `whole` is all or nothing, and a wrong pick starts the whole tree over,
+    as old Carnap's checker did: it is what keeps a student from clicking
+    every connective in turn. The restart is itself a verdict, so it happens
+    under every `feedback`; `feedback="none"` withholds only the sentence
+    that says why.
+  - `partial` takes one pick per sentence and then shows its true split,
+    right or wrong. The score is the share of sentences picked right.
+
+A typed answer that names no connective of the language (`P`, a typo) is a
+slip: it is pointed out, and starts nothing over.
+
 ## Aufbau-proof directive
 
 The four proof directives share one grading mechanism. The browser compiles
@@ -2294,6 +2339,28 @@ The editor finds `instances` and `directions` by asking the engine, and the
 certificate proves them; an author writing an answer by hand can leave them
 out. See [the truth-tree reference](../src/worker/exercises/truth-tree/README.md)
 for the limits on a tree's size.
+
+A syntax-tree answer is the picks the tree was built from, in order: each
+names its node, and either the node whose connective was clicked or the
+constructor a typed connective named. This one splits `P ∧ ¬Q`:
+
+```json
+{
+  "kind": "syntax-tree-answer@1",
+  "schemaVersion": 1,
+  "data": {
+    "picks": [
+      { "node": [], "clicked": [] },
+      { "node": [1], "named": "not" }
+    ]
+  }
+}
+```
+
+A node is the path of argument indices from the sentence down to it, as the
+parse has it (`[]` is the sentence itself). A pick is right when it clicked
+the node's own connective, or named the node's constructor. Only a node's
+first pick counts, and a pick at no node is not counted.
 
 See each exercise package's reference for its full answer schema. The
 assessment registry rejects wrong kinds, unsupported versions, malformed

@@ -3409,6 +3409,84 @@ Explain the rule.
   });
 });
 
+describe("a syntax tree on an assignment", () => {
+  test("renders its live form with hydration, and grades a submitted tree", async () => {
+    await withStorage(async (_storage, env) => {
+      const instructor = await login(env, "syntax-teacher@example.test");
+      const student = await login(env, "syntax-student@example.test");
+      const courseId = await createCourse(env, instructor);
+      const revisionId = await createRevision(
+        env,
+        instructor,
+        `# Lesson
+
+::::syntax-tree{#st points="2"}
+Split the sentence.
+
+- P /\\ ~Q
+::::`,
+      );
+
+      await enrollStudent(env, instructor, student, courseId);
+
+      const assignment = await createPublishedAssignment(
+        env,
+        instructor,
+        courseId,
+        revisionId,
+      );
+      const attemptId = await beginAttempt(
+        env,
+        student,
+        courseId,
+        assignment.id,
+      );
+      const documentHtml = await (
+        await appRequest(
+          createTestApp(),
+          `/courses/${courseId}/assignments/${assignment.id}/content`,
+          { headers: { Cookie: student.cookieHeader } },
+          env,
+        )
+      ).text();
+
+      // The element, inside the live form, with its payload and the bar: the
+      // one registration point a type can get wrong is its component.
+      expect(documentHtml).toContain("<carnap-syntax-tree");
+      expect(documentHtml).toContain(`/attempts/${attemptId}/submissions`);
+      expect(documentHtml).toContain("data-exercise-hydration");
+      expect(documentHtml).toContain('slot="exercise-actions"');
+      expect(documentHtml).toContain("carnap-syntax-tree-v1");
+
+      const response = await submitAnswer(
+        env,
+        student,
+        courseId,
+        assignment.id,
+        attemptId,
+        {
+          answer: {
+            data: {
+              picks: [
+                { clicked: [], node: [] },
+                { named: "not", node: [1] },
+              ],
+            },
+            kind: "syntax-tree-answer@1",
+            schemaVersion: 1,
+          },
+          exerciseId: "st",
+        },
+      );
+      const body = (await response.json()) as SubmissionResponse;
+
+      expect(response.status).toBe(201);
+      expect(body.evaluation.result.status).toBe("correct");
+      expect(body.evaluation.score).toBe(2);
+    });
+  });
+});
+
 describe("a truth tree on an assignment", () => {
   test("renders its live form with hydration, and grades a submitted tree", async () => {
     await withStorage(async (_storage, env) => {
