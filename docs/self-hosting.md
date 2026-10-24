@@ -200,7 +200,8 @@ variable to disable it; an empty value is not always equivalent to absence.
 - `ADMIN_BOOTSTRAP_TOKEN`: administrator setup secret; required to bootstrap
   the first site administrator, and to be removed after use.
 - `CARNAP_TRUST_PROXY`: set to `1` when a trusted reverse proxy supplies the
-  public scheme and host. See [Reverse proxy setup](#behind-a-reverse-proxy).
+  public scheme, host and client address. See
+  [Reverse proxy setup](#behind-a-reverse-proxy).
 
 ### Email and login
 
@@ -291,11 +292,18 @@ They affect secure cookies, HSTS, login links, and LTI callback URLs. Nginx
 normally rewrites `Host` to the upstream host, so explicitly preserve it or
 set `X-Forwarded-Host`.
 
-Client-IP handling is separate: the application prefers `CF-Connecting-IP`,
-then the first `X-Forwarded-For` entry. These headers are read as hints even
-without the proxy-trust setting. At a self-hosted edge, strip untrusted
-client-supplied copies and set the address yourself. If no address header is
-present, the login limiter has only its email-address limit.
+The client address comes from the same setting. With `CARNAP_TRUST_PROXY`
+enabled, the application reads the last `X-Forwarded-For` entry, which is the
+one your proxy adds; earlier entries are whatever the client sent. Without
+it, the application uses the address of the connection itself and ignores
+`X-Forwarded-For` and `CF-Connecting-IP`, which any client can send. The login
+limiter's per-address bucket, the human check and the log all use this
+address. If the setting is on but `X-Forwarded-For` is missing, the login
+limiter has only its email-address limit.
+
+If your proxy is itself behind another proxy or CDN, the last entry names
+that outer hop, not the browser. Have the proxy nearest the application
+replace `X-Forwarded-For` with the client address it resolved.
 
 Only the trusted proxy should be able to reach the application port. Do not
 let public clients bypass it or supply trusted forwarding headers directly.
@@ -342,7 +350,6 @@ With [Caddy](https://caddyserver.com), you can use this site block:
 ```caddyfile
 carnap.example.edu {
 	reverse_proxy 127.0.0.1:8787 {
-		header_up -CF-Connecting-IP
 		header_up X-Request-Id {http.request.uuid}
 	}
 }
@@ -354,11 +361,10 @@ Its reverse proxy preserves `Host` and supplies `X-Forwarded-For`,
 copies of those forwarding headers unless the sender is a configured trusted
 proxy.
 
-The example also removes `CF-Connecting-IP`: Carnap prefers that header over
-`X-Forwarded-For`, so an untrusted client must not be allowed to supply it.
-The other `header_up` line adds an optional request ID. If Caddy is itself
-behind another proxy or CDN, configure and review that trust relationship
-separately.
+The `header_up` line adds an optional request ID. If Caddy is itself behind
+another proxy or CDN, configure that hop in Caddy's `trusted_proxies` (see
+also `trusted_proxies_strict`) and add `header_up X-Forwarded-For {client_ip}`,
+so the application receives the browser's address rather than the CDN's.
 
 With the scheme and host forwarded, leave `AUTH_LOGIN_CONFIRM_URL` unset;
 login links resolve to `https://carnap.example.edu/login/confirm`.
@@ -427,9 +433,10 @@ Because these lines hold email addresses, the logs are personal data. Who can
 read them, and how long they are kept, is yours to set, as for any other
 system's authentication logs.
 
-`ip` is the address the request reports: `CF-Connecting-IP`, or else the first
-`X-Forwarded-For` entry. Off Cloudflare, without a proxy that sets those
-headers, treat it as client-supplied.
+`ip` is the client address: on Cloudflare, `CF-Connecting-IP` from the edge;
+behind a trusted proxy, the entry it added to `X-Forwarded-For`; otherwise,
+the address of the connection. See
+[Behind a reverse proxy](#behind-a-reverse-proxy).
 
 ### Security and audit events
 

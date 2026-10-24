@@ -185,7 +185,29 @@ app.use("*", async (context, next) => {
   await next();
 });
 
-app.route("/", createApp());
+const IPV4_MAPPED = /^::ffff:\d{1,3}(\.\d{1,3}){3}$/i;
+
+/**
+ * The socket's peer: the one address here a client cannot choose. On a
+ * dual-stack socket Bun reports an IPv4 client as `::ffff:203.0.113.7`; it is
+ * written as plain IPv4, the way a proxy would write it, so one client keeps
+ * one throttle bucket and one spelling in the log however it arrives.
+ *
+ * `server` is assigned below, before the first request can arrive.
+ */
+function socketPeerAddress(request: Request): string | null {
+  const address = server.requestIP(request)?.address;
+
+  if (address === undefined) {
+    return null;
+  }
+
+  return IPV4_MAPPED.test(address)
+    ? address.slice("::ffff:".length)
+    : address;
+}
+
+app.route("/", createApp({ connectingAddress: socketPeerAddress }));
 
 let sweeping = false;
 

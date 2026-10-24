@@ -39,6 +39,13 @@ const MAX_REQUEST_BODY_BYTES = 4 * 1024 * 1024;
 export interface CreateAppOptions {
   readonly configure?: (app: WorkerApp) => void;
   /**
+   * The host's word for where a request came from, which a client cannot
+   * choose: the Worker reads Cloudflare's `CF-Connecting-IP`, the Bun server
+   * its socket's peer. Absent, every request's is null, and only a trusted
+   * proxy can supply one; see `clientIpAddress`.
+   */
+  readonly connectingAddress?: (request: Request) => string | null;
+  /**
    * Test seam: verify LTI launch tokens against an injected key set instead
    * of fetching the platform's JWKS. Must be threaded here (not through
    * `configure`) because middleware registered after the route mounts would
@@ -59,6 +66,7 @@ export interface CreateAppOptions {
 
 export function createApp(options: CreateAppOptions = {}): WorkerApp {
   const app = new Hono<AppBindings>();
+  const connectingAddress = options.connectingAddress ?? (() => null);
   const ltiKeyResolver = options.lti?.keyResolver;
   const turnstileVerifier = options.turnstile?.verifier;
 
@@ -80,6 +88,11 @@ export function createApp(options: CreateAppOptions = {}): WorkerApp {
   app.route("/", theoryRoutes);
 
   app.use("*", requestIdMiddleware());
+  app.use("*", async (context, next) => {
+    context.set("connectingAddress", connectingAddress(context.req.raw));
+    await next();
+  });
+
   // Locale resolves in two passes around authentication: the request's own
   // preference first — translator and all, so even a request rejected below
   // renders in a sensible language — then the signed-in user's stored choice

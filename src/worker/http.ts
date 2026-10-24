@@ -17,6 +17,13 @@ export interface AppVariables {
   readonly actor: AuthenticatedActor | null;
   readonly authFailure: "disabled_user" | null;
   /**
+   * The host's word for where this request came from: the socket's peer under
+   * the Bun server, the edge's `CF-Connecting-IP` on Cloudflare. Set from
+   * `CreateAppOptions.connectingAddress`, and read only through
+   * `clientIpAddress`, which prefers a trusted proxy's word to it.
+   */
+  readonly connectingAddress: string | null;
+  /**
    * An origin this response's forms may post to, beyond our own. Unset on all
    * but the handful of responses that carry a cross-origin form; see
    * `allowFormActionTo` in `middleware/security-headers.ts`, which is the only
@@ -103,34 +110,27 @@ export function requireAuthenticated(
 }
 
 /**
- * Who a request came from, for the audit trail — null when nothing credible
- * says.
+ * Who a request came from, for the login throttle's per-address bucket, the
+ * Turnstile check and the log — null when nothing credible says.
  *
- * `CF-Connecting-IP` first, because on Cloudflare it is set by the edge and
- * cannot be spoofed by the client. Off Cloudflare there is no such header, and
- * a self-hosted instance sits behind whatever proxy its operator chose, so
- * `X-Forwarded-For` is the fallback: its first entry is the original client
- * and the rest are the proxies that relayed it.
- *
- * A client can put anything in `X-Forwarded-For` — this is a hint for a human
- * reading a login record, not an authorization input, and nothing decides
- * anything on it.
+ * Behind a trusted proxy (`CARNAP_TRUST_PROXY`), the last `X-Forwarded-For`
+ * entry: proxies chain by appending the peer they saw, so the last entry is
+ * the one our own proxy wrote, and everything before it is whatever the
+ * client claimed. Otherwise the host's word for it (`connectingAddress`),
+ * which a client cannot choose: on Cloudflare the edge overwrites
+ * `CF-Connecting-IP`, and under Bun it is the socket's peer. Neither header is
+ * read otherwise, because off Cloudflare and without a proxy either one is
+ * what any client can type — a fresh value per request would be a fresh
+ * throttle bucket.
  */
 export function clientIpAddress(
   context: Context<AppBindings>,
 ): string | null {
-  const edge = context.req.header("CF-Connecting-IP");
-
-  if (edge !== undefined) {
-    return edge;
+  if (trustsProxy(context.env)) {
+    return forwardedEntry(context, "X-Forwarded-For", "last") ?? null;
   }
 
-  const forwarded = context.req
-    .header("X-Forwarded-For")
-    ?.split(",")[0]
-    ?.trim();
-
-  return forwarded === undefined || forwarded.length === 0 ? null : forwarded;
+  return context.get("connectingAddress");
 }
 
 /**
@@ -174,8 +174,9 @@ export function publicRequestUrl(context: Context<AppBindings>): URL {
   const protocol = forwardedEntry(
     context,
     "X-Forwarded-Proto",
+    "first",
   )?.toLowerCase();
-  const host = forwardedEntry(context, "X-Forwarded-Host");
+  const host = forwardedEntry(context, "X-Forwarded-Host", "first");
 
   if (protocol === "https" || protocol === "http") {
     url.protocol = `${protocol}:`;
@@ -194,15 +195,17 @@ export function requestIsSecure(context: Context<AppBindings>): boolean {
 }
 
 /**
- * The first entry of a comma-separated forwarding header, or undefined when
- * it is absent or empty. Proxies chain by appending, so the first entry is
- * the one nearest the browser.
+ * One end of a comma-separated forwarding header, or undefined when it is
+ * absent or empty. Proxies chain by appending, so the first entry is the one
+ * nearest the browser and the last is the one our own proxy wrote.
  */
 function forwardedEntry(
   context: Context<AppBindings>,
   name: string,
+  end: "first" | "last",
 ): string | undefined {
-  const first = context.req.header(name)?.split(",")[0]?.trim();
+  const entries = context.req.header(name)?.split(",");
+  const entry = (end === "first" ? entries?.[0] : entries?.at(-1))?.trim();
 
-  return first === undefined || first.length === 0 ? undefined : first;
+  return entry === undefined || entry.length === 0 ? undefined : entry;
 }
