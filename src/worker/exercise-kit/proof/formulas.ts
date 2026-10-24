@@ -475,14 +475,27 @@ export function displayStatement(
 }
 
 /**
- * Maps a cited rule name to the one the engine declares. An alias resolves to
- * its rule; anything else stands, so a name the theory never mentions reaches
- * the engine spelled as the student wrote it, to be refused there.
+ * Maps a cited rule name to the one the engine declares: an alias to its rule,
+ * a rule's own name to itself. `null` for a name the theory has no rule by,
+ * which the translator reports in the student's terms and never sends on
+ * (gh #53): what the engine says about one depends on how the name happens to
+ * start — "expected identifier" for `\/Intro`, which is no MM0 identifier,
+ * "unknown rule" for `orIntro` — and names neither the rule nor the problem.
  */
-export type ProofRuleReader = (cited: string) => string;
+export type ProofRuleReader = (cited: string) => string | null;
 
-/** Passes every rule name through — the reader where no theory says otherwise. */
+/**
+ * Passes every rule name through — the reader where no theory says otherwise,
+ * and so where there is nothing to check a name against.
+ */
 export const ENGINE_RULE: ProofRuleReader = (cited) => cited;
+
+/**
+ * The engine's own justification for admitting a line unproved. Not a rule
+ * any theory declares, so a reader lets it through by name: whether a proof
+ * may use it is the exercise's `allow-sorry`, decided after the compile.
+ */
+const ADMIT_RULE = "sorry!";
 
 /**
  * The rule reader for a proof exercise's frozen theory text: what its
@@ -505,9 +518,60 @@ export function proofRuleReader(
 export function languageRuleReader(
   language: SurfaceLanguage,
 ): ProofRuleReader {
-  const aliases = language.spec.ruleAliases;
+  const { ruleAliases, rules } = language.spec;
 
-  return (cited) => aliases.get(cited) ?? cited;
+  return (cited) =>
+    ruleAliases.get(cited) ??
+    (rules.has(cited) || cited === ADMIT_RULE ? cited : null);
+}
+
+/**
+ * A node that cites a rule the theory does not have, by the name it was cited
+ * as. Kept apart from the translators' structural diagnostics because, like an
+ * unreadable formula, it stops the proof reaching the compiler, and in a
+ * starter it is the author's to hear about as a warning rather than a refusal.
+ */
+export interface NodeRuleProblem {
+  readonly nodeId: string;
+  readonly rule: string;
+}
+
+/**
+ * Reads a proof tree's citations, each node's once: the engine's name for its
+ * rule, or the name as cited where the theory has none — recorded in
+ * `problems`, once per node however often the translator asks. An empty
+ * citation stands unreported: an unfinished node is a different complaint.
+ */
+export function nodeRuleReader(readRule: ProofRuleReader): {
+  readonly problems: readonly NodeRuleProblem[];
+  readonly rule: (node: {
+    readonly id: string;
+    readonly rule: string;
+  }) => string;
+} {
+  const problems: NodeRuleProblem[] = [];
+  const read = new Map<string, string>();
+
+  return {
+    problems,
+    rule: (node) => {
+      const known = read.get(node.id);
+
+      if (known !== undefined) {
+        return known;
+      }
+
+      const resolved = node.rule.length === 0 ? "" : readRule(node.rule);
+
+      if (resolved === null) {
+        problems.push({ nodeId: node.id, rule: node.rule });
+      }
+
+      const rule = resolved ?? node.rule;
+      read.set(node.id, rule);
+      return rule;
+    },
+  };
 }
 
 /**

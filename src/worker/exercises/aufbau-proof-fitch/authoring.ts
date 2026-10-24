@@ -25,6 +25,7 @@ import {
   starterFormulaReader,
   starterLine,
   starterRuleReader,
+  unknownStarterRule,
   unreadableStarterFormula,
 } from "../../exercise-kit/proof/authoring";
 import { theoryLanguageSource } from "../../exercise-kit/proof/formulas";
@@ -175,6 +176,15 @@ export async function compileAufbauProofFitch(
           starterLine(block, starter, problem.sourceLine),
           problem.formula,
           problem.error,
+        ),
+      );
+    }
+
+    for (const problem of translated.ruleProblems) {
+      diagnostics.push(
+        unknownStarterRule(
+          starterLine(block, starter, problem.sourceLine),
+          problem.rule,
         ),
       );
     }

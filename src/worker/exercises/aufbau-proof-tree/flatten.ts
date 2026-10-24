@@ -22,18 +22,20 @@
  * *whole* judgement — so its text is read at the sort the turnstile yields.
  * A theory that names neither a turnstile role nor a sentence sort passes every
  * node through untouched. A node's rule goes through `readRule` the same way:
- * an alias the theory declares becomes the engine's name, anything else
- * stands.
+ * an alias the theory declares becomes the engine's name, and a name the
+ * theory has no rule by stands as cited and comes back in `ruleProblems`.
  */
 
 import type {
   NodeFormulaProblem,
+  NodeRuleProblem,
   ProofFormulaReader,
   ProofRuleReader,
 } from "../../exercise-kit/proof/formulas";
 import {
   ENGINE_RULE,
   ENGINE_TEXT,
+  nodeRuleReader,
   readNodeFormulas,
 } from "../../exercise-kit/proof/formulas";
 import type { ProofStatement } from "../../exercise-kit/proof/playground";
@@ -54,6 +56,9 @@ export interface FlattenedProofTree {
   readonly lineSpans: readonly ProofTreeLineSpan[];
   /** `${goalName}\n----\n${body}` — the full text handed to `compile`. */
   readonly proofText: string;
+  /** Nodes citing a rule the theory does not have, which nothing should
+   *  compile; empty where there is no theory to check a name against. */
+  readonly ruleProblems: readonly NodeRuleProblem[];
   /**
    * What the root asserts — its sequent, the last emitted `$ … $` — and the
    * variables the reading saw in it; `null` for a root that is a bare `hyp`
@@ -80,7 +85,8 @@ export function flattenProofTree(
     readFormula,
     (node) => node.hyp === undefined,
   );
-  const { lines, owners } = proofLines(read.root, readRule);
+  const rules = nodeRuleReader(readRule);
+  const { lines, owners } = proofLines(read.root, rules.rule);
 
   const statement: ProofStatement | null =
     read.root.hyp === undefined
@@ -93,6 +99,7 @@ export function flattenProofTree(
   return {
     ...assembleProofText(goalName, lines, owners),
     formulaProblems: read.problems,
+    ruleProblems: rules.problems,
     statement,
   };
 }
@@ -105,7 +112,7 @@ export function flattenProofTree(
  * exercise's starting point.
  */
 export function proofTreeStarter(root: ProofTreeNode): string {
-  return proofLines(root, ENGINE_RULE).lines.join("\n");
+  return proofLines(root, (node) => node.rule).lines.join("\n");
 }
 
 /**
@@ -114,7 +121,7 @@ export function proofTreeStarter(root: ProofTreeNode): string {
  */
 function proofLines(
   root: ProofTreeNode,
-  readRule: ProofRuleReader,
+  ruleOf: (node: ProofTreeNode) => string,
 ): {
   readonly lines: readonly string[];
   readonly owners: readonly { readonly nodeId: string }[];
@@ -133,7 +140,7 @@ function proofLines(
     const label = `l${counter}`;
     owners.push({ nodeId: node.id });
     lines.push(
-      `${label}: $ ${node.formula} $ by ${readRule(node.rule)} [${refs.join(", ")}]`,
+      `${label}: $ ${node.formula} $ by ${ruleOf(node)} [${refs.join(", ")}]`,
     );
     return label;
   }

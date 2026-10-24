@@ -173,6 +173,10 @@ export function buildTruthTreeStrings(i18n: Translator) {
       i18n.t(
         "Name the rule this step uses: type it in the margin, after the row it develops.",
       ),
+    "There is no rule called “{rule}”.": i18n.t(
+      "There is no rule called “{rule}”.",
+      placeholders("rule"),
+    ),
     "The rule named does not give this from row {cited}.": i18n.t(
       "The rule named does not give this from row {cited}.",
       placeholders("cited"),

@@ -106,6 +106,10 @@ export function describeRowProblem(
       return words(
         "Name the rule this step uses: type it in the margin, after the row it develops.",
       );
+    case "unknown-rule":
+      return words("There is no rule called “{rule}”.", {
+        rule: problem.rule,
+      });
     case "step-wrong":
       return other === undefined
         ? words("The rule named does not give this from row {cited}.", {

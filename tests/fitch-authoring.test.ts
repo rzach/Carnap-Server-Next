@@ -44,7 +44,7 @@ describe("a goal binder that shadows the theory's language", () => {
     // written, so the author is told and not stopped.
     const compiled = await compileGoal(
       "theorem mp (a b: wff): $ a ⊢ a $;",
-      "a → a    :ax",
+      "a → a    :AS",
     );
 
     expect(compiled.ok).toBe(true);
@@ -77,7 +77,7 @@ describe("a goal binder that shadows the theory's language", () => {
   test("a goal that displaces nothing says nothing", async () => {
     const compiled = await compileGoal(
       "theorem u {x: var} {a: name}: $ ∀ x F(x) ⊢ F(a) $;",
-      "∀ x F(x)    :ax",
+      "∀ x F(x)    :AS",
     );
 
     expect(compiled.ok).toBe(true);

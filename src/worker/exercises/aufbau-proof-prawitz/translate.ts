@@ -51,18 +51,21 @@
  * Structural problems (a discharge mark no assumption answers to, mixed
  * formulas under one mark, an assumption with premises) are returned as
  * diagnostics keyed to the offending node; a formula that will not read comes
- * back in `formulaProblems`, worded by the parser; logical errors come from
- * the compiler and are attributed back through `lineSpans`.
+ * back in `formulaProblems`, worded by the parser, and a rule the theory does
+ * not have in `ruleProblems`; logical errors come from the compiler and are
+ * attributed back through `lineSpans`.
  */
 
 import type {
   NodeFormulaProblem,
+  NodeRuleProblem,
   ProofFormulaReader,
   ProofRuleReader,
 } from "../../exercise-kit/proof/formulas";
 import {
   ENGINE_RULE,
   ENGINE_TEXT,
+  nodeRuleReader,
   readNodeFormulas,
   unionVariables,
 } from "../../exercise-kit/proof/formulas";
@@ -111,6 +114,9 @@ export interface TranslatedPrawitzProof {
   readonly lineSpans: readonly PrawitzLineSpan[];
   /** `${goalName}\n----\n${body}` — the full text handed to `compile`. */
   readonly proofText: string;
+  /** Nodes citing a rule the theory does not have, which nothing should
+   *  compile; empty where there is no theory to check a name against. */
+  readonly ruleProblems: readonly NodeRuleProblem[];
   /**
    * What the root asserts — its dependency context and its formula, as the
    * last emitted `$ … $` — and the variables the readings saw in it. What a
@@ -160,7 +166,8 @@ export function prawitzToAuf(
   // Rule names resolve the way formulas read: to what the engine declares.
   // The configured assumption rule goes through the same reader, so a node
   // citing it by alias is still a leaf.
-  const assumption = readRule(assumptionRule);
+  const assumption = readRule(assumptionRule) ?? assumptionRule;
+  const rules = nodeRuleReader(readRule);
   // Read every formula before anything looks at one. Discharge resolution
   // below decides which leaves a mark answers to by comparing their formulas
   // as strings, so reading first is what makes `~P` under one mark and `¬P`
@@ -183,7 +190,7 @@ export function prawitzToAuf(
       parent,
     };
     all.push(walked);
-    if (readRule(node.rule) === assumption) {
+    if (rules.rule(node) === assumption) {
       leaves.push(walked);
       if (node.premises.length > 0) {
         diagnostics.push({
@@ -298,7 +305,7 @@ export function prawitzToAuf(
     const refs = walked.children.map(emit);
 
     let entries: readonly number[];
-    if (readRule(walked.node.rule) === assumption) {
+    if (rules.rule(walked.node) === assumption) {
       // A leaf depends only on itself; everything else is inherited upward.
       entries = [walked.index];
     } else {
@@ -328,7 +335,7 @@ export function prawitzToAuf(
     owners.push({ nodeId: walked.node.id });
     const sequent = `${contextText} ${sequentSymbol} ${walked.node.formula}`;
     lines.push(
-      `${label}: $ ${sequent} $ by ${readRule(walked.node.rule)} [${refs.join(", ")}]`,
+      `${label}: $ ${sequent} $ by ${rules.rule(walked.node)} [${refs.join(", ")}]`,
     );
 
     // The root's sequent is the proof's statement; its variables are those of
@@ -355,6 +362,7 @@ export function prawitzToAuf(
     contexts,
     diagnostics,
     formulaProblems,
+    ruleProblems: rules.problems,
     statement,
   };
 }

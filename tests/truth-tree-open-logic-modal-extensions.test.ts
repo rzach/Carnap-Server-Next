@@ -150,10 +150,10 @@ describe("a logic refuses the rules it lacks", () => {
     test(`${logic} does not prove ${schema} so`, async () => {
       const found = await proves(logic, proof);
 
-      // Refused at the one step that needs the rule, so the branch stays open.
-      expect(found).toHaveLength(2);
-      expect(found[0]).toBe("open");
-      expect(found[1]).toEndWith(": step-wrong");
+      // The weaker logic has no rule by that name, so the one step that needs
+      // it is refused by name (gh #53), and the tree with it.
+      expect(found).toHaveLength(1);
+      expect(found[0]).toEndWith(": unknown-rule");
     }, 60_000);
   }
 });

@@ -119,11 +119,12 @@ const TICK_OVERHANG_CHARS = 3;
  */
 const SCOPE_COLOR = "var(--_scope-line)";
 
-/** Whether the source has a problem of either kind, so nothing should compile. */
+/** Whether the source has a problem of any kind, so nothing should compile. */
 function unreadable(translation: ReturnType<typeof fitchToAuf>): boolean {
   return (
     translation.diagnostics.length > 0 ||
-    translation.formulaProblems.length > 0
+    translation.formulaProblems.length > 0 ||
+    translation.ruleProblems.length > 0
   );
 }
 
@@ -607,8 +608,8 @@ class AufbauProofFitch extends ProofExerciseElement<AufbauProofFitchStringId> {
     this.syncAnswer();
 
     if (unreadable(translation)) {
-      // Structural problems, or a formula the language refused: show them
-      // straight away, don't compile.
+      // Structural problems, a formula the language refused, or a rule the
+      // theory does not have: show them straight away, don't compile.
       this.cancelCompile();
       this.setMark("idle");
       this.applyStructuralDiagnostics(translation);
@@ -695,11 +696,12 @@ class AufbauProofFitch extends ProofExerciseElement<AufbauProofFitchStringId> {
 
   /**
    * Everything wrong with the source before the compiler has seen it: the
-   * translator's structural problems, underlined across their whole line, and
-   * the language's refusals, underlined from the character that broke the
-   * formula. A structural code is worded from this widget's own map; a
-   * refusal arrives already worded by the parser, as a template plus its
-   * values, so it goes through the same `t` by a different route.
+   * translator's structural problems, underlined across their whole line, the
+   * language's refusals, underlined from the character that broke the
+   * formula, and citations of a rule the theory does not have, under the
+   * name. A structural code is worded from this widget's own map; a refusal
+   * arrives already worded by the parser, as a template plus its values, so
+   * it goes through the same `t` by a different route.
    */
   private applyStructuralDiagnostics(
     translation: ReturnType<typeof fitchToAuf>,
@@ -743,6 +745,19 @@ class AufbauProofFitch extends ProofExerciseElement<AufbauProofFitchStringId> {
         message: this.t(problem.error.message, problem.error.params),
         severity: "error",
         to: Math.max(range.to, at + 1),
+      });
+    }
+
+    for (const problem of translation.ruleProblems) {
+      const range = this.lineRange(problem.sourceLine);
+      const at = clamp(range.from + problem.column, range.from, range.to);
+      diagnostics.push({
+        from: at,
+        message: this.t("There is no rule called “{rule}”.", {
+          rule: problem.rule,
+        }),
+        severity: "error",
+        to: Math.min(Math.max(at + problem.rule.length, at + 1), range.to),
       });
     }
 

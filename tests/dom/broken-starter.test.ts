@@ -97,8 +97,8 @@ describe("an editor opened on a starter that does not read", () => {
     const { compiled, mounted } = await mount(
       "tree",
       [
-        "l1: $ P → Q ; P ⊢ ? $ by ax []",
-        "l2: $ P → Q ; P ⊢ P $ by ax []",
+        "l1: $ P → Q ; P ⊢ ? $ by AS []",
+        "l2: $ P → Q ; P ⊢ P $ by AS []",
         "l3: $ P → Q ; P ⊢ Q $ by imp_elim [l1, l2]",
       ].join("\n"),
       (m) => invalidFields(m).length > 0,
@@ -114,8 +114,8 @@ describe("an editor opened on a starter that does not read", () => {
     const { compiled, mounted } = await mount(
       "prawitz",
       [
-        "a1: $ P → Q ⊢ ? $ by ax []",
-        "a2: $ P ⊢ P $ by ax []",
+        "a1: $ P → Q ⊢ ? $ by AS []",
+        "a2: $ P ⊢ P $ by AS []",
         "l1: $ _ ⊢ Q $ by imp_elim [a1, a2]",
       ].join("\n"),
       (m) => invalidFields(m).length > 0,
@@ -123,6 +123,80 @@ describe("an editor opened on a starter that does not read", () => {
 
     expect(mounted.element.dataset.enhanced).toBe("true");
     expect(invalidFields(mounted)).toEqual(["?"]);
+    expect(markState(mounted)).toBe("idle");
+    expect(compiled).toBe(false);
+  });
+});
+
+/** The Fitch editor's underline messages, in order. */
+function underlineMessages(mounted: MountedExercise): string[] {
+  const messages: string[] = [];
+  forEachDiagnostic(editorOf(mounted).state, (diagnostic) => {
+    messages.push(diagnostic.message);
+  });
+  return messages;
+}
+
+/** Whether some element of the widget says exactly `text`. */
+function says(mounted: MountedExercise, text: string): boolean {
+  return Array.from(mounted.root.querySelectorAll("*")).some(
+    (element) => element.textContent === text,
+  );
+}
+
+// gh #53: a citation of a rule the theory does not have is the widget's to
+// name, and nothing reaches the compiler while one stands.
+describe("an editor opened on a starter citing a rule the theory lacks", () => {
+  test("Fitch underlines the name and says there is no such rule", async () => {
+    const starter = [
+      "P → Q   :PR",
+      "P       :PR",
+      "Q       :\\/Elim 1 2",
+    ].join("\n");
+    const { compiled, mounted } = await mount(
+      "fitch",
+      starter,
+      (m) => underlinedLines(m).length > 0,
+    );
+
+    expect(underlinedLines(mounted)).toEqual(["Q       :\\/Elim 1 2"]);
+    expect(underlineMessages(mounted)).toEqual([
+      "There is no rule called “\\/Elim”.",
+    ]);
+    expect(markState(mounted)).toBe("idle");
+    expect(compiled).toBe(false);
+  });
+
+  test("the proof tree marks the node and says there is no such rule", async () => {
+    const { compiled, mounted } = await mount(
+      "tree",
+      [
+        "l1: $ P → Q ; P ⊢ P → Q $ by AS []",
+        "l2: $ P → Q ; P ⊢ P $ by AS []",
+        "l3: $ P → Q ; P ⊢ Q $ by impElim [l1, l2]",
+      ].join("\n"),
+      (m) => says(m, "There is no rule called “impElim”."),
+    );
+
+    // The root carries the goal, so the problem is its line's, not a field's.
+    expect(invalidFields(mounted)).toEqual([]);
+    expect(markState(mounted)).toBe("idle");
+    expect(compiled).toBe(false);
+  });
+
+  test("Prawitz marks the node and says there is no such rule", async () => {
+    const { compiled, mounted } = await mount(
+      "prawitz",
+      [
+        "a1: $ P → Q ⊢ P → Q $ by AS []",
+        "a2: $ P ⊢ P $ by AS []",
+        "l1: $ _ ⊢ Q $ by ->Elim [a1, a2]",
+      ].join("\n"),
+      (m) => invalidFields(m).length > 0,
+    );
+
+    expect(invalidFields(mounted)).toEqual(["Q"]);
+    expect(says(mounted, "There is no rule called “->Elim”.")).toBe(true);
     expect(markState(mounted)).toBe("idle");
     expect(compiled).toBe(false);
   });

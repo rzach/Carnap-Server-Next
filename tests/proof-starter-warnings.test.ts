@@ -56,8 +56,8 @@ describe("a starter formula that does not read", () => {
     const compiled = await compile(
       "tree",
       [
-        "l1: $ P → Q ; P ⊢ ? $ by ax []",
-        "l2: $ P → Q ; P ⊢ P $ by ax []",
+        "l1: $ P → Q ; P ⊢ ? $ by AS []",
+        "l2: $ P → Q ; P ⊢ P $ by AS []",
         "l3: $ P → Q ; P ⊢ Q $ by imp_elim [l1, l2]",
       ].join("\n"),
     );
@@ -73,8 +73,8 @@ describe("a starter formula that does not read", () => {
     const compiled = await compile(
       "prawitz",
       [
-        "a1: $ P → Q ⊢ ? $ by ax []",
-        "a2: $ P ⊢ P $ by ax []",
+        "a1: $ P → Q ⊢ ? $ by AS []",
+        "a2: $ P ⊢ P $ by AS []",
         "l1: $ _ ⊢ Q $ by imp_elim [a1, a2]",
       ].join("\n"),
     );
@@ -91,11 +91,64 @@ describe("a starter formula that does not read", () => {
     // warning is for formulas, not shape.
     const compiled = await compile(
       "prawitz",
-      ["a1: $ P ⊢ ? $ by ax []", "l1: $ _ ⊢ Q $ by imp_elim [a1, a1]"].join(
+      ["a1: $ P ⊢ ? $ by AS []", "l1: $ _ ⊢ Q $ by imp_elim [a1, a1]"].join(
         "\n",
       ),
     );
 
     expect(compiled.ok).toBe(false);
+  });
+});
+
+// gh #53: the same terms for a citation of a rule the theory does not have —
+// the save goes through, and the author is told which line, by the name.
+describe("a starter citing a rule the theory does not have", () => {
+  test("Fitch saves, warning on the line", async () => {
+    const compiled = await compile(
+      "fitch",
+      ["P → Q :PR", "P :PR", "Q :->Elim 1 2"].join("\n"),
+    );
+
+    expect(compiled.ok).toBe(true);
+    expect(said(compiled)).toEqual([["unknown_rule", "warning", 11]]);
+    expect(compiled.diagnostics[0]?.params).toEqual({ rule: "->Elim" });
+  });
+
+  test("the proof tree saves, warning on the node's line", async () => {
+    const compiled = await compile(
+      "tree",
+      [
+        "l1: $ P → Q ; P ⊢ P → Q $ by AS []",
+        "l2: $ P → Q ; P ⊢ P $ by AS []",
+        "l3: $ P → Q ; P ⊢ Q $ by \\/Elim [l1, l2]",
+      ].join("\n"),
+    );
+
+    expect(compiled.ok).toBe(true);
+    expect(said(compiled)).toEqual([["unknown_rule", "warning", 11]]);
+  });
+
+  test("Prawitz saves, warning on the node's line", async () => {
+    const compiled = await compile(
+      "prawitz",
+      [
+        "a1: $ P → Q ⊢ P → Q $ by AS []",
+        "a2: $ P ⊢ P $ by AS []",
+        "l1: $ _ ⊢ Q $ by impElim [a1, a2]",
+      ].join("\n"),
+    );
+
+    expect(compiled.ok).toBe(true);
+    expect(said(compiled)).toEqual([["unknown_rule", "warning", 11]]);
+  });
+
+  test("a starter citing its rules by alias says nothing", async () => {
+    const compiled = await compile(
+      "fitch",
+      ["P → Q :PR", "P :PR", "Q :→E 1 2"].join("\n"),
+    );
+
+    expect(compiled.ok).toBe(true);
+    expect(said(compiled)).toEqual([]);
   });
 });

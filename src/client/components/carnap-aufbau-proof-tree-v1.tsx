@@ -41,6 +41,7 @@ import { useLayoutEffect, useMemo, useRef } from "preact/hooks";
 import type { CorrectnessMarkState } from "../../worker/exercise-kit/correctness-mark";
 import type {
   NodeFormulaProblem,
+  NodeRuleProblem,
   ProofFormulaReader,
   ProofRuleReader,
 } from "../../worker/exercise-kit/proof/formulas";
@@ -1523,15 +1524,23 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
     // A node the language refused never reaches the compiler: the `.auf` it
     // would produce is the text the student typed, and the unification failure
     // that comes back names none of the characters they got wrong. Show the
-    // parser's own complaint against the node instead.
-    if (flattened.formulaProblems.length > 0) {
+    // parser's own complaint against the node instead. A rule the theory does
+    // not have is held back the same way, since what the engine says of one
+    // depends on how its name happens to start (gh #53).
+    if (
+      flattened.formulaProblems.length > 0 ||
+      flattened.ruleProblems.length > 0
+    ) {
       this.cancelCompile();
       this.goal = null;
       this.syncAnswer();
       this.setStatus({
         mark: "idle",
         markTitle: "",
-        nodeErrors: this.formulaNodeErrors(flattened.formulaProblems),
+        nodeErrors: this.untranslatedNodeErrors(
+          flattened.formulaProblems,
+          flattened.ruleProblems,
+        ),
         nodeWarnings: {},
       });
       return;
@@ -1552,24 +1561,35 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
   }
 
   /**
-   * The language's refusals as the same node-id → message map a compiler
-   * diagnostic produces, so the view draws one kind of squiggle. Withheld
-   * under `terse`/`none` on the same terms as {@link collectNodeProblems}: a
-   * refusal is a reason, and the two must not disagree about that.
+   * The language's refusals, and the citations of a rule the theory does not
+   * have, as the same node-id → message map a compiler diagnostic produces,
+   * so the view draws one kind of squiggle. Withheld under `terse`/`none` on
+   * the same terms as {@link collectNodeProblems}: a refusal is a reason, and
+   * the two must not disagree about that.
    */
-  private formulaNodeErrors(
-    problems: readonly NodeFormulaProblem[],
+  private untranslatedNodeErrors(
+    formulaProblems: readonly NodeFormulaProblem[],
+    ruleProblems: readonly NodeRuleProblem[],
   ): NodeProblems {
     if (!this.showsDetail) {
       return {};
     }
 
     const errors: Record<string, ProblemText[]> = {};
-    for (const problem of problems) {
-      const said = plainProblem(
+    const add = (nodeId: string, message: string): void => {
+      errors[nodeId] = [...(errors[nodeId] ?? []), plainProblem(message)];
+    };
+    for (const problem of formulaProblems) {
+      add(
+        problem.nodeId,
         this.t(problem.error.message, problem.error.params),
       );
-      errors[problem.nodeId] = [...(errors[problem.nodeId] ?? []), said];
+    }
+    for (const problem of ruleProblems) {
+      add(
+        problem.nodeId,
+        this.t("There is no rule called “{rule}”.", { rule: problem.rule }),
+      );
     }
     return errors;
   }

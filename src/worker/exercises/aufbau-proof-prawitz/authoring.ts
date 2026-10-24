@@ -30,6 +30,7 @@ import {
   starterFormulaReader,
   starterLine,
   starterRuleReader,
+  unknownStarterRule,
   unreadableStarterFormula,
 } from "../../exercise-kit/proof/authoring";
 import { requireSystem } from "../../exercise-kit/systems/theory";
@@ -242,6 +243,15 @@ export async function compileAufbauProofPrawitz(
           lineFor(parsed.bodyLineByLabel.get(problem.nodeId)),
           problem.formula,
           problem.error,
+        ),
+      );
+    }
+
+    for (const problem of translated.ruleProblems) {
+      diagnostics.push(
+        unknownStarterRule(
+          lineFor(parsed.bodyLineByLabel.get(problem.nodeId)),
+          problem.rule,
         ),
       );
     }

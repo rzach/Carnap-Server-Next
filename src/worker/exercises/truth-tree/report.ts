@@ -31,6 +31,8 @@ export type RowProblem =
   | { readonly type: "split-mixed" }
   /** The step names no rule (gh #46). */
   | { readonly type: "no-rule-named" }
+  /** The step names a rule the theory does not have (gh #53). */
+  | { readonly type: "unknown-rule"; readonly rule: string }
   /**
    * The engine refused the step: it is not what the rule it names gives from
    * the rows it cites (gh #46). `rule` is the axiom the engine tried.

@@ -26,6 +26,7 @@ import {
   starterFormulaReader,
   starterLine,
   starterRuleReader,
+  unknownStarterRule,
   unreadableStarterFormula,
 } from "../../exercise-kit/proof/authoring";
 import { parseProofTree } from "../../exercise-kit/proof/tree-parse";
@@ -148,7 +149,7 @@ export async function compileAufbauProofTree(
       // warned, not stopped. `flattenProofTree` is what the widget will run
       // over this same tree, so reading through it is what makes the author's
       // warning and the student's squiggle the same judgement.
-      const { formulaProblems } = flattenProofTree(
+      const { formulaProblems, ruleProblems } = flattenProofTree(
         parsed.tree,
         scope.goalName,
         starterFormulaReader(theory, scope, "sequent"),
@@ -165,6 +166,19 @@ export async function compileAufbauProofTree(
             ),
             problem.formula,
             problem.error,
+          ),
+        );
+      }
+
+      for (const problem of ruleProblems) {
+        diagnostics.push(
+          unknownStarterRule(
+            starterLine(
+              block,
+              starter,
+              parsed.bodyLineByLabel.get(problem.nodeId),
+            ),
+            problem.rule,
           ),
         );
       }

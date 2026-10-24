@@ -336,10 +336,11 @@ export function emitTreeProof(
     const first = group[0];
     const cited =
       first?.cites.length === 1 ? (first.cites[0] as string) : null;
-    const patterns =
+    const axiom =
       first === undefined
         ? null
-        : patternsOf(resolve(options.rules.get(first.dev)?.trim() ?? ""));
+        : resolve(options.rules.get(first.dev)?.trim() ?? "");
+    const patterns = axiom === null ? null : patternsOf(axiom);
     const terms = new Set(
       (patterns?.marks ?? [])
         .flat()
@@ -541,7 +542,14 @@ export function emitTreeProof(
     }
 
     const rule = options.rules.get(first.dev)?.trim() ?? "";
-    const axiom = resolve(rule);
+    // A name the theory has no rule by is said so here, in the tree's terms:
+    // sent on, it would come back as the engine's parse error (gh #53).
+    const axiom = rule.length === 0 ? "" : resolve(rule);
+
+    if (axiom === null) {
+      fail({ rule, type: "unknown-rule" });
+      return;
+    }
 
     // A step that cites nothing is unfinished, unless its rule cites nothing
     // (Cut): it focuses on the empty branch.

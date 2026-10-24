@@ -5502,6 +5502,10 @@ msgid "The source doesn't compile."
 msgstr "Der Quelltext lässt sich nicht kompilieren."
 
 #: src/worker/application/content/diagnostic-strings.ts
+msgid "The starter cites “{rule}”, which is not a rule in this system."
+msgstr "Die Vorgabe zitiert „{rule}“, aber dieses System hat keine Regel dieses Namens."
+
+#: src/worker/application/content/diagnostic-strings.ts
 msgid "The starter proof has no lines."
 msgstr "Der Vorlagenbeweis hat keine Zeilen."
 
@@ -5655,6 +5659,11 @@ msgstr "Ich kann keinen Block für {variable} wählen, also gewinnen Sie."
 #: src/worker/exercises/world/strings.ts
 msgid "There is no block to choose for {variable}, so I win."
 msgstr "Es gibt keinen Block, den Sie für {variable} wählen könnten, also gewinne ich."
+
+#: src/worker/exercise-kit/proof/engine-strings.ts
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "There is no rule called “{rule}”."
+msgstr "Es gibt keine Regel namens „{rule}“."
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "There is no world kind called “{world}”. Known kinds: {known}."

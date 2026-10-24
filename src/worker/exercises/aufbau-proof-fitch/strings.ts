@@ -1,5 +1,8 @@
 import { buildProofEditorStrings } from "../../exercise-kit/proof/editor-strings";
-import { buildProofEngineStrings } from "../../exercise-kit/proof/engine-strings";
+import {
+  buildProofEngineStrings,
+  buildRuleCitationStrings,
+} from "../../exercise-kit/proof/engine-strings";
 import { placeholders, type Translator } from "../../i18n/translator";
 import { buildFormulaParserStrings } from "../../logic/specs/strings";
 import type { FitchDiagnosticCode } from "./translate";
@@ -21,6 +24,7 @@ import type { FitchDiagnosticCode } from "./translate";
 export function buildAufbauProofFitchStrings(i18n: Translator) {
   return {
     ...buildProofEngineStrings(i18n),
+    ...buildRuleCitationStrings(i18n),
     ...buildProofEditorStrings(i18n),
     ...buildFitchDiagnosticStrings(i18n),
     // A line's formula is read in the theory's language before it reaches the

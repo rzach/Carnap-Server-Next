@@ -1,6 +1,9 @@
 import { buildCopySourceStrings } from "../../exercise-kit/copy-source-strings";
 import { buildExerciseHelpStrings } from "../../exercise-kit/help-strings";
-import { buildProofEngineStrings } from "../../exercise-kit/proof/engine-strings";
+import {
+  buildProofEngineStrings,
+  buildRuleCitationStrings,
+} from "../../exercise-kit/proof/engine-strings";
 import { placeholders, type Translator } from "../../i18n/translator";
 import { buildFormulaParserStrings } from "../../logic/specs/strings";
 
@@ -26,6 +29,7 @@ export function buildAufbauProofTreeStrings(i18n: Translator) {
     // the compiler, so the parser's complaints are the widget's to say.
     ...buildFormulaParserStrings(i18n),
     ...buildProofEngineStrings(i18n),
+    ...buildRuleCitationStrings(i18n),
     ...buildExerciseHelpStrings(i18n),
     ...buildCopySourceStrings(i18n),
     /** Help: what `p` does. */

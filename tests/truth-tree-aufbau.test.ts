@@ -254,6 +254,18 @@ describe("a sentential tree", () => {
     expect(checked.hypotheses).toBe(0);
   });
 
+  test("a step naming a rule the theory does not have is refused by that name", async () => {
+    // gh #53: said here, in the tree's terms, rather than sent to the engine.
+    const tree = new TreeBuilder(["P & Q", "¬(P & Q)"]);
+    const [p, q] = tree.stack(tree.rootNode, "r1", ["P", "Q"], "&Intro");
+    tree.close(tree.rootNode, "r1", "r2");
+    const checked = await check(tree);
+    expect([...checked.problems]).toEqual([
+      [p as string, { rule: "&Intro", type: "unknown-rule" }],
+      [q as string, { rule: "&Intro", type: "unknown-rule" }],
+    ]);
+  });
+
   test("an open branch is assumed, not checked, and the rest still is", async () => {
     // P ∨ Q, ¬P: the right branch stays open.
     const tree = new TreeBuilder(["P ∨ Q", "¬P"]);

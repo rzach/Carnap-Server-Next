@@ -45,6 +45,7 @@ import { useLayoutEffect, useRef } from "preact/hooks";
 import type { CorrectnessMarkState } from "../../worker/exercise-kit/correctness-mark";
 import type {
   NodeFormulaProblem,
+  NodeRuleProblem,
   ProofFormulaReader,
   ProofRuleReader,
 } from "../../worker/exercise-kit/proof/formulas";
@@ -1099,6 +1100,7 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
   private structural: readonly PrawitzDiagnostic[] = [];
   /** Nodes the theory's language refused; empty where nothing reads them. */
   private formulaProblems: readonly NodeFormulaProblem[] = [];
+  private ruleProblems: readonly NodeRuleProblem[] = [];
 
   protected enhance(): void {
     const root = this.shadowRoot;
@@ -1707,6 +1709,7 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
       this.compileMm0 = null;
       this.cancelCompile();
       this.formulaProblems = [];
+      this.ruleProblems = [];
       this.setStatus({ mark: "idle", markTitle: "", nodeErrors: {} });
       this.syncAnswer();
       return;
@@ -1725,11 +1728,14 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
     this.lineSpans = translated.lineSpans;
     this.structural = translated.diagnostics;
     this.formulaProblems = translated.formulaProblems;
+    this.ruleProblems = translated.ruleProblems;
 
     // A node the language refused never reaches the compiler: what it would
     // send is the text the student typed, and the unification failure that
-    // comes back names none of the characters they got wrong.
-    if (this.formulaProblems.length > 0) {
+    // comes back names none of the characters they got wrong. A rule the
+    // theory does not have is held back the same way, since what the engine
+    // says of one depends on how its name happens to start (gh #53).
+    if (this.formulaProblems.length > 0 || this.ruleProblems.length > 0) {
       this.cancelCompile();
       this.goal = null;
       this.compileMm0 = null;
@@ -1853,7 +1859,8 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
     if (
       verdict.certificate !== null &&
       this.structural.length === 0 &&
-      this.formulaProblems.length === 0
+      this.formulaProblems.length === 0 &&
+      this.ruleProblems.length === 0
     ) {
       this.setStatus({ mark: "ok", markTitle: "", nodeErrors });
     } else {
@@ -1887,10 +1894,11 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
   /**
    * Everything wrong with the tree before the compiler has seen it, as one
    * node-id → message map: the translator's structural diagnostics, worded
-   * from this widget's own switch, and the language's refusals, which arrive
-   * already worded by the parser. Withheld under `terse`/`none` on the same
-   * terms as {@link collectNodeErrors}: a refusal is a reason, and the two
-   * must not disagree about that.
+   * from this widget's own switch, the language's refusals, which arrive
+   * already worded by the parser, and citations of a rule the theory does not
+   * have. Withheld under `terse`/`none` on the same terms as
+   * {@link collectNodeErrors}: a refusal is a reason, and the two must not
+   * disagree about that.
    */
   private structuralErrors(): NodeProblems {
     if (!this.showsDetail) {
@@ -1907,6 +1915,12 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
     }
     for (const item of this.formulaProblems) {
       add(item.nodeId, this.t(item.error.message, item.error.params));
+    }
+    for (const item of this.ruleProblems) {
+      add(
+        item.nodeId,
+        this.t("There is no rule called “{rule}”.", { rule: item.rule }),
+      );
     }
 
     return errors;

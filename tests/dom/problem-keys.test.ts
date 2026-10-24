@@ -48,6 +48,13 @@ import { toolbarButton, treeExercise } from "./tree-widget";
 
 const MESSAGE = "unknown rule nope";
 
+/**
+ * The tree editor reads its rule names in the theory before anything compiles
+ * (gh #53), so `nope` never reaches the mock there: the problem is the
+ * widget's own, on the same line, and keyed the same way.
+ */
+const TREE_MESSAGE = "There is no rule called “nope”.";
+
 await mockProofCompiler((mm0: string, proof: string) => {
   const at = proof.indexOf("nope");
   if (at === -1) {
@@ -167,17 +174,17 @@ describe("the tree editor", () => {
     const { mounted, premise, root, ruleField } = await withPremise("nope");
     await until(() => premise.hasAttribute("aria-describedby"));
 
-    expect(noteOf(mounted, premise)).toBe(MESSAGE);
+    expect(noteOf(mounted, premise)).toBe(TREE_MESSAGE);
     expect(root.hasAttribute("aria-describedby")).toBe(false);
     // The note sits beside the treeitem, not inside it, where it would be
     // read a second time as part of the line's name.
-    expect(premise.textContent).not.toContain(MESSAGE);
+    expect(premise.textContent).not.toContain(TREE_MESSAGE);
 
     const formula = premise.querySelector(".tree-edit") as HTMLElement;
     expect(formula.getAttribute("role")).toBe("textbox");
     expect(formula.getAttribute("aria-label")).toBe("Formula");
     expect(formula.getAttribute("aria-invalid")).toBe("true");
-    expect(noteOf(mounted, formula)).toBe(MESSAGE);
+    expect(noteOf(mounted, formula)).toBe(TREE_MESSAGE);
     // The problem is the line's, not a warning on its rule.
     expect(ruleField.getAttribute("aria-label")).toBe("Rule");
     expect(ruleField.hasAttribute("aria-describedby")).toBe(false);
@@ -194,7 +201,7 @@ describe("the tree editor", () => {
     // Standing on the only problem, focus cannot move to say it.
     press(mounted, "F8");
     expect(mounted.root.activeElement).toBe(premise);
-    expect(spoken(mounted)).toBe(MESSAGE);
+    expect(spoken(mounted)).toBe(TREE_MESSAGE);
 
     // From inside the line's own field, the way back is to the line.
     (premise.querySelector(".tree-edit") as HTMLElement).focus();
@@ -215,12 +222,12 @@ describe("the tree editor", () => {
     root.focus();
     press(mounted, "F8");
     // A tree's lines have no numbers to name; the tint is where.
-    expect(problemLine(mounted)).toBe(`${MESSAGE} | 1 of 1`);
+    expect(problemLine(mounted)).toBe(`${TREE_MESSAGE} | 1 of 1`);
     expect(premise.classList.contains("is-pinned")).toBe(true);
 
     // Moving on — to fix it, say — leaves it where it is.
     root.focus();
-    expect(problemLine(mounted)).toBe(`${MESSAGE} | 1 of 1`);
+    expect(problemLine(mounted)).toBe(`${TREE_MESSAGE} | 1 of 1`);
     expect(premise.classList.contains("is-pinned")).toBe(true);
 
     typeInto(ruleField, "mp");

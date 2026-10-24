@@ -310,6 +310,24 @@ export function unreadableStarterFormula(
   );
 }
 
+/**
+ * A starter line citing a rule the theory does not have (gh #53). A warning on
+ * the terms of {@link unreadableStarterFormula}: the student meets it squiggled
+ * as their own typing would be, and a citation left wrong on purpose is a fair
+ * exercise; one the author did not mean is theirs to hear about here.
+ */
+export function unknownStarterRule(
+  line: number,
+  rule: string,
+): CompilerDiagnostic {
+  return diagnostic(
+    line,
+    "unknown_rule",
+    "The starter cites “{rule}”, which is not a rule in this system.",
+    { params: { rule }, severity: "warning" },
+  );
+}
+
 /** A `theorem <name>` header line and its structural parts. */
 const THEOREM_HEADER = /^\s*theorem\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
 /** The underline separating the goal header from the starter proof body. */

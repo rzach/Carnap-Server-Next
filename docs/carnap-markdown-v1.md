@@ -1777,6 +1777,12 @@ earlier form. Built-in `∧E`, `∨I`, and `↔E` use this mechanism.
 Aliases work in Fitch, tree, and Prawitz rule citations and starters. The
 linear proof-script editor uses engine identifiers directly.
 
+In those three editors a citation must be an alias or the name of a rule the
+theory declares; the engine's `sorry!` is also accepted. Anything else is
+reported on its line as "There is no rule called …", by the name as typed,
+and nothing is compiled until it is fixed. A starter that cites one saves
+with a warning.
+
 The shaped proof interfaces also read structural roles from the theory:
 
 - `assumption`: the axiom that introduces an assumption.

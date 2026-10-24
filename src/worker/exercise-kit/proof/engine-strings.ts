@@ -1,4 +1,4 @@
-import type { Translator } from "../../i18n/translator";
+import { placeholders, type Translator } from "../../i18n/translator";
 
 /**
  * The text every proof widget — linear `.auf`, Fitch, tree and Prawitz — has
@@ -81,3 +81,18 @@ export function buildProofEngineStrings(i18n: Translator) {
 export type ProofEngineStringId = keyof ReturnType<
   typeof buildProofEngineStrings
 >;
+
+/**
+ * What the three widgets that read a theory's rule names — Fitch, tree and
+ * Prawitz — say of a citation the theory has no rule by (gh #53). The linear
+ * editor's proof is the engine's own text, citations and all, so the engine
+ * words that one itself.
+ */
+export function buildRuleCitationStrings(i18n: Translator) {
+  return {
+    "There is no rule called “{rule}”.": i18n.t(
+      "There is no rule called “{rule}”.",
+      placeholders("rule"),
+    ),
+  };
+}

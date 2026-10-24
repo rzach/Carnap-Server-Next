@@ -842,6 +842,10 @@ export function buildDiagnosticStrings(i18n: Translator) {
       "The starter proof has no lines.",
     ),
 
+    "The starter cites “{rule}”, which is not a rule in this system.": i18n.t(
+      "The starter cites “{rule}”, which is not a rule in this system.",
+      placeholders("rule"),
+    ),
     // The Prawitz starter parser and structural checks
     // (`aufbau-proof-prawitz/parse.ts`, `authoring.ts`).
     "A “-- label:” comment must sit at the end of the proof line it marks, not on its own line.":

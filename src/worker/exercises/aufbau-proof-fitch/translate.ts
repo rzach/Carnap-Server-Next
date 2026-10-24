@@ -62,7 +62,9 @@
  * theory's `@syntax alias` says so) as the line is parsed, and everything
  * downstream — the assumption test, the citation-shape lookup, the emitted
  * `by` — sees the resolved name. The theory's assumption rule is read the
- * same way, so a line citing `AS` and one citing `ax` agree.
+ * same way, so a line citing `AS` and one citing `ax` agree. A name the theory
+ * has no rule by comes back in `ruleProblems` and stands as cited: the proof
+ * still assembles, but nothing should compile it (gh #53).
  *
  * Structural problems (bad dedent, unknown/misordered/inaccessible references,
  * a subproof citation whose ends don't bracket one subproof, a line with no
@@ -139,6 +141,15 @@ export interface FitchFormulaProblem {
   readonly sourceLine: number;
 }
 
+/** A line citing a rule the theory does not have, by the name it cited. */
+export interface FitchRuleProblem {
+  /** Character offset of the cited name within its source line. */
+  readonly column: number;
+  readonly rule: string;
+  /** Zero-based index into the source `fitchText` split on newlines. */
+  readonly sourceLine: number;
+}
+
 /** Where a generated `.auf` line sits, and which source line produced it. */
 export interface FitchLineSpan extends ProofLineSpan {
   /** Zero-based index of the source Fitch line. */
@@ -154,6 +165,9 @@ export interface TranslatedFitchProof {
   readonly lineSpans: readonly FitchLineSpan[];
   /** `${goalName}\n----\n${body}` — the full text handed to `compile`. */
   readonly proofText: string;
+  /** Lines citing a rule the theory does not have; empty where there is no
+   *  theory to check a name against. */
+  readonly ruleProblems: readonly FitchRuleProblem[];
   /**
    * What the last line asserts — its ambient context and its formula, as the
    * last emitted `$ … $` — and the variables the readings saw in it; `null`
@@ -244,6 +258,9 @@ function parseJustification(
   isAssumption: boolean;
   refs: Reference[];
   rule: string;
+  /** The cited name, where the theory has no rule by it, and where in
+   *  `content` it starts. */
+  unknownRule: { readonly at: number; readonly rule: string } | null;
 } {
   const colon = content.lastIndexOf(":");
 
@@ -257,23 +274,27 @@ function parseJustification(
       isAssumption: false,
       refs: [],
       rule: "",
+      unknownRule: null,
     };
   }
 
   const formula = content.slice(0, colon).trim();
-  const tokens = content
-    .slice(colon + 1)
+  const justification = content.slice(colon + 1);
+  const tokens = justification
     .trim()
     .split(/\s+/)
     .filter((token) => token.length > 0);
-  const rule = readRule(tokens[0] ?? "");
+  const cited = tokens[0] ?? "";
+  const resolved = cited.length === 0 ? "" : readRule(cited);
 
-  if (rule.length === 0) {
+  if (cited.length === 0) {
     diagnostics.push({
       code: "missing_rule",
       sourceLine,
     });
   }
+
+  const rule = resolved ?? cited;
 
   const refs: Reference[] = [];
   for (const token of tokens.slice(1)) {
@@ -316,6 +337,10 @@ function parseJustification(
     isAssumption: rule.length > 0 && rule === assumptionRule,
     refs,
     rule,
+    unknownRule:
+      resolved === null
+        ? { at: colon + 1 + justification.search(/\S/), rule: cited }
+        : null,
   };
 }
 
@@ -335,6 +360,7 @@ function walkFitch(
   diagnostics: FitchDiagnostic[];
   formulaProblems: FitchFormulaProblem[];
   lines: ParsedLine[];
+  ruleProblems: FitchRuleProblem[];
   rawLineCount: number;
   scopeAssumptions: ReadonlyMap<number, readonly string[]>;
   /** The variables each read formula holds, by its engine text. */
@@ -343,9 +369,10 @@ function walkFitch(
   const rawLines = fitchText.split("\n");
   const diagnostics: FitchDiagnostic[] = [];
   const formulaProblems: FitchFormulaProblem[] = [];
+  const ruleProblems: FitchRuleProblem[] = [];
   // Resolved once, so a configured alias and a cited canonical name (or the
   // other way about) meet as the same rule.
-  const assumption = readRule(assumptionRule);
+  const assumption = readRule(assumptionRule) ?? assumptionRule;
 
   // Only non-blank lines are proof steps; blanks neither number nor emit.
   const proofLines = rawLines
@@ -417,6 +444,14 @@ function walkFitch(
       index + 1,
       readRule,
     );
+
+    if (justification.unknownRule !== null) {
+      ruleProblems.push({
+        column: leadingWidth(line.raw) + justification.unknownRule.at,
+        rule: justification.unknownRule.rule,
+        sourceLine: line.sourceLine,
+      });
+    }
 
     // Surface text in, engine text out — and from here down the *engine*
     // spelling is the line's formula, so a context built from an assumption
@@ -495,6 +530,7 @@ function walkFitch(
     formulaProblems,
     lines: parsed,
     rawLineCount: rawLines.length,
+    ruleProblems,
     scopeAssumptions,
     variablesByFormula,
   };
@@ -641,6 +677,7 @@ export function fitchToAuf(
     diagnostics,
     formulaProblems,
     lines: parsed,
+    ruleProblems,
     scopeAssumptions,
     variablesByFormula,
   } = walkFitch(fitchText, assumptionRule, readFormula, readRule);
@@ -776,6 +813,7 @@ export function fitchToAuf(
     ),
     diagnostics,
     formulaProblems,
+    ruleProblems,
     statement,
   };
 }

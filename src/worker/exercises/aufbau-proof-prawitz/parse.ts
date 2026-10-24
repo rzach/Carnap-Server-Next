@@ -197,7 +197,7 @@ export function parsePrawitzStarter(
   // A starter may cite the assumption rule by any alias the theory gives
   // it; the leaf it becomes carries the configured name, which is what the
   // widget compares against when it rebuilds the tree.
-  const assumption = readRule(assumptionRule);
+  const assumption = readRule(assumptionRule) ?? assumptionRule;
   const stripped = stripTrailingComments(body);
   if ("ok" in stripped) {
     return stripped;

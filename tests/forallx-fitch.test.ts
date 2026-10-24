@@ -303,10 +303,13 @@ describe("forallx: Calgary rule aliases", () => {
     expect(readRule("∧E")).toBe("and_elim_r");
     expect(readRule("∨I")).toBe("or_intro_r");
     expect(readRule("↔E")).toBe("iff_elim_r");
-    // A canonical name is not an alias; it stands, as does anything unknown.
+    // A canonical name is not an alias; it stands, as does the engine's own
+    // admission. A name the theory has no rule by is null (gh #53).
     expect(readRule("and_intro")).toBe("and_intro");
     expect(readRule("and_elim_l")).toBe("and_elim_l");
-    expect(readRule("∧X")).toBe("∧X");
+    expect(readRule("sorry!")).toBe("sorry!");
+    expect(readRule("∧X")).toBeNull();
+    expect(readRule("andIntro")).toBeNull();
   });
 
   test("the aliased case lowers to the axiom names", () => {
