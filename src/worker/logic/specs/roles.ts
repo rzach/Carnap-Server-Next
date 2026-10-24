@@ -40,7 +40,7 @@ export interface RoleIndex {
   roleOf(term: string): string | null;
   /**
    * Every role in a namespace, mapped to the constructor playing it:
-   * `rolesIn("blocks")` might give `blocks.cube → Cube`. The consumer that
+   * `rolesIn("blocks")` might give `blocks.square → Square`. The consumer that
    * owns the namespace reads these; to everyone else the constructors are
    * role-less. The first constructor declared with a role wins, as for
    * {@link termFor}.
@@ -144,7 +144,7 @@ export function argumentListSort(lang: SurfaceLanguage): string | undefined {
  *
  * A dotted role is the convention by which a spec says what a symbol means to
  * one exercise type without saying anything to the others. The world exercise
- * reads `blocks.cube` as "the block is a cube"; the model and the translation
+ * reads `blocks.square` as "the block is a square"; the model and the translation
  * read the same constructor as an ordinary predicate, because to them it has
  * no role at all. So one blocks language serves all three.
  */

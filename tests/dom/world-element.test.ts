@@ -31,10 +31,10 @@ function worldExercise(attrs: string, body: string) {
 }
 
 const BUILD = [
-  "- ∀x(Cube(x) → ∃y LeftOf(y,x))",
+  "- ∀x(Square(x) → ∃y LeftOf(y,x))",
   "- false: ∃x Large(x)",
-  "| pinned block : small tet at 1,1 named a",
-  "| block : large cube at 4,3 named b",
+  "| pinned block : small triangle at 1,1 named a",
+  "| block : large square at 4,3 named b",
 ].join("\n");
 
 function answerOf(mounted: Mounted): unknown {
@@ -137,7 +137,7 @@ describe("editing", () => {
     expect(blocksOf(mounted).find((block) => block.id === "o2")?.size).toBe(
       "medium",
     );
-    expect(announced(mounted)).toBe("b is now a medium cube.");
+    expect(announced(mounted)).toBe("b is now a medium square.");
   });
 
   test("a block is carried with Enter and refused an occupied square", async () => {
@@ -284,7 +284,7 @@ describe("the other variants", () => {
     const mounted = mountExercise(
       await worldExercise(
         'variant="evaluate"',
-        "- Cube(a)\n- ∃x Tet(x)\n| block : small cube at 2,2 named a",
+        "- Square(a)\n- ∃x Triangle(x)\n| block : small square at 2,2 named a",
       ),
     );
 
@@ -301,7 +301,7 @@ describe("the other variants", () => {
     const mounted = mountExercise(
       await worldExercise(
         'variant="distinguish"',
-        "| A block : small cube at 2,2\n| B block : small tet at 2,2",
+        "| A block : small square at 2,2\n| B block : small triangle at 2,2",
       ),
     );
     const input =
@@ -311,10 +311,10 @@ describe("the other variants", () => {
       throw new Error("no sentence input");
     }
 
-    input.value = "∃x Cube(x)";
+    input.value = "∃x Square(x)";
     input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
 
-    expect(answerOf(mounted)).toEqual({ sentence: "∃x Cube(x)" });
+    expect(answerOf(mounted)).toEqual({ sentence: "∃x Square(x)" });
     expect(mounted.root.querySelectorAll("table[role='grid']")).toHaveLength(
       2,
     );
@@ -324,7 +324,7 @@ describe("the other variants", () => {
     const mounted = mountExercise(
       await worldExercise(
         'variant="distinguish"',
-        "| A block : small cube at 2,2\n| B block : small tet at 2,2",
+        "| A block : small square at 2,2\n| B block : small triangle at 2,2",
       ),
     );
     const input =
@@ -334,7 +334,7 @@ describe("the other variants", () => {
       throw new Error("no sentence input");
     }
 
-    input.value = "∃x Cube(y)";
+    input.value = "∃x Square(y)";
     input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
     mounted.form.querySelector<HTMLButtonElement>(".world-check")?.click();
 
@@ -346,7 +346,8 @@ describe("the other variants", () => {
 });
 
 describe("distinguish's author preview", () => {
-  const PAIR = "| A block : small cube at 2,2\n| B block : small tet at 2,2";
+  const PAIR =
+    "| A block : small square at 2,2\n| B block : small triangle at 2,2";
 
   async function preview() {
     return mountExercise(await worldExercise('variant="distinguish"', PAIR), {
@@ -400,24 +401,24 @@ describe("distinguish's author preview", () => {
     expect(mounted.root.querySelectorAll(".world-palette")).toHaveLength(1);
     expect(board(mounted, 0).hasAttribute("data-active")).toBe(true);
 
-    // The cursor starts on A's 1,1; carry on to its cube and make it large.
+    // The cursor starts on A's 1,1; carry on to its cell and make it large.
     pressOn(mounted, 0, "ArrowRight");
     pressOn(mounted, 0, "ArrowDown");
     pressOn(mounted, 0, "l");
     expect(descriptions(mounted, 0)).toEqual([
-      "large cube at column 2, row 2",
+      "large square at column 2, row 2",
     ]);
 
     // A key on B's board makes B the one being edited, first.
     pressOn(mounted, 1, "ArrowRight");
     pressOn(mounted, 1, "ArrowDown");
-    pressOn(mounted, 1, "d");
+    pressOn(mounted, 1, "5");
     expect(board(mounted, 1).hasAttribute("data-active")).toBe(true);
     expect(descriptions(mounted, 1)).toEqual([
-      "small dodec at column 2, row 2",
+      "small pentagon at column 2, row 2",
     ]);
     expect(descriptions(mounted, 0)).toEqual([
-      "large cube at column 2, row 2",
+      "large square at column 2, row 2",
     ]);
 
     // Each world keeps its own history.
@@ -431,17 +432,17 @@ describe("distinguish's author preview", () => {
         }),
       );
     expect(descriptions(mounted, 1)).toEqual([
-      "small tet at column 2, row 2",
+      "small triangle at column 2, row 2",
     ]);
     expect(descriptions(mounted, 0)).toEqual([
-      "large cube at column 2, row 2",
+      "large square at column 2, row 2",
     ]);
   });
 
   test("Check judges the worlds as edited", async () => {
     const mounted = await preview();
 
-    expect(check(mounted, "∃x Cube(x)")).toBe(
+    expect(check(mounted, "∃x Square(x)")).toBe(
       "The sentence is true in world A and false in world B.",
     );
 
@@ -450,10 +451,10 @@ describe("distinguish's author preview", () => {
       .querySelector<HTMLButtonElement>(".world-copy-across")
       ?.click();
     expect(descriptions(mounted, 1)).toEqual([
-      "small cube at column 2, row 2",
+      "small square at column 2, row 2",
     ]);
     expect(announced(mounted)).toBe("World B is now a copy of world A.");
-    expect(check(mounted, "∃x Cube(x)")).toBe(
+    expect(check(mounted, "∃x Square(x)")).toBe(
       "The sentence is true in world B.",
     );
   });
@@ -489,7 +490,7 @@ describe("distinguish's author preview", () => {
       await Promise.resolve();
 
       expect(copied).toEqual([
-        "| A block : small cube at 2,2\n| B block : small tet at 2,2",
+        "| A block : small square at 2,2\n| B block : small triangle at 2,2",
       ]);
     } finally {
       for (const [name, value] of Object.entries(saved)) {
@@ -513,10 +514,10 @@ describe("distinguish's author preview", () => {
 
 describe("the evaluation game", () => {
   const GAME = [
-    "- ∃x(Cube(x) ∧ Small(x))",
-    "- Cube(a) ∨ Tet(a)",
-    "| block : small cube at 2,2 named a",
-    "| block : large tet at 5,5",
+    "- ∃x(Square(x) ∧ Small(x))",
+    "- Square(a) ∨ Triangle(a)",
+    "| block : small square at 2,2 named a",
+    "| block : large triangle at 5,5",
   ].join("\n");
 
   function claim(mounted: Mounted, row: number, value: boolean): void {
@@ -557,10 +558,10 @@ describe("the evaluation game", () => {
     tap(cellAt(mounted, 2, 2), "touch");
 
     expect(moves(mounted)).toEqual([
-      "You say ∃x(Cube(x) ∧ Small(x)) is true.",
+      "You say ∃x(Square(x) ∧ Small(x)) is true.",
       "You choose a for x.",
-      "I pick Cube(x), which you say is true.",
-      "Cube(x) is true, so you win.",
+      "I pick Square(x), which you say is true.",
+      "Square(x) is true, so you win.",
     ]);
     expect(
       mounted.root.querySelector(".world-game-result")?.textContent,
@@ -610,12 +611,12 @@ describe("the evaluation game", () => {
       ),
     ];
     expect(options.map((option) => option.textContent)).toEqual([
-      "Cube(a) is true",
-      "Tet(a) is true",
+      "Square(a) is true",
+      "Triangle(a) is true",
     ]);
 
     options[1]?.click();
-    expect(moves(mounted).at(-1)).toBe("Tet(a) is false, so I win.");
+    expect(moves(mounted).at(-1)).toBe("Triangle(a) is false, so I win.");
     expect(answerOf(mounted)).toEqual({
       games: [null, { choices: [[null, true]], claim: true }],
     });
@@ -661,7 +662,7 @@ describe("the evaluation game", () => {
       },
     );
 
-    expect(moves(mounted).at(-1)).toBe("Cube(a) is true, so you win.");
+    expect(moves(mounted).at(-1)).toBe("Square(a) is true, so you win.");
     expect(
       mounted.root
         .querySelectorAll(".world-game-row")[1]

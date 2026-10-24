@@ -118,7 +118,7 @@ describe("namespaced roles", () => {
   test("a dotted role is not a core role, and is listed by namespace", () => {
     const index = roleIndex(blocksLanguage());
 
-    expect(index.roleOf("Cube")).toBeNull();
+    expect(index.roleOf("Square")).toBeNull();
     expect(index.roleOf("and")).toBe("conjunction");
     expect(index.rolesIn("blocks").get("blocks.left-of")).toBe("LeftOf");
     expect(index.rolesIn("blocks").size).toBe(18);
@@ -126,7 +126,7 @@ describe("namespaced roles", () => {
 
   test("the model reads a blocks predicate as an ordinary predicate", async () => {
     const result = await compileCarnapMarkdown(
-      `${LANGUAGE_BLOCK}::::model{#m system="blocks-lpl"}\n- ∃x(Cube(x) ∧ LeftOf(x, a))\n::::`,
+      `${LANGUAGE_BLOCK}::::model{#m system="blocks-lpl"}\n- ∃x(Square(x) ∧ LeftOf(x, a))\n::::`,
     );
 
     expect(result.diagnostics).toEqual([]);
@@ -135,11 +135,11 @@ describe("namespaced roles", () => {
 
   test("canonical text reads back, which the stored form depends on", () => {
     const lang = blocksLanguage();
-    const parsed = parseFormula("∀x(Cube(x) → ∃y LeftOf(y,x))", lang);
+    const parsed = parseFormula("∀x(Square(x) → ∃y LeftOf(y,x))", lang);
 
     expect(parsed.ok).toBe(true);
     expect(
-      parseFormulaTree("∀x(Cube(x) → ∃yLeftOf(y,x))", lang),
+      parseFormulaTree("∀x(Square(x) → ∃yLeftOf(y,x))", lang),
     ).not.toBeNull();
   });
 });
@@ -148,12 +148,12 @@ describe("the blocks vocabulary", () => {
   const lang = blocksLanguage();
   const vocabulary = bindVocabulary(BLOCKS_KIND, lang);
   const state = world(
-    block("o1", "tet", "small", 1, 1, ["a"]),
-    block("o2", "cube", "medium", 3, 1, ["b"]),
-    block("o3", "dodec", "large", 3, 3, ["c"]),
-    block("o4", "cube", "large", 2, 1, ["d"]),
-    block("o5", "tet", "medium", 5, 5, ["e"]),
-    block("o6", "dodec", "small", 4, 2, ["f"]),
+    block("o1", "triangle", "small", 1, 1, ["a"]),
+    block("o2", "square", "medium", 3, 1, ["b"]),
+    block("o3", "pentagon", "large", 3, 3, ["c"]),
+    block("o4", "square", "large", 2, 1, ["d"]),
+    block("o5", "triangle", "medium", 5, 5, ["e"]),
+    block("o6", "pentagon", "small", 4, 2, ["f"]),
   );
 
   test("binds every role and reports nothing", () => {
@@ -162,9 +162,9 @@ describe("the blocks vocabulary", () => {
   });
 
   const cases: readonly [string, boolean][] = [
-    ["Tet(a)", true],
-    ["Cube(a)", false],
-    ["Dodec(c)", true],
+    ["Triangle(a)", true],
+    ["Square(a)", false],
+    ["Pentagon(c)", true],
     ["Small(a)", true],
     ["Medium(b)", true],
     ["Large(c)", true],
@@ -210,9 +210,9 @@ describe("the blocks vocabulary", () => {
 
   test("a diagonal between holds", () => {
     const diagonal = world(
-      block("o1", "cube", "small", 2, 2, ["a"]),
-      block("o2", "cube", "small", 1, 1, ["b"]),
-      block("o3", "cube", "small", 4, 4, ["c"]),
+      block("o1", "square", "small", 2, 2, ["a"]),
+      block("o2", "square", "small", 1, 1, ["b"]),
+      block("o3", "square", "small", 4, 4, ["c"]),
     );
     const parsed = parseFormula("Between(a,b,c)", lang);
 
@@ -232,8 +232,8 @@ describe("the blocks vocabulary", () => {
 
 describe("the blocks kind", () => {
   const start = world(
-    block("o1", "tet", "small", 1, 1, ["a"]),
-    block("o2", "cube", "large", 4, 3, ["b"]),
+    block("o1", "triangle", "small", 1, 1, ["a"]),
+    block("o2", "square", "large", 4, 3, ["b"]),
   );
 
   test("refuses a move onto an occupied square, with the reason", () => {
@@ -256,8 +256,8 @@ describe("the blocks kind", () => {
     const english = (id: string, values?: Readonly<Record<string, string>>) =>
       formatMessage(id, values);
     const unnamed = world(
-      block("o1", "tet", "small", 1, 1, ["a"]),
-      block("o2", "dodec", "large", 5, 6),
+      block("o1", "triangle", "small", 1, 1, ["a"]),
+      block("o2", "pentagon", "large", 5, 6),
     );
 
     test("opening a sentence, it is capitalized", () => {
@@ -267,7 +267,7 @@ describe("the blocks kind", () => {
           { id: "o2", size: "small", type: "size" },
           english,
         ),
-      ).toBe("The block at column 5, row 6 is now a small dodec.");
+      ).toBe("The block at column 5, row 6 is now a small pentagon.");
       expect(
         BLOCKS_KIND.objectSentence(unnamed, "o2", "pinned", english),
       ).toBe("The block at column 5, row 6 is pinned and cannot be changed.");
@@ -327,9 +327,9 @@ describe("the blocks kind", () => {
 
   test("counts changed blocks, not changed attributes", () => {
     const next = world(
-      block("o1", "cube", "large", 2, 2, ["a"]),
-      block("o2", "cube", "large", 4, 3, ["b"]),
-      block("n1", "dodec", "small", 8, 8),
+      block("o1", "square", "large", 2, 2, ["a"]),
+      block("o2", "square", "large", 4, 3, ["b"]),
+      block("n1", "pentagon", "small", 8, 8),
     );
 
     expect(BLOCKS_KIND.distance(start, next)).toBe(2);
@@ -339,19 +339,19 @@ describe("the blocks kind", () => {
   });
 
   test("reads and writes an object line", () => {
-    const spec = BLOCKS_KIND.parseObject("cube LARGE at 3, 5 named a, b");
+    const spec = BLOCKS_KIND.parseObject("square LARGE at 3, 5 named a, b");
 
     expect(spec).toEqual({
       col: 3,
       names: ["a", "b"],
       row: 5,
-      shape: "cube",
+      shape: "square",
       size: "large",
     });
     expect(
       BLOCKS_KIND.formatObject(BLOCKS_KIND.build([spec as never]), "o1"),
-    ).toBe("large cube at 3,5 named a, b");
-    expect(BLOCKS_KIND.parseObject("huge cube at 3,5")).toMatchObject({
+    ).toBe("large square at 3,5 named a, b");
+    expect(BLOCKS_KIND.parseObject("huge square at 3,5")).toMatchObject({
       code: "object-attribute",
     });
   });
@@ -363,7 +363,7 @@ describe("the blocks kind", () => {
     expect(
       BLOCKS_KIND.parseState({
         kind: "blocks@1",
-        objects: [block("o1", "cube", "small", 9, 1)],
+        objects: [block("o1", "square", "small", 9, 1)],
       }),
     ).toBe(null);
   });
@@ -375,13 +375,13 @@ describe("compiling a world directive", () => {
     [
       "Change at most two blocks.",
       "",
-      "- ∀x(Cube(x) → ∃y LeftOf(y,x))",
+      "- ∀x(Square(x) → ∃y LeftOf(y,x))",
       "- false: ∃x Large(x)",
       "",
       "| law : ∀x∀y(SameRow(x,y) → x = y)",
-      "| pinned block : small tet at 1,1 named a",
-      "| block : large cube at 4,3 named b",
-      "| block : medium dodec at 6,7",
+      "| pinned block : small triangle at 1,1 named a",
+      "| block : large square at 4,3 named b",
+      "| block : medium pentagon at 6,7",
     ].join("\n"),
   );
 
@@ -392,7 +392,7 @@ describe("compiling a world directive", () => {
     expect(data.world).toBe("blocks");
     expect(data.sentences).toEqual([
       {
-        engine: "( ∀ x ( ( Cube ( x ) ) → ( ∃ y ( LeftOf ( y , x ) ) ) ) )",
+        engine: "( ∀ x ( ( Square ( x ) ) → ( ∃ y ( LeftOf ( y , x ) ) ) ) )",
         target: true,
       },
       { engine: "( ∃ x ( Large ( x ) ) )", target: false },
@@ -404,7 +404,7 @@ describe("compiling a world directive", () => {
     // A reader is shown the language's own spelling, worked out on reading.
     const resolved = resolveWorld(data);
     expect(resolved?.sentences.map((sentence) => sentence.text)).toEqual([
-      "∀x(Cube(x) → ∃yLeftOf(y,x))",
+      "∀x(Square(x) → ∃yLeftOf(y,x))",
       "∃xLarge(x)",
     ]);
     expect(resolved?.laws.map((law) => law.text)).toEqual([
@@ -416,9 +416,9 @@ describe("compiling a world directive", () => {
   });
 
   test("needs a system, since no built-in language has blocks", async () => {
-    expect(await compileCodes("::::world{#w}\n- ∃x Cube(x)\n::::")).toContain(
-      "missing_system",
-    );
+    expect(
+      await compileCodes("::::world{#w}\n- ∃x Square(x)\n::::"),
+    ).toContain("missing_system");
   });
 
   test("refuses a symbol the world gives no meaning, at its arity", async () => {
@@ -430,20 +430,23 @@ describe("compiling a world directive", () => {
   test("refuses a bad object line, a shared square, and an unknown name", async () => {
     expect(
       await compileCodes(
-        directive("#w", "- ∃x Cube(x)\n| block : huge cube at 1,1"),
+        directive("#w", "- ∃x Square(x)\n| block : huge square at 1,1"),
       ),
     ).toEqual(["world_object_attribute"]);
     expect(
       await compileCodes(
         directive(
           "#w",
-          "- ∃x Cube(x)\n| block : small cube at 1,1\n| block : small tet at 1,1",
+          "- ∃x Square(x)\n| block : small square at 1,1\n| block : small triangle at 1,1",
         ),
       ),
     ).toEqual(["world_shared_square"]);
     expect(
       await compileCodes(
-        directive("#w", "- ∃x Cube(x)\n| block : small cube at 1,1 named q"),
+        directive(
+          "#w",
+          "- ∃x Square(x)\n| block : small square at 1,1 named q",
+        ),
       ),
     ).toEqual(["world_object_name_unknown"]);
   });
@@ -453,7 +456,7 @@ describe("compiling a world directive", () => {
       await compileCodes(
         directive(
           "#w",
-          "- ∃x Tet(x)\n| law : ∀x Cube(x)\n| block : small tet at 1,1",
+          "- ∃x Triangle(x)\n| law : ∀x Square(x)\n| block : small triangle at 1,1",
         ),
       ),
     ).toEqual(["world_law_false"]);
@@ -461,7 +464,7 @@ describe("compiling a world directive", () => {
 
   test("warns about a build exercise already solved", async () => {
     const result = await compileCarnapMarkdown(
-      directive("#w", "- ∃x Cube(x)\n| block : small cube at 1,1"),
+      directive("#w", "- ∃x Square(x)\n| block : small square at 1,1"),
     );
 
     expect(result.ok).toBe(true);
@@ -475,7 +478,7 @@ describe("compiling a world directive", () => {
       await compileCodes(
         directive(
           '#w variant="evaluate"',
-          "- Cube(a)\n| block : small cube at 1,1",
+          "- Square(a)\n| block : small square at 1,1",
         ),
       ),
     ).toEqual(["world_name_denotes_nothing"]);
@@ -486,20 +489,23 @@ describe("compiling a world directive", () => {
       await compileCodes(
         directive(
           '#w variant="distinguish" without="= Purple"',
-          "| A block : small cube at 1,1\n| B block : small tet at 1,1",
+          "| A block : small square at 1,1\n| B block : small triangle at 1,1",
         ),
       ),
     ).toEqual(["world_restriction_spelling"]);
     expect(
       await compileCodes(
-        directive('#w variant="distinguish"', "| block : small cube at 1,1"),
+        directive(
+          '#w variant="distinguish"',
+          "| block : small square at 1,1",
+        ),
       ),
     ).toEqual(["world_distinguish_worlds"]);
     expect(
       await compileCodes(
         directive(
           '#w variant="distinguish" symbols="∃" without="="',
-          "| A block : small cube at 1,1",
+          "| A block : small square at 1,1",
         ),
       ),
     ).toEqual(["world_restriction_both"]);
@@ -510,7 +516,7 @@ describe("compiling a world directive", () => {
       await declaration(
         directive(
           '#w variant="distinguish" without="= LeftOf"',
-          "| A block : small cube at 1,1\n| B block : small tet at 1,1",
+          "| A block : small square at 1,1\n| B block : small triangle at 1,1",
         ),
       ),
     );
@@ -528,12 +534,12 @@ describe("grading", () => {
   const BUILD = directive(
     '#lefty budget="2" points="3"',
     [
-      "- ∀x(Cube(x) → ∃y LeftOf(y,x))",
+      "- ∀x(Square(x) → ∃y LeftOf(y,x))",
       "- false: ∃x Large(x)",
       "| law : ∀x∀y(SameRow(x,y) → x = y)",
-      "| pinned block : small tet at 1,1 named a",
-      "| block : large cube at 4,3 named b",
-      "| block : medium dodec at 6,7",
+      "| pinned block : small triangle at 1,1 named a",
+      "| block : large square at 4,3 named b",
+      "| block : medium pentagon at 6,7",
     ].join("\n"),
   );
 
@@ -593,8 +599,8 @@ describe("grading", () => {
           ...objects.map((o) =>
             o.id === "o2" ? { ...o, size: "small" as const } : o,
           ),
-          block("n1", "cube", "small", 8, 8),
-          block("n2", "cube", "small", 8, 5),
+          block("n1", "square", "small", 8, 8),
+          block("n2", "square", "small", 8, 5),
         ])
       ).summary,
     ).toBe("This world changes 3 objects; the most allowed is 2.");
@@ -620,7 +626,7 @@ describe("grading", () => {
 
     expect(result.status).toBe("incorrect");
     expect(result.summary).toBe(
-      "Two blocks share column 4, row 3: b and medium dodec.",
+      "Two blocks share column 4, row 3: b and medium pentagon.",
     );
   });
 
@@ -628,7 +634,7 @@ describe("grading", () => {
     const item = await declaration(
       directive(
         '#ev variant="evaluate" points="2"',
-        "- Cube(a)\n- ∃x Tet(x)\n| block : small cube at 2,2 named a",
+        "- Square(a)\n- ∃x Triangle(x)\n| block : small square at 2,2 named a",
       ),
     );
 
@@ -641,7 +647,7 @@ describe("grading", () => {
     const item = await declaration(
       directive(
         '#tell variant="distinguish" without="="',
-        "| A block : small cube at 2,2\n| A block : small cube at 5,2\n| B block : small cube at 2,2",
+        "| A block : small square at 2,2\n| A block : small square at 5,2\n| B block : small square at 2,2",
       ),
     );
 
@@ -651,10 +657,10 @@ describe("grading", () => {
     expect((await grade(item, { sentence: "∃x∃y¬x=y" })).summary).toBe(
       "This exercise does not allow =.",
     );
-    expect((await grade(item, { sentence: "∃x Cube(x)" })).summary).toBe(
+    expect((await grade(item, { sentence: "∃x Square(x)" })).summary).toBe(
       "The sentence is true in world B.",
     );
-    expect((await grade(item, { sentence: "Cube(x)" })).status).toBe(
+    expect((await grade(item, { sentence: "Square(x)" })).status).toBe(
       "incorrect",
     );
   });
@@ -671,10 +677,10 @@ describe("grading", () => {
       "",
     ].join("\n");
     const worlds = [
-      "| A block : small cube at 3,3 named a",
-      "| A block : large cube at 6,3",
-      "| B block : small cube at 3,3 named a",
-      "| B block : large cube at 1,3",
+      "| A block : small square at 3,3 named a",
+      "| A block : large square at 6,3",
+      "| B block : small square at 3,3 named a",
+      "| B block : large square at 1,3",
     ].join("\n");
     const exercise = (restriction: string) =>
       declaration(

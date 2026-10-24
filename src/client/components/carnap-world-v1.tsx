@@ -603,9 +603,9 @@ function Arrows({
 // ---------------------------------------------------------------------------
 
 const SHAPE_LABEL: Readonly<Record<BlockShape, WorldStringId>> = {
-  cube: "Cube",
-  dodec: "Dodec",
-  tet: "Tet",
+  triangle: "Triangle",
+  square: "Square",
+  pentagon: "Pentagon",
 };
 const SIZE_LABEL: Readonly<Record<BlockSize, WorldStringId>> = {
   large: "Large",
@@ -1067,7 +1067,10 @@ const SHORTCUTS: readonly {
   { action: "Move between squares", keys: ["←", "→", "↑", "↓"] },
   { action: "Pick up or drop a block", keys: ["Enter", "Space"] },
   { action: "Put a carried block back", keys: ["Esc"] },
-  { action: "Make it a tet, cube, or dodec", keys: ["t", "c", "d"] },
+  {
+    action: "Make it a triangle, square, or pentagon",
+    keys: ["3", "4", "5"],
+  },
   { action: "Make it small, medium, or large", keys: ["s", "m", "l"] },
   { action: "Name it", icon: "name", keys: ["n"] },
   { action: "Add a block here", icon: "add-block", keys: ["Insert", "+"] },
@@ -1150,7 +1153,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
   private focusCursor = false;
   private tab: "board" | "table" = "board";
   private namesOpen = false;
-  private newShape: BlockShape = "cube";
+  private newShape: BlockShape = "square";
   private newSize: BlockSize = "small";
   private announcement = "";
   private highlight: Highlight | null = null;
@@ -1810,12 +1813,17 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
           this.addHere();
         }
         break;
-      case "t":
-      case "c":
-      case "d":
+      // The number of sides, since `s` is already small.
+      case "3":
+      case "4":
+      case "5":
         if (this.editable && !ctrl) {
           this.setShape(
-            event.key === "t" ? "tet" : event.key === "c" ? "cube" : "dodec",
+            event.key === "3"
+              ? "triangle"
+              : event.key === "4"
+                ? "square"
+                : "pentagon",
           );
         } else {
           handled = false;

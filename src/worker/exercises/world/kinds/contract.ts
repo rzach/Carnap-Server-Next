@@ -133,7 +133,7 @@ export interface WorldKind<State = unknown, Move = unknown, Spec = unknown> {
   readonly id: string;
   /** The state tag's version; a bump is a new contract, not a reinterpretation. */
   readonly version: number;
-  /** The `@syntax role` namespace the kind interprets: `blocks` for `blocks.cube`. */
+  /** The `@syntax role` namespace the kind interprets: `blocks` for `blocks.square`. */
   readonly roleNamespace: string;
   /** Role → what it means. Roles in the namespace missing here are typos. */
   readonly vocabulary: ReadonlyMap<string, WorldSymbol<State>>;

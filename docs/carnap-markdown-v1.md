@@ -799,13 +799,13 @@ changes, and pointing at part of a sentence marks what that part is true of.
 Change at most two blocks so that every sentence comes out as marked.
 No two blocks may share a row.
 
-- ∀x(Cube(x) → ∃y LeftOf(y,x))
+- ∀x(Square(x) → ∃y LeftOf(y,x))
 - false: ∃x Large(x)
 
 | law : ∀x∀y(SameRow(x,y) → x = y)
-| pinned block : small tet at 1,1 named a
-| block : large cube at 4,3 named b
-| block : medium dodec at 6,7
+| pinned block : small triangle at 1,1 named a
+| block : large square at 4,3 named b
+| block : medium pentagon at 6,7
 ::::
 ```
 
@@ -871,9 +871,10 @@ lost game, whether the first claim was wrong or which choice lost it.
 
 ### The world
 
-Each object is a data line. For blocks, `| block : large cube at 3,5 named a, b`:
-a size (`small`, `medium`, `large`) and a shape (`tet`, `cube`, `dodec`) in
-either order, a square `at column,row`, and optional names. Columns run 1–8
+Each object is a data line. For blocks,
+`| block : large square at 3,5 named a, b`: a size (`small`, `medium`,
+`large`) and a shape (`triangle`, `square`, `pentagon`) in either order, its
+place on the board `at column,row`, and optional names. Columns run 1–8
 left to right and rows 1–8 back to front, so row 8 is nearest the viewer. A
 world holds at most 16 blocks, one per square, and a name names one block.
 
@@ -911,7 +912,7 @@ and a compile error.
 
 | Role | Arity | True when |
 | --- | --- | --- |
-| `blocks.tet`, `.cube`, `.dodec` | 1 | the block has that shape |
+| `blocks.triangle`, `.square`, `.pentagon` | 1 | the block has that shape |
 | `blocks.small`, `.medium`, `.large` | 1 | the block has that size |
 | `blocks.smaller`, `.larger` | 2 | first is strictly smaller / larger |
 | `blocks.same-size`, `.same-shape` | 2 | equal size / shape |

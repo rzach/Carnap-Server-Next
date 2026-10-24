@@ -522,7 +522,7 @@ function reportObjectProblem(
         diagnostic(
           line,
           "world_object_syntax",
-          "“{object}” does not read as an object. Write it like “large cube at 3,5 named a, b”.",
+          "“{object}” does not read as an object. Write it like “large square at 3,5 named a, b”.",
           { params: { object: source } },
         ),
       );
@@ -875,7 +875,7 @@ export async function compileWorld(
         diagnostic(
           block.line,
           "missing_world_argument",
-          "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Cube(a) :|-: Large(a)'.",
+          "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Square(a) :|-: Large(a)'.",
         ),
       );
     } else {

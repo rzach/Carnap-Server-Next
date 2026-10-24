@@ -5,8 +5,9 @@ import { languageFromSource } from "../../src/worker/logic/specs";
 /**
  * A complete blocks language, the one `docs/carnap-markdown-v1.md` gives as
  * the worked example for the world exercise: every `blocks.*` role the kind
- * interprets, spelled the way Barwise and Etchemendy spell it, with the
- * connectives and quantifiers.
+ * interprets, named the way Barwise and Etchemendy name their predicates
+ * (the shapes are the ones the board draws), with the connectives and
+ * quantifiers.
  *
  * Two things about it are not arbitrary.
  *
@@ -19,14 +20,14 @@ import { languageFromSource } from "../../src/worker/logic/specs";
  *     let a student write `∃yLeftOf(y,x)` tight, the way forallx writes
  *     `∃yF(y)`; without them `yLeftOf` is one chunk and needs its space. Once
  *     letters cut, every name spelled with one must be declared whole, or
- *     `Cube` would read as `Cub` and `e`; the longest match then keeps
- *     `Smaller` from reading as `Small` and `er`. The printer needs none of
+ *     `Square` would read as `Sq`, `u`, `a`, `r` and `e`; the longest match
+ *     then keeps `Smaller` from reading as `Small` and `er`. The printer needs none of
  *     this — it leaves a space wherever the delimiters would not cut — so a
  *     language without letter delimiters is just as good, with `∃y LeftOf(y,x)`.
  */
 export const BLOCKS_SPEC_SOURCE = `--| @syntax delimiter $ ( ) , = ¬ ∧ ∨ → ↔ ∀ ∃ $
 --| @syntax delimiter $ a b c d e f u v w x y z $
---| @syntax delimiter $ Tet Cube Dodec Small Medium Large Smaller Larger $
+--| @syntax delimiter $ Triangle Square Pentagon Small Medium Large Smaller Larger $
 --| @syntax delimiter $ SameSize SameShape LeftOf RightOf BackOf FrontOf $
 --| @syntax delimiter $ SameRow SameCol Adjoins Between $
 --| @syntax brackets ( )
@@ -53,12 +54,12 @@ term snil: seq;
 term scomma (sq tq: seq): seq;
 infixl scomma: $,$ prec 10;
 
---| @syntax role blocks.tet
-term Tet (sq: seq): wff;
---| @syntax role blocks.cube
-term Cube (sq: seq): wff;
---| @syntax role blocks.dodec
-term Dodec (sq: seq): wff;
+--| @syntax role blocks.triangle
+term Triangle (sq: seq): wff;
+--| @syntax role blocks.square
+term Square (sq: seq): wff;
+--| @syntax role blocks.pentagon
+term Pentagon (sq: seq): wff;
 --| @syntax role blocks.small
 term Small (sq: seq): wff;
 --| @syntax role blocks.medium

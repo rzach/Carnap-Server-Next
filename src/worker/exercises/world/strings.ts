@@ -88,9 +88,9 @@ export function buildWorldStrings(i18n: Translator) {
     Size: i18n.t("Size"),
     Column: i18n.t("Column"),
     Row: i18n.t("Row"),
-    Tet: i18n.t("Tet"),
-    Cube: i18n.t("Cube"),
-    Dodec: i18n.t("Dodec"),
+    Triangle: i18n.t("Triangle"),
+    Square: i18n.t("Square"),
+    Pentagon: i18n.t("Pentagon"),
     Small: i18n.t("Small"),
     Medium: i18n.t("Medium"),
     Large: i18n.t("Large"),
@@ -297,7 +297,9 @@ export function buildWorldStrings(i18n: Translator) {
     "Move between squares": i18n.t("Move between squares"),
     "Pick up or drop a block": i18n.t("Pick up or drop a block"),
     "Put a carried block back": i18n.t("Put a carried block back"),
-    "Make it a tet, cube, or dodec": i18n.t("Make it a tet, cube, or dodec"),
+    "Make it a triangle, square, or pentagon": i18n.t(
+      "Make it a triangle, square, or pentagon",
+    ),
     "Make it small, medium, or large": i18n.t(
       "Make it small, medium, or large",
     ),
@@ -419,15 +421,15 @@ export function buildWorldStrings(i18n: Translator) {
 
     // ——— The blocks world's own words. Whole phrases, because a size and a
     // shape agree in gender in some languages.
-    "small tet": i18n.t("small tet"),
-    "medium tet": i18n.t("medium tet"),
-    "large tet": i18n.t("large tet"),
-    "small cube": i18n.t("small cube"),
-    "medium cube": i18n.t("medium cube"),
-    "large cube": i18n.t("large cube"),
-    "small dodec": i18n.t("small dodec"),
-    "medium dodec": i18n.t("medium dodec"),
-    "large dodec": i18n.t("large dodec"),
+    "small triangle": i18n.t("small triangle"),
+    "medium triangle": i18n.t("medium triangle"),
+    "large triangle": i18n.t("large triangle"),
+    "small square": i18n.t("small square"),
+    "medium square": i18n.t("medium square"),
+    "large square": i18n.t("large square"),
+    "small pentagon": i18n.t("small pentagon"),
+    "medium pentagon": i18n.t("medium pentagon"),
+    "large pentagon": i18n.t("large pentagon"),
     "the block at column {col}, row {row}": i18n.t(
       "the block at column {col}, row {row}",
       placeholders("col", "row"),

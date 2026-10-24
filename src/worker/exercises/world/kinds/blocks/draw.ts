@@ -15,6 +15,13 @@ const SCALE: Readonly<Record<BlockSize, number>> = {
   small: 0.58,
 };
 
+/** Where a name sits in each shape: its optical centre, low for a triangle. */
+const LABEL_Y: Readonly<Record<BlockShape, number>> = {
+  pentagon: 55,
+  square: 51,
+  triangle: 62,
+};
+
 function point(x: number, y: number): string {
   return `${Math.round(x * 10) / 10},${Math.round(y * 10) / 10}`;
 }
@@ -34,11 +41,11 @@ function outline(shape: BlockShape, scale: number): DrawPrimitive {
   const className = `block-body block-${shape}`;
 
   switch (shape) {
-    case "tet":
+    case "triangle":
       // Centred on its centroid rather than its box, so a triangle sits in
-      // the middle of its square the way the other two do.
+      // the middle of its cell the way the other two do.
       return { className, el: "polygon", points: regular(3, 46 * scale, 56) };
-    case "cube": {
+    case "square": {
       const side = 72 * scale;
       return {
         className,
@@ -49,7 +56,7 @@ function outline(shape: BlockShape, scale: number): DrawPrimitive {
         y: 50 - side / 2,
       };
     }
-    default:
+    case "pentagon":
       return { className, el: "polygon", points: regular(5, 42 * scale, 52) };
   }
 }
@@ -63,8 +70,7 @@ export function blockGlyph(block: Block): readonly DrawPrimitive[] {
       el: "text",
       text: block.names.join(","),
       x: 50,
-      // The optical centre of each shape, which for a triangle is low.
-      y: block.shape === "tet" ? 62 : block.shape === "dodec" ? 55 : 51,
+      y: LABEL_Y[block.shape],
     });
   }
 

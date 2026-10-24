@@ -67,7 +67,7 @@ msgid "“{name}” names two objects."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
-msgid "“{object}” does not read as an object. Write it like “large cube at 3,5 named a, b”."
+msgid "“{object}” does not read as an object. Write it like “large square at 3,5 named a, b”."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -389,7 +389,7 @@ msgid "A constraint exercise needs at least one constraint before the ':'."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
-msgid "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Cube(a) :|-: Large(a)'."
+msgid "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Square(a) :|-: Large(a)'."
 msgstr ""
 
 #: src/worker/application/courses.ts
@@ -1960,10 +1960,6 @@ msgstr ""
 msgid "CSV of the whole course's grades"
 msgstr ""
 
-#: src/worker/exercises/world/strings.ts
-msgid "Cube"
-msgstr ""
-
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Delete"
 msgstr ""
@@ -2079,10 +2075,6 @@ msgstr ""
 
 #: src/worker/web/content.tsx
 msgid "Document"
-msgstr ""
-
-#: src/worker/exercises/world/strings.ts
-msgid "Dodec"
 msgstr ""
 
 #: src/worker/web/labels.ts
@@ -2865,15 +2857,15 @@ msgid "Large"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
-msgid "large cube"
+msgid "large pentagon"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
-msgid "large dodec"
+msgid "large square"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
-msgid "large tet"
+msgid "large triangle"
 msgstr ""
 
 #: src/worker/web/courses.tsx
@@ -3055,7 +3047,7 @@ msgid "Make false"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
-msgid "Make it a tet, cube, or dodec"
+msgid "Make it a triangle, square, or pentagon"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
@@ -3128,15 +3120,15 @@ msgid "Medium"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
-msgid "medium cube"
+msgid "medium pentagon"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
-msgid "medium dodec"
+msgid "medium square"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
-msgid "medium tet"
+msgid "medium triangle"
 msgstr ""
 
 #: src/worker/web/admin.tsx
@@ -3770,6 +3762,10 @@ msgstr ""
 
 #: src/worker/web/admin-lti.tsx
 msgid "Paste these Carnap endpoints into the LMS when registering the external tool."
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Pentagon"
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -4681,15 +4677,15 @@ msgid "Small"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
-msgid "small cube"
+msgid "small pentagon"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
-msgid "small dodec"
+msgid "small square"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
-msgid "small tet"
+msgid "small triangle"
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
@@ -4748,6 +4744,10 @@ msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Split the branch in two"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Square"
 msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts
@@ -4930,10 +4930,6 @@ msgstr ""
 
 #: src/worker/web/content.tsx
 msgid "Terms"
-msgstr ""
-
-#: src/worker/exercises/world/strings.ts
-msgid "Tet"
 msgstr ""
 
 #: src/worker/application/email-authority.ts
@@ -6096,6 +6092,10 @@ msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Tree actions"
+msgstr ""
+
+#: src/worker/exercises/world/strings.ts
+msgid "Triangle"
 msgstr ""
 
 #. A truth-table cell's value, spoken as part of the cell's accessible name: “Q, row 3: true”. Lowercase, mid-sentence.

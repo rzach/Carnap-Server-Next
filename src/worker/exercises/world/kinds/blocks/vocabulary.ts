@@ -84,9 +84,9 @@ export const BLOCKS_VOCABULARY: ReadonlyMap<
   string,
   WorldSymbol<BlocksState>
 > = new Map([
-  ["blocks.tet", unary((a) => a.shape === "tet")],
-  ["blocks.cube", unary((a) => a.shape === "cube")],
-  ["blocks.dodec", unary((a) => a.shape === "dodec")],
+  ["blocks.triangle", unary((a) => a.shape === "triangle")],
+  ["blocks.square", unary((a) => a.shape === "square")],
+  ["blocks.pentagon", unary((a) => a.shape === "pentagon")],
   ["blocks.small", unary((a) => a.size === "small")],
   ["blocks.medium", unary((a) => a.size === "medium")],
   ["blocks.large", unary((a) => a.size === "large")],

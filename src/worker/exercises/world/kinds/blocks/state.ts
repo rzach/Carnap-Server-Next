@@ -13,7 +13,7 @@ export const BLOCKS_STATE_TAG = "blocks@1";
 export const BOARD_SIZE = 8;
 export const MAX_BLOCKS = 16;
 
-export const SHAPES = ["tet", "cube", "dodec"] as const;
+export const SHAPES = ["triangle", "square", "pentagon"] as const;
 export const SIZES = ["small", "medium", "large"] as const;
 
 export type BlockShape = (typeof SHAPES)[number];

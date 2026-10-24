@@ -44,13 +44,13 @@ function block(
   return { col, id, names, row, shape, size };
 }
 
-/** A small cube named a, a large tet, and a medium dodec named b. */
+/** A small square named a, a large triangle, and a medium pentagon named b. */
 const WORLD: BlocksState = {
   kind: "blocks@1",
   objects: [
-    block("o1", "cube", "small", 2, 2, ["a"]),
-    block("o2", "tet", "large", 5, 5),
-    block("o3", "dodec", "medium", 7, 1, ["b"]),
+    block("o1", "square", "small", 2, 2, ["a"]),
+    block("o2", "triangle", "large", 5, 5),
+    block("o3", "pentagon", "medium", 7, 1, ["b"]),
   ],
 };
 
@@ -127,7 +127,7 @@ describe("forcing sets", () => {
 
 describe("playing the game", () => {
   test("a good witness wins an existential", () => {
-    const game = play("∃x(Cube(x) ∧ Small(x))", true, ["o1"]);
+    const game = play("∃x(Square(x) ∧ Small(x))", true, ["o1"]);
 
     expect(outcome(game)).toBe("won");
     expect(game.steps.map((step) => step.type)).toEqual([
@@ -139,7 +139,7 @@ describe("playing the game", () => {
   });
 
   test("a bad witness loses, and is the move that lost", () => {
-    const game = play("∃x(Cube(x) ∧ Small(x))", true, ["o2"]);
+    const game = play("∃x(Square(x) ∧ Small(x))", true, ["o2"]);
 
     expect(outcome(game)).toBe("lost");
     expect(lostAt(game)).toBe(1);
@@ -149,7 +149,7 @@ describe("playing the game", () => {
   });
 
   test("a wrong first claim cannot be defended", () => {
-    const game = play("∃x(Cube(x) ∧ Small(x))", false, [[false, null]]);
+    const game = play("∃x(Square(x) ∧ Small(x))", false, [[false, null]]);
 
     expect(outcome(game)).toBe("lost");
     expect(lostAt(game)).toBe(0);
@@ -159,7 +159,7 @@ describe("playing the game", () => {
   });
 
   test("the computer tries every object against a universal", () => {
-    const game = play("∀x(Cube(x) → Small(x))", true, [[null, true]]);
+    const game = play("∀x(Square(x) → Small(x))", true, [[null, true]]);
 
     expect(outcome(game)).toBe("won");
     const chosen = game.steps[1];
@@ -167,7 +167,7 @@ describe("playing the game", () => {
   });
 
   test("a negation carries the opposite claim into its part", () => {
-    const game = play("¬Tet(a)", true, []);
+    const game = play("¬Triangle(a)", true, []);
 
     expect(outcome(game)).toBe("won");
     expect(game.steps[1]?.type).toBe("follow");
@@ -177,8 +177,8 @@ describe("playing the game", () => {
   });
 
   test("a biconditional takes a row, then the computer's pick from it", () => {
-    const right = play("Cube(a) ↔ Tet(b)", false, [[true, false]]);
-    const wrong = play("Cube(a) ↔ Tet(b)", false, [[false, true]]);
+    const right = play("Square(a) ↔ Triangle(b)", false, [[true, false]]);
+    const wrong = play("Square(a) ↔ Triangle(b)", false, [[false, true]]);
 
     expect(outcome(right)).toBe("won");
     expect(right.steps.map((step) => step.type)).toEqual([
@@ -191,10 +191,10 @@ describe("playing the game", () => {
   });
 
   test("stops where the student has a choice to make", () => {
-    const game = play("∃x Cube(x)", true, []);
+    const game = play("∃x Square(x)", true, []);
 
     expect(game.state.type).toBe("choose-object");
-    expect(play("Cube(a) ∨ Tet(a)", true, []).state).toMatchObject({
+    expect(play("Square(a) ∨ Triangle(a)", true, []).state).toMatchObject({
       options: [
         [true, null],
         [null, true],
@@ -204,22 +204,24 @@ describe("playing the game", () => {
   });
 
   test("refuses a choice that does not fit, or one past the end", () => {
-    expect(outcome(play("∃x Cube(x)", true, ["o9"]))).toBe("invalid");
-    expect(outcome(play("∃x Cube(x)", true, [[true, null]]))).toBe("invalid");
-    expect(outcome(play("∃x Cube(x)", true, ["o1", "o1"]))).toBe("invalid");
-    expect(outcome(play("Cube(a) ∨ Tet(a)", true, [[true, true]]))).toBe(
+    expect(outcome(play("∃x Square(x)", true, ["o9"]))).toBe("invalid");
+    expect(outcome(play("∃x Square(x)", true, [[true, null]]))).toBe(
       "invalid",
     );
+    expect(outcome(play("∃x Square(x)", true, ["o1", "o1"]))).toBe("invalid");
+    expect(
+      outcome(play("Square(a) ∨ Triangle(a)", true, [[true, true]])),
+    ).toBe("invalid");
   });
 
   test("an empty world has no witness and no counterexample", () => {
     const empty = BLOCKS_KIND.empty();
 
-    expect(play("∃x Cube(x)", true, [], empty).state).toMatchObject({
+    expect(play("∃x Square(x)", true, [], empty).state).toMatchObject({
       end: { by: "student", reason: "no-object" },
       won: false,
     });
-    expect(play("∀x Cube(x)", true, [], empty).state).toMatchObject({
+    expect(play("∀x Square(x)", true, [], empty).state).toMatchObject({
       end: { by: "computer", reason: "no-object" },
       won: true,
     });
@@ -233,10 +235,10 @@ function directive(attrs: string, body: string): string {
 }
 
 const GAME_BODY = [
-  "- ∃x(Cube(x) ∧ Small(x))",
-  "- ∀x Cube(x)",
-  "| block : small cube at 2,2 named a",
-  "| block : large tet at 5,5",
+  "- ∃x(Square(x) ∧ Small(x))",
+  "- ∀x Square(x)",
+  "| block : small square at 2,2 named a",
+  "| block : large triangle at 5,5",
 ].join("\n");
 
 async function compiled(source: string) {
@@ -313,9 +315,9 @@ describe("the game variant", () => {
       directive(
         '#g variant="game"',
         [
-          "- true: Cube(a)",
-          "| pinned block : small cube at 2,2 named a",
-          "| law : Cube(a)",
+          "- true: Square(a)",
+          "| pinned block : small square at 2,2 named a",
+          "| law : Square(a)",
         ].join("\n"),
       ),
     );
@@ -334,7 +336,7 @@ describe("the game variant", () => {
       directive('#g variant="game" points="2"', GAME_BODY),
     );
     const won = { choices: ["o1"], claim: true };
-    // ∀x Cube(x) is false; claiming so, the student picks the tet.
+    // ∀x Square(x) is false; claiming so, the student picks the triangle.
     const counter = { choices: ["o2"], claim: false };
 
     expect(await grade(item, { games: [won, counter] })).toEqual({
@@ -349,7 +351,7 @@ describe("the game variant", () => {
     expect(
       (await grade(item, { games: [won, { choices: [], claim: false }] }))
         .summary,
-    ).toBe("Won: 1 of 2. Take another look at: ∀xCube(x).");
+    ).toBe("Won: 1 of 2. Take another look at: ∀xSquare(x).");
   });
 
   test("refuses a game of the wrong shape, but not a bad move", async () => {

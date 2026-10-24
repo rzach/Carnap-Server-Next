@@ -67,8 +67,8 @@ msgid "“{name}” names two objects."
 msgstr "„{name}“ benennt zwei Objekte."
 
 #: src/worker/application/content/diagnostic-strings.ts
-msgid "“{object}” does not read as an object. Write it like “large cube at 3,5 named a, b”."
-msgstr "„{object}“ lässt sich nicht als Objekt lesen. Schreiben Sie es wie „large cube at 3,5 named a, b“."
+msgid "“{object}” does not read as an object. Write it like “large square at 3,5 named a, b”."
+msgstr "„{object}“ lässt sich nicht als Objekt lesen. Schreiben Sie es wie „large square at 3,5 named a, b“."
 
 #: src/worker/application/content/diagnostic-strings.ts
 #: src/worker/logic/specs/strings.ts
@@ -389,8 +389,8 @@ msgid "A constraint exercise needs at least one constraint before the ':'."
 msgstr "Eine Bedingungsaufgabe braucht mindestens eine Bedingung vor dem ':'."
 
 #: src/worker/application/content/diagnostic-strings.ts
-msgid "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Cube(a) :|-: Large(a)'."
-msgstr "Eine Gegenbeispiel-Aufgabe braucht ein Argument mit dem Ableitungszeichen ':|-:', z. B. 'Cube(a) :|-: Large(a)'."
+msgid "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Square(a) :|-: Large(a)'."
+msgstr "Eine Gegenbeispiel-Aufgabe braucht ein Argument mit dem Ableitungszeichen ':|-:', z. B. 'Square(a) :|-: Large(a)'."
 
 #: src/worker/application/courses.ts
 msgid "A course must keep at least one active instructor."
@@ -1960,10 +1960,6 @@ msgstr "CSV der aktuellen Punktzahlen"
 msgid "CSV of the whole course's grades"
 msgstr "CSV der Noten des gesamten Kurses"
 
-#: src/worker/exercises/world/strings.ts
-msgid "Cube"
-msgstr "Würfel"
-
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Delete"
 msgstr "Löschen"
@@ -2080,10 +2076,6 @@ msgstr "Die Anzeigereihenfolge muss eine nicht negative ganze Zahl sein."
 #: src/worker/web/content.tsx
 msgid "Document"
 msgstr "Dokument"
-
-#: src/worker/exercises/world/strings.ts
-msgid "Dodec"
-msgstr "Dodekaeder"
 
 #: src/worker/web/labels.ts
 msgid "Does not count"
@@ -2865,16 +2857,16 @@ msgid "Large"
 msgstr "Groß"
 
 #: src/worker/exercises/world/strings.ts
-msgid "large cube"
-msgstr "großer Würfel"
+msgid "large pentagon"
+msgstr "großes Fünfeck"
 
 #: src/worker/exercises/world/strings.ts
-msgid "large dodec"
-msgstr "großes Dodekaeder"
+msgid "large square"
+msgstr "großes Quadrat"
 
 #: src/worker/exercises/world/strings.ts
-msgid "large tet"
-msgstr "großes Tetraeder"
+msgid "large triangle"
+msgstr "großes Dreieck"
 
 #: src/worker/web/courses.tsx
 msgid "Last attempt"
@@ -3055,8 +3047,8 @@ msgid "Make false"
 msgstr "Falsch machen"
 
 #: src/worker/exercises/world/strings.ts
-msgid "Make it a tet, cube, or dodec"
-msgstr "Zum Tetraeder, Würfel oder Dodekaeder machen"
+msgid "Make it a triangle, square, or pentagon"
+msgstr "Zum Dreieck, Quadrat oder Fünfeck machen"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Make it small, medium, or large"
@@ -3128,16 +3120,16 @@ msgid "Medium"
 msgstr "Mittel"
 
 #: src/worker/exercises/world/strings.ts
-msgid "medium cube"
-msgstr "mittelgroßer Würfel"
+msgid "medium pentagon"
+msgstr "mittelgroßes Fünfeck"
 
 #: src/worker/exercises/world/strings.ts
-msgid "medium dodec"
-msgstr "mittelgroßes Dodekaeder"
+msgid "medium square"
+msgstr "mittelgroßes Quadrat"
 
 #: src/worker/exercises/world/strings.ts
-msgid "medium tet"
-msgstr "mittelgroßes Tetraeder"
+msgid "medium triangle"
+msgstr "mittelgroßes Dreieck"
 
 #: src/worker/web/admin.tsx
 #: src/worker/web/profile.tsx
@@ -3771,6 +3763,10 @@ msgstr "Klammern dürfen nur einen Satz einschließen, dessen Hauptjunktor zweis
 #: src/worker/web/admin-lti.tsx
 msgid "Paste these Carnap endpoints into the LMS when registering the external tool."
 msgstr "Tragen Sie diese Carnap-Endpunkte im LMS ein, wenn Sie das externe Werkzeug registrieren."
+
+#: src/worker/exercises/world/strings.ts
+msgid "Pentagon"
+msgstr "Fünfeck"
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Per-student overrides and the late policy for this assignment."
@@ -4681,16 +4677,16 @@ msgid "Small"
 msgstr "Klein"
 
 #: src/worker/exercises/world/strings.ts
-msgid "small cube"
-msgstr "kleiner Würfel"
+msgid "small pentagon"
+msgstr "kleines Fünfeck"
 
 #: src/worker/exercises/world/strings.ts
-msgid "small dodec"
-msgstr "kleines Dodekaeder"
+msgid "small square"
+msgstr "kleines Quadrat"
 
 #: src/worker/exercises/world/strings.ts
-msgid "small tet"
-msgstr "kleines Tetraeder"
+msgid "small triangle"
+msgstr "kleines Dreieck"
 
 #: src/worker/exercises/world/strings.ts
 msgid "So you say {formula} is false."
@@ -4749,6 +4745,10 @@ msgstr "Verzweigung zurückgenommen."
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Split the branch in two"
 msgstr "Den Ast in zwei Äste verzweigen"
+
+#: src/worker/exercises/world/strings.ts
+msgid "Square"
+msgstr "Quadrat"
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Stack"
@@ -4931,10 +4931,6 @@ msgstr "Tutorinnen und Tutoren können Abgaben bewerten und Inhalte erstellen, a
 #: src/worker/web/content.tsx
 msgid "Terms"
 msgstr "Terme"
-
-#: src/worker/exercises/world/strings.ts
-msgid "Tet"
-msgstr "Tetraeder"
 
 #: src/worker/application/email-authority.ts
 msgid "That address was recently moved off another Carnap account, and is kept for it while the change can still be undone."
@@ -6097,6 +6093,10 @@ msgstr "Übersetzung"
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Tree actions"
 msgstr "Baumaktionen"
+
+#: src/worker/exercises/world/strings.ts
+msgid "Triangle"
+msgstr "Dreieck"
 
 #. A truth-table cell's value, spoken as part of the cell's accessible name: “Q, row 3: true”. Lowercase, mid-sentence.
 #: src/worker/exercises/truth-table/strings.ts

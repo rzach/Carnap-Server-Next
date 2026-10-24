@@ -75,7 +75,7 @@ describe("mountCopySource", () => {
     const button = mountCopySource(
       host,
       STRINGS,
-      () => "| block : small cube",
+      () => "| block : small square",
     );
 
     expect(button?.type).toBe("button");

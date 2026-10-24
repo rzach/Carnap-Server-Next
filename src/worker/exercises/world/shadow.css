@@ -11,9 +11,9 @@
   --_world-square-dark: color-mix(in srgb, currentColor 10%, var(--_surface));
   --_world-block-edge: color-mix(in srgb, var(--_text) 78%, transparent);
   --_world-fold: color-mix(in srgb, var(--_text-muted) 40%, var(--_surface));
-  --_world-tet: color-mix(in srgb, var(--_accent) 34%, var(--_surface));
-  --_world-cube: color-mix(in srgb, var(--_warning) 38%, var(--_surface));
-  --_world-dodec: color-mix(
+  --_world-triangle: color-mix(in srgb, var(--_accent) 34%, var(--_surface));
+  --_world-square: color-mix(in srgb, var(--_warning) 38%, var(--_surface));
+  --_world-pentagon: color-mix(
     in srgb,
     var(--_accent) 18%,
     color-mix(in srgb, var(--_correct) 30%, var(--_surface))
@@ -121,16 +121,16 @@
   stroke-width: 2.5;
 }
 
-.block-tet {
-  fill: var(--_world-tet);
+.block-triangle {
+  fill: var(--_world-triangle);
 }
 
-.block-cube {
-  fill: var(--_world-cube);
+.block-square {
+  fill: var(--_world-square);
 }
 
-.block-dodec {
-  fill: var(--_world-dodec);
+.block-pentagon {
+  fill: var(--_world-pentagon);
 }
 
 .block-name {

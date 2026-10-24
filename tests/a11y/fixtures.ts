@@ -64,8 +64,8 @@ export interface Fixture {
  * the first two by default, the Fitch one by name — rather than the local
  * `prop` block, which declares no quantifiers for them to read.
  */
-// The world exercises write their object lines shape first ("tet small"):
-// "small tet" is also a message id, and this source is shown on the revision
+// The world exercises write their object lines shape first ("triangle small"):
+// "small triangle" is also a message id, and this source is shown on the revision
 // pages the pseudolocale test reads.
 const LESSON_SOURCE = `# Accessibility fixture lesson
 
@@ -163,35 +163,35 @@ ${BLOCKS_SPEC_SOURCE}:::
 ::::world{#wd system="blocks" budget="1" points="1"}
 Make the sentence true.
 
-- ∃x(Cube(x) ∧ LeftOf(x, a))
+- ∃x(Square(x) ∧ LeftOf(x, a))
 - false: ∃x Large(x)
 
 | law : ∀x∀y(SameRow(x,y) → x = y)
-| pinned block : tet small at 3,1 named a
-| block : dodec medium at 5,4
+| pinned block : triangle small at 3,1 named a
+| block : pentagon medium at 5,4
 ::::
 
 ::::world{#wv system="blocks" variant="evaluate" points="1"}
 Say whether the sentence holds.
 
-- Tet(a)
+- Triangle(a)
 
-| block : tet small at 3,1 named a
+| block : triangle small at 3,1 named a
 ::::
 
 ::::world{#wg system="blocks" variant="game" points="1"}
 Defend a claim about the sentence.
 
-- ∃x Tet(x)
+- ∃x Triangle(x)
 
-| block : tet small at 3,1 named a
+| block : triangle small at 3,1 named a
 ::::
 
 ::::world{#wx system="blocks" variant="distinguish" points="1"}
 Tell the worlds apart.
 
-| A block : cube small at 2,2
-| B block : cube large at 2,2
+| A block : square small at 2,2
+| B block : square large at 2,2
 ::::
 
 ::::truth-tree{#tv points="1"}

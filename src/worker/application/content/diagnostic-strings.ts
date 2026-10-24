@@ -507,9 +507,9 @@ export function buildDiagnosticStrings(i18n: Translator) {
       "Column {col}, row {row} is not on the board.",
       placeholders("col", "row"),
     ),
-    "“{object}” does not read as an object. Write it like “large cube at 3,5 named a, b”.":
+    "“{object}” does not read as an object. Write it like “large square at 3,5 named a, b”.":
       i18n.t(
-        "“{object}” does not read as an object. Write it like “large cube at 3,5 named a, b”.",
+        "“{object}” does not read as an object. Write it like “large square at 3,5 named a, b”.",
         placeholders("object"),
       ),
     "Two objects stand on column {col}, row {row}.": i18n.t(
@@ -549,9 +549,9 @@ export function buildDiagnosticStrings(i18n: Translator) {
       "“{key}” is not a line a world exercise reads. It reads {keys}.",
       placeholders("key", "keys"),
     ),
-    "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Cube(a) :|-: Large(a)'.":
+    "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Square(a) :|-: Large(a)'.":
       i18n.t(
-        "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Cube(a) :|-: Large(a)'.",
+        "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Square(a) :|-: Large(a)'.",
       ),
     "Only a counterexample exercise is written as an argument with ':|-:'.":
       i18n.t(

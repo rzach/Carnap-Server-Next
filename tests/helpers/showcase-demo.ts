@@ -684,9 +684,9 @@ schema over metavariables like the \`P\` of the exercises before this one.
 
 ## 20. A world
 
-A **world** is a picture of a structure: a board of blocks, each a tet, a cube
-or a dodecahedron, small, medium or large. Its sentences are true or false
-because of where the blocks stand and what they are, so the student works on
+A **world** is a picture of a structure: a board of blocks, each a triangle,
+a square or a pentagon, small, medium or large. Its sentences are true or
+false because of where the blocks stand and what they are, so the student works on
 the picture rather than on tables. Every sentence shows its truth value live,
 and resting the pointer on any part of a sentence rings the blocks that part is
 true of.
@@ -699,12 +699,12 @@ language is in the authoring reference).
 :::world{id="wd_left" title="Everything has something to its left" system="blocks" budget="2" points="3"}
 Change at most two blocks so that every sentence comes out as marked.
 
-- ∀x(Cube(x) → ∃y LeftOf(y,x))
+- ∀x(Square(x) → ∃y LeftOf(y,x))
 - false: ∃x Large(x)
 
-| pinned block : small tet at 1,1 named a
-| block : large cube at 4,3 named b
-| block : medium dodec at 6,7
+| pinned block : small triangle at 1,1 named a
+| block : large square at 4,3 named b
+| block : medium pentagon at 6,7
 :::
 \`\`\`
 
@@ -714,12 +714,12 @@ ${BLOCKS_SPEC_SOURCE}:::
 :::world{id="wd_left" title="Everything has something to its left" system="blocks" budget="2" points="3"}
 Change at most two blocks so that every sentence comes out as marked.
 
-- ∀x(Cube(x) → ∃y LeftOf(y,x))
+- ∀x(Square(x) → ∃y LeftOf(y,x))
 - false: ∃x Large(x)
 
-| pinned block : small tet at 1,1 named a
-| block : large cube at 4,3 named b
-| block : medium dodec at 6,7
+| pinned block : small triangle at 1,1 named a
+| block : large square at 4,3 named b
+| block : medium pentagon at 6,7
 :::
 
 ## 21. A truth tree

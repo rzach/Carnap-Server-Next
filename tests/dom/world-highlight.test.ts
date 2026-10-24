@@ -19,28 +19,28 @@ function highlight(mode: Highlight["mode"], count: number): Highlight {
     mode,
     pairs: [],
     rings: new Map(),
-    text: "Cube(x)",
+    text: "Square(x)",
   };
 }
 
 describe("highlight announcements", () => {
   test("a short list is read in full", () => {
     expect(highlightAnnouncement(highlight("objects", 5), words)).toBe(
-      "Cube(x): satisfied by o1; o2; o3; o4; o5.",
+      "Square(x): satisfied by o1; o2; o3; o4; o5.",
     );
   });
 
   test("a long list gives its first five and the total", () => {
     expect(highlightAnnouncement(highlight("pairs", 7), words)).toBe(
-      "Cube(x): satisfied by o1; o2; o3; o4; o5, and others: 7 in all.",
+      "Square(x): satisfied by o1; o2; o3; o4; o5, and others: 7 in all.",
     );
     expect(highlightAnnouncement(highlight("witnesses", 6), words)).toBe(
-      "Cube(x): witnesses o1; o2; o3; o4; o5, and others: 6 in all.",
+      "Square(x): witnesses o1; o2; o3; o4; o5, and others: 6 in all.",
     );
     expect(
       highlightAnnouncement(highlight("counterexamples", 9), words),
     ).toBe(
-      "Cube(x): counterexamples o1; o2; o3; o4; o5, and others: 9 in all.",
+      "Square(x): counterexamples o1; o2; o3; o4; o5, and others: 9 in all.",
     );
   });
 });

@@ -2,8 +2,9 @@
  * What the blocks world says about itself: a block's description, the
  * sentence each move is announced with, and the reason for each refusal.
  *
- * Whole phrases, never an adjective glued to a noun: a German "large cube"
- * and "large tet" decline differently, so each of the nine is its own string.
+ * Whole phrases, never an adjective glued to a noun: the adjective's ending
+ * follows the noun's gender, which differs from shape to shape in many
+ * languages, so each of the nine is its own string.
  */
 
 import type { WorldStringId } from "../../strings";
@@ -15,12 +16,24 @@ import { blockById } from "./state";
 const KINDS: Readonly<
   Record<BlockSize, Readonly<Record<BlockShape, WorldStringId>>>
 > = {
-  large: { cube: "large cube", dodec: "large dodec", tet: "large tet" },
-  medium: { cube: "medium cube", dodec: "medium dodec", tet: "medium tet" },
-  small: { cube: "small cube", dodec: "small dodec", tet: "small tet" },
+  large: {
+    triangle: "large triangle",
+    square: "large square",
+    pentagon: "large pentagon",
+  },
+  medium: {
+    triangle: "medium triangle",
+    square: "medium square",
+    pentagon: "medium pentagon",
+  },
+  small: {
+    triangle: "small triangle",
+    square: "small square",
+    pentagon: "small pentagon",
+  },
 };
 
-/** `large cube`, in the reader's language. */
+/** `large square`, in the reader's language. */
 export function blockKind(
   shape: BlockShape,
   size: BlockSize,

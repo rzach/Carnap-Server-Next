@@ -1,5 +1,5 @@
 /**
- * One authored block: `large cube at 3,5 named a, b`.
+ * One authored block: `large square at 3,5 named a, b`.
  *
  * The size and the shape may come in either order and the names are
  * optional; the square is always `at column,row`. {@link formatBlockLine}

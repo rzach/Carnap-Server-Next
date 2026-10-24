@@ -8,7 +8,7 @@ import { BLOCKS_SPEC_SOURCE } from "./blocks-language";
 export const WORLD_DEMO_SOURCE = `# Worlds of blocks
 
 A world is a picture of a structure. The sentences below are about the
-blocks on the board: \`Cube(a)\` is true because of what \`a\` is, and
+blocks on the board: \`Square(a)\` is true because of what \`a\` is, and
 \`LeftOf(a, b)\` because of where the two stand. Columns run left to right,
 and rows run back to front, so row 8 is the one nearest you.
 
@@ -21,14 +21,14 @@ ${BLOCKS_SPEC_SOURCE}:::
 Change at most two blocks so that every sentence comes out as marked.
 No two blocks may share a row.
 
-- ∀x(Cube(x) → ∃y LeftOf(y,x))
+- ∀x(Square(x) → ∃y LeftOf(y,x))
 - false: ∃x Large(x)
 - ∃x∃y(Adjoins(x,y) ∧ SameShape(x,y))
 
 | law : ∀x∀y(SameRow(x,y) → x = y)
-| pinned block : small tet at 1,1 named a
-| block : large cube at 4,3 named b
-| block : medium dodec at 6,7
+| pinned block : small triangle at 1,1 named a
+| block : large square at 4,3 named b
+| block : medium pentagon at 6,7
 ::::
 
 ## Evaluate
@@ -36,15 +36,15 @@ No two blocks may share a row.
 ::::world{#judge system="blocks-lpl" variant="evaluate" points="4" title="True or false?"}
 Say whether each sentence is true in this world.
 
-- Cube(a)
-- ∃x(Tet(x) ∧ LeftOf(x, a))
-- ∀x(Dodec(x) → Large(x))
+- Square(a)
+- ∃x(Triangle(x) ∧ LeftOf(x, a))
+- ∀x(Pentagon(x) → Large(x))
 - Between(c, a, b)
 
-| block : small cube at 2,6 named a
-| block : large dodec at 6,2 named b
-| block : medium tet at 4,4 named c
-| block : large dodec at 7,7
+| block : small square at 2,6 named a
+| block : large pentagon at 6,2 named b
+| block : medium triangle at 4,4 named c
+| block : large pentagon at 7,7
 ::::
 
 ## Play the game
@@ -54,14 +54,14 @@ Claim each sentence true or false, and then defend your claim. When a
 quantifier needs a witness, you choose the block; when it needs every block,
 the computer tries to find one that breaks your claim.
 
-- ∃x(Cube(x) ∧ ∀y(Tet(y) → LeftOf(x, y)))
+- ∃x(Square(x) ∧ ∀y(Triangle(y) → LeftOf(x, y)))
 - ∀x(Large(x) → ¬Adjoins(x, a))
-- Cube(a) ↔ Small(b)
+- Square(a) ↔ Small(b)
 
-| block : small cube at 2,6 named a
-| block : large dodec at 6,2 named b
-| block : medium tet at 4,4 named c
-| block : large tet at 7,7
+| block : small square at 2,6 named a
+| block : large pentagon at 6,2 named b
+| block : medium triangle at 4,4 named c
+| block : large triangle at 7,7
 ::::
 
 ## A counterexample
@@ -69,7 +69,7 @@ the computer tries to find one that breaks your claim.
 ::::world{#counter system="blocks-lpl" variant="counterexample" points="2" title="Not valid"}
 Build a world in which the premises are true and the conclusion false.
 
-∀x(Cube(x) → Small(x)), ∃x Cube(x) :|-: ∀x Small(x)
+∀x(Square(x) → Small(x)), ∃x Square(x) :|-: ∀x Small(x)
 ::::
 
 ## Tell them apart
@@ -78,9 +78,9 @@ Build a world in which the premises are true and the conclusion false.
 Write a sentence that is true in world A and false in world B, without
 using identity.
 
-| A block : small cube at 2,2 named a
-| A block : small cube at 5,2
-| B block : small cube at 2,2 named a
-| B block : large dodec at 5,6
+| A block : small square at 2,2 named a
+| A block : small square at 5,2
+| B block : small square at 2,2 named a
+| B block : large pentagon at 5,6
 ::::
 `;
