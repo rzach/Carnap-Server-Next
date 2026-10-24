@@ -604,12 +604,18 @@ table .create-bar button {
   padding: 1.25em;
 }
 
+/* The value is drawn above its label, though the label comes first in the
+   markup. Packed at the top (flex-end, since the column runs reversed), so a
+   label that wraps to a second line grows its cell downwards and the values
+   stay on one line across the strip. Packed at the bottom, as before, the
+   wrapped label pushed its value up out of line with its neighbours'. */
 .summary-item {
   background: var(--surface-translucent);
   display: flex;
   flex: 1 1 9rem;
   flex-direction: column-reverse;
   gap: 0.2rem;
+  justify-content: flex-end;
   padding: 1rem clamp(0.85rem, 1.4vw, 1.1rem);
 }
 
@@ -1233,9 +1239,12 @@ form > .bar-field {
    height: the bar bottom-aligns its items, so a shorter button sat on the
    field's bottom edge with its top a few pixels below the field's. The height
    is a field's box (its line, padding and border; see the select's floor in
-   content.css), stated in rem because the button's own text is smaller. */
+   content.css), stated in rem because the button's own text is smaller. A
+   sheet footer that puts a field beside its Cancel and save (the revision
+   editor's note) is the same row, and takes the same height. */
 .create-bar button,
-.revision-actions > .button {
+.revision-actions > .button,
+.sheet-actions:has(> .bar-field) .action-pair > :is(button, .button) {
   flex: 0 0 auto;
   min-height: calc(1.5rem + 1.1rem + 2px);
 }
