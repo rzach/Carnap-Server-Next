@@ -2231,7 +2231,7 @@ const ReviewFilterBar: FC<{
   // split around its count rather than assembled from the word plus
   // punctuation.
   const [countBefore, countAfter] = splitAtValue(
-    i18n.t("Needs review ({count})", { count: VALUE }),
+    i18n.t("Unreviewed ({count})", { count: VALUE }),
   );
   const [activeBefore, activeAfter] = splitAtValue(
     i18n.t("Active ({count})", { count: VALUE }),
@@ -2248,18 +2248,105 @@ const ReviewFilterBar: FC<{
       class="segmented review-filter"
       data-filter={query.review}
     >
+      {/* Each tab carries two labels, and the stylesheet shows one: with
+          its count, and on a phone, where three counted labels and the funnel
+          do not fit one row, the bare word. The count is the extra. Each
+          label is one span, because a tab is a flex box and loose text would
+          be flex items wrapping apart. */}
       <a {...tab("needs-review")}>
-        {countBefore}
-        <span class="review-count-needs">{needsReviewCount}</span>
-        {countAfter}
+        <span class="review-tab-full">
+          {countBefore}
+          <span class="review-count-needs">{needsReviewCount}</span>
+          {countAfter}
+        </span>
+        <span class="review-tab-short">{i18n.t("Unreviewed")}</span>
       </a>
       <a {...tab("active")}>
-        {activeBefore}
-        <span class="review-count-active">{activeCount}</span>
-        {activeAfter}
+        <span class="review-tab-full">
+          {activeBefore}
+          <span class="review-count-active">{activeCount}</span>
+          {activeAfter}
+        </span>
+        <span class="review-tab-short">{i18n.t("Active")}</span>
       </a>
-      <a {...tab("all")}>{i18n.t("All ({count})", { count: total })}</a>
+      <a {...tab("all")}>
+        <span class="review-tab-full">
+          {i18n.t("All ({count})", { count: total })}
+        </span>
+        <span class="review-tab-short">{i18n.t("All")}</span>
+      </a>
     </nav>
+  );
+};
+
+const REVIEW_HELP_DIALOG_ID = "review-help";
+
+/**
+ * The queue's `(?)`, the idiom every exercise uses for its own instructions
+ * (`client/components/help-dialog.ts`): a plain `?` button, here at the end
+ * of the tab row, opening a short paragraph over a table of keys. The keys
+ * are the grading form's, which nothing else on the page names.
+ *
+ * Keys are spelled as they are printed, untranslated, as the exercises spell
+ * theirs. A Mac's spelling rides along in `data-mac-key` for the review script
+ * to swap in, since the server cannot tell which keyboard the grader has.
+ */
+const ReviewHelp: FC = () => {
+  const i18n = useI18n();
+  const label = i18n.t("Usage and keyboard shortcuts");
+  const shortcuts: readonly {
+    readonly action: string;
+    readonly key: string;
+    readonly macKey?: string;
+  }[] = [
+    { action: i18n.t("Save the grade (from the score field)"), key: "Enter" },
+    {
+      action: i18n.t("Save the grade, then go to the next submission"),
+      key: "Ctrl-Enter",
+      macKey: "Cmd-Enter",
+    },
+    {
+      action: i18n.t(
+        "Approve the autograded score, then go to the next submission",
+      ),
+      key: "Ctrl-Shift-Enter",
+      macKey: "Cmd-Shift-Enter",
+    },
+  ];
+
+  return (
+    <>
+      <button
+        aria-label={label}
+        class="help-trigger review-help-trigger"
+        data-dialog-target={REVIEW_HELP_DIALOG_ID}
+        title={label}
+        type="button"
+      >
+        ?
+      </button>
+      <ModalDialog
+        id={REVIEW_HELP_DIALOG_ID}
+        title={i18n.t("Reviewing submissions")}
+      >
+        <p>
+          {i18n.t(
+            "A submission waiting for a grade opens with its grading form. Going to the next submission opens its form and puts you in its score.",
+          )}
+        </p>
+        <h3 class="help-dialog-heading">{i18n.t("Keyboard")}</h3>
+        <dl class="help-shortcuts">
+          {shortcuts.map((shortcut) => (
+            <>
+              <dt>
+                <kbd data-mac-key={shortcut.macKey}>{shortcut.key}</kbd>
+              </dt>
+              <dd>{shortcut.action}</dd>
+            </>
+          ))}
+        </dl>
+      </ModalDialog>
+    </>
   );
 };
 
@@ -2553,8 +2640,8 @@ const SubmissionsReview: FC<{
 
   // Active is the work a grade is drawn from: for each student and exercise,
   // the try the score takes, and the latest while it waits for a grade. The
-  // other tries, and a reset attempt's work, are on file under All. Needs
-  // review is the part of Active still waiting for a grader.
+  // other tries, and a reset attempt's work, are on file under All.
+  // Unreviewed is the part of Active still waiting for a grader.
   const active = narrowed.filter((entry) => entry.counts);
   const needsReview = active.filter(
     (entry) => reviewStateOf(entry) === "needs-review",
@@ -2606,7 +2693,7 @@ const SubmissionsReview: FC<{
       {/* One block, so the page's gap falls around the controls rather than
           between each of them, and around an empty status line besides. The
           narrowing panel opens under the tabs; its funnel sits at the end of
-          their row. */}
+          their row, with the (?) before it. */}
       <div class="review-controls">
         <ReviewFilterBar
           activeCount={active.length}
@@ -2615,6 +2702,7 @@ const SubmissionsReview: FC<{
           query={query}
           total={narrowed.length}
         />
+        <ReviewHelp />
         <ReviewNarrowForm
           base={base}
           exercises={choices.exercises}

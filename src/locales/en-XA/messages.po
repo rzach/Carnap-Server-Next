@@ -540,6 +540,10 @@ msgstr ""
 msgid "A submission cannot be accepted for this attempt."
 msgstr ""
 
+#: src/worker/web/assignment-detail.tsx
+msgid "A submission waiting for a grade opens with its grading form. Going to the next submission opens its form and puts you in its score."
+msgstr ""
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A syntax tree exercise needs a sentence to decompose, written as a list item: “- P ∧ Q”."
 msgstr ""
@@ -710,6 +714,7 @@ msgid "Actions"
 msgstr ""
 
 #: src/worker/web/admin.tsx
+#: src/worker/web/assignment-detail.tsx
 #: src/worker/web/courses.tsx
 #: src/worker/web/labels.ts
 msgid "Active"
@@ -855,6 +860,10 @@ msgid "Administrator bootstrap is not configured on this server. Set ADMIN_BOOTS
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
+msgid "All"
+msgstr ""
+
+#: src/worker/web/assignment-detail.tsx
 msgid "All ({count})"
 msgstr ""
 
@@ -974,6 +983,10 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Approve the autograded score as final"
+msgstr ""
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Approve the autograded score, then go to the next submission"
 msgstr ""
 
 #: src/worker/web/components.tsx
@@ -2921,6 +2934,7 @@ msgid "Join course"
 msgstr ""
 
 #: src/worker/exercise-kit/help-strings.ts
+#: src/worker/web/assignment-detail.tsx
 msgid "Keyboard"
 msgstr ""
 
@@ -3346,14 +3360,6 @@ msgstr ""
 
 #: src/worker/exercises/syntax-tree/strings.ts
 msgid "necessity (connective name)"
-msgstr ""
-
-#: src/worker/web/labels.ts
-msgid "Needs review"
-msgstr ""
-
-#: src/worker/web/assignment-detail.tsx
-msgid "Needs review ({count})"
 msgstr ""
 
 #: src/worker/exercises/syntax-tree/strings.ts
@@ -4378,6 +4384,10 @@ msgstr ""
 msgid "Reviewed"
 msgstr ""
 
+#: src/worker/web/assignment-detail.tsx
+msgid "Reviewing submissions"
+msgstr ""
+
 #: src/worker/routes/content.ts
 msgid "Revision created."
 msgstr ""
@@ -4591,6 +4601,14 @@ msgstr ""
 
 #: src/worker/web/content.tsx
 msgid "Save sharing"
+msgstr ""
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Save the grade (from the score field)"
+msgstr ""
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Save the grade, then go to the next submission"
 msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts
@@ -6451,6 +6469,15 @@ msgstr ""
 msgid "Unpublish is blocked once a student has an attempt; reset attempts first."
 msgstr ""
 
+#: src/worker/web/assignment-detail.tsx
+#: src/worker/web/labels.ts
+msgid "Unreviewed"
+msgstr ""
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Unreviewed ({count})"
+msgstr ""
+
 #: src/worker/web/admin.tsx
 msgid "Unverified"
 msgstr ""
@@ -6468,6 +6495,7 @@ msgid "Upload revision"
 msgstr ""
 
 #: src/worker/exercise-kit/help-strings.ts
+#: src/worker/web/assignment-detail.tsx
 msgid "Usage and keyboard shortcuts"
 msgstr ""
 

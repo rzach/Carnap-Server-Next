@@ -540,6 +540,10 @@ msgstr "Ein Schritt oder ein Abschluss im Baum ist nicht korrekt."
 msgid "A submission cannot be accepted for this attempt."
 msgstr "Für diesen Versuch kann keine Abgabe akzeptiert werden."
 
+#: src/worker/web/assignment-detail.tsx
+msgid "A submission waiting for a grade opens with its grading form. Going to the next submission opens its form and puts you in its score."
+msgstr "Eine Abgabe, die auf eine Bewertung wartet, öffnet sich mit ihrem Bewertungsformular. Beim Wechsel zur nächsten Abgabe öffnet sich deren Formular, und Sie stehen in ihrem Punktefeld."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A syntax tree exercise needs a sentence to decompose, written as a list item: “- P ∧ Q”."
 msgstr "Eine Syntaxbaum-Aufgabe braucht einen Satz zum Zerlegen, als Listenpunkt geschrieben: „- P ∧ Q“."
@@ -710,6 +714,7 @@ msgid "Actions"
 msgstr "Aktionen"
 
 #: src/worker/web/admin.tsx
+#: src/worker/web/assignment-detail.tsx
 #: src/worker/web/courses.tsx
 #: src/worker/web/labels.ts
 msgid "Active"
@@ -855,6 +860,10 @@ msgid "Administrator bootstrap is not configured on this server. Set ADMIN_BOOTS
 msgstr "Die Einrichtung des ersten Administrators ist auf diesem Server nicht konfiguriert. Setzen Sie ADMIN_BOOTSTRAP_TOKEN und starten Sie den Server neu."
 
 #: src/worker/web/assignment-detail.tsx
+msgid "All"
+msgstr "Alle"
+
+#: src/worker/web/assignment-detail.tsx
 msgid "All ({count})"
 msgstr "Alle ({count})"
 
@@ -975,6 +984,10 @@ msgstr "Punktzahl bestätigen"
 #: src/worker/web/assignment-detail.tsx
 msgid "Approve the autograded score as final"
 msgstr "Die automatisch ermittelte Punktzahl als endgültig bestätigen"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Approve the autograded score, then go to the next submission"
+msgstr "Die automatisch ermittelte Punktzahl bestätigen und zur nächsten Abgabe wechseln"
 
 #: src/worker/web/components.tsx
 msgid "Archive {name}"
@@ -2921,6 +2934,7 @@ msgid "Join course"
 msgstr "Kurs beitreten"
 
 #: src/worker/exercise-kit/help-strings.ts
+#: src/worker/web/assignment-detail.tsx
 msgid "Keyboard"
 msgstr "Tastatur"
 
@@ -3347,14 +3361,6 @@ msgstr "Namen für {block}"
 #: src/worker/exercises/syntax-tree/strings.ts
 msgid "necessity (connective name)"
 msgstr "Notwendigkeit"
-
-#: src/worker/web/labels.ts
-msgid "Needs review"
-msgstr "Prüfung erforderlich"
-
-#: src/worker/web/assignment-detail.tsx
-msgid "Needs review ({count})"
-msgstr "Prüfung erforderlich ({count})"
 
 #: src/worker/exercises/syntax-tree/strings.ts
 msgid "negation (connective name)"
@@ -4378,6 +4384,10 @@ msgstr "Sehen Sie sich die Angaben an und starten Sie dann Ihren Versuch. Die Fr
 msgid "Reviewed"
 msgstr "Geprüft"
 
+#: src/worker/web/assignment-detail.tsx
+msgid "Reviewing submissions"
+msgstr "Abgaben prüfen"
+
 #: src/worker/routes/content.ts
 msgid "Revision created."
 msgstr "Revision angelegt."
@@ -4592,6 +4602,14 @@ msgstr "Einstellungen speichern"
 #: src/worker/web/content.tsx
 msgid "Save sharing"
 msgstr "Freigabe speichern"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Save the grade (from the score field)"
+msgstr "Bewertung speichern (im Punktefeld)"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Save the grade, then go to the next submission"
+msgstr "Bewertung speichern und zur nächsten Abgabe wechseln"
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Say which row this row comes from: type that row's number in the margin."
@@ -6451,6 +6469,15 @@ msgstr "Veröffentlichung zurücknehmen"
 msgid "Unpublish is blocked once a student has an attempt; reset attempts first."
 msgstr "Sobald eine studierende Person einen Versuch hat, kann die Veröffentlichung nicht mehr zurückgenommen werden; setzen Sie zuerst die Versuche zurück."
 
+#: src/worker/web/assignment-detail.tsx
+#: src/worker/web/labels.ts
+msgid "Unreviewed"
+msgstr "Ungeprüft"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Unreviewed ({count})"
+msgstr "Ungeprüft ({count})"
+
 #: src/worker/web/admin.tsx
 msgid "Unverified"
 msgstr "Nicht bestätigt"
@@ -6468,6 +6495,7 @@ msgid "Upload revision"
 msgstr "Revision hochladen"
 
 #: src/worker/exercise-kit/help-strings.ts
+#: src/worker/web/assignment-detail.tsx
 msgid "Usage and keyboard shortcuts"
 msgstr "Bedienung und Tastenkürzel"
 

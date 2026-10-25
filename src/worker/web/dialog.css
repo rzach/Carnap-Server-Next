@@ -11,7 +11,9 @@
  * token on the page, where `web/content.css` maps it onto the palette.
  *
  * What differs stays with its owner: where the panel sits and how wide it
- * is, its backdrop, its type size, and what goes in the body.
+ * is, its backdrop, its type size, and what goes in the body. The one body
+ * that is shared is a help panel's table of keys, which the review queue's
+ * `(?)` opens on the page as the exercises' does in a shadow root.
  */
 
 .dialog-panel {
@@ -67,4 +69,43 @@
 
 .dialog-body {
   padding: 0.75rem 0.85rem 0.9rem;
+}
+
+/* A help panel's key table: a muted heading over the keys, each a `<kbd>`
+   beside what it does. */
+.help-dialog-heading {
+  color: var(--_text-muted, var(--exercise-text-muted));
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin: 0.85rem 0 0.45rem;
+  text-transform: uppercase;
+}
+
+.help-shortcuts {
+  display: grid;
+  gap: 0.4rem 0.75rem;
+  grid-template-columns: max-content 1fr;
+  margin: 0;
+}
+
+.help-shortcuts dt,
+.help-shortcuts dd {
+  margin: 0;
+}
+
+.help-shortcuts dt {
+  align-items: center;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.help-shortcuts kbd {
+  background: var(--_field-bg, var(--exercise-field-bg));
+  border: 1px solid var(--_border, var(--exercise-border));
+  border-radius: 0.25rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+  padding: 0.05rem 0.3rem;
+  white-space: nowrap;
 }

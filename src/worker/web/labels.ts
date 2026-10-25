@@ -268,7 +268,7 @@ export function reviewStateLabel(
     case "auto-graded":
       return i18n.t("Auto-graded");
     case "needs-review":
-      return i18n.t("Needs review");
+      return i18n.t("Unreviewed");
     case "not-counted":
       return i18n.t("Does not count");
     case "reset":

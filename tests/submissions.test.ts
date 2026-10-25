@@ -1989,7 +1989,7 @@ Choose yes.
 
       // The default view leads with the needs-review filter and offers the
       // one-click approval on the waiting submission.
-      expect(defaultView).toContain("Needs review (");
+      expect(defaultView).toContain("Unreviewed (");
       expect(defaultView).toContain('class="review-count-needs">1</span>');
       expect(defaultView).toContain("All (1)");
       expect(defaultView).toContain('class="approve-score"');
@@ -3329,7 +3329,7 @@ Explain the rule.
 
       expect(read()).toEqual({
         active: "2",
-        cards: ["First try.: Reviewed", "Third try.: Needs review"],
+        cards: ["First try.: Reviewed", "Third try.: Unreviewed"],
         needs: "1",
         note: "",
       });
@@ -3405,6 +3405,111 @@ Explain the rule.
       expect(document.body.textContent).toContain(
         "None of the recorded submissions counts toward a grade.",
       );
+    });
+  });
+
+  test("names its keys in a (?) panel, and approves and moves on with Ctrl+Shift+Enter", async () => {
+    await withStorage(async (_storage, env) => {
+      const instructor = await login(env, "approve-teacher@example.test");
+      const student = await login(env, "approve-student@example.test");
+      const courseId = await createCourse(env, instructor);
+      const revisionId = await createRevision(
+        env,
+        instructor,
+        `# Lesson
+
+::::multiple-choice{#q1 points="2" exam}
+Choose yes.
+
+- [x] yes | Yes
+- [ ] no | No
+::::
+
+::::multiple-choice{#q2 points="2" exam}
+Choose yes again.
+
+- [x] yes | Yes
+- [ ] no | No
+::::`,
+      );
+
+      await enrollStudent(env, instructor, student, courseId);
+
+      const assignment = await createPublishedAssignment(
+        env,
+        instructor,
+        courseId,
+        revisionId,
+      );
+      const attemptId = await beginAttempt(
+        env,
+        student,
+        courseId,
+        assignment.id,
+      );
+
+      // Both wrong under exam: each waits for a grader, with its automatic
+      // score to approve.
+      for (const exerciseId of ["q1", "q2"]) {
+        await submitAnswer(env, student, courseId, assignment.id, attemptId, {
+          ...answer(["no"]),
+          exerciseId,
+        });
+      }
+
+      const page = await reviewPage(
+        env,
+        instructor,
+        `/courses/${courseId}/instructor/assignments/${assignment.id}/submissions`,
+      );
+      const document = page.window.document;
+      const trigger = document.querySelector(".review-help-trigger");
+      const dialog = document.getElementById(
+        trigger?.getAttribute("data-dialog-target") ?? "",
+      );
+
+      expect(trigger?.textContent).toBe("?");
+      expect(trigger?.getAttribute("aria-label")).toBe(
+        "Usage and keyboard shortcuts",
+      );
+      expect(
+        [...(dialog?.querySelectorAll(".help-shortcuts kbd") ?? [])].map(
+          (key) => [key.textContent, key.getAttribute("data-mac-key")],
+        ),
+      ).toEqual([
+        ["Enter", null],
+        ["Ctrl-Enter", "Cmd-Enter"],
+        ["Ctrl-Shift-Enter", "Cmd-Shift-Enter"],
+      ]);
+
+      const cards = [...document.querySelectorAll(".submission-review-card")];
+      const firstScore = cards[0]?.querySelector(
+        "[name=score]",
+      ) as HTMLInputElement;
+      const nextScore = cards[1]?.querySelector(
+        "[name=score]",
+      ) as HTMLInputElement;
+
+      // From the empty score field: the approval needs no score, and the
+      // grading form is not asked to validate.
+      firstScore.dispatchEvent(
+        new page.window.KeyboardEvent("keydown", {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+          key: "Enter",
+          shiftKey: true,
+        }),
+      );
+      await page.settle();
+
+      // Approved, it leaves Unreviewed, and the grader is in the next
+      // card's score.
+      expect(cards[0]?.isConnected).toBe(false);
+      expect(document.querySelector(".review-count-needs")?.textContent).toBe(
+        "1",
+      );
+      expect(document.activeElement).toBe(nextScore);
     });
   });
 });

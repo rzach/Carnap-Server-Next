@@ -540,6 +540,10 @@ msgstr "A step or a closure in the tree does not check."
 msgid "A submission cannot be accepted for this attempt."
 msgstr "A submission cannot be accepted for this attempt."
 
+#: src/worker/web/assignment-detail.tsx
+msgid "A submission waiting for a grade opens with its grading form. Going to the next submission opens its form and puts you in its score."
+msgstr "A submission waiting for a grade opens with its grading form. Going to the next submission opens its form and puts you in its score."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A syntax tree exercise needs a sentence to decompose, written as a list item: “- P ∧ Q”."
 msgstr "A syntax tree exercise needs a sentence to decompose, written as a list item: “- P ∧ Q”."
@@ -710,6 +714,7 @@ msgid "Actions"
 msgstr "Actions"
 
 #: src/worker/web/admin.tsx
+#: src/worker/web/assignment-detail.tsx
 #: src/worker/web/courses.tsx
 #: src/worker/web/labels.ts
 msgid "Active"
@@ -855,6 +860,10 @@ msgid "Administrator bootstrap is not configured on this server. Set ADMIN_BOOTS
 msgstr "Administrator bootstrap is not configured on this server. Set ADMIN_BOOTSTRAP_TOKEN and restart it."
 
 #: src/worker/web/assignment-detail.tsx
+msgid "All"
+msgstr "All"
+
+#: src/worker/web/assignment-detail.tsx
 msgid "All ({count})"
 msgstr "All ({count})"
 
@@ -975,6 +984,10 @@ msgstr "Approve score"
 #: src/worker/web/assignment-detail.tsx
 msgid "Approve the autograded score as final"
 msgstr "Approve the autograded score as final"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Approve the autograded score, then go to the next submission"
+msgstr "Approve the autograded score, then go to the next submission"
 
 #: src/worker/web/components.tsx
 msgid "Archive {name}"
@@ -2921,6 +2934,7 @@ msgid "Join course"
 msgstr "Join course"
 
 #: src/worker/exercise-kit/help-strings.ts
+#: src/worker/web/assignment-detail.tsx
 msgid "Keyboard"
 msgstr "Keyboard"
 
@@ -3347,14 +3361,6 @@ msgstr "Names for {block}"
 #: src/worker/exercises/syntax-tree/strings.ts
 msgid "necessity (connective name)"
 msgstr "necessity"
-
-#: src/worker/web/labels.ts
-msgid "Needs review"
-msgstr "Needs review"
-
-#: src/worker/web/assignment-detail.tsx
-msgid "Needs review ({count})"
-msgstr "Needs review ({count})"
 
 #: src/worker/exercises/syntax-tree/strings.ts
 msgid "negation (connective name)"
@@ -4378,6 +4384,10 @@ msgstr "Review the details, then start your attempt. The questions appear once y
 msgid "Reviewed"
 msgstr "Reviewed"
 
+#: src/worker/web/assignment-detail.tsx
+msgid "Reviewing submissions"
+msgstr "Reviewing submissions"
+
 #: src/worker/routes/content.ts
 msgid "Revision created."
 msgstr "Revision created."
@@ -4592,6 +4602,14 @@ msgstr "Save settings"
 #: src/worker/web/content.tsx
 msgid "Save sharing"
 msgstr "Save sharing"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Save the grade (from the score field)"
+msgstr "Save the grade (from the score field)"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Save the grade, then go to the next submission"
+msgstr "Save the grade, then go to the next submission"
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Say which row this row comes from: type that row's number in the margin."
@@ -6451,6 +6469,15 @@ msgstr "Unpublish"
 msgid "Unpublish is blocked once a student has an attempt; reset attempts first."
 msgstr "Unpublish is blocked once a student has an attempt; reset attempts first."
 
+#: src/worker/web/assignment-detail.tsx
+#: src/worker/web/labels.ts
+msgid "Unreviewed"
+msgstr "Unreviewed"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Unreviewed ({count})"
+msgstr "Unreviewed ({count})"
+
 #: src/worker/web/admin.tsx
 msgid "Unverified"
 msgstr "Unverified"
@@ -6468,6 +6495,7 @@ msgid "Upload revision"
 msgstr "Upload revision"
 
 #: src/worker/exercise-kit/help-strings.ts
+#: src/worker/web/assignment-detail.tsx
 msgid "Usage and keyboard shortcuts"
 msgstr "Usage and keyboard shortcuts"
 

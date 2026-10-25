@@ -52,7 +52,8 @@
    from the tokens rather than left to the page's `button` rule, so that the
    tokens are the whole of what colours them. */
 .exercise-submit,
-.exercise-actions button {
+.exercise-actions button,
+.help-trigger {
   background: var(--exercise-field-bg);
   border-color: var(--exercise-border);
   color: var(--exercise-accent);
@@ -63,7 +64,8 @@
 }
 
 .exercise-submit:hover,
-.exercise-actions button:hover {
+.exercise-actions button:hover,
+.help-trigger:hover {
   background: var(--exercise-accent-bg);
   border-color: var(--exercise-accent);
   color: var(--exercise-accent-text);
@@ -98,8 +100,12 @@
    Only the horizontal padding is its own: the glyph is a single character, so
    the row's full side padding would leave it swimming. Nothing vertical is set
    here — a padding shorthand, or a tighter line height, would make it the one
-   short button in the row, which is exactly what it must not be. */
-.exercise-actions .help-trigger {
+   short button in the row, which is exactly what it must not be.
+
+   The review queue's `(?)` is the same button on the page, out of any bar,
+   so both rules name it bare too. */
+.exercise-actions .help-trigger,
+.help-trigger {
   padding-left: 0.6rem;
   padding-right: 0.6rem;
 }

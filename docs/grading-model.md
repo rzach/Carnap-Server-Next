@@ -134,7 +134,7 @@ rounded to whole points for an LMS.
 The review queue asks the same calculation which submissions count: for each
 exercise, the one step 2 selected, and the student's latest try while it has
 no grade yet, since its grade could still be the best. Its Active tab lists
-those, and Needs review the ones among them still waiting for a grader. Every
+those, and Unreviewed the ones among them still waiting for a grader. Every
 other try, and a reset attempt's work, is listed under All, marked "Does not
 count" or "Reset". A grade on one of a student's several tries can change
 which one counts, so the reply to a grade carries the new state of each of

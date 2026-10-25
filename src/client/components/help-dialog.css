@@ -1,9 +1,9 @@
 /*
  * What is this panel's own; the frame (surface, header strip, close button,
- * body padding) is the page chrome's `web/dialog.css`, shared with its modals and
- * served ahead of this. Appended to a widget's shadow styles, which is where
- * the panel lives; the `(?)` that opens it is in light DOM and is styled by
- * `.exercise-actions .help-trigger` in `web/styles.ts`.
+ * body padding) and the key table are the page chrome's `web/dialog.css`,
+ * shared with its modals and served ahead of this. Appended to a widget's
+ * shadow styles, which is where the panel lives; the `(?)` that opens it is
+ * in light DOM and is styled by `.help-trigger` in `exercise-kit/exercise.css`.
  *
  * `position` and `margin` here are not decoration: they are what defeats the UA
  * stylesheet's centring so {@link openHelpDialog} can place the panel.
@@ -38,29 +38,6 @@
 .help-dialog-body p {
   margin: 0 0 0.55rem;
 }
-.help-dialog-heading {
-  color: var(--_text-muted);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  margin: 0.85rem 0 0.45rem;
-  text-transform: uppercase;
-}
-.help-shortcuts {
-  display: grid;
-  gap: 0.4rem 0.75rem;
-  grid-template-columns: max-content 1fr;
-  margin: 0;
-}
-.help-shortcuts dt,
-.help-shortcuts dd {
-  margin: 0;
-}
-.help-shortcuts dt {
-  align-items: center;
-  display: flex;
-  gap: 0.25rem;
-}
 /* The toolbar glyph beside the keys, so the legend reads glyph · keys · what
    it does. Drawn in the muted ink: this is a picture of the button, not the
    button. The cell is present on every row, empty where the action has no
@@ -75,15 +52,6 @@
 .help-shortcut-icon .toolbar-icon {
   height: 18px;
   width: 18px;
-}
-.help-shortcuts kbd {
-  background: var(--_field-bg);
-  border: 1px solid var(--_border);
-  border-radius: 0.25rem;
-  font-family: ui-monospace, monospace;
-  font-size: 0.78rem;
-  padding: 0.05rem 0.3rem;
-  white-space: nowrap;
 }
 
 /* The Ctrl-? panel (`show-source.ts`) borrows this one's placement and frame,

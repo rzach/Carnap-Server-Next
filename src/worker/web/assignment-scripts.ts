@@ -435,7 +435,7 @@ ${readStringsPrelude(EXERCISE_UI_STRINGS_ATTRIBUTE)}
  * reloading. Without JS the forms POST and redirect as before; this only takes
  * over once it can, and mirrors the server's render of the new state — the
  * status line, the review-state word, whether the one-click approve still
- * applies, the "needs review" count, and (in the needs-review filter) dropping
+ * applies, the Unreviewed count, and (on the Unreviewed tab) dropping
  * the card out of the queue it no longer belongs in. A grade can move which of
  * a student's tries counts, so the reply carries every such try's new state
  * and the script redraws each card it moved; one that now belongs on this tab
@@ -822,10 +822,29 @@ ${readStringsPrelude(REVIEW_UI_STRINGS_ATTRIBUTE)}
     }
   }
 
+  // The help panel names the keys as they are bound here: Cmd on a Mac.
+  if (/Mac/.test(navigator.platform)) {
+    for (const key of document.querySelectorAll("kbd[data-mac-key]")) {
+      key.textContent = key.dataset.macKey;
+    }
+  }
+
+  // While an approval is on its way the button is disabled, which stops a
+  // click; the shortcut goes round the button, so it asks too.
+  function approve(form, advance) {
+    const button = form.querySelector("button[type=submit]");
+
+    if (button !== null && button.disabled) {
+      return;
+    }
+
+    submit(form, {}, advance);
+  }
+
   for (const form of document.querySelectorAll("form.approve-score-form")) {
     form.addEventListener("submit", (event) => {
       event.preventDefault();
-      submit(form, {});
+      approve(form, false);
     });
   }
 
@@ -857,18 +876,39 @@ ${readStringsPrelude(REVIEW_UI_STRINGS_ATTRIBUTE)}
       event.preventDefault();
       grade(form, false);
     });
+  }
 
-    // Ctrl+Enter (Cmd+Enter on a Mac) saves and moves to the next card, from
-    // the score or the feedback alike. Plain Enter keeps what a browser does
-    // with it — saves from the score, starts a line in the feedback — so it
-    // never moves the grader anywhere they did not ask to go.
-    form.addEventListener("keydown", (event) => {
+  // Ctrl+Enter (Cmd+Enter on a Mac) saves and moves to the next card, from
+  // the score or the feedback alike. Plain Enter keeps what a browser does
+  // with it — saves from the score, starts a line in the feedback — so it
+  // never moves the grader anywhere they did not ask to go. With Shift it
+  // approves the autograded score instead, where the card still offers one.
+  // Heard on the footer rather than the form, so that it works from the
+  // Approve button as well as from the grading form beside it.
+  for (const footer of document.querySelectorAll(".submission-review-footer")) {
+    footer.addEventListener("keydown", (event) => {
       if (
-        event.key === "Enter" &&
-        (event.ctrlKey || event.metaKey) &&
-        !event.isComposing
+        event.key !== "Enter" ||
+        !(event.ctrlKey || event.metaKey) ||
+        event.isComposing ||
+        !(event.target instanceof Element)
       ) {
-        event.preventDefault();
+        return;
+      }
+
+      const form = event.shiftKey
+        ? footer.querySelector("form.approve-score-form")
+        : event.target.closest("form.manual-evaluation-form");
+
+      if (form === null) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (event.shiftKey) {
+        approve(form, true);
+      } else {
         grade(form, true);
       }
     });
