@@ -2484,6 +2484,17 @@ form > .bar-field {
   font-size: 0.82rem;
 }
 
+.app-footer .footer-links {
+  column-gap: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.app-footer .footer-sep {
+  color: var(--ink-faint);
+  font-size: 0.82rem;
+}
+
 .app-footer .footer-link {
   color: var(--ink-muted);
   font-size: 0.82rem;

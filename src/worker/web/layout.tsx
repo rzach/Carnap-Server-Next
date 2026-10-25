@@ -296,9 +296,19 @@ const Layout: FC<LayoutProps> = ({
                   "A platform for teaching and practicing formal logic.",
                 )}
               </span>
-              <a class="footer-link" href="/donate">
-                {i18n.t("Donate to charity →")}
-              </a>
+              {/* On every page with a footer, signed in or not: About is
+                  where an instance's Impressum or privacy notice lives. */}
+              <span class="footer-links">
+                <a class="footer-link" href="/about">
+                  {i18n.t("About")}
+                </a>
+                <span aria-hidden="true" class="footer-sep">
+                  ·
+                </span>
+                <a class="footer-link" href="/donate">
+                  {i18n.t("Donate to charity")}
+                </a>
+              </span>
             </div>
           </footer>
         )}

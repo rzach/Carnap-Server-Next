@@ -145,8 +145,11 @@ import {
   ltiProviderSubject,
 } from "../../domain/lti";
 import {
+  type AboutPage,
   DEFAULT_SITE_SETTINGS,
   isNativeRegistration,
+  type NativeRegistration,
+  type SetAboutPageInput,
   type SetNativeRegistrationInput,
   type SiteSettings,
 } from "../../domain/site-settings";
@@ -3097,46 +3100,104 @@ class SqliteAdminAuditStore implements AdminAuditStore {
 }
 
 const NATIVE_REGISTRATION_KEY = "native_registration";
+const ABOUT_PAGE_KEY = "about_page";
+
+/*
+ * A value this build cannot read is a database written by another version, not
+ * a reason to fall back: a registration setting read as its default would open
+ * registration, and an About page read as absent would drop what an operator
+ * may be obliged to publish. Both refuse loudly instead.
+ */
+
+function nativeRegistrationFromRow(value: string): NativeRegistration {
+  if (!isNativeRegistration(value)) {
+    throw new Error(
+      `Unknown native_registration setting: ${JSON.stringify(value)}.`,
+    );
+  }
+
+  return value;
+}
+
+function aboutPageFromRow(value: string): AboutPage {
+  const parsed: unknown = JSON.parse(value);
+
+  if (
+    typeof parsed !== "object" ||
+    parsed === null ||
+    typeof (parsed as { html?: unknown }).html !== "string" ||
+    typeof (parsed as { source?: unknown }).source !== "string"
+  ) {
+    throw new Error("Unreadable about_page setting.");
+  }
+
+  const page = parsed as AboutPage;
+
+  return { html: page.html, source: page.source };
+}
 
 class SqliteSiteSettingsStore implements SiteSettingsStore {
   constructor(private readonly db: AppDatabase) {}
 
   async read(): Promise<SiteSettings> {
     const rows = await this.db.select().from(siteSettings);
-    const stored = rows.find((row) => row.key === NATIVE_REGISTRATION_KEY);
+    const stored = (key: string) =>
+      rows.find((row) => row.key === key)?.value;
+    const registration = stored(NATIVE_REGISTRATION_KEY);
+    const about = stored(ABOUT_PAGE_KEY);
 
-    if (stored === undefined) {
-      return DEFAULT_SITE_SETTINGS;
-    }
-
-    // A value this build does not know is a database written by another
-    // version, not a reason to open registration: refuse loudly instead.
-    if (!isNativeRegistration(stored.value)) {
-      throw new Error(
-        `Unknown native_registration setting: ${JSON.stringify(stored.value)}.`,
-      );
-    }
-
-    return { ...DEFAULT_SITE_SETTINGS, nativeRegistration: stored.value };
+    return {
+      about:
+        about === undefined
+          ? DEFAULT_SITE_SETTINGS.about
+          : aboutPageFromRow(about),
+      nativeRegistration:
+        registration === undefined
+          ? DEFAULT_SITE_SETTINGS.nativeRegistration
+          : nativeRegistrationFromRow(registration),
+    };
   }
 
-  async setNativeRegistration(
-    input: SetNativeRegistrationInput,
+  setNativeRegistration(input: SetNativeRegistrationInput): Promise<void> {
+    return this.write(NATIVE_REGISTRATION_KEY, input, input.value);
+  }
+
+  // A cleared page is a missing row, as a fresh instance has, rather than a
+  // stored null: then there is one way for an instance to have no page.
+  async setAboutPage(input: SetAboutPageInput): Promise<void> {
+    if (input.value === null) {
+      await this.db
+        .delete(siteSettings)
+        .where(eq(siteSettings.key, ABOUT_PAGE_KEY));
+      return;
+    }
+
+    await this.write(
+      ABOUT_PAGE_KEY,
+      input,
+      JSON.stringify({ html: input.value.html, source: input.value.source }),
+    );
+  }
+
+  private async write(
+    key: string,
+    by: { readonly updatedAt: string; readonly updatedById: AppId },
+    value: string,
   ): Promise<void> {
     await this.db
       .insert(siteSettings)
       .values({
-        key: NATIVE_REGISTRATION_KEY,
-        updatedAt: input.updatedAt,
-        updatedById: input.updatedById,
-        value: input.value,
+        key,
+        updatedAt: by.updatedAt,
+        updatedById: by.updatedById,
+        value,
       })
       .onConflictDoUpdate({
         target: siteSettings.key,
         set: {
-          updatedAt: input.updatedAt,
-          updatedById: input.updatedById,
-          value: input.value,
+          updatedAt: by.updatedAt,
+          updatedById: by.updatedById,
+          value,
         },
       });
   }

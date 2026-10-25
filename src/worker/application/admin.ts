@@ -9,12 +9,18 @@ import type { CourseMembership } from "../domain/courses";
 import type { AppId } from "../domain/ids";
 import { createAppId } from "../domain/ids";
 import {
+  type AboutPage,
   isNativeRegistration,
   type SiteSettings,
 } from "../domain/site-settings";
 import type { User } from "../domain/users";
 import { deferred } from "../i18n/deferred";
 import type { EventLog } from "../log";
+import {
+  ABOUT_PAGE_MAX_LENGTH,
+  type AboutPageCompileResult,
+  compileAboutPage,
+} from "./about";
 import { appendAdminAudit, auditMoment } from "./admin-audit";
 import { type AuthenticatedActor, assertEmail, normalizeEmail } from "./auth";
 import { requirePlatformCapability } from "./authorization";
@@ -203,6 +209,63 @@ export class AdminService {
     });
 
     return { ...settings, nativeRegistration: value };
+  }
+
+  /** The About page as it stands, for its editor. Site administrators only. */
+  async getAboutPage(actor: AuthenticatedActor): Promise<AboutPage | null> {
+    requirePlatformCapability(actor, ["site_admin"]);
+
+    return (await this.options.stores.siteSettings.read()).about;
+  }
+
+  /**
+   * Replace the instance's own About text, or clear it with a blank source.
+   * Source that does not compile is answered with its diagnostics rather than
+   * thrown, so the editor can show them beside the text it keeps. Saving the
+   * text already there is a no-op, not an audit row.
+   */
+  async setAboutPage(
+    actor: AuthenticatedActor,
+    source: string,
+  ): Promise<AboutPageCompileResult> {
+    requirePlatformCapability(actor, ["site_admin"]);
+
+    if (source.length > ABOUT_PAGE_MAX_LENGTH) {
+      throw badRequest(
+        "about_page_too_long",
+        deferred.i18n.t("The About page can be at most {max} characters.", {
+          max: ABOUT_PAGE_MAX_LENGTH,
+        }),
+      );
+    }
+
+    const compiled = await compileAboutPage(source);
+
+    if (!compiled.ok) {
+      return compiled;
+    }
+
+    const current = (await this.options.stores.siteSettings.read()).about;
+
+    if ((current?.source ?? null) === (compiled.page?.source ?? null)) {
+      return compiled;
+    }
+
+    const now = auditMoment(this.options.now);
+
+    await this.options.stores.siteSettings.setAboutPage({
+      updatedAt: now.timestamp,
+      updatedById: actor.user.id,
+      value: compiled.page,
+    });
+    await appendAdminAudit(this.options, {
+      action: "admin.change_about_page",
+      actorUserId: actor.user.id,
+      metadata: { cleared: compiled.page === null },
+      timestamp: now.timestamp,
+    });
+
+    return compiled;
   }
 
   async listAuditEvents(

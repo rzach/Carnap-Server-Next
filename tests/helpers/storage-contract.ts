@@ -1101,6 +1101,7 @@ export function describeStorageContract(
         const admin = await createUser(stores, "admin-1");
 
         await expect(stores.siteSettings.read()).resolves.toEqual({
+          about: null,
           nativeRegistration: "public",
         });
 
@@ -1116,7 +1117,47 @@ export function describeStorageContract(
         });
 
         await expect(stores.siteSettings.read()).resolves.toEqual({
+          about: null,
           nativeRegistration: "lms_only",
+        });
+      });
+    });
+
+    test("the About page is kept beside the other settings, and clearing it removes it", async () => {
+      await withStorage(async ({ stores }) => {
+        const admin = await createUser(stores, "admin-1");
+        const page = { html: "<p>Impressum</p>", source: "Impressum" };
+
+        await stores.siteSettings.setNativeRegistration({
+          updatedAt: NOW,
+          updatedById: admin.id,
+          value: "link_only",
+        });
+        await stores.siteSettings.setAboutPage({
+          updatedAt: NOW,
+          updatedById: admin.id,
+          value: { html: "<p>First</p>", source: "First" },
+        });
+        await stores.siteSettings.setAboutPage({
+          updatedAt: LATER,
+          updatedById: admin.id,
+          value: page,
+        });
+
+        await expect(stores.siteSettings.read()).resolves.toEqual({
+          about: page,
+          nativeRegistration: "link_only",
+        });
+
+        await stores.siteSettings.setAboutPage({
+          updatedAt: LATER,
+          updatedById: admin.id,
+          value: null,
+        });
+
+        await expect(stores.siteSettings.read()).resolves.toEqual({
+          about: null,
+          nativeRegistration: "link_only",
         });
       });
     });

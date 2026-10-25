@@ -1,3 +1,7 @@
+/** Where this server's source lives; the About page links it too. */
+export const CARNAP_SOURCE_URL =
+  "https://github.com/gleachkr/Carnap-Server-Next";
+
 /**
  * How this server identifies itself on every request it makes to somebody
  * else's server.
@@ -18,8 +22,7 @@
  * The URL in the comment form is the convention platforms expect for a robot:
  * an admin reading their logs can find out who we are without asking.
  */
-export const OUTBOUND_USER_AGENT =
-  "CarnapServer/1.0 (+https://github.com/gleachkr/Carnap-Server-Next)";
+export const OUTBOUND_USER_AGENT = `CarnapServer/1.0 (+${CARNAP_SOURCE_URL})`;
 
 /**
  * Add our `User-Agent` to a set of request headers, leaving an explicit one

@@ -13,6 +13,7 @@
 import type { CompileResult } from "@aufbau/compiler";
 import type { EditorView } from "@codemirror/view";
 import { raw } from "hono/html";
+import { compileAboutPage } from "../worker/application/about";
 import type { CompileMarkdownResult } from "../worker/application/content/compiler";
 import { compileCarnapMarkdown } from "../worker/application/content/compiler";
 import type { CompilerDiagnostic } from "../worker/application/content/diagnostics";
@@ -662,6 +663,13 @@ setUpSplitView();
 // on a page where the preview could not be set up.
 if (source?.form != null) {
   warnBeforeDiscarding(source.form);
+}
+
+// The instance's About text has no preview column either: it is shown in the
+// site's chrome, and `/about` is a click away. Its compile is the one the save
+// runs, which also refuses the blocks a lesson would accept.
+if (source !== null && diagnosticsHost !== null && sourceFormat === "about") {
+  setUpEditor(source, diagnosticsHost, compileAboutPage, () => undefined);
 }
 
 // An MM0 item has no preview column and no document to build: the editor and

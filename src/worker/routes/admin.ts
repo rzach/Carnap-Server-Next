@@ -18,6 +18,7 @@ import type { User } from "../domain/users";
 import { type AppBindings, requireAuthenticated } from "../http";
 import { logRequestEvent, requestLog } from "../request-log";
 import { storesForContext } from "../stores";
+import { renderAboutEditor } from "../web/about";
 import {
   type AuditDirectory,
   renderAdminAudit,
@@ -491,6 +492,62 @@ adminRoutes.post("/settings/registration", async (context) => {
       error,
       ADMIN_CHROME,
       i18n.t("Registration setting not changed"),
+    );
+  }
+});
+
+adminRoutes.get("/about", async (context) => {
+  const loginRedirect = webActorOrLogin(context);
+
+  if (loginRedirect !== null) {
+    return loginRedirect;
+  }
+
+  const actor = requireAuthenticated(context);
+  const page = await adminService(context).getAboutPage(actor);
+
+  return renderAboutEditor(context, {
+    diagnostics: [],
+    saved: new URL(context.req.url).searchParams.has("saved"),
+    source: page?.source ?? "",
+  });
+});
+
+adminRoutes.post("/about", async (context) => {
+  const actor = requireAuthenticated(context);
+  const form = isFormSubmission(context);
+
+  try {
+    const source = form
+      ? fieldValue((await context.req.raw.formData()).get("source"))
+      : (await readJsonObject(context)).source;
+    const text = typeof source === "string" ? source : "";
+    const result = await adminService(context).setAboutPage(actor, text);
+
+    if (form) {
+      // A refusal keeps the page, and the text, where they were: an error
+      // page would send the administrator back to a field the browser may
+      // well have emptied.
+      return result.ok
+        ? redirect("/admin/about?saved=1")
+        : renderAboutEditor(context, {
+            diagnostics: result.diagnostics,
+            saved: false,
+            source: text,
+          });
+    }
+
+    return result.ok
+      ? context.json({ about: result.page })
+      : context.json({ diagnostics: result.diagnostics }, 400);
+  } catch (error) {
+    const i18n = context.get("i18n");
+
+    return formErrorOrThrow(
+      context,
+      error,
+      ADMIN_CHROME,
+      i18n.t("About page not changed"),
     );
   }
 });

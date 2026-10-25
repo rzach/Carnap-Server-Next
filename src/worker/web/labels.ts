@@ -317,6 +317,8 @@ export function auditActionLabel(
       return i18n.t("First site administrator created");
     case "admin.change_native_registration":
       return i18n.t("Account registration changed");
+    case "admin.change_about_page":
+      return i18n.t("About page changed");
     case "admin.change_course_membership":
       return i18n.t("Course membership changed");
     case "admin.grant_platform_capability":

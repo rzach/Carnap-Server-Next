@@ -48,6 +48,7 @@ import type {
   LtiResourceLink,
 } from "../domain/lti";
 import type {
+  SetAboutPageInput,
   SetNativeRegistrationInput,
   SiteSettings,
 } from "../domain/site-settings";
@@ -1435,6 +1436,7 @@ export interface AdminStatsStore {
  */
 export interface SiteSettingsStore {
   read(): Promise<SiteSettings>;
+  setAboutPage(input: SetAboutPageInput): Promise<void>;
   setNativeRegistration(input: SetNativeRegistrationInput): Promise<void>;
 }
 

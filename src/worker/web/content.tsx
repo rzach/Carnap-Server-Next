@@ -405,7 +405,7 @@ export interface Diagnostic extends TranslatableMessage {
   readonly severity: DiagnosticSeverity;
 }
 
-const DiagnosticsList: FC<{
+export const DiagnosticsList: FC<{
   readonly diagnostics: readonly Diagnostic[];
 }> = ({ diagnostics }) => {
   const i18n = useI18n();

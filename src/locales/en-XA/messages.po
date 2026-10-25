@@ -669,6 +669,24 @@ msgstr ""
 msgid "A wrong pick starts the tree over."
 msgstr ""
 
+#: src/worker/web/about.tsx
+#: src/worker/web/layout.tsx
+msgid "About"
+msgstr ""
+
+#: src/worker/web/about.tsx
+#: src/worker/web/admin.tsx
+msgid "About page"
+msgstr ""
+
+#: src/worker/web/labels.ts
+msgid "About page changed"
+msgstr ""
+
+#: src/worker/routes/admin.ts
+msgid "About page not changed"
+msgstr ""
+
 #: src/worker/application/lti-admin.ts
 #: src/worker/web/admin-lti.tsx
 msgid "Access token URL"
@@ -1369,6 +1387,11 @@ msgstr ""
 msgid "Carnap home"
 msgstr ""
 
+#: src/worker/web/about.tsx
+msgid "Carnap is a platform for teaching and practicing formal logic. Its source code is on {github}."
+msgstr ""
+
+#: src/worker/web/about.tsx
 #: src/worker/web/content.tsx
 msgid "Carnap Markdown"
 msgstr ""
@@ -1398,6 +1421,7 @@ msgstr ""
 msgid "Change email address"
 msgstr ""
 
+#: src/worker/web/about.tsx
 #: src/worker/web/admin.tsx
 msgid "Change saved."
 msgstr ""
@@ -2174,7 +2198,7 @@ msgid "Domain"
 msgstr ""
 
 #: src/worker/web/layout.tsx
-msgid "Donate to charity →"
+msgid "Donate to charity"
 msgstr ""
 
 #: src/worker/web/courses.tsx
@@ -2939,6 +2963,10 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Inspect and reset student attempts"
+msgstr ""
+
+#: src/worker/web/about.tsx
+msgid "Instance text"
 msgstr ""
 
 #: src/worker/web/labels.ts
@@ -4634,6 +4662,7 @@ msgstr ""
 msgid "Rules a proof can cite: {names}."
 msgstr ""
 
+#: src/worker/web/about.tsx
 #: src/worker/web/admin.tsx
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/courses.tsx
@@ -4847,6 +4876,10 @@ msgstr ""
 
 #: src/worker/exercise-kit/copy-source-strings.ts
 msgid "Show your work as source"
+msgstr ""
+
+#: src/worker/web/about.tsx
+msgid "Shown to everyone at /about, signed in or not, above what every Carnap instance says about itself. Write it in Carnap Markdown, as a lesson's prose; leave it empty to show only that part."
 msgstr ""
 
 #: src/worker/infrastructure/email/resend.ts
@@ -5247,6 +5280,10 @@ msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The {name} attribute must be true or false."
+msgstr ""
+
+#: src/worker/application/admin.ts
+msgid "The About page can be at most {max} characters."
 msgstr ""
 
 #: src/worker/web/ui-strings.ts
@@ -6121,6 +6158,10 @@ msgstr ""
 msgid "This grade has not been released."
 msgstr ""
 
+#: src/worker/web/about.tsx
+msgid "This instance runs commit {commit}."
+msgstr ""
+
 #: src/worker/application/content/diagnostic-strings.ts
 #: src/worker/logic/specs/strings.ts
 msgid "This is a {actual} where a {expected} is needed."
@@ -6674,6 +6715,10 @@ msgstr ""
 msgid "Verified {when}"
 msgstr ""
 
+#: src/worker/web/about.tsx
+msgid "View the About page"
+msgstr ""
+
 #: src/worker/web/components.tsx
 msgid "View this course as"
 msgstr ""
@@ -6702,6 +6747,10 @@ msgstr ""
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/content.tsx
 msgid "What changed, optional"
+msgstr ""
+
+#: src/worker/web/admin.tsx
+msgid "What this instance says about itself, such as an Impressum or privacy notice"
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx

@@ -184,6 +184,22 @@ The default is open because the first administrator signs in by email before
 anyone can invite them. Change the setting after
 [becoming the site administrator](#first-run-becoming-the-site-administrator).
 
+## About page
+
+Every page with a footer links to `/about`, which anyone can read without
+signing in. It says what Carnap is, links the source on GitHub, and names the
+commit the instance runs when `CARNAP_COMMIT` is set (see
+[Configuration](#configuration)).
+
+Above that, the page shows the instance's own text: the place for an
+Impressum, a privacy notice, or whom to contact. A site administrator writes
+it at **Admin › About page** (`/admin/about`) in Carnap Markdown, the language
+of a lesson's prose. Headings, lists, links, tables, footnotes and math work
+as they do in a lesson. Raw HTML, exercises, theory blocks and `:::style`
+blocks are refused, with the same diagnostics the lesson editor gives. Saving
+an empty text removes the instance's part. Each change is recorded in the
+audit log as `admin.change_about_page`.
+
 ## Configuration
 
 The standalone server reads environment variables at startup. Unset a
@@ -202,6 +218,13 @@ variable to disable it; an empty value is not always equivalent to absence.
 - `CARNAP_TRUST_PROXY`: set to `1` when a trusted reverse proxy supplies the
   public scheme, host and client address. See
   [Reverse proxy setup](#behind-a-reverse-proxy).
+- `CARNAP_COMMIT`: the Git commit the build was made from, which the
+  [About page](#about-page) names and links. Neither host reads Git at run
+  time, so set it when building or deploying:
+  `podman build --build-arg CARNAP_COMMIT=$(git rev-parse HEAD) .` for the
+  container, or
+  `npx wrangler deploy -c wrangler.<name>.jsonc --var CARNAP_COMMIT:$(git rev-parse HEAD)`
+  on Workers. A value that is not a commit hash is ignored.
 
 ### Email and login
 

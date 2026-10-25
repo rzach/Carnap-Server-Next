@@ -1,5 +1,6 @@
 import { type Context, Hono } from "hono";
 
+import { readAboutPage } from "../application/about";
 import type {
   AuthenticatedActor,
   StartedNativeLogin,
@@ -25,6 +26,8 @@ import { deferred } from "../i18n/deferred";
 import type { Translator } from "../i18n/translator";
 import { loginEmailSenderFromEnv } from "../infrastructure/email/resend";
 import { turnstileForContext } from "../infrastructure/turnstile";
+import { storesForContext } from "../stores";
+import { buildCommit, renderAboutPage } from "../web/about";
 import {
   renderLoginError,
   renderLoginPage,
@@ -143,6 +146,15 @@ webRoutes.get("/favicon.svg", (context) => {
 webRoutes.get("/favicon.ico", () => redirect("/favicon.svg", 302));
 
 webRoutes.get("/donate", (context) => renderDonatePage(context));
+
+// Open to anyone, signed in or not: it is where an instance publishes what
+// the law may require it to, which has to be reachable without an account.
+webRoutes.get("/about", async (context) =>
+  renderAboutPage(context, {
+    commit: buildCommit(context.env.CARNAP_COMMIT),
+    page: await readAboutPage(storesForContext(context)),
+  }),
+);
 
 webRoutes.get("/login", (context) => {
   if (context.get("actor") !== null) {

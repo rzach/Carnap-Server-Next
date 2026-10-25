@@ -7,6 +7,13 @@ export interface Env {
    * on it; cookie security follows the request's protocol (`cookies.ts`).
    */
   readonly CARNAP_ENV?: string;
+  /**
+   * The commit this build was made from, which the About page names and links
+   * to, so whoever runs several instances can see which are behind. Set at
+   * deploy or image build (`docs/self-hosting.md`); nothing reads git at run
+   * time, since neither host has a checkout. Unset, the page names none.
+   */
+  readonly CARNAP_COMMIT?: string;
   readonly ADMIN_BOOTSTRAP_TOKEN?: string;
   readonly AUTH_LOGIN_CONFIRM_URL?: string;
   readonly AUTH_LOGIN_EMAIL_FROM?: string;

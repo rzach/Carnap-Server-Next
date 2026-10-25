@@ -736,6 +736,17 @@ export function renderAdminDashboard(
               href: "/admin/audit",
               label: i18n.t("Audit log"),
             },
+            ...(model.canChangeSettings
+              ? [
+                  {
+                    hint: i18n.t(
+                      "What this instance says about itself, such as an Impressum or privacy notice",
+                    ),
+                    href: "/admin/about",
+                    label: i18n.t("About page"),
+                  },
+                ]
+              : []),
           ]}
         />
       </Sheet>

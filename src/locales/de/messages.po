@@ -669,6 +669,24 @@ msgstr "Eine Welt kann höchstens {max} Objekte enthalten."
 msgid "A wrong pick starts the tree over."
 msgstr "Eine falsche Wahl lässt den Baum von vorn beginnen."
 
+#: src/worker/web/about.tsx
+#: src/worker/web/layout.tsx
+msgid "About"
+msgstr "Über"
+
+#: src/worker/web/about.tsx
+#: src/worker/web/admin.tsx
+msgid "About page"
+msgstr "Seite „Über“"
+
+#: src/worker/web/labels.ts
+msgid "About page changed"
+msgstr "Seite „Über“ geändert"
+
+#: src/worker/routes/admin.ts
+msgid "About page not changed"
+msgstr "Seite „Über“ nicht geändert"
+
 #: src/worker/application/lti-admin.ts
 #: src/worker/web/admin-lti.tsx
 msgid "Access token URL"
@@ -1369,6 +1387,11 @@ msgstr "Für Carnap ist kein Signaturschlüssel konfiguriert, daher kann die Inh
 msgid "Carnap home"
 msgstr "Carnap-Startseite"
 
+#: src/worker/web/about.tsx
+msgid "Carnap is a platform for teaching and practicing formal logic. Its source code is on {github}."
+msgstr "Carnap ist eine Plattform zum Lehren und Üben formaler Logik. Der Quellcode liegt auf {github}."
+
+#: src/worker/web/about.tsx
 #: src/worker/web/content.tsx
 msgid "Carnap Markdown"
 msgstr "Carnap-Markdown"
@@ -1398,6 +1421,7 @@ msgstr "Adresse ändern"
 msgid "Change email address"
 msgstr "E-Mail-Adresse ändern"
 
+#: src/worker/web/about.tsx
 #: src/worker/web/admin.tsx
 msgid "Change saved."
 msgstr "Änderung gespeichert."
@@ -2174,8 +2198,8 @@ msgid "Domain"
 msgstr "Individuenbereich"
 
 #: src/worker/web/layout.tsx
-msgid "Donate to charity →"
-msgstr "Für einen guten Zweck spenden →"
+msgid "Donate to charity"
+msgstr "Für einen guten Zweck spenden"
 
 #: src/worker/web/courses.tsx
 msgid "Download CSV"
@@ -2940,6 +2964,10 @@ msgstr "URL zum Anmeldestart"
 #: src/worker/web/assignment-detail.tsx
 msgid "Inspect and reset student attempts"
 msgstr "Versuche von Studierenden ansehen und zurücksetzen"
+
+#: src/worker/web/about.tsx
+msgid "Instance text"
+msgstr "Text dieser Instanz"
 
 #: src/worker/web/labels.ts
 msgid "Instructor"
@@ -4634,6 +4662,7 @@ msgstr "Regeln"
 msgid "Rules a proof can cite: {names}."
 msgstr "Regeln, die ein Beweis zitieren kann: {names}."
 
+#: src/worker/web/about.tsx
 #: src/worker/web/admin.tsx
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/courses.tsx
@@ -4848,6 +4877,10 @@ msgstr "In den Aufgabenlisten der Studierenden anzeigen"
 #: src/worker/exercise-kit/copy-source-strings.ts
 msgid "Show your work as source"
 msgstr "Ihre Arbeit als Quelltext anzeigen"
+
+#: src/worker/web/about.tsx
+msgid "Shown to everyone at /about, signed in or not, above what every Carnap instance says about itself. Write it in Carnap Markdown, as a lesson's prose; leave it empty to show only that part."
+msgstr "Wird allen unter /about angezeigt, ob angemeldet oder nicht, über dem Teil, den jede Carnap-Instanz über sich selbst sagt. Schreiben Sie ihn in Carnap-Markdown wie den Fließtext einer Lektion; lassen Sie ihn leer, um nur jenen Teil anzuzeigen."
 
 #: src/worker/infrastructure/email/resend.ts
 msgid "Sign in"
@@ -5248,6 +5281,10 @@ msgstr "Das Attribut {name} ist erforderlich."
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The {name} attribute must be true or false."
 msgstr "Das Attribut {name} muss true oder false sein."
+
+#: src/worker/application/admin.ts
+msgid "The About page can be at most {max} characters."
+msgstr "Die Seite „Über“ darf höchstens {max} Zeichen lang sein."
 
 #: src/worker/web/ui-strings.ts
 msgid "The action was not accepted."
@@ -6121,6 +6158,10 @@ msgstr "Diese Vorgabe setzt {pinned} in eine Zelle, deren berechneter Wert {expe
 msgid "This grade has not been released."
 msgstr "Diese Note ist noch nicht freigegeben."
 
+#: src/worker/web/about.tsx
+msgid "This instance runs commit {commit}."
+msgstr "Diese Instanz läuft mit Commit {commit}."
+
 #: src/worker/application/content/diagnostic-strings.ts
 #: src/worker/logic/specs/strings.ts
 msgid "This is a {actual} where a {expected} is needed."
@@ -6674,6 +6715,10 @@ msgstr "Der Wert muss größer als null sein."
 msgid "Verified {when}"
 msgstr "Bestätigt {when}"
 
+#: src/worker/web/about.tsx
+msgid "View the About page"
+msgstr "Seite „Über“ ansehen"
+
 #: src/worker/web/components.tsx
 msgid "View this course as"
 msgstr "Diesen Kurs ansehen als"
@@ -6703,6 +6748,10 @@ msgstr "Wir senden einen Link an die neue Adresse und ändern nichts, bis er ge�
 #: src/worker/web/content.tsx
 msgid "What changed, optional"
 msgstr "Was sich geändert hat, optional"
+
+#: src/worker/web/admin.tsx
+msgid "What this instance says about itself, such as an Impressum or privacy notice"
+msgstr "Was diese Instanz über sich selbst sagt, etwa ein Impressum oder eine Datenschutzerklärung"
 
 #: src/worker/web/assignment-detail.tsx
 msgid "When"

@@ -555,6 +555,17 @@ async function emailChangeFixtures(
 }
 
 /** `?a=1&b=1&…` for every flash-notice parameter a page understands. */
+/**
+ * An instance's own About text, in the shapes an Impressum takes: a heading, a
+ * list, a link. Not catalog text, so the pseudolocale run leaves it alone.
+ */
+const ABOUT_FIXTURE_SOURCE = [
+  "## Impressum",
+  "",
+  "- Logiklabor, Universitätsstraße 7",
+  "- [logiklabor.example](https://logiklabor.example)",
+].join("\n");
+
 function noticeQuery(...params: readonly string[]): string {
   return `?${params.map((param) => `${param}=1`).join("&")}`;
 }
@@ -960,6 +971,8 @@ export async function collectFixtures(
 
   await add("login", "/login");
   await add("donate", "/donate");
+  // Before the instance has text of its own: the built-in part alone.
+  await add("about-default", "/about");
   await add("courses-index", "/courses", instructor);
   // The list's own notices: its rows edit and archive, its drawer unarchives.
   await add(
@@ -1217,6 +1230,27 @@ export async function collectFixtures(
   );
   await add("admin-audit", "/admin/audit", instructor);
   await add("admin-bootstrap", "/admin/bootstrap", instructor);
+  // A refused save re-renders the editor with its diagnostics, so it has to
+  // be submitted to be seen; the saved text then shows on both pages.
+  await addPost(
+    "admin-about-refused",
+    "/admin/about",
+    { source: "## Impressum\n\n:::style\np { color: red; }\n:::" },
+    instructor,
+  );
+  const aboutSaved = await formPost(
+    env,
+    "/admin/about",
+    { source: ABOUT_FIXTURE_SOURCE },
+    instructor,
+    headers,
+  );
+
+  if (aboutSaved.status !== 303) {
+    throw new Error(`fixture About save → ${aboutSaved.status}`);
+  }
+  await add("admin-about", `/admin/about${noticeQuery("saved")}`, instructor);
+  await add("about", "/about");
   await add(
     "admin-lti",
     `/admin/lti${noticeQuery(

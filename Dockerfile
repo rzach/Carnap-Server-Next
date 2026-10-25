@@ -101,6 +101,12 @@ USER bun
 ENV PORT=8787
 EXPOSE 8787
 
+# The commit the About page names, passed in because the build context has no
+# `.git` to ask: `--build-arg CARNAP_COMMIT=$(git rev-parse HEAD)`. Left empty,
+# the page names none.
+ARG CARNAP_COMMIT=""
+ENV CARNAP_COMMIT=$CARNAP_COMMIT
+
 # Liveness, not readiness: `/health` answers without touching storage, so this
 # reports that the process is up and serving, which is what an orchestrator
 # restarts on. Podman keeps it only when built with `--format docker`; the OCI
