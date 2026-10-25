@@ -1939,10 +1939,6 @@ msgstr "Course role is not supported."
 msgid "Course roles and membership states. The course owner is marked with a crown."
 msgstr "Course roles and membership states. The course owner is marked with a crown."
 
-#: src/worker/web/gradebook.tsx
-msgid "Course scores across published assignments."
-msgstr "Course scores across published assignments."
-
 #: src/worker/web/labels.ts
 msgid "Course staff added"
 msgstr "Course staff added"
@@ -3706,6 +3702,10 @@ msgstr "not recorded"
 msgid "Not set"
 msgstr "Not set"
 
+#: src/worker/web/gradebook.tsx
+msgid "Not started"
+msgstr "Not started"
+
 #: src/worker/web/ui-strings.ts
 msgid "not verified"
 msgstr "not verified"
@@ -3725,6 +3725,10 @@ msgstr "Nothing can follow a split on its branch. Put it in the split's branches
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Nothing can follow the end of a branch."
 msgstr "Nothing can follow the end of a branch."
+
+#: src/worker/web/gradebook.tsx
+msgid "Nothing graded"
+msgstr "Nothing graded"
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Nothing in the world is named “{name}”, which “{formula}” uses."
@@ -3910,6 +3914,10 @@ msgstr "Option labels cannot be empty."
 #: src/worker/web/assignment-detail.tsx
 msgid "Optional"
 msgstr "Optional"
+
+#: src/worker/web/gradebook.tsx
+msgid "out of {points}"
+msgstr "out of {points}"
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Override"
@@ -4748,6 +4756,10 @@ msgstr "Scores already sent to the LMS are corrected to zero."
 msgid "Scores have already been recorded on this assignment. A correction keeps each recorded score and the points it was graded out of; assignment totals will count every exercise at the new revision's points."
 msgstr "Scores have already been recorded on this assignment. A correction keeps each recorded score and the points it was graded out of; assignment totals will count every exercise at the new revision's points."
 
+#: src/worker/web/gradebook.tsx
+msgid "Scores on every published graded assignment. Practice scores are on each practice assignment's own page."
+msgstr "Scores on every published graded assignment. Practice scores are on each practice assignment's own page."
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Scores, export, and submission review"
 msgstr "Scores, export, and submission review"
@@ -5023,6 +5035,10 @@ msgstr "Staff role"
 #: src/worker/web/assignment-detail.tsx
 msgid "Start attempt"
 msgstr "Start attempt"
+
+#: src/worker/web/gradebook.tsx
+msgid "Started, nothing submitted"
+msgstr "Started, nothing submitted"
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Starter line “{line}” must be a full sequent — its formula has no turnstile ({symbols})."

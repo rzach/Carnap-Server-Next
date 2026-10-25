@@ -5,6 +5,7 @@ import type { FC } from "hono/jsx";
 import type {
   AssignmentGradebook,
   CourseGradebook,
+  GradebookExercise,
 } from "../application/gradebook";
 import type {
   StudentAssignmentResults,
@@ -18,7 +19,8 @@ import type { CourseStaffTier } from "../domain/courses";
 import { type AssignmentScore, roundPoints } from "../domain/grades";
 import type { User } from "../domain/users";
 import type { AppBindings } from "../http";
-import { splitAtValue, VALUE } from "../i18n/translator";
+import { splitAtValue, type Translator, VALUE } from "../i18n/translator";
+import { reviewQueryString } from "./assignment-detail";
 import {
   courseCrumb,
   coursesCrumb,
@@ -38,57 +40,205 @@ import { renderShell, useI18n } from "./layout";
 import { SortHeader, sortNumber } from "./table-sort";
 import { UserRecordLabel, userDisplayName } from "./users";
 
-const ScoreCell: FC<{ readonly score: AssignmentScore | null }> = ({
-  score,
+const DASH = "—";
+
+/**
+ * A not-started assignment (no attempts) reads as a dash, and a missing one
+ * (attempted but nothing submitted) as a question mark — so neither is
+ * confused with a genuine zero the student earned.
+ */
+const STATUS_MARKS = {
+  missing: "?",
+  "not-started": DASH,
+} as const;
+
+type UnscoredStatus = keyof typeof STATUS_MARKS;
+
+function isUnscored(
+  status: AssignmentScore["status"],
+): status is UnscoredStatus {
+  return status in STATUS_MARKS;
+}
+
+/**
+ * A cell with no score in it: a mark for the eye, explained once by
+ * {@link ScoreLegend}, and the words a screen reader hears in its place.
+ */
+interface UnscoredMarkText {
+  readonly label: string;
+  readonly mark: string;
+}
+
+function statusMark(
+  i18n: Translator,
+  status: UnscoredStatus,
+): UnscoredMarkText {
+  return {
+    label:
+      status === "missing"
+        ? i18n.t("Started, nothing submitted")
+        : i18n.t("Not started"),
+    mark: STATUS_MARKS[status],
+  };
+}
+
+/**
+ * An exercise with no graded work: unanswered, or awaiting a grade, which the
+ * score calculation does not tell apart.
+ */
+function ungradedMark(i18n: Translator): UnscoredMarkText {
+  return { label: i18n.t("Nothing graded"), mark: DASH };
+}
+
+const UnscoredMark: FC<UnscoredMarkText> = ({ label, mark }) => (
+  <>
+    <span aria-hidden="true">{mark}</span>
+    <span class="visually-hidden">{label}</span>
+  </>
+);
+
+/**
+ * What the marks in a gradebook mean, under the table that uses them: one
+ * line per mark, the first explanation given for it.
+ */
+const ScoreLegend: FC<{ readonly marks: readonly UnscoredMarkText[] }> = ({
+  marks,
 }) => {
+  const lines = new Map<string, string>();
+
+  for (const { label, mark } of marks) {
+    if (!lines.has(mark)) {
+      lines.set(mark, label);
+    }
+  }
+
+  if (lines.size === 0) {
+    return null;
+  }
+
+  // Hidden from the accessibility tree: each cell already says its own words,
+  // so read aloud this would be the same phrases again, out of context.
+  return (
+    <p aria-hidden="true" class="small score-legend">
+      {[...lines].map(([mark, label]) => (
+        <span>
+          <span class="score-legend-mark">{mark}</span> {label}
+        </span>
+      ))}
+    </p>
+  );
+};
+
+/** The marks a set of scores shows, in the legend's order. */
+function statusMarks(
+  i18n: Translator,
+  scores: readonly (AssignmentScore | null)[],
+): UnscoredMarkText[] {
+  return (["not-started", "missing"] as const)
+    .filter((status) => scores.some((score) => score?.status === status))
+    .map((status) => statusMark(i18n, status));
+}
+
+/**
+ * Each cell of a row with the column it sits in. The application builds a
+ * row's cells by position from the same list as the columns, so a mismatch
+ * is a bug there, and a table that filled the gap would hide it.
+ */
+function underColumns<Cell, Column>(
+  cells: readonly Cell[],
+  columns: readonly Column[],
+): (readonly [Cell, Column])[] {
+  if (cells.length !== columns.length) {
+    throw new Error(
+      `A gradebook row has ${cells.length} cells for ${columns.length} columns.`,
+    );
+  }
+
+  return cells.map(
+    (cell, index) => [cell, columns[index] as Column] as const,
+  );
+}
+
+/**
+ * The points alone: what they are out of is said once, under the column's
+ * heading. Work that has been submitted links to it — the review queue,
+ * narrowed to this student — which is where a reader who spots a low score
+ * goes next.
+ */
+const ScoreCell: FC<{
+  readonly href: string;
+  readonly score: AssignmentScore | null;
+}> = ({ href, score }) => {
+  const i18n = useI18n();
+
   if (score === null) {
     return null;
   }
 
-  // A not-started assignment (no attempts) reads as a dash, and a missing one
-  // (attempted but nothing submitted) as a question mark, over the possible
-  // points — so neither is confused with a genuine zero the student earned.
-  if (score.status === "not-started") {
-    return <>—/{score.maxScore}</>;
-  }
-
-  if (score.status === "missing") {
-    return <>?/{score.maxScore}</>;
+  if (isUnscored(score.status)) {
+    return <UnscoredMark {...statusMark(i18n, score.status)} />;
   }
 
   return (
-    <>
-      {score.score}/{score.maxScore}
-    </>
+    <a class="score-link" href={href}>
+      {score.score}
+    </a>
   );
 };
 
 /**
- * A student's course total: earned points over the points possible, summed
- * across every assignment that has a score record. Assignments with no score
- * for this student (a null cell) contribute nothing to either side.
+ * One exercise's points for one student, linking to the work on that exercise
+ * alone, or a dash where nothing is graded.
  */
-const TotalCell: FC<{
-  readonly scores: readonly (AssignmentScore | null)[];
-}> = ({ scores }) => {
-  let earned = 0;
-  let possible = 0;
-
-  for (const score of scores) {
-    if (score === null) {
-      continue;
-    }
-
-    earned += score.score;
-    possible += score.maxScore;
-  }
+const ExerciseScoreCell: FC<{
+  readonly earned: number | null;
+  readonly exercise: GradebookExercise;
+  readonly href: string;
+}> = ({ earned, exercise, href }) => {
+  const i18n = useI18n();
 
   return (
-    <>
-      {roundPoints(earned)}/{roundPoints(possible)}
-    </>
+    <td
+      class="numeric"
+      data-sort-value={sortNumber(
+        earned === null ? null : fractionOf(earned, exercise.points),
+      )}
+    >
+      {earned === null ? (
+        <UnscoredMark {...ungradedMark(i18n)} />
+      ) : (
+        <a class="score-link" href={href}>
+          {earned}
+        </a>
+      )}
+    </td>
   );
 };
+
+/**
+ * A student's course total: the points earned across every assignment that
+ * has a score record. Assignments with no score for this student (a null
+ * cell) contribute nothing.
+ */
+function totalEarned(scores: readonly (AssignmentScore | null)[]): number {
+  return roundPoints(
+    scores.reduce((sum, score) => sum + (score?.score ?? 0), 0),
+  );
+}
+
+/** The review queue for one student's work on one assignment, any state. */
+function studentWorkHref(
+  courseId: string,
+  assignmentId: string,
+  userId: string,
+  exerciseId: string | null = null,
+): string {
+  return `/courses/${courseId}/instructor/assignments/${assignmentId}/submissions${reviewQueryString({ exercise: exerciseId, review: "active", student: userId })}`;
+}
+
+function outOf(i18n: Translator, points: number): string {
+  return i18n.t("out of {points}", { points: roundPoints(points) });
+}
 
 /**
  * What one score cell is worth as a number to sort on: the fraction of the
@@ -97,15 +247,13 @@ const TotalCell: FC<{
  * brings it to the top, which is how an instructor finds it.
  */
 function scoreFraction(score: AssignmentScore | null): number | null {
-  if (score === null || score.status === "missing") {
-    return null;
-  }
+  return score === null || isUnscored(score.status)
+    ? null
+    : fractionOf(score.score, score.maxScore);
+}
 
-  if (score.status === "not-started") {
-    return null;
-  }
-
-  return score.maxScore === 0 ? 0 : score.score / score.maxScore;
+function fractionOf(earned: number, possible: number): number {
+  return possible === 0 ? 0 : earned / possible;
 }
 
 /** The same measure over a whole row: the course total's own fraction. */
@@ -142,77 +290,170 @@ const StudentCell: FC<{ readonly user: User }> = ({ user }) => {
   );
 };
 
-const CourseGradebookTable: FC<{ readonly gradebook: CourseGradebook }> = ({
-  gradebook,
-}) => {
+const CourseGradebookTable: FC<{
+  readonly courseId: string;
+  readonly gradebook: CourseGradebook;
+}> = ({ courseId, gradebook }) => {
   const i18n = useI18n();
+  const coursePoints = gradebook.maxScores.reduce(
+    (sum, points) => sum + points,
+    0,
+  );
+
   return (
-    <TableScroll>
-      <thead>
-        <tr>
-          <SortHeader label={i18n.t("Student")} />
-          {/* Every assignment is a column a reader can order by — "who has not
-              done problem set 3" is the question this table exists to
-              answer. */}
-          {gradebook.assignments.map((assignment) => (
-            <SortHeader label={assignment.title} numeric />
-          ))}
-          <SortHeader label={i18n.t("Total")} numeric />
-        </tr>
-      </thead>
-      <tbody>
-        {gradebook.rows.map((row) => (
+    <>
+      <TableScroll stickyLead>
+        <thead>
           <tr>
-            <StudentCell user={row.user} />
-            {row.scores.map((score) => (
+            <SortHeader label={i18n.t("Student")} />
+            <SortHeader
+              detail={outOf(i18n, coursePoints)}
+              label={i18n.t("Total")}
+              numeric
+            />
+            {/* Every assignment is a column a reader can order by — "who has
+                not done problem set 3" is the question this table exists to
+                answer. */}
+            {underColumns(gradebook.maxScores, gradebook.assignments).map(
+              ([points, assignment]) => (
+                <SortHeader
+                  detail={outOf(i18n, points)}
+                  label={assignment.title}
+                  numeric
+                />
+              ),
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {gradebook.rows.map((row) => (
+            <tr>
+              <StudentCell user={row.user} />
               <td
                 class="numeric"
-                data-sort-value={sortNumber(scoreFraction(score))}
+                data-sort-value={sortNumber(totalFraction(row.scores))}
               >
-                <ScoreCell score={score} />
+                <strong>{totalEarned(row.scores)}</strong>
               </td>
-            ))}
-            <td
-              class="numeric"
-              data-sort-value={sortNumber(totalFraction(row.scores))}
-            >
-              <strong>
-                <TotalCell scores={row.scores} />
-              </strong>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </TableScroll>
+              {underColumns(row.scores, gradebook.assignments).map(
+                ([score, assignment]) => (
+                  <td
+                    class="numeric"
+                    data-sort-value={sortNumber(scoreFraction(score))}
+                  >
+                    <ScoreCell
+                      href={studentWorkHref(
+                        courseId,
+                        assignment.id,
+                        row.user.id,
+                      )}
+                      score={score}
+                    />
+                  </td>
+                ),
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </TableScroll>
+      <ScoreLegend
+        marks={statusMarks(
+          i18n,
+          gradebook.rows.flatMap((row) => row.scores),
+        )}
+      />
+    </>
   );
 };
 
+/**
+ * The assignment's score, then one column per exercise: the per-exercise
+ * points the export already carries, so "which question tripped everyone up"
+ * is a sort away. An exercise with no evaluated work for the student is a
+ * dash, "nothing graded", which is all the score calculation can say about it.
+ */
 const AssignmentGradebookTable: FC<{
+  readonly courseId: string;
   readonly gradebook: AssignmentGradebook;
-}> = ({ gradebook }) => {
+}> = ({ courseId, gradebook }) => {
   const i18n = useI18n();
+  const assignmentId = gradebook.assignment.id;
+  const points = gradebook.exercises.reduce(
+    (sum, exercise) => sum + exercise.points,
+    0,
+  );
+
   return (
-    <TableScroll>
-      <thead>
-        <tr>
-          <SortHeader label={i18n.t("Student")} />
-          <SortHeader label={i18n.t("Score")} numeric />
-        </tr>
-      </thead>
-      <tbody>
-        {gradebook.rows.map((row) => (
+    <>
+      <TableScroll stickyLead>
+        <thead>
           <tr>
-            <StudentCell user={row.user} />
-            <td
-              class="numeric"
-              data-sort-value={sortNumber(scoreFraction(row.score))}
-            >
-              <ScoreCell score={row.score} />
-            </td>
+            <SortHeader label={i18n.t("Student")} />
+            <SortHeader
+              detail={outOf(i18n, points)}
+              label={i18n.t("Score")}
+              numeric
+            />
+            {gradebook.exercises.map((exercise) => (
+              <SortHeader
+                detail={outOf(i18n, exercise.points)}
+                label={exercise.title ?? exercise.id}
+                numeric
+              />
+            ))}
           </tr>
-        ))}
-      </tbody>
-    </TableScroll>
+        </thead>
+        <tbody>
+          {gradebook.rows.map((row) => (
+            <tr>
+              <StudentCell user={row.user} />
+              <td
+                class="numeric"
+                data-sort-value={sortNumber(scoreFraction(row.score))}
+              >
+                <strong>
+                  <ScoreCell
+                    href={studentWorkHref(
+                      courseId,
+                      assignmentId,
+                      row.user.id,
+                    )}
+                    score={row.score}
+                  />
+                </strong>
+              </td>
+              {underColumns(row.exerciseScores, gradebook.exercises).map(
+                ([earned, exercise]) => (
+                  <ExerciseScoreCell
+                    earned={earned}
+                    exercise={exercise}
+                    href={studentWorkHref(
+                      courseId,
+                      assignmentId,
+                      row.user.id,
+                      exercise.id,
+                    )}
+                  />
+                ),
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </TableScroll>
+      {/* The ungraded dash first, since it is the broader reading of the
+          two dashes: a student who has not started has nothing graded. */}
+      <ScoreLegend
+        marks={[
+          ...(gradebook.rows.some((row) => row.exerciseScores.includes(null))
+            ? [ungradedMark(i18n)]
+            : []),
+          ...statusMarks(
+            i18n,
+            gradebook.rows.map((row) => row.score),
+          ),
+        ]}
+      />
+    </>
   );
 };
 
@@ -235,10 +476,12 @@ export function renderCourseGradebook(
       title: i18n.t("Course gradebook"),
     },
     <Sheet
-      description={i18n.t("Course scores across published assignments.")}
+      description={i18n.t(
+        "Scores on every published graded assignment. Practice scores are on each practice assignment's own page.",
+      )}
       title={i18n.t("Course gradebook")}
     >
-      <CourseGradebookTable gradebook={gradebook} />
+      <CourseGradebookTable courseId={courseId} gradebook={gradebook} />
     </Sheet>,
   );
 }
@@ -285,7 +528,7 @@ export function renderAssignmentGradebook(
       }
       title={title}
     >
-      <AssignmentGradebookTable gradebook={gradebook} />
+      <AssignmentGradebookTable courseId={courseId} gradebook={gradebook} />
       <LinkStrip
         links={[
           {

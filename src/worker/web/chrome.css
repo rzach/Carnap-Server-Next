@@ -760,6 +760,118 @@ th > .column-sort:hover {
    phone. */
 .table-scroll {
   overflow-x: auto;
+  /* A containing block for what is positioned inside it — a cell's
+     visually-hidden words sit absolutely where the cell is, and without this
+     a column scrolled out of view would carry them past the page's edge. */
+  position: relative;
+}
+
+/* A heading's second line (`SortHeader`'s `detail`): what every cell under
+   it shares — a gradebook column's "out of 11" — in the heading's size but
+   not its small capitals, so it reads as a note on the name rather than a
+   second name. Inside the sort button it takes the button's whole width under
+   the label and the triangle, which keep their line. */
+.column-detail {
+  display: block;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+th > .column-sort:has(> .column-detail) {
+  column-gap: 0.3em;
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  row-gap: 0.1rem;
+  /* A button's own nowrap would hold a long title on one line however
+     narrow its column. */
+  white-space: normal;
+}
+
+.column-sort > .column-detail {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+/* A table read across (`TableScroll`'s `stickyLead`): its first two columns
+   — whose row it is, and what it sums to — stay where they are while the
+   columns after them scroll under. They need an opaque fill to cover what
+   passes beneath, the sheet's own colour, and a hairline where the scrolling
+   columns go under them.
+
+   The second sticks at the first's width, so the first has an exact one,
+   border box and all: the minimum is what holds it when a table this wide
+   has the browser squeezing every column, and an address-only student, one
+   unbreakable word, may break anywhere rather than widen it.
+
+   The headings after them wrap at a measure instead of setting the column's
+   width by a long assignment title: a column of three-digit scores headed by
+   "Problem set 5: Natural deduction with quantifiers and identity" was a
+   third of a laptop screen wide. */
+table.sticky-lead > * > tr > :is(:first-child, :nth-child(2)) {
+  background: var(--surface);
+  position: sticky;
+  z-index: 1;
+}
+
+table.sticky-lead > * > tr > :first-child {
+  box-sizing: border-box;
+  left: 0;
+  max-width: var(--sticky-lead-width);
+  min-width: var(--sticky-lead-width);
+  overflow-wrap: anywhere;
+  width: var(--sticky-lead-width);
+}
+
+table.sticky-lead > * > tr > :nth-child(2) {
+  box-shadow: inset -1px 0 0 var(--rule-soft);
+  left: var(--sticky-lead-width);
+}
+
+table.sticky-lead > thead > tr > th:nth-child(n + 3) {
+  min-width: 5.5rem;
+  width: 8rem;
+}
+
+/* The address under a name, kept to one line in a column that has to stay
+   narrow enough to leave the scores room on a phone. A clipped line still
+   counts at its full length toward the column's minimum width, so it claims
+   none (`width: 0`) and fills whatever the column is given instead. */
+table.sticky-lead > tbody > tr > td:first-child .small {
+  display: block;
+  min-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 0;
+}
+
+/* A score that opens the work behind it. A table of them in link blue would
+   be a wall of links, so it keeps the ink of the figures around it, with an
+   underline faint enough to leave the column readable as numbers. */
+a.score-link {
+  color: inherit;
+  font-weight: inherit;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 0.2em;
+}
+
+a.score-link:hover {
+  text-decoration-color: currentColor;
+}
+
+/* What a gradebook's marks mean, under the table. */
+.score-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.25rem;
+  margin: 0.9rem 0 0;
+}
+
+.score-legend-mark {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 /* A row holding an inline form (a membership's role and status, an LMS link's

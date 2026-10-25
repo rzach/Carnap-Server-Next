@@ -172,6 +172,10 @@
      exercise tokens: a document's own :root takes either back. */
   --prose-measure: 38rem;
   --figure-measure: 54rem;
+  /* The name column of a table whose lead columns stay put while the rest
+     scroll (chrome.css, `sticky-lead`): one value, because the column after
+     it sticks at exactly this offset. */
+  --sticky-lead-width: clamp(8.5rem, 28vw, 15rem);
   color-scheme: light dark;
 }
 

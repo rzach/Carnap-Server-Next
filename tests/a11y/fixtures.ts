@@ -771,7 +771,7 @@ export async function collectFixtures(
     jsonRequest(
       {
         contentRevisionId: revisionId,
-        description: "Not started yet.",
+        description: "Read chapter 2 first.",
         maxAttempts: 2,
         timeLimitMinutes: 30,
         title: "Homework briefing",

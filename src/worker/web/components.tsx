@@ -268,26 +268,32 @@ export const CourseViewSwitch: FC<{
  * `data-sort-value` is empty holds nothing (the sort's own convention) and is
  * left out of that line rather than shown as a dash with no heading to
  * explain it.
+ *
+ * `stickyLead` is for a table read across rather than down — a gradebook,
+ * one column per assignment — whose first column says whose row it is and
+ * whose second sums it: both stay put while the columns after them scroll, so
+ * a row scrolled halfway across still has its name and its total beside it.
  */
 export const TableScroll: FC<{
   readonly children?: Child;
   /** `"flat"` for rows with no end: every cell after the name is the line. */
   readonly phoneList?: boolean | "flat";
-}> = ({ children, phoneList = false }) => (
-  <div class="table-scroll">
-    <table
-      class={
-        phoneList === "flat"
-          ? "phone-list phone-flat"
-          : phoneList
-            ? "phone-list"
-            : undefined
-      }
-    >
-      {children}
-    </table>
-  </div>
-);
+  readonly stickyLead?: boolean;
+}> = ({ children, phoneList = false, stickyLead = false }) => {
+  const classes = [
+    phoneList === false ? null : "phone-list",
+    phoneList === "flat" ? "phone-flat" : null,
+    stickyLead ? "sticky-lead" : null,
+  ].filter((name) => name !== null);
+
+  return (
+    <div class="table-scroll">
+      <table class={classes.length === 0 ? undefined : classes.join(" ")}>
+        {children}
+      </table>
+    </div>
+  );
+};
 
 /** Whether a child would render anything: absent, false and `[]` would not. */
 function hasContent(child: Child): boolean {

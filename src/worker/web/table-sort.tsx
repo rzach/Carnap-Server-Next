@@ -27,12 +27,22 @@ import type { FC } from "hono/jsx";
  * the page in hand, which is a lie about the rest.
  */
 export const SortHeader: FC<{
+  /**
+   * A second, quieter line under the label: what every cell below shares, said
+   * once — a gradebook column's "out of 11" — rather than in each cell. It
+   * goes into the sort button with the label, so it is part of the column's
+   * name as a screen reader announces it.
+   */
+  readonly detail?: string;
   readonly label: string;
   /** A column of figures, set right to line up with its cells. */
   readonly numeric?: boolean;
-}> = ({ label, numeric = false }) => (
+}> = ({ detail, label, numeric = false }) => (
   <th class={numeric ? "numeric" : undefined} data-sort="" scope="col">
     {label}
+    {detail === undefined ? null : (
+      <span class="column-detail">{detail}</span>
+    )}
   </th>
 );
 

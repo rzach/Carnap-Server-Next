@@ -2198,12 +2198,15 @@ Choose yes.
         3,
       );
       expect(html).toContain('<th data-sort="" scope="col">Student</th>');
-      // Figures are set right, heading and cells alike, so they line up.
+      // The name and the total stay put while the assignments scroll.
+      expect(html).toContain('<table class="sticky-lead">');
+      // Figures are set right, heading and cells alike, so they line up, and
+      // what a column is out of is said once, under its heading.
       expect(html).toContain(
-        '<th class="numeric" data-sort="" scope="col">Homework</th>',
+        '<th class="numeric" data-sort="" scope="col">Homework<span class="column-detail">out of 2</span></th>',
       );
       expect(html).toContain(
-        '<th class="numeric" data-sort="" scope="col">Total</th>',
+        '<th class="numeric" data-sort="" scope="col">Total<span class="column-detail">out of 2</span></th>',
       );
       // A named student is sorted by name, with the email quietly under it.
       expect(html).toContain(
@@ -2213,17 +2216,60 @@ Choose yes.
       expect(html).toContain(
         '<td data-sort-value="c-untouched@example.test">c-untouched@example.test</td>',
       );
-      // Scores sort on the fraction earned, not the printed "2/2".
+
+      const work = (userId: string) =>
+        `/courses/${courseId}/instructor/assignments/${assignmentId}/submissions?review=active&amp;student=${userId}`;
+
+      // Scores sort on the fraction earned, not the printed points, and open
+      // the student's work — a zero included, since it was earned.
       expect(html).toContain(
-        '<td class="numeric" data-sort-value="1">2/2</td>',
+        `<td class="numeric" data-sort-value="1"><a class="score-link" href="${work(first.actorId)}">2</a></td>`,
       );
       expect(html).toContain(
-        '<td class="numeric" data-sort-value="0">0/2</td>',
+        `<td class="numeric" data-sort-value="0"><a class="score-link" href="${work(second.actorId)}">0</a></td>`,
       );
       // Work nobody started is not a zero: it carries no sort value at all,
       // which is what puts it after every real score and, reversed, on top.
+      // It links nowhere, there being nothing to open, and says what it is.
       expect(html).toContain(
-        '<td class="numeric" data-sort-value="">—/2</td>',
+        '<td class="numeric" data-sort-value=""><span aria-hidden="true">—</span><span class="visually-hidden">Not started</span></td>',
+      );
+      // The mark is explained under the table; the one not on it is not.
+      expect(html).toContain('class="small score-legend"');
+      expect(html).not.toContain("Started, nothing submitted");
+
+      const assignmentPage = await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/instructor/assignments/${assignmentId}/gradebook`,
+        {
+          headers: {
+            Accept: "text/html",
+            Cookie: instructor.cookieHeader,
+          },
+        },
+        env,
+      );
+      const assignmentHtml = await assignmentPage.text();
+
+      expect(assignmentPage.status).toBe(200);
+      // One column per exercise, by id where it has no title, out of its own
+      // points; each score opens the work on that exercise alone.
+      expect(assignmentHtml).toContain(
+        '<th class="numeric" data-sort="" scope="col">q1<span class="column-detail">out of 2</span></th>',
+      );
+      expect(assignmentHtml).toContain(
+        `<a class="score-link" href="/courses/${courseId}/instructor/assignments/${assignmentId}/submissions?review=active&amp;exercise=q1&amp;student=${first.actorId}">2</a>`,
+      );
+      // An exercise with nothing graded is a dash, not a blank, and the legend
+      // gives the dash that broader reading, which a not-started row shares.
+      expect(assignmentHtml).toContain(
+        '<td class="numeric" data-sort-value=""><span aria-hidden="true">—</span><span class="visually-hidden">Nothing graded</span></td>',
+      );
+      expect(assignmentHtml).toContain(
+        '<span class="score-legend-mark">—</span> Nothing graded',
+      );
+      expect(assignmentHtml).not.toContain(
+        '<span class="score-legend-mark">—</span> Not started',
       );
     });
   });

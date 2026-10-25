@@ -1939,10 +1939,6 @@ msgstr "Diese Kursrolle wird nicht unterstützt."
 msgid "Course roles and membership states. The course owner is marked with a crown."
 msgstr "Kursrollen und Mitgliedschaftsstatus. Der Kursinhaber ist mit einer Krone gekennzeichnet."
 
-#: src/worker/web/gradebook.tsx
-msgid "Course scores across published assignments."
-msgstr "Kurspunktzahlen über alle veröffentlichten Aufgaben."
-
 #: src/worker/web/labels.ts
 msgid "Course staff added"
 msgstr "Lehrpersonal zum Kurs hinzugefügt"
@@ -3706,6 +3702,10 @@ msgstr "nicht erfasst"
 msgid "Not set"
 msgstr "Nicht gesetzt"
 
+#: src/worker/web/gradebook.tsx
+msgid "Not started"
+msgstr "Nicht begonnen"
+
 #: src/worker/web/ui-strings.ts
 msgid "not verified"
 msgstr "nicht verifiziert"
@@ -3725,6 +3725,10 @@ msgstr "Auf eine Verzweigung kann auf ihrem Ast nichts folgen. Setzen Sie es in 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Nothing can follow the end of a branch."
 msgstr "Auf das Ende eines Astes kann nichts folgen."
+
+#: src/worker/web/gradebook.tsx
+msgid "Nothing graded"
+msgstr "Nichts bewertet"
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Nothing in the world is named “{name}”, which “{formula}” uses."
@@ -3910,6 +3914,10 @@ msgstr "Optionsbeschriftungen dürfen nicht leer sein."
 #: src/worker/web/assignment-detail.tsx
 msgid "Optional"
 msgstr "Optional"
+
+#: src/worker/web/gradebook.tsx
+msgid "out of {points}"
+msgstr "von {points}"
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Override"
@@ -4748,6 +4756,10 @@ msgstr "Bereits an das LMS gesendete Punktzahlen werden auf null korrigiert."
 msgid "Scores have already been recorded on this assignment. A correction keeps each recorded score and the points it was graded out of; assignment totals will count every exercise at the new revision's points."
 msgstr "Für diese Aufgabe wurden bereits Punkte erfasst. Eine Korrektur behält jede erfasste Punktzahl samt der Höchstpunktzahl, mit der sie bewertet wurde; die Gesamtwertung der Aufgabe zählt jede Übung mit der Punktzahl der neuen Revision."
 
+#: src/worker/web/gradebook.tsx
+msgid "Scores on every published graded assignment. Practice scores are on each practice assignment's own page."
+msgstr "Punktzahlen aller veröffentlichten bewerteten Aufgaben. Übungspunktzahlen stehen auf der Seite der jeweiligen Übung."
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Scores, export, and submission review"
 msgstr "Punktzahlen, Export und Prüfung der Abgaben"
@@ -5023,6 +5035,10 @@ msgstr "Rolle im Lehrpersonal"
 #: src/worker/web/assignment-detail.tsx
 msgid "Start attempt"
 msgstr "Versuch starten"
+
+#: src/worker/web/gradebook.tsx
+msgid "Started, nothing submitted"
+msgstr "Begonnen, nichts eingereicht"
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Starter line “{line}” must be a full sequent — its formula has no turnstile ({symbols})."

@@ -1939,10 +1939,6 @@ msgstr ""
 msgid "Course roles and membership states. The course owner is marked with a crown."
 msgstr ""
 
-#: src/worker/web/gradebook.tsx
-msgid "Course scores across published assignments."
-msgstr ""
-
 #: src/worker/web/labels.ts
 msgid "Course staff added"
 msgstr ""
@@ -3706,6 +3702,10 @@ msgstr ""
 msgid "Not set"
 msgstr ""
 
+#: src/worker/web/gradebook.tsx
+msgid "Not started"
+msgstr ""
+
 #: src/worker/web/ui-strings.ts
 msgid "not verified"
 msgstr ""
@@ -3724,6 +3724,10 @@ msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Nothing can follow the end of a branch."
+msgstr ""
+
+#: src/worker/web/gradebook.tsx
+msgid "Nothing graded"
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -3909,6 +3913,10 @@ msgstr ""
 #: src/worker/web/admin-lti.tsx
 #: src/worker/web/assignment-detail.tsx
 msgid "Optional"
+msgstr ""
+
+#: src/worker/web/gradebook.tsx
+msgid "out of {points}"
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -4748,6 +4756,10 @@ msgstr ""
 msgid "Scores have already been recorded on this assignment. A correction keeps each recorded score and the points it was graded out of; assignment totals will count every exercise at the new revision's points."
 msgstr ""
 
+#: src/worker/web/gradebook.tsx
+msgid "Scores on every published graded assignment. Practice scores are on each practice assignment's own page."
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Scores, export, and submission review"
 msgstr ""
@@ -5022,6 +5034,10 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Start attempt"
+msgstr ""
+
+#: src/worker/web/gradebook.tsx
+msgid "Started, nothing submitted"
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
