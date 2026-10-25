@@ -112,6 +112,11 @@ than repeat the rules.
 Late penalties are applied during score projection, based on recorded times
 and effective policy. They do not change the original evaluation.
 
+An excuse takes an exercise out of the score and the total for every student;
+it sets no work aside. Reinstating the exercise withdraws the excuse, so the
+exercise counts again from the evidence already on file. A withdrawn excuse
+stays in the corrections ledger, and the exercise can be excused again.
+
 ## Score selection
 
 The gradebook calculates scores from non-voided evidence:
@@ -160,7 +165,8 @@ deliveries by data recency. Page views do not write this table.
 
 Score-changing operations refresh the ledger: submissions, manual grades,
 excuses, overrides, content corrections, attempt resets, late policies, and
-accommodations, including clearing an override or an accommodation. The
+accommodations, including reinstating an excused exercise and clearing an
+override or an accommodation. The
 service method that makes the change performs the refresh
 before it returns, so a caller with no HTTP request — a script, a backfill —
 keeps the ledger as a route would; the route's only part is to start a

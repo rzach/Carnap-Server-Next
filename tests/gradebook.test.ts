@@ -637,6 +637,109 @@ describe("gradebook", () => {
     });
   });
 
+  test("reinstating an excused exercise brings back the scores already recorded on it", async () => {
+    await withStorage(async (_storage, env) => {
+      const instructor = await login(env, "reinstate-teacher@example.test");
+      const student = await login(env, "reinstate-student@example.test");
+      const courseId = await createCourse(env, instructor);
+      const revisionId = await createRevision(
+        env,
+        instructor,
+        ["# Lesson", question("q1", 2), question("q2", 1)].join("\n\n"),
+      );
+
+      await enrollStudent(env, instructor, student, courseId);
+
+      const assignmentId = await createPublishedAssignment(
+        env,
+        instructor,
+        courseId,
+        revisionId,
+      );
+      const attemptId = await beginAttempt(
+        env,
+        student,
+        courseId,
+        assignmentId,
+      );
+
+      for (const exerciseId of ["q1", "q2"]) {
+        await submitAnswer(
+          env,
+          student,
+          courseId,
+          assignmentId,
+          attemptId,
+          ["yes"],
+          exerciseId,
+        );
+      }
+
+      const gradebook = async () => {
+        const response = await appRequest(
+          createTestApp(),
+          `/courses/${courseId}/instructor/assignments/${assignmentId}/gradebook`,
+          { headers: { Cookie: instructor.cookieHeader } },
+          env,
+        );
+        const body: unknown = await response.json();
+
+        return {
+          exercises: (body as AssignmentGradebookResponse).exercises.map(
+            (exercise) => exercise.id,
+          ),
+          scores: (body as FullGradebookResponse).rows.map((row) => [
+            row.score.score,
+            row.score.maxScore,
+          ]),
+        };
+      };
+      const excuseResponse = await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/instructor/assignments/${assignmentId}/excuses`,
+        jsonRequest({ exerciseId: "q2" }, instructor),
+        env,
+      );
+      const { exerciseExcuse } = (await excuseResponse.json()) as {
+        readonly exerciseExcuse: { readonly id: string };
+      };
+
+      expect(await gradebook()).toEqual({
+        exercises: ["q1"],
+        scores: [[2, 2]],
+      });
+
+      const reinstate = () =>
+        appRequest(
+          createTestApp(),
+          `/courses/${courseId}/instructor/assignments/${assignmentId}` +
+            `/excuses/${exerciseExcuse.id}/reinstate`,
+          jsonRequest({}, instructor),
+          env,
+        );
+      const reinstated = await reinstate();
+
+      expect(reinstated.status).toBe(200);
+      expect(
+        ((await reinstated.json()) as { exerciseExcuse: { status: string } })
+          .exerciseExcuse.status,
+      ).toBe("withdrawn");
+      // Nothing was set aside, so the answer to q2 counts again as it stood.
+      expect(await gradebook()).toEqual({
+        exercises: ["q1", "q2"],
+        scores: [[3, 3]],
+      });
+
+      // A second click on a stale page changes nothing.
+      const again = await reinstate();
+
+      expect(again.status).toBe(200);
+      expect(
+        ((await again.json()) as { exerciseExcuse: unknown }).exerciseExcuse,
+      ).toBeNull();
+    });
+  });
+
   test("an exercise column carrying a comma is quoted, not spilled", async () => {
     await withStorage(async (_storage, env) => {
       const instructor = await login(env, "quoting-teacher@example.test");

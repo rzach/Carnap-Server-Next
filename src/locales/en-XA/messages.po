@@ -187,6 +187,10 @@ msgstr ""
 msgid "{exercise} — {reason}"
 msgstr ""
 
+#: src/worker/web/assignment-detail.tsx
+msgid "{exercise} will count toward the grade again. Students' scores on it come back from the work they already submitted."
+msgstr ""
+
 #: src/worker/exercises/model/strings.ts
 msgid "{field} of {argument}"
 msgstr ""
@@ -728,6 +732,7 @@ msgid "Action"
 msgstr ""
 
 #: src/worker/web/admin.tsx
+#: src/worker/web/assignment-detail.tsx
 #: src/worker/web/content.tsx
 #: src/worker/web/courses.tsx
 msgid "Actions"
@@ -2498,8 +2503,20 @@ msgstr ""
 msgid "Exercise kind {kind} is not supported."
 msgstr ""
 
+#: src/worker/routes/assignments.ts
+msgid "Exercise not reinstated"
+msgstr ""
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Exercise points must be a number from 0 to 1000."
+msgstr ""
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Exercise reinstated"
+msgstr ""
+
+#: src/worker/routes/assignments.ts
+msgid "Exercise reinstated."
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -4270,6 +4287,22 @@ msgstr ""
 
 #: src/worker/routes/admin.ts
 msgid "Registration setting not changed"
+msgstr ""
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Reinstate"
+msgstr ""
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Reinstate {exercise}"
+msgstr ""
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Reinstate exercise"
+msgstr ""
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Reinstate this exercise?"
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx

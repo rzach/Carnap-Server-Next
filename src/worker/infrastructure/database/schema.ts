@@ -411,7 +411,7 @@ export const assignmentExerciseExcuses = sqliteTable(
       .notNull()
       .references(() => assignments.id, { onDelete: "cascade" }),
     exerciseId: text("exercise_id").notNull(),
-    status: text("status", { enum: ["excused"] })
+    status: text("status", { enum: ["excused", "withdrawn"] })
       .notNull()
       .default("excused"),
     actorId: text("actor_id")
@@ -419,12 +419,15 @@ export const assignmentExerciseExcuses = sqliteTable(
       .references(() => users.id, { onDelete: "restrict" }),
     createdAt: text("created_at").notNull(),
     reason: text("reason").notNull().default(""),
+    withdrawnAt: text("withdrawn_at"),
+    withdrawnById: text("withdrawn_by_id").references(() => users.id, {
+      onDelete: "restrict",
+    }),
   },
   (table) => [
-    uniqueIndex("assignment_exercise_excuses_assignment_exercise_unique").on(
-      table.assignmentId,
-      table.exerciseId,
-    ),
+    uniqueIndex("assignment_exercise_excuses_in_force_unique")
+      .on(table.assignmentId, table.exerciseId)
+      .where(sql`${table.status} = 'excused'`),
     index("assignment_exercise_excuses_assignment_id_idx").on(
       table.assignmentId,
     ),

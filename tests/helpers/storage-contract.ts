@@ -2020,6 +2020,77 @@ export function describeStorageContract(
       });
     });
 
+    test("an excuse is withdrawn once, stays on file, and frees its exercise to be excused again", async () => {
+      await withStorage(async ({ stores }) => {
+        const { assignment, instructor } =
+          await createAssignmentSlice(stores);
+        const excuse = await stores.assignments.excuseExercise({
+          id: "excuse-1",
+          assignmentId: assignment.id,
+          exerciseId: "cp",
+          actorId: instructor.id,
+          reason: "Too hard.",
+          createdAt: NOW,
+        });
+
+        expect(excuse.withdrawnAt).toBeNull();
+        expect(excuse.withdrawnById).toBeNull();
+
+        // While it is in force, the exercise cannot be excused a second time.
+        await expect(
+          stores.assignments.excuseExercise({
+            id: "excuse-2",
+            assignmentId: assignment.id,
+            exerciseId: "cp",
+            actorId: instructor.id,
+            reason: "",
+            createdAt: NOW,
+          }),
+        ).rejects.toThrow();
+
+        const withdraw = {
+          actorId: instructor.id,
+          assignmentId: assignment.id,
+          excuseId: excuse.id,
+          withdrawnAt: LATER,
+        };
+        const withdrawn = {
+          ...excuse,
+          status: "withdrawn" as const,
+          withdrawnAt: LATER,
+          withdrawnById: instructor.id,
+        };
+
+        await expect(
+          stores.assignments.withdrawExerciseExcuse(withdraw),
+        ).resolves.toEqual(withdrawn);
+        // Once only, and only on its own assignment.
+        await expect(
+          stores.assignments.withdrawExerciseExcuse(withdraw),
+        ).resolves.toBeNull();
+
+        const again = await stores.assignments.excuseExercise({
+          id: "excuse-3",
+          assignmentId: assignment.id,
+          exerciseId: "cp",
+          actorId: instructor.id,
+          reason: "",
+          createdAt: LATER,
+        });
+
+        await expect(
+          stores.assignments.withdrawExerciseExcuse({
+            ...withdraw,
+            assignmentId: "elsewhere",
+            excuseId: again.id,
+          }),
+        ).resolves.toBeNull();
+        await expect(
+          stores.assignments.listExerciseExcuses(assignment.id),
+        ).resolves.toEqual([withdrawn, again]);
+      });
+    });
+
     test("evaluated work is known by its live evaluations, not by any ledger", async () => {
       await withStorage(async ({ stores }) => {
         const { attempt, student } = await createAttemptSlice(stores);

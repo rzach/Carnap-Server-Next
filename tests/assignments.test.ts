@@ -532,9 +532,11 @@ describe("assignment publication", () => {
         html.indexOf(`${base}/content-revision`, start),
       );
       // Cells, not loose text: the sheet's own description says "Content
-      // updates and excused exercises", and would be counted as a row.
+      // updates and excused exercises", and would be counted as a row. A cell
+      // may carry a class for its phone layout.
       const rows = (cell: string): number =>
-        ledger.split(`<td>${cell}</td>`).length - 1;
+        ledger.split(new RegExp(`<td(?: class="[^"]*")?>${cell}</td>`))
+          .length - 1;
 
       expect(page.status).toBe(200);
       expect(start).toBeGreaterThan(-1);
@@ -673,9 +675,103 @@ describe("assignment publication", () => {
       // "too_hard" names something they never chose.
       expect(instructorResponse.status).toBe(200);
       expect(instructorHtml).toContain(
-        "<td>Question — This was more difficult than intended.</td>",
+        '<td class="phone-own-line">Question — This was more difficult than intended.</td>',
       );
       expect(instructorHtml).not.toContain("too_hard —");
+    });
+  });
+
+  test("an instructor can reinstate an excused exercise from the ledger", async () => {
+    await withStorage(async (_storage, env) => {
+      const instructor = await login(env, "reinstate-teacher@example.test");
+      const courseId = await createCourse(env, instructor);
+      const revision = await createRevision(
+        env,
+        instructor,
+        source("only", "The only prompt."),
+      );
+      const draft = await createDraft(
+        env,
+        instructor,
+        courseId,
+        revision.revision.id,
+      );
+
+      await publish(env, instructor, courseId, draft.assignment.id);
+
+      const pagePath = `/courses/${courseId}/instructor/assignments/${draft.assignment.id}`;
+      const page = async () =>
+        (
+          await appRequest(
+            createTestApp(),
+            pagePath,
+            {
+              headers: {
+                Accept: "text/html",
+                Cookie: instructor.cookieHeader,
+              },
+            },
+            env,
+          )
+        ).text();
+      const formPost = (path: string, fields: Record<string, string>) =>
+        appRequest(
+          createTestApp(),
+          path,
+          {
+            body: new URLSearchParams({
+              csrfToken: instructor.csrfToken,
+              ...fields,
+            }),
+            headers: {
+              Accept: "text/html",
+              Cookie: instructor.cookieHeader,
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            method: "POST",
+          },
+          env,
+        );
+      const excuseOnly = () =>
+        formPost(`${pagePath}/excuses`, { exerciseId: "only", reason: "" });
+
+      expect((await excuseOnly()).status).toBe(303);
+
+      const excused = await page();
+      const [, excuseId = ""] =
+        excused.match(/action="[^"]*\/excuses\/([^/"]+)\/reinstate"/) ?? [];
+
+      expect(excuseId).not.toBe("");
+      expect(excused).toContain(`id="confirm-reinstate-${excuseId}"`);
+      expect(excused).toContain('aria-label="Reinstate Question"');
+      // The only exercise is excused, so there is nothing left to offer.
+      expect(excused).not.toContain("Exercise to excuse");
+
+      const reinstated = await formPost(
+        `${pagePath}/excuses/${excuseId}/reinstate`,
+        {},
+      );
+
+      expect(reinstated.status).toBe(303);
+      expect(reinstated.headers.get("Location")).toBe(
+        `${pagePath}?reinstated=1`,
+      );
+
+      const after = await page();
+
+      // The excuse stays on the record, with its reinstatement after it, and
+      // nothing is left to reinstate.
+      expect(after).toContain("<td>Excused exercise</td>");
+      expect(after).toContain("<td>Exercise reinstated</td>");
+      expect(after.indexOf("<td>Excused exercise</td>")).toBeLessThan(
+        after.indexOf("<td>Exercise reinstated</td>"),
+      );
+      expect(after).not.toContain("/reinstate");
+      expect(after).toContain("Exercise to excuse");
+
+      // And it can be excused again.
+      expect((await excuseOnly()).status).toBe(303);
+      expect(await page()).toContain("/reinstate");
     });
   });
 

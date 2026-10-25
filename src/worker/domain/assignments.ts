@@ -3,7 +3,7 @@ import type { Timestamp } from "./time";
 
 export type AssignmentState = "draft" | "published";
 export type AssessmentMode = "none" | "practice" | "graded";
-export type AssignmentExerciseExcuseStatus = "excused";
+export type AssignmentExerciseExcuseStatus = "excused" | "withdrawn";
 
 export interface Assignment {
   readonly id: AppId;
@@ -150,6 +150,9 @@ export interface AssignmentExerciseExcuse {
   readonly actorId: AppId;
   readonly createdAt: Timestamp;
   readonly reason: string;
+  /** When an instructor reinstated the exercise, and who; null while excused. */
+  readonly withdrawnAt: Timestamp | null;
+  readonly withdrawnById: AppId | null;
 }
 
 export type LatePolicyKind =

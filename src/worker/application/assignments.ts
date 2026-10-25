@@ -1222,7 +1222,10 @@ export class AssignmentService {
     const exerciseId = normalizeExerciseId(command.exerciseId);
     const existing = (
       await this.options.stores.assignments.listExerciseExcuses(assignment.id)
-    ).find((excuse) => excuse.exerciseId === exerciseId);
+    ).find(
+      (excuse) =>
+        excuse.exerciseId === exerciseId && excuse.status === "excused",
+    );
 
     if (existing !== undefined) {
       return existing;
@@ -1241,6 +1244,42 @@ export class AssignmentService {
     await this.gradebook().refreshAfterInstructorChange(assignment);
 
     return excuse;
+  }
+
+  /**
+   * Counts an excused exercise again. Excusing set no student's work aside, so
+   * the scores come back from the evidence already on file; the excuse stays
+   * in the ledger, withdrawn.
+   *
+   * Idempotent, as clearing an override is: an excuse already withdrawn (a
+   * second click on a stale page) changes nothing and reports null.
+   */
+  async reinstateExercise(
+    actor: AuthenticatedActor,
+    courseId: AppId,
+    assignmentId: AppId,
+    excuseId: AppId,
+  ): Promise<AssignmentExerciseExcuse | null> {
+    await requireInstructor(this.options.stores, actor, courseId);
+
+    const assignment = await assignmentInCourse(
+      this.options.stores,
+      courseId,
+      assignmentId,
+    );
+    const withdrawn =
+      await this.options.stores.assignments.withdrawExerciseExcuse({
+        actorId: actor.user.id,
+        assignmentId: assignment.id,
+        excuseId,
+        withdrawnAt: timestampNow(this.options.now?.() ?? new Date()),
+      });
+
+    if (withdrawn !== null) {
+      await this.gradebook().refreshAfterInstructorChange(assignment);
+    }
+
+    return withdrawn;
   }
 
   async listForInstructor(

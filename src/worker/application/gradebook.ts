@@ -1544,6 +1544,11 @@ export class GradebookService {
     const excusedIds = new Map<AppId, Set<string>>();
 
     for (const excuse of excuses) {
+      // A withdrawn excuse is history: its exercise counts again.
+      if (excuse.status !== "excused") {
+        continue;
+      }
+
       const ids = excusedIds.get(excuse.assignmentId) ?? new Set<string>();
 
       ids.add(excuse.exerciseId);

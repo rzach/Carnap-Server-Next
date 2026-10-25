@@ -253,6 +253,8 @@ function publicExerciseExcuse(excuse: AssignmentExerciseExcuse) {
     id: excuse.id,
     reason: excuse.reason,
     status: excuse.status,
+    withdrawnAt: excuse.withdrawnAt,
+    withdrawnById: excuse.withdrawnById,
   };
 }
 
@@ -1646,6 +1648,7 @@ function instructorNotices(
       param: "repointed",
     },
     { message: i18n.t("Exercise excused."), param: "excused" },
+    { message: i18n.t("Exercise reinstated."), param: "reinstated" },
     { message: i18n.t("Late policy saved."), param: "latePolicy" },
     { message: i18n.t("Assignment override saved."), param: "override" },
     {
@@ -2461,6 +2464,39 @@ assignmentRoutes.post(
     excuseAssignmentExercise,
     STAFF_ASSIGNMENT_CHROME,
     (i18n) => i18n.t("Excuse not saved"),
+  ),
+);
+
+assignmentRoutes.post(
+  "/:courseId/instructor/assignments/:assignmentId/excuses/:excuseId/reinstate",
+  withFormErrorPage(
+    async (context) => {
+      const actor = requireAuthenticated(context);
+      const courseId = requiredParam(context, "courseId");
+      const assignmentId = requiredParam(context, "assignmentId");
+      const withdrawn = await assignmentService(context).reinstateExercise(
+        actor,
+        courseId,
+        assignmentId,
+        requiredParam(context, "excuseId"),
+      );
+
+      kickGradePassback(context);
+
+      if (isFormSubmission(context)) {
+        return redirect(
+          `/courses/${courseId}/instructor/assignments/${assignmentId}` +
+            "?reinstated=1",
+        );
+      }
+
+      return context.json({
+        exerciseExcuse:
+          withdrawn === null ? null : publicExerciseExcuse(withdrawn),
+      });
+    },
+    STAFF_ASSIGNMENT_CHROME,
+    (i18n) => i18n.t("Exercise not reinstated"),
   ),
 );
 

@@ -94,6 +94,7 @@ import type {
   UpsertLtiResourceLinkInput,
   UserStore,
   VoidAttemptInput,
+  WithdrawExerciseExcuseInput,
 } from "../../application/stores";
 import type {
   AdminAuditEvent,
@@ -534,6 +535,8 @@ function mapAssignmentExerciseExcuse(
     actorId: row.actorId,
     createdAt: row.createdAt,
     reason: row.reason,
+    withdrawnAt: row.withdrawnAt,
+    withdrawnById: row.withdrawnById,
   };
 }
 
@@ -2050,6 +2053,28 @@ class SqliteAssignmentStore implements AssignmentStore {
           .returning(),
       ),
     );
+  }
+
+  async withdrawExerciseExcuse(input: WithdrawExerciseExcuseInput) {
+    const row = nullableSingle(
+      await this.db
+        .update(assignmentExerciseExcuses)
+        .set({
+          status: "withdrawn",
+          withdrawnAt: input.withdrawnAt,
+          withdrawnById: input.actorId,
+        })
+        .where(
+          and(
+            eq(assignmentExerciseExcuses.id, input.excuseId),
+            eq(assignmentExerciseExcuses.assignmentId, input.assignmentId),
+            eq(assignmentExerciseExcuses.status, "excused"),
+          ),
+        )
+        .returning(),
+    );
+
+    return row === null ? null : mapAssignmentExerciseExcuse(row);
   }
 
   async getById(id: AppId): Promise<Assignment | null> {

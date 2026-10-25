@@ -187,6 +187,10 @@ msgstr "{date}: {details}"
 msgid "{exercise} — {reason}"
 msgstr "{exercise} — {reason}"
 
+#: src/worker/web/assignment-detail.tsx
+msgid "{exercise} will count toward the grade again. Students' scores on it come back from the work they already submitted."
+msgstr "{exercise} zählt wieder für die Note. Die Punkte der Studierenden darauf ergeben sich aus den bereits eingereichten Arbeiten."
+
 #: src/worker/exercises/model/strings.ts
 msgid "{field} of {argument}"
 msgstr "{field} von {argument}"
@@ -728,6 +732,7 @@ msgid "Action"
 msgstr "Aktion"
 
 #: src/worker/web/admin.tsx
+#: src/worker/web/assignment-detail.tsx
 #: src/worker/web/content.tsx
 #: src/worker/web/courses.tsx
 msgid "Actions"
@@ -2498,9 +2503,21 @@ msgstr "Übungs-IDs müssen zwischen 1 und 200 Zeichen lang sein."
 msgid "Exercise kind {kind} is not supported."
 msgstr "Die Übungsart {kind} wird nicht unterstützt."
 
+#: src/worker/routes/assignments.ts
+msgid "Exercise not reinstated"
+msgstr "Übung nicht wieder gewertet"
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Exercise points must be a number from 0 to 1000."
 msgstr "Die Punktzahl einer Übung muss eine Zahl von 0 bis 1000 sein."
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Exercise reinstated"
+msgstr "Übung wieder gewertet"
+
+#: src/worker/routes/assignments.ts
+msgid "Exercise reinstated."
+msgstr "Übung wieder gewertet."
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Exercise to excuse"
@@ -4271,6 +4288,22 @@ msgstr "Diese Registrierungseinstellung wird nicht unterstützt."
 #: src/worker/routes/admin.ts
 msgid "Registration setting not changed"
 msgstr "Registrierungseinstellung nicht geändert"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Reinstate"
+msgstr "Wieder werten"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Reinstate {exercise}"
+msgstr "{exercise} wieder werten"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Reinstate exercise"
+msgstr "Übung wieder werten"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Reinstate this exercise?"
+msgstr "Diese Übung wieder werten?"
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Release grades"

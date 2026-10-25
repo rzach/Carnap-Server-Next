@@ -829,6 +829,13 @@ export interface ExcuseAssignmentExerciseInput {
   readonly reason: string;
 }
 
+export interface WithdrawExerciseExcuseInput {
+  readonly actorId: AppId;
+  readonly assignmentId: AppId;
+  readonly excuseId: AppId;
+  readonly withdrawnAt: Timestamp;
+}
+
 export interface UpsertLatePolicyInput {
   readonly assignmentId: AppId;
   readonly kind: AssignmentLatePolicy["kind"];
@@ -879,6 +886,14 @@ export interface AssignmentStore {
   excuseExercise(
     input: ExcuseAssignmentExerciseInput,
   ): Promise<AssignmentExerciseExcuse>;
+  /**
+   * Withdraws an excuse still in force, counting its exercise again. Null when
+   * this assignment has no such excuse in force: none by that id, or one
+   * already withdrawn, so two reinstatements racing withdraw it once.
+   */
+  withdrawExerciseExcuse(
+    input: WithdrawExerciseExcuseInput,
+  ): Promise<AssignmentExerciseExcuse | null>;
   getById(id: AppId): Promise<Assignment | null>;
   listContentVersions(
     assignmentId: AppId,
@@ -902,6 +917,7 @@ export interface AssignmentStore {
     courseId: AppId,
     userId: AppId,
   ): Promise<AssignmentOverride[]>;
+  /** Withdrawn excuses included, oldest first: the ledger reads them all. */
   listExerciseExcuses(
     assignmentId: AppId,
   ): Promise<AssignmentExerciseExcuse[]>;

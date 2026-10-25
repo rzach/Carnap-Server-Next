@@ -936,6 +936,19 @@ td > .create-bar {
     content: "·" / "";
     margin-inline: 0.4em;
   }
+
+  /* A value long enough to wrap, such as a corrections ledger's detail,
+     takes a line of its own, with the values after it on the next: beside
+     them it would wrap as a whole and leave the next value opening its line
+     with a dot. */
+  table.phone-list td.phone-own-line {
+    flex-basis: 100%;
+  }
+
+  /* As specific as the dot's own rule above, which it overrides. */
+  table.phone-list td.phone-own-line + td:not(:first-child)::before {
+    content: none;
+  }
 }
 
 /* The admin audit log is one event per *pair* of rows: the four fields anyone

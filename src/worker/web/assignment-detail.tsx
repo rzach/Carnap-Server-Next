@@ -1307,8 +1307,9 @@ export function renderAttemptGatePage(
 }
 
 /**
- * Every content version and excused exercise this assignment has had, oldest
- * first.
+ * Every content version, excused exercise and reinstatement this assignment has
+ * had, oldest first, as one timeline: a reinstatement reads after the excuse
+ * it withdrew, and a correction between them sits where it happened.
  *
  * No row is dropped for carrying no note. A correction published without one is
  * still a correction — the content changed under students who may already have
@@ -1325,17 +1326,22 @@ export function renderAttemptGatePage(
  * words and reached every reader in English. Which row it is, is positional —
  * versions arrive in the order they took effect and the publish writes the
  * first — since a version carries no kind of its own.
+ *
+ * An excuse still in force carries its Reinstate button; a withdrawn one is
+ * history, with its reinstatement as a row of its own.
  */
 const CorrectionsLedger: FC<{
+  readonly context: Context<AppBindings>;
+  readonly courseId: string;
   readonly detail: {
     readonly artifact: CompiledContentArtifact;
+    readonly assignment: Assignment;
     readonly contentVersions: readonly AssignmentContentVersion[];
     readonly exerciseExcuses: readonly AssignmentExerciseExcuse[];
   };
-}> = ({ detail }) => {
+}> = ({ context, courseId, detail }) => {
   const i18n = useI18n();
-  const contentRows = detail.contentVersions;
-  // The same name the form above excuses it by. An excuse stores the exercise's
+  // The same name the form below excuses it by. An excuse stores the exercise's
   // id, which is what the grader needs and not what anyone picked: the author
   // chose a title, chose it from a list of titles, and then read back a row
   // naming something they never typed. The id survives as the fallback for the
@@ -1344,8 +1350,79 @@ const CorrectionsLedger: FC<{
   const exerciseNames = new Map(
     detail.artifact.manifest.map((item) => [item.id, item.title ?? item.id]),
   );
+  const nameOf = (excuse: AssignmentExerciseExcuse) =>
+    exerciseNames.get(excuse.exerciseId) ?? excuse.exerciseId;
+  const rows: { readonly at: Timestamp; readonly row: Child }[] = [
+    ...detail.contentVersions.map((version, index) => ({
+      at: version.effectiveAt,
+      row: (
+        <tr>
+          <td>
+            {index === 0
+              ? i18n.t("Initial revision")
+              : i18n.t("Content update")}
+          </td>
+          <td class="phone-own-line">
+            {revisionDetailsText(i18n, version.note)}
+          </td>
+          <td>
+            <Time value={version.effectiveAt} />
+          </td>
+          <td />
+        </tr>
+      ),
+    })),
+    ...detail.exerciseExcuses.map((excuse) => ({
+      at: excuse.createdAt,
+      row: (
+        <tr>
+          <td>{i18n.t("Excused exercise")}</td>
+          <td class="phone-own-line">
+            {excuse.reason.length === 0
+              ? nameOf(excuse)
+              : i18n.t("{exercise} — {reason}", {
+                  exercise: nameOf(excuse),
+                  reason: excuse.reason,
+                })}
+          </td>
+          <td>
+            <Time value={excuse.createdAt} />
+          </td>
+          <td>
+            {excuse.status === "excused" ? (
+              <ReinstateExerciseForm
+                action={`/courses/${courseId}/instructor/assignments/${detail.assignment.id}/excuses/${excuse.id}/reinstate`}
+                context={context}
+                excuseId={excuse.id}
+                exerciseName={nameOf(excuse)}
+              />
+            ) : null}
+          </td>
+        </tr>
+      ),
+    })),
+    ...detail.exerciseExcuses.flatMap((excuse) =>
+      excuse.withdrawnAt === null
+        ? []
+        : [
+            {
+              at: excuse.withdrawnAt,
+              row: (
+                <tr>
+                  <td>{i18n.t("Exercise reinstated")}</td>
+                  <td class="phone-own-line">{nameOf(excuse)}</td>
+                  <td>
+                    <Time value={excuse.withdrawnAt} />
+                  </td>
+                  <td />
+                </tr>
+              ),
+            },
+          ],
+    ),
+  ];
 
-  if (contentRows.length === 0 && detail.exerciseExcuses.length === 0) {
+  if (rows.length === 0) {
     return (
       <p>
         {i18n.t("No corrections have been published for this assignment.")}
@@ -1353,49 +1430,84 @@ const CorrectionsLedger: FC<{
     );
   }
 
+  // Stable, so rows stamped alike keep the order above; ISO stamps in UTC
+  // order as strings.
+  rows.sort((left, right) =>
+    left.at < right.at ? -1 : left.at > right.at ? 1 : 0,
+  );
+
+  // The Actions column stands whether or not anything can be reinstated, so
+  // the rows keep one shape: on a phone, the change with any Reinstate button
+  // at its end, then its detail on a line of its own, then its date.
   return (
-    <TableScroll>
+    <TableScroll phoneList>
       <thead>
         <tr>
           <th>{i18n.t("Change")}</th>
           <th>{i18n.t("Detail")}</th>
           <th>{i18n.t("When")}</th>
+          <th>{i18n.t("Actions")}</th>
         </tr>
       </thead>
-      <tbody>
-        {contentRows.map((version, index) => (
-          <tr>
-            <td>
-              {index === 0
-                ? i18n.t("Initial revision")
-                : i18n.t("Content update")}
-            </td>
-            <td>{revisionDetailsText(i18n, version.note)}</td>
-            <td>
-              <Time value={version.effectiveAt} />
-            </td>
-          </tr>
-        ))}
-        {detail.exerciseExcuses.map((excuse) => (
-          <tr>
-            <td>{i18n.t("Excused exercise")}</td>
-            <td>
-              {excuse.reason.length === 0
-                ? (exerciseNames.get(excuse.exerciseId) ?? excuse.exerciseId)
-                : i18n.t("{exercise} — {reason}", {
-                    exercise:
-                      exerciseNames.get(excuse.exerciseId) ??
-                      excuse.exerciseId,
-                    reason: excuse.reason,
-                  })}
-            </td>
-            <td>
-              <Time value={excuse.createdAt} />
-            </td>
-          </tr>
-        ))}
-      </tbody>
+      <tbody>{rows.map(({ row }) => row)}</tbody>
     </TableScroll>
+  );
+};
+
+/**
+ * One excuse's Reinstate, which asks first, naming the exercise, since the
+ * button sits among rows alike. Nothing is lost either way: excusing set no
+ * work aside, so reinstating only counts the exercise again, and it can be
+ * excused again after. Without JS the form posts directly.
+ */
+const ReinstateExerciseForm: FC<{
+  readonly action: string;
+  readonly context: Context<AppBindings>;
+  readonly excuseId: string;
+  readonly exerciseName: string;
+}> = ({ action, context, excuseId, exerciseName }) => {
+  const i18n = useI18n();
+  const formId = `reinstate-${excuseId}`;
+  const dialogId = `confirm-${formId}`;
+  const label = i18n.t("Reinstate {exercise}", { exercise: exerciseName });
+
+  return (
+    <>
+      <ModalDialog id={dialogId} title={i18n.t("Reinstate this exercise?")}>
+        <form method="dialog">
+          <p>
+            {i18n.t(
+              "{exercise} will count toward the grade again. Students' scores on it come back from the work they already submitted.",
+              { exercise: exerciseName },
+            )}
+          </p>
+          <div class="sheet-actions">
+            <button data-confirm-submit={formId} type="button">
+              {i18n.t("Reinstate exercise")}
+            </button>
+            <button class="secondary" type="submit">
+              {i18n.t("Cancel")}
+            </button>
+          </div>
+        </form>
+      </ModalDialog>
+      <form
+        action={action}
+        data-confirm-dialog={dialogId}
+        id={formId}
+        method="post"
+      >
+        <CsrfInput context={context} />
+        <button
+          aria-label={label}
+          class="secondary"
+          title={label}
+          type="submit"
+        >
+          {i18n.t("Reinstate")}
+        </button>
+      </form>
+    </>
   );
 };
 
@@ -1457,12 +1569,21 @@ const CorrectionForms: FC<{
     readonly assignment: Assignment;
     readonly contentItem: ContentItem;
     readonly contentRevision: ContentRevision;
+    readonly exerciseExcuses: readonly AssignmentExerciseExcuse[];
   };
   readonly gradedWorkExists: boolean;
   readonly revisions: readonly AssignmentRevisionOption[];
 }> = ({ context, courseId, detail, gradedWorkExists, revisions }) => {
   const i18n = useI18n();
   const baseAction = `/courses/${courseId}/instructor/assignments/${detail.assignment.id}`;
+  const excused = new Set(
+    detail.exerciseExcuses
+      .filter((excuse) => excuse.status === "excused")
+      .map((excuse) => excuse.exerciseId),
+  );
+  const excusable = detail.artifact.manifest.filter(
+    (item) => !excused.has(item.id),
+  );
 
   return (
     <>
@@ -1532,10 +1653,12 @@ const CorrectionForms: FC<{
         </form>
         {/* No exercises to name means no excuse to make — and a `required`
           select with no options is a control that cannot be satisfied. That is
-          the ordinary case for a prose-only assignment, and also what an
-          unreadable artifact leaves behind, where the repoint form above is
-          the only one that can help. */}
-        {detail.artifact.manifest.length === 0 ? null : (
+          the ordinary case for a prose-only assignment, what an unreadable
+          artifact leaves behind, where the repoint form above is the only one
+          that can help, and what is left once every exercise is excused. An
+          exercise already excused is not offered: excusing it again would
+          change nothing, and reinstating is the ledger row's button. */}
+        {excusable.length === 0 ? null : (
           <form
             action={`${baseAction}/excuses`}
             class="create-bar"
@@ -1544,7 +1667,7 @@ const CorrectionForms: FC<{
             <CsrfInput context={context} />
             <BarField label={i18n.t("Exercise to excuse")}>
               <select name="exerciseId" required>
-                {detail.artifact.manifest.map((item) => (
+                {excusable.map((item) => (
                   <option value={item.id}>{item.title ?? item.id}</option>
                 ))}
               </select>
@@ -3389,7 +3512,11 @@ export function renderInstructorAssignmentPage(
         }
         title={i18n.t("Published assignment corrections")}
       >
-        <CorrectionsLedger detail={detail} />
+        <CorrectionsLedger
+          context={context}
+          courseId={courseId}
+          detail={detail}
+        />
       </Sheet>
     ) : null;
 

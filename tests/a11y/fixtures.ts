@@ -870,6 +870,29 @@ export async function collectFixtures(
     { maxAttempts: "3", userId: student.actorId },
     instructor,
   );
+  // Two excused exercises for the corrections ledger: one reinstated, so it
+  // has a reinstatement row, and one still in force, so it has its Reinstate
+  // button and the dialog that confirms it.
+  const excuse = async (exerciseId: string): Promise<string> => {
+    const response = await appRequest(
+      createTestApp(),
+      `${instructorBase}/excuses`,
+      jsonRequest({ exerciseId, reason: "Ambiguous wording" }, instructor),
+      env,
+    );
+
+    return ((await response.json()) as { exerciseExcuse: { id: string } })
+      .exerciseExcuse.id;
+  };
+  const reinstatedExcuseId = await excuse("sa");
+
+  await formPost(
+    env,
+    `${instructorBase}/excuses/${reinstatedExcuseId}/reinstate`,
+    {},
+    instructor,
+  );
+  await excuse("fr");
   // And a course accommodation, so the member's dialog carries its second
   // form, the one that clears it.
   await formPost(
@@ -1082,6 +1105,7 @@ export async function collectFixtures(
       "updated",
       "repointed",
       "excused",
+      "reinstated",
       "latePolicy",
       "override",
       "overrideCleared",
