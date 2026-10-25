@@ -23,6 +23,8 @@ import {
   isTruthTreePublicData,
   judgeTree,
   resolveTruthTree,
+  rootRowsOf,
+  startingRules,
   startingTree,
 } from "./grading";
 import type { TreeReport } from "./report";
@@ -83,7 +85,7 @@ function treeHtml(
     {
       flag: false,
       marks: drawn.marks,
-      rootRows: resolved.root.length,
+      rootRows: rootRowsOf(resolved, tree),
       rules,
     },
   );
@@ -115,11 +117,14 @@ export function renderTruthTreeElement(
   const legend = exerciseLegendHtml(
     exerciseGroupLabel(truthTreeName(meta.i18n), meta),
   );
-  // The root alone, which has no marks to draw.
+  // The tree as the student starts it, which has no marks to draw.
   const body =
     resolved === null
       ? ""
-      : treeHtml(startingTree(resolved), resolved, words, { marks: false });
+      : treeHtml(startingTree(resolved), resolved, words, {
+          marks: false,
+          rules: startingRules(resolved),
+        });
 
   return `<carnap-truth-tree${exerciseRootAttributes(meta)}>
         <template shadowrootmode="open">

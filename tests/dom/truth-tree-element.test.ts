@@ -1260,3 +1260,68 @@ describe("type mode", () => {
     expect(answerOf(mounted).nodes).toHaveLength(3);
   });
 });
+
+describe("a starter and a playground (#475)", () => {
+  const STARTER = "- P & Q\n- ¬P\n----\n3: $ P $ by & [1]\n4: $ Q $";
+
+  test("a starter seeds the tree below the root, rules and all", async () => {
+    const mounted = mountExercise(await treeExercise("", STARTER));
+    const answer = answerOf(mounted);
+
+    expect(answer.nodes[0]?.rows.map((each) => each.text)).toEqual([
+      "P & Q",
+      "¬P",
+      "P",
+      "Q",
+    ]);
+    expect(Object.values(answer.rules ?? {})).toEqual(["&"]);
+    // The root is still the exercise's.
+    press(row(mounted, "P & Q"), "Delete");
+    expect(announced(mounted)).toBe(
+      "The root's rows are given, and cannot be changed.",
+    );
+  });
+
+  test("Ctrl-? shows the tree as the directive's body", async () => {
+    const mounted = mountExercise(await treeExercise("", STARTER));
+
+    press(row(mounted, "Q"), "?", { composed: true, ctrlKey: true });
+
+    expect(
+      mounted.root.querySelector<HTMLTextAreaElement>(".source-dialog-text")
+        ?.value,
+    ).toBe(STARTER);
+  });
+
+  test("a playground's root is the student's to write, and grow, but not to cite", async () => {
+    const mounted = mountExercise(await treeExercise("playground", "Try."));
+
+    // One empty row to write the first root row in.
+    press(rows(mounted)[0] as Element, "Enter");
+    fill(
+      mounted.root.querySelector<HTMLInputElement>(".tableau-input"),
+      "A & B",
+    );
+    press(mounted.root.querySelector(".tableau-input") as Element, "Escape");
+    // Add row adds another root row; a citation is refused there.
+    press(cursor(mounted), "r");
+    fill(
+      mounted.root.querySelector<HTMLInputElement>(".tableau-input"),
+      "¬A",
+    );
+    press(mounted.root.querySelector(".tableau-input") as Element, "Escape");
+    press(cursor(mounted), "c");
+    expect(announced(mounted)).toBe(
+      "The root's rows are where the tree begins: they cite no row.",
+    );
+
+    const root = answerOf(mounted).nodes[0]?.rows ?? [];
+    expect(root.map((each) => each.text)).toEqual(["A & B", "¬A"]);
+    expect(new Set(root.map((each) => each.dev)).size).toBe(1);
+
+    // And it keeps a row to write in.
+    press(cursor(mounted), "Delete");
+    press(cursor(mounted), "Delete");
+    expect(announced(mounted)).toBe("The root needs a row.");
+  });
+});

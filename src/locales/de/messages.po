@@ -54,6 +54,10 @@ msgid "“{key}” is not a line a world exercise reads. It reads {keys}."
 msgstr "„{key}“ ist keine Zeile, die eine Welt-Aufgabe liest. Sie liest {keys}."
 
 #: src/worker/application/content/diagnostic-strings.ts
+msgid "“{label}” names no row above this one on its branch."
+msgstr "„{label}“ bezeichnet keine Zeile über dieser auf ihrem Ast."
+
+#: src/worker/application/content/diagnostic-strings.ts
 #: src/worker/logic/specs/strings.ts
 msgid "“{name}” does not occur in this quantifier's scope, so it binds nothing."
 msgstr "„{name}“ kommt im Bereich dieses Quantors nicht vor; er bindet also nichts."
@@ -370,6 +374,10 @@ msgstr "{used} von {allowed}"
 msgid "A “-- label:” comment must sit at the end of the proof line it marks, not on its own line."
 msgstr "Ein „-- label:“-Kommentar muss am Ende der Beweiszeile stehen, die er markiert, nicht in einer eigenen Zeile."
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A branch begins with a row."
+msgstr "Ein Ast beginnt mit einer Zeile."
+
 #: src/worker/web/lti.tsx
 msgid "A Carnap account already exists for {email}. We sent a confirmation link to that address — open it to connect your LMS identity to the account, then launch again from your LMS."
 msgstr "Für {email} gibt es bereits ein Carnap-Konto. Wir haben einen Bestätigungslink an diese Adresse gesendet — öffnen Sie ihn, um Ihre LMS-Identität mit dem Konto zu verbinden, und starten Sie danach erneut aus Ihrem LMS."
@@ -532,6 +540,14 @@ msgstr "Eine Kurzantwort-Übung braucht mindestens eine akzeptierte Antwort."
 msgid "A short-answer exercise requires answer or answers."
 msgstr "Eine Kurzantwort-Übung braucht answer oder answers."
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A split's step is named once, on its first branch."
+msgstr "Der Schritt einer Verzweigung wird nur einmal angegeben, auf ihrem ersten Ast."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A starter grows from a root: write the root's rows above the “----”."
+msgstr "Eine Vorgabe wächst aus einer Wurzel: Schreiben Sie die Zeilen der Wurzel über das „----“."
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "A step or a closure in the tree does not check."
 msgstr "Ein Schritt oder ein Abschluss im Baum ist nicht korrekt."
@@ -579,6 +595,10 @@ msgstr "Eine Wahrheitstafel darf höchstens {max} Atome verwenden; diese verwend
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A truth tree needs a root: a list of its rows, each on a line of its own after “- ”."
 msgstr "Ein Wahrheitsbaum braucht eine Wurzel: eine Liste ihrer Zeilen, jede für sich nach „- “."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A truth tree's root and starter together may have at most {max} rows."
+msgstr "Wurzel und Vorgabe eines Wahrheitsbaums dürfen zusammen höchstens {max} Zeilen haben."
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A truth tree's root may have at most {max} rows."
@@ -1782,6 +1802,10 @@ msgstr "Die Formel „{formula}“ konnte nicht gelesen werden: {detail}"
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Could not parse the goal's formula “{formula}”: {detail}"
 msgstr "Die Formel des Ziels „{formula}“ konnte nicht gelesen werden: {detail}"
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Could not read “{line}”. A starter row reads “label: $ row $ by rule [cites]”, a branch ends “closed [cites]” or “open”, and “- ” opens a branch."
+msgstr "„{line}“ konnte nicht gelesen werden. Eine Zeile der Vorgabe lautet „label: $ Zeile $ by Regel [Zeilen]“, ein Ast endet mit „closed [Zeilen]“ oder „open“, und „- “ eröffnet einen Ast."
 
 #: src/worker/exercises/model/strings.ts
 msgid "Could not read the sentence “{sentence}”."
@@ -3654,6 +3678,14 @@ msgid "Not yet verified. Signing in by email once will verify it."
 msgstr "Noch nicht bestätigt. Eine Anmeldung per E-Mail bestätigt sie."
 
 #: src/worker/application/content/diagnostic-strings.ts
+msgid "Nothing can follow a split on its branch. Put it in the split's branches."
+msgstr "Auf eine Verzweigung kann auf ihrem Ast nichts folgen. Setzen Sie es in die Äste der Verzweigung."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "Nothing can follow the end of a branch."
+msgstr "Auf das Ende eines Astes kann nichts folgen."
+
+#: src/worker/application/content/diagnostic-strings.ts
 msgid "Nothing in the world is named “{name}”, which “{formula}” uses."
 msgstr "Nichts in der Welt heißt „{name}“, das „{formula}“ verwendet."
 
@@ -5427,6 +5459,10 @@ msgid "The label “{label}” is defined more than once."
 msgstr "Die Beschriftung „{label}“ ist mehr als einmal definiert."
 
 #: src/worker/application/content/diagnostic-strings.ts
+msgid "The label “{label}” is used twice on one branch."
+msgstr "Die Marke „{label}“ kommt auf einem Ast zweimal vor."
+
+#: src/worker/application/content/diagnostic-strings.ts
 msgid "The language has no symbol “{symbol}”."
 msgstr "Die Sprache hat kein Symbol „{symbol}“."
 
@@ -5582,8 +5618,16 @@ msgid "The role “{role}” needs {arity} arguments, but “{symbol}” takes {
 msgstr "Die Rolle „{role}“ braucht {arity} Argumente, aber „{symbol}“ nimmt {declared}."
 
 #: src/worker/exercises/truth-tree/strings.ts
+msgid "The root needs a row."
+msgstr "Die Wurzel braucht eine Zeile."
+
+#: src/worker/exercises/truth-tree/strings.ts
 msgid "The root's rows are given, and cannot be changed."
 msgstr "Die Zeilen der Wurzel sind vorgegeben und können nicht geändert werden."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "The root's rows are where the tree begins: they cite no row."
+msgstr "Mit den Zeilen der Wurzel beginnt der Baum: Sie verweisen auf keine Zeile."
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "The rows of one step must cite the same row."
@@ -6094,6 +6138,10 @@ msgstr "Dieser Start ist abgelaufen. Kehren Sie zu Ihrem Kurs zurück und starte
 msgid "This launch was not issued for Carnap."
 msgstr "Dieser Start wurde nicht für Carnap ausgestellt."
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "This line is not in line with the branch it is in: a branch's lines line up with its first."
+msgstr "Diese Zeile ist nicht bündig mit ihrem Ast: Die Zeilen eines Astes stehen bündig mit seiner ersten."
+
 #: src/worker/exercises/aufbau-proof-fitch/strings.ts
 msgid "This line's indentation does not match any open subproof level."
 msgstr "Die Einrückung dieser Zeile passt zu keiner offenen Teilbeweisebene."
@@ -6137,6 +6185,10 @@ msgstr "Dieses Modell erfüllt alles, was die Aufgabe verlangt."
 #: src/worker/exercises/model/strings.ts
 msgid "This model gives {symbol} no meaning, so a sentence cannot use it."
 msgstr "Dieses Modell gibt {symbol} keine Bedeutung, daher kann ein Satz es nicht verwenden."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "This row begins a step, so it needs “by”, with the step's rule and the rows it develops."
+msgstr "Diese Zeile beginnt einen Schritt und braucht daher „by“ mit der Regel des Schritts und den Zeilen, die er entwickelt."
 
 #: src/worker/exercises/truth-table/strings.ts
 msgid "This row is a counterexample, but it isn't filled in correctly."
@@ -6698,6 +6750,14 @@ msgstr "Schreiben Sie einen Schritt pro Zeile: eine Marke, die Formel zwischen D
 #: src/worker/exercises/aufbau-proof-fitch/strings.ts
 msgid "Write one step per line: the formula, a colon, then the rule and the lines it cites, as in Q :→E 1 2. Cite a subproof by its range of lines, as in 2-4."
 msgstr "Schreiben Sie einen Schritt pro Zeile: die Formel, einen Doppelpunkt, dann die Regel und die zitierten Zeilen, etwa Q :→E 1 2. Einen Unterbeweis zitieren Sie über seinen Zeilenbereich, etwa 2-4."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Write the root first, in the rows at the top of the tree; “Add row” adds another. Then develop it."
+msgstr "Schreiben Sie zuerst die Wurzel, in die Zeilen oben im Baum; „Zeile hinzufügen“ fügt eine weitere hinzu. Entwickeln Sie sie dann."
+
+#: src/worker/exercises/truth-tree/strings.ts
+msgid "Write the root first: the rows at the top of the tree, which its steps develop."
+msgstr "Schreiben Sie zuerst die Wurzel: die Zeilen oben im Baum, die seine Schritte entwickeln."
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Write the row's sentence"

@@ -3,6 +3,7 @@ import { freeVariables, printTerm, variables } from "@aufbau/syntax";
 import {
   type CompilerDiagnostic,
   diagnostic,
+  diagnosticFrom,
 } from "../../application/content/diagnostics";
 import { renderMarkdownSource } from "../../application/content/markdown";
 import {
@@ -10,6 +11,7 @@ import {
   COMMON_EXERCISE_ATTRIBUTES,
   type CompiledExercise,
   type DirectiveBlock,
+  parseBooleanAttribute,
   parseExamAttribute,
   parsePoints,
   reconcileFeedback,
@@ -17,6 +19,10 @@ import {
   validateAttributes,
   validateExerciseId,
 } from "../../exercise-kit/authoring";
+import {
+  UNDERLINE,
+  unknownStarterRule,
+} from "../../exercise-kit/proof/authoring";
 import { parseSystemAttribute } from "../../exercise-kit/systems/attribute";
 import type { ExerciseCompileContext } from "../../exercise-kit/type";
 import { formulaParseErrors } from "../../logic/specs/diagnostics";
@@ -24,12 +30,15 @@ import type { TreeDevelopment } from "./aufbau/criteria";
 import { readTreeDevelopment } from "./aufbau/criteria";
 import type { OkAxioms } from "./aufbau/ok";
 import { okAxioms } from "./aufbau/ok";
+import { rowSortReader } from "./aufbau/rows";
 import {
   isTreeTheory,
   readTreeTheory,
+  ruleSpelling,
   type TreeTheory,
   type TreeTheoryProblem,
 } from "./aufbau/theory";
+import { parseTreeStarter, type TruthTreeStarter } from "./starter";
 import type { TruthTreeFinish, TruthTreePublicData } from "./types";
 import {
   TREE_ROW_CAP,
@@ -46,6 +55,7 @@ const LIST_ITEM = /^\s*-\s+(.+?)\s*$/;
 const TRUTH_TREE_ATTRIBUTES = [
   ...COMMON_EXERCISE_ATTRIBUTES,
   "finish",
+  "playground",
   "system",
 ] as const;
 
@@ -93,11 +103,15 @@ interface Located {
 interface TreeBody {
   readonly promptLines: readonly string[];
   readonly items: readonly Located[];
+  /** The starter under the root's `----`, and the line it begins on. */
+  readonly starter: Located | null;
 }
 
 /**
  * Prose, then the root: a list of its rows, one per item. The prompt is the
- * run of lines before the first item.
+ * run of lines before the first item. A `----` after the root begins the
+ * starter, the tree below it; one before the root is the prompt's, a rule
+ * across it, since a starter grows from a root.
  */
 function parseBody(
   block: DirectiveBlock,
@@ -109,6 +123,17 @@ function parseBody(
   for (const [index, line] of block.bodyLines.entries()) {
     const lineNumber = block.bodyStartLine + index;
     const item = LIST_ITEM.exec(line);
+
+    if (items.length > 0 && UNDERLINE.test(line)) {
+      return {
+        items,
+        promptLines,
+        starter: {
+          line: lineNumber + 1,
+          text: block.bodyLines.slice(index + 1).join("\n"),
+        },
+      };
+    }
 
     if (item !== null) {
       items.push({ line: lineNumber, text: item[1] ?? "" });
@@ -125,7 +150,7 @@ function parseBody(
     }
   }
 
-  return { items, promptLines };
+  return { items, promptLines, starter: null };
 }
 
 /** Lines of the body the nested-directive scan leaves alone. */
@@ -520,6 +545,96 @@ function reportDevelopment(
   }
 }
 
+/**
+ * The tree under the root, or `null` after reporting why it cannot be one,
+ * or when it is empty. Its shape is the author's to get right, so a problem
+ * there is an error; a row that does not read, or a rule the theory does not
+ * have, is a warning (gh #44), since a starter may be handed over broken for
+ * the student to repair, and the editor squiggles it as it would their own.
+ */
+function readStarter(
+  located: Located,
+  rootRows: number,
+  language: SurfaceLanguage,
+  theory: TreeTheory,
+  diagnostics: CompilerDiagnostic[],
+): TruthTreeStarter | null {
+  const read = parseTreeStarter(located.text, rootRows);
+
+  if (!read.ok) {
+    diagnostics.push(
+      diagnosticFrom(
+        located.line + read.issue.line,
+        read.issue.code,
+        read.issue,
+      ),
+    );
+    return null;
+  }
+
+  const rows = read.starter.nodes.flatMap((node) => node.rows);
+
+  if (
+    rows.length === 0 &&
+    read.starter.nodes.length === 1 &&
+    read.starter.nodes[0]?.end === undefined
+  ) {
+    return null;
+  }
+
+  if (rootRows + rows.length > TREE_ROW_CAP) {
+    diagnostics.push(
+      diagnostic(
+        located.line,
+        "truth_tree_starter_too_long",
+        "A truth tree's root and starter together may have at most {max} rows.",
+        { params: { max: String(TREE_ROW_CAP) } },
+      ),
+    );
+    return null;
+  }
+
+  // Read as the editor reads the student's rows, so the author's warning and
+  // the student's squiggle are one judgement.
+  const reader = rowSortReader(language, theory.rowSort);
+
+  for (const row of rows) {
+    const typed = row.text.trim() === "" ? null : reader.read(row.text);
+    const error = typed === null || typed.ok ? undefined : typed.errors[0];
+
+    if (error !== undefined) {
+      diagnostics.push(
+        diagnostic(
+          located.line + (read.rowLines.get(row.id) ?? 0),
+          "invalid_formula",
+          "Could not parse “{formula}” as a row, of the sort “{sort}”: {detail}",
+          {
+            params: {
+              detail: error,
+              formula: row.text.trim(),
+              sort: theory.rowSort,
+            },
+            severity: "warning",
+          },
+        ),
+      );
+    }
+  }
+
+  for (const [dev, rule] of Object.entries(read.starter.rules)) {
+    if (ruleSpelling(language, rule) === null) {
+      diagnostics.push(
+        unknownStarterRule(
+          located.line + (read.ruleLines.get(dev) ?? 0),
+          rule,
+        ),
+      );
+    }
+  }
+
+  return read.starter;
+}
+
 export async function compileTruthTree(
   block: DirectiveBlock,
   context: ExerciseCompileContext,
@@ -539,6 +654,12 @@ export async function compileTruthTree(
     { defaultId: DEFAULT_TRUTH_TREE_SYSTEM },
   );
   const finish = parseFinish(block, diagnostics);
+  const playground = parseBooleanAttribute(
+    block.attrs.playground,
+    block.line,
+    "playground",
+    diagnostics,
+  );
   const body = parseBody(block, diagnostics);
 
   if (id === null) {
@@ -585,7 +706,9 @@ export async function compileTruthTree(
     }
   }
 
-  if (body.items.length === 0) {
+  // A playground's root is the student's to write: the author's, if any, is
+  // only where it begins.
+  if (body.items.length === 0 && !playground) {
     diagnostics.push(
       diagnostic(
         block.line,
@@ -606,9 +729,22 @@ export async function compileTruthTree(
     );
   }
 
+  const starter =
+    body.starter === null
+      ? null
+      : readStarter(
+          body.starter,
+          body.items.length,
+          language,
+          theory,
+          diagnostics,
+        );
+
   const publicData: TruthTreePublicData = {
     // Stored only where it is not the default.
     ...(finish === "closed" ? {} : { finish }),
+    ...(playground ? { playground: true as const } : {}),
+    ...(starter === null ? {} : { starter }),
     promptHtml: await renderMarkdownSource(body.promptLines.join("\n"), {
       ...renderOptions,
       lineOffset: block.bodyStartLine - 1,

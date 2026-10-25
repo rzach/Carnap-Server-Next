@@ -1,3 +1,4 @@
+import { buildCopySourceStrings } from "../../exercise-kit/copy-source-strings";
 import { buildExerciseHelpStrings } from "../../exercise-kit/help-strings";
 import { buildProofEngineStrings } from "../../exercise-kit/proof/engine-strings";
 import { placeholders, type Translator } from "../../i18n/translator";
@@ -25,6 +26,8 @@ export function buildTruthTreeStrings(i18n: Translator) {
     // ——— The parser's sentences: a student types every row.
     ...buildFormulaParserStrings(i18n),
     ...buildExerciseHelpStrings(i18n),
+    // Copy as source, in the author preview, and Ctrl-? anywhere (#475).
+    ...buildCopySourceStrings(i18n),
     // The engine's, since the tree is compiled as a proof is (gh #46).
     ...buildProofEngineStrings(i18n),
 
@@ -266,6 +269,14 @@ export function buildTruthTreeStrings(i18n: Translator) {
     "This row is empty: write a sentence on it, or delete it.": i18n.t(
       "This row is empty: write a sentence on it, or delete it.",
     ),
+    "The root's rows are where the tree begins: they cite no row.": i18n.t(
+      "The root's rows are where the tree begins: they cite no row.",
+    ),
+    "The root needs a row.": i18n.t("The root needs a row."),
+    "Write the root first, in the rows at the top of the tree; “Add row” adds another. Then develop it.":
+      i18n.t(
+        "Write the root first, in the rows at the top of the tree; “Add row” adds another. Then develop it.",
+      ),
     "This is not the sentence the exercise gives.": i18n.t(
       "This is not the sentence the exercise gives.",
     ),
@@ -335,6 +346,10 @@ export function buildTruthTreeStrings(i18n: Translator) {
       "The branch ending at row {row}: {problem}",
       placeholders("problem", "row"),
     ),
+    "Write the root first: the rows at the top of the tree, which its steps develop.":
+      i18n.t(
+        "Write the root first: the rows at the top of the tree, which its steps develop.",
+      ),
     "The tree is missing a row of its root.": i18n.t(
       "The tree is missing a row of its root.",
     ),

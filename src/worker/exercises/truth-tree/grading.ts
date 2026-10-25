@@ -25,6 +25,8 @@ import { displayRow, isDeclaredRoot, rowSortReader } from "./aufbau/rows";
 import type { TreeTheory } from "./aufbau/theory";
 import { isTreeTheory, readTreeTheory } from "./aufbau/theory";
 import type { TreeProblem, TreeReport } from "./report";
+import type { TruthTreeStarter } from "./starter";
+import { rootRowId } from "./starter";
 import type {
   TableauDocument,
   TableauEnd,
@@ -61,10 +63,17 @@ export interface ResolvedTree {
   readonly theory: TreeTheory;
   /** Reads a row at the theory's row sort. */
   readonly reader: RowSortReader;
-  /** The root, as engine text at the row sort, in order. */
+  /**
+   * The root, as engine text at the row sort, in order: the exercise's, or
+   * in a playground where it begins (see {@link treeRoot}).
+   */
   readonly root: readonly string[];
   /** Each root row as a reader is shown it. */
   readonly rootText: readonly string[];
+  /** Whether the student writes the root. */
+  readonly playground: boolean;
+  /** The tree below the root that the student starts from. */
+  readonly starter: TruthTreeStarter | null;
   readonly finish: TruthTreeFinish;
   /** The most rows a tree may have before it is not read. */
   readonly rowCap: number;
@@ -95,6 +104,8 @@ export function isTruthTreePublicData(
       data.finish === "complete" ||
       data.finish === "one-open") &&
     isStringArray(data.root) &&
+    (data.playground === undefined || data.playground === true) &&
+    (data.starter === undefined || isStarter(data.starter)) &&
     (data.source === undefined || typeof data.source === "string") &&
     (data.mm0 === undefined || typeof data.mm0 === "string")
   );
@@ -199,6 +210,25 @@ function isOneTree(nodes: readonly TableauNode[]): boolean {
   }
 
   return true;
+}
+
+/** A starter as the compiler writes it: one tree, its rules by step. */
+function isStarter(value: unknown): value is TruthTreeStarter {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const starter = value as Partial<TruthTreeStarter>;
+  const nodes = starter.nodes;
+
+  return (
+    Array.isArray(nodes) &&
+    nodes.every(isNode) &&
+    isOneTree(nodes) &&
+    typeof starter.rules === "object" &&
+    starter.rules !== null &&
+    Object.values(starter.rules).every((rule) => typeof rule === "string")
+  );
 }
 
 /**
@@ -336,41 +366,114 @@ export function resolveTruthTree(
     development: readTreeDevelopment(language, theory),
     finish: publicData.finish ?? "closed",
     language,
+    playground: publicData.playground === true,
     reader,
     root: publicData.root,
     rootText,
     rowCap: TREE_ROW_CAP,
+    starter: publicData.starter ?? null,
     theory,
   };
 }
 
-/** The tree the student starts from: the root, and nothing else. */
+/**
+ * The tree the student starts from: the root, and the starter below it. A
+ * playground with no root to begin from begins with one empty row, for the
+ * student to write its first.
+ */
 export function startingTree(resolved: ResolvedTree): TableauDocument {
+  const [below, ...nodes] = resolved.starter?.nodes ?? [];
+  const root = resolved.rootText.map((text, at) => ({
+    cites: [],
+    dev: "root",
+    id: rootRowId(at + 1),
+    text,
+  }));
+
   return {
     nodes: [
       {
         id: "root",
         parent: null,
-        rows: resolved.rootText.map((text, at) => ({
-          cites: [],
-          dev: "root",
-          id: `root-${at + 1}`,
-          text,
-        })),
+        rows:
+          root.length === 0
+            ? [{ cites: [], dev: "root", id: rootRowId(1), text: "" }]
+            : [...root, ...(below?.rows ?? [])],
+        ...(below?.end === undefined ? {} : { end: below.end }),
       },
+      ...nodes,
     ],
   };
+}
+
+/** The rule each step of the starting tree names, by its `dev`. */
+export function startingRules(
+  resolved: ResolvedTree,
+): ReadonlyMap<string, string> {
+  return new Map(Object.entries(resolved.starter?.rules ?? {}));
+}
+
+/**
+ * How many of a tree's first rows are its root: the exercise's, or in a
+ * playground the root node's first step, if no row is cited by it. That is
+ * the run the editor's Add row extends, and a step's Stack ends, so what the
+ * student writes as the root is the root, and an uncited step below it is
+ * not taken into it.
+ */
+export function rootRowsOf(
+  resolved: ResolvedTree,
+  tree: TableauDocument,
+): number {
+  if (!resolved.playground) {
+    return resolved.root.length;
+  }
+
+  const rows = tree.nodes[0]?.rows ?? [];
+  const first = rows[0];
+
+  if (first === undefined || first.cites.length > 0) {
+    return 0;
+  }
+
+  const other = rows.findIndex((row) => row.dev !== first.dev);
+  return other === -1 ? rows.length : other;
+}
+
+/**
+ * The root a tree is judged from, as engine text: the exercise's, or a
+ * playground's own. A playground's row that does not read is kept as typed,
+ * where it is flagged as unreadable, and matches nothing.
+ */
+export function treeRoot(
+  resolved: ResolvedTree,
+  tree: TableauDocument,
+): readonly string[] {
+  if (!resolved.playground) {
+    return resolved.root;
+  }
+
+  return (tree.nodes[0]?.rows ?? [])
+    .slice(0, rootRowsOf(resolved, tree))
+    .map((row) => {
+      const read = resolved.reader.read(row.text);
+      return read.ok ? read.engine : row.text;
+    });
 }
 
 /**
  * Whether a saved tree starts from the declaration's root. It may not: the
  * root is given, and cannot be edited, so a tree saved before a correction
- * changed the root could never be put right.
+ * changed the root could never be put right. A playground's is the
+ * student's, so any tree starts from it.
  */
 export function startsFromRoot(
   tree: TableauDocument,
   resolved: ResolvedTree,
 ): boolean {
+  if (resolved.playground) {
+    return true;
+  }
+
   const rows = tree.nodes[0]?.rows ?? [];
 
   return resolved.root.every((expected, at) =>
@@ -429,7 +532,7 @@ export function treeProofOf(
       development: resolved.development,
       language: resolved.language,
       reader: resolved.reader,
-      rootRows: resolved.root.length,
+      rootRows: rootRowsOf(resolved, answer),
       rowCap: resolved.rowCap,
       rules: answerRules(answer),
       textCap: TREE_TEXT_CAP,
@@ -454,7 +557,7 @@ export function judgeTree(
     finish: resolved.finish,
     proof,
     reader: resolved.reader,
-    root: resolved.root,
+    root: treeRoot(resolved, answer),
     tree: { nodes: answer.nodes },
   });
   const shows = treeVerdict(report);

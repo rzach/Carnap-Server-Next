@@ -162,9 +162,22 @@ export function judgeTreeProof(input: JudgeInput): TreeReport {
     };
   }
 
+  // A playground's root not yet written: its rows all blank, as it begins.
+  // That is said once, of the tree, not of each row as if it were a slip.
+  const rootRows = index.root?.rows.slice(0, root.length) ?? [];
+  const unwritten = new Set(
+    rootRows.length > 0 && rootRows.every((row) => row.text.trim() === "")
+      ? rootRows.map((row) => row.id)
+      : [],
+  );
+
   // Every row reads at the row sort.
   for (const node of order) {
     for (const row of node.rows) {
+      if (unwritten.has(row.id)) {
+        continue;
+      }
+
       if (row.text.trim() === "") {
         flag(row.id, { type: "empty" });
         continue;
@@ -178,10 +191,13 @@ export function judgeTreeProof(input: JudgeInput): TreeReport {
     }
   }
 
-  // The root node starts with the declared root, one row per sentence.
+  // The root node starts with the declared root, one row per sentence. A
+  // playground's is the student's, and so may be missing altogether.
   const rootNode = index.root;
 
-  if (rootNode === null || rootNode.rows.length < root.length) {
+  if (root.length === 0 || unwritten.size > 0) {
+    treeProblems.push({ type: "root-empty" });
+  } else if (rootNode === null || rootNode.rows.length < root.length) {
     treeProblems.push({ type: "root-missing" });
   }
 
@@ -192,8 +208,9 @@ export function judgeTreeProof(input: JudgeInput): TreeReport {
       break;
     }
 
-    if (!isDeclaredRoot(reader, row, expected)) {
-      rowProblems.set(row.id, { type: "root-mismatch" });
+    // An unreadable row was said to be so above.
+    if (!unwritten.has(row.id) && !isDeclaredRoot(reader, row, expected)) {
+      flag(row.id, { type: "root-mismatch" });
     }
   }
 

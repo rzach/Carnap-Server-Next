@@ -142,6 +142,8 @@ export interface TreeProblem {
 
 export type TreeLevelProblem =
   | { readonly type: "root-missing" }
+  /** A playground's tree, begun with no root. */
+  | { readonly type: "root-empty" }
   | { readonly type: "too-many-rows"; readonly limit: number }
   /** Its theorems would state more than the text cap: too long to check. */
   | { readonly type: "too-large" }

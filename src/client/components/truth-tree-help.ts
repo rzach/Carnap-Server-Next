@@ -3,8 +3,9 @@
  * the element builds the dialog from these.
  */
 
+import type { ResolvedTree } from "../../worker/exercises/truth-tree/grading";
 import type { TruthTreeStringId } from "../../worker/exercises/truth-tree/strings";
-import type { TruthTreeFinish } from "../../worker/exercises/truth-tree/types";
+import { SHOW_SOURCE_KEYS } from "./show-source";
 import type { ToolbarIconName } from "./toolbar-icons";
 
 interface Shortcut {
@@ -58,6 +59,7 @@ const SHORTCUTS: readonly Shortcut[] = [
     keys: ["Delete"],
   },
   { action: "Undo or redo", icon: "undo", keys: ["Ctrl-Z", "Ctrl-Y"] },
+  { action: "Show your work as source", keys: SHOW_SOURCE_KEYS },
 ];
 
 /** The keys, bar marking a branch open where no branch may be. */
@@ -78,12 +80,21 @@ export function treeShortcuts(
   }));
 }
 
-/** What to do, for a tree that is done when `finish` says. */
+/** What to do, for a tree that is done when its `finish` says. */
 export function treeHelpIntro(
-  finish: TruthTreeFinish,
+  tree: Pick<ResolvedTree, "finish" | "playground">,
   t: (id: TruthTreeStringId) => string,
 ): string[] {
+  const { finish } = tree;
+
   return [
+    ...(tree.playground
+      ? [
+          t(
+            "Write the root first, in the rows at the top of the tree; “Add row” adds another. Then develop it.",
+          ),
+        ]
+      : []),
     t(
       "Move to a row with the arrow keys or by clicking it; each action works on the row or branch there.",
     ),

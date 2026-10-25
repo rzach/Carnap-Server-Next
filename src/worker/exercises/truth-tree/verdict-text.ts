@@ -227,6 +227,10 @@ function describeTreeProblem(
     switch (at.problem.type) {
       case "root-missing":
         return words("The tree is missing a row of its root.");
+      case "root-empty":
+        return words(
+          "Write the root first: the rows at the top of the tree, which its steps develop.",
+        );
       case "unverified":
         return words("A step or a closure in the tree does not check.");
       case "too-many-rows":

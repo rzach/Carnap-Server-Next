@@ -1,5 +1,6 @@
 import type { ExerciseCapabilities } from "../../domain/exercises";
 import type { Translator } from "../../i18n/translator";
+import type { TruthTreeStarter } from "./starter";
 import type { TableauNode } from "./tableau/document";
 
 /**
@@ -68,9 +69,17 @@ export interface TruthTreePublicData {
   readonly finish?: TruthTreeFinish;
   /**
    * The root, as the author wrote it: its rows in order, as engine text at
-   * the theory's row sort.
+   * the theory's row sort. A playground's may be empty.
    */
   readonly root: readonly string[];
+  /**
+   * Whether the student writes the root: a playground (#475). Its root is
+   * then the root node's first step, whatever the student writes there, and
+   * the author's root and starter are only where the tree begins.
+   */
+  readonly playground?: true;
+  /** The tree the student starts from below the root, as the author wrote it. */
+  readonly starter?: TruthTreeStarter;
 }
 
 /**

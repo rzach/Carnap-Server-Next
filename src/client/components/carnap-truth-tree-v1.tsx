@@ -67,12 +67,15 @@ import {
   isTruthTreePublicData,
   judgeTree,
   resolveTruthTree,
+  rootRowsOf,
+  startingRules,
   startingTree,
   startsFromRoot,
   treeProofOf,
 } from "../../worker/exercises/truth-tree/grading";
 import { displayName } from "../../worker/exercises/truth-tree/labels";
 import type { TreeReport } from "../../worker/exercises/truth-tree/report";
+import { treeStarterSource } from "../../worker/exercises/truth-tree/starter";
 import type { TruthTreeStringId } from "../../worker/exercises/truth-tree/strings";
 import type { TableauDocument } from "../../worker/exercises/truth-tree/tableau/document";
 import { TableauIndex } from "../../worker/exercises/truth-tree/tableau/document";
@@ -112,6 +115,7 @@ import {
 import { mountActionButton } from "./action-bar";
 import { register } from "./base";
 import islandStyles from "./carnap-truth-tree-v1.css" with { type: "text" };
+import { mountCopySource } from "./copy-source";
 import {
   createHelpDialog,
   HELP_DIALOG_STYLES,
@@ -120,6 +124,7 @@ import {
 } from "./help-dialog";
 import { mountProblemPopup } from "./problem-popup";
 import { ProofExerciseElement } from "./proof-element";
+import { mountShowSource } from "./show-source";
 import { ToolbarIcon } from "./toolbar-icon";
 import { TOOLBAR_STYLES, type ToolbarIconName } from "./toolbar-icons";
 import {
@@ -299,7 +304,7 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
 
     this.helpDialog = createHelpDialog({
       close: this.t("Close help"),
-      intro: treeHelpIntro(resolved.finish, (id) => this.t(id)),
+      intro: treeHelpIntro(resolved, (id) => this.t(id)),
       keyboard: this.t("Keyboard"),
       shortcuts: treeShortcuts(this.offersOpen, (id) => this.t(id)),
       title: this.t("Using the tree editor"),
@@ -315,6 +320,18 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
         }
       },
     );
+    // The tree as it stands, as the directive's body: in the author preview
+    // to paste back as the exercise's root and starter, and on any form by
+    // Ctrl-?.
+    const source = () =>
+      treeStarterSource(this.tree, this.rules, this.rootRows());
+
+    mountCopySource(
+      this,
+      { copied: this.t("Copied."), label: this.t("Copy as source") },
+      source,
+    );
+    mountShowSource(this, root, (id) => this.t(id), source);
 
     this.buildCheck();
     this.gateSubmit((event) => this.gate(event));
@@ -364,7 +381,7 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
     const usable =
       isTruthTreeAnswerData(prior) && startsFromRoot(prior, resolved);
     const saved = usable ? { nodes: prior.nodes } : startingTree(resolved);
-    const rules = usable ? answerRules(prior) : new Map<string, string>();
+    const rules = usable ? answerRules(prior) : startingRules(resolved);
 
     this.tree = remint(saved, this.mint);
     this.cursor = this.lastRow();
@@ -806,8 +823,21 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
     return layoutNumbers(layout)(rowId);
   }
 
+  /** How many of the tree's first rows are its root. */
+  private rootRows(): number {
+    return this.resolved === null ? 0 : rootRowsOf(this.resolved, this.tree);
+  }
+
   private isRootRow(rowId: string): boolean {
-    return isRootRow(this.index, rowId, this.resolved?.root.length ?? 0);
+    return isRootRow(this.index, rowId, this.rootRows());
+  }
+
+  /**
+   * Whether a row is the exercise's, which the student cannot change: a root
+   * row, but for a playground's, which is the student's own.
+   */
+  private isGivenRow(rowId: string): boolean {
+    return this.resolved?.playground !== true && this.isRootRow(rowId);
   }
 
   /** Whether an id names a branch's end mark: its node's, with an end. */
@@ -1011,7 +1041,7 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
       return;
     }
 
-    if (this.isRootRow(row)) {
+    if (this.isGivenRow(row)) {
       this.refuse(
         this.t("The root's rows are given, and cannot be changed."),
       );
@@ -1034,7 +1064,11 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
 
     if (this.isRootRow(row)) {
       this.refuse(
-        this.t("The root's rows are given, and cannot be changed."),
+        this.resolved?.playground === true
+          ? this.t(
+              "The root's rows are where the tree begins: they cite no row.",
+            )
+          : this.t("The root's rows are given, and cannot be changed."),
       );
       return;
     }
@@ -1135,7 +1169,8 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
       return;
     }
 
-    if (this.isRootRow(row)) {
+    // On a playground's root, another root row.
+    if (this.isGivenRow(row)) {
       this.refuse(
         this.t("The root's rows are given, and cannot be changed."),
       );
@@ -1331,10 +1366,17 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
       return;
     }
 
-    if (this.isRootRow(row)) {
+    if (this.isGivenRow(row)) {
       this.refuse(
         this.t("The root's rows are given, and cannot be changed."),
       );
+      return;
+    }
+
+    // A playground's root keeps a row to write in: with none, there would be
+    // nowhere for Add a row to put one.
+    if (this.isRootRow(row) && this.rootRows() === 1) {
+      this.refuse(this.t("The root needs a row."));
       return;
     }
 
@@ -1490,7 +1532,7 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
       return;
     }
 
-    if (this.isRootRow(rowId) || this.editing === rowId) {
+    if (this.isGivenRow(rowId) || this.editing === rowId) {
       this.rerender();
       return;
     }
@@ -1876,7 +1918,7 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
               {
                 flag: this.showsDetail,
                 marks: this.showsDetail,
-                rootRows: resolved.root.length,
+                rootRows: this.rootRows(),
                 rules: this.rules,
               },
             ),

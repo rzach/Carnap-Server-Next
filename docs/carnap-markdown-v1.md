@@ -292,10 +292,11 @@ be associated with that exercise.
 
 ### Work as source
 
-In the world, proof tree and Prawitz widgets, whose work is not text the
-student can select, **Ctrl-?** opens a dialog showing the work as it stands,
-written as directive source: the world's object lines or the tree's starter
-lines, which the author preview's **Copy as source** copies. The dialog opens
+In the world, proof tree, Prawitz and truth-tree widgets, whose work is not
+text the student can select, **Ctrl-?** opens a dialog showing the work as it
+stands, written as directive source: the world's object lines, the tree's
+starter lines, or a truth tree's root and starter, which the author preview's
+**Copy as source** copies. The dialog opens
 on its Copy button, so Enter copies the text. The key works on every form, a
 student's included, and is Ctrl on a Mac too, not Cmd. A student can send
 their work on in that form, and anyone can paste it back into a lesson as an
@@ -987,6 +988,75 @@ a set inconsistent, is the prompt's to say.
   when `finish` is not `closed`, so a question whose answer is a complete
   open branch (a consistent set, an invalid argument) needs `one-open` or
   `complete`.
+- `playground` lets the student write the root (below).
+
+### A starter tree
+
+Under the root, a `----` line begins a starter: the tree as the student
+finds it, part worked, to finish or to put right. It is written one row a
+line, as the proof tree's starter is, with the tree's shape in its
+indentation:
+
+```md
+::::truth-tree{#tt3 points="3"}
+Finish the tree.
+
+- (D & ¬R) ∨ Q
+- ¬Q ∨ R
+- ¬(D ∨ R)
+----
+4: $ ¬D $ by ¬∨ [3]
+5: $ ¬R $
+- 6: $ D & ¬R $ by ∨ [1]
+  7: $ D $ by & [6]
+  8: $ ¬R $
+  closed [4, 7]
+- 6: $ Q $
+::::
+```
+
+- A row is `label: $ row $`, and `by rule [cites]` after it begins a step:
+  the rule as the margin names it, and the rows it develops, by label. A
+  row without `by` is the next row of the step above it. A step still to be
+  justified is written `by []`.
+- The label is optional, and names the row for the rows below it on its
+  branch: two branches may each have a `6`. The root's rows are labelled by
+  their place, `1` to `n`.
+- A `- ` item opens a branch, and the items at one indentation are the
+  branches of one split, its step named on the first branch's first row.
+  Nothing follows a split on its branch.
+- A branch ends with `closed [cites]`, the rows it closes on, or `open`.
+- Blank lines and lines beginning `--` are ignored.
+
+A row out of place, a citation of a row that is not above it, or a split's
+step named twice is an error. A row the theory cannot read, or a rule it
+does not have, is a warning: a starter may be handed over broken for the
+student to put right, and the editor marks it as it marks the student's own
+typing. The root's rows are the exercise's, and the student cannot change
+them; the rest of the starter is theirs.
+
+In the author preview, **Copy as source** in the action bar copies the tree
+being built as the root's list, `----` and the starter, labelling each row
+with its line in the tree, to paste back as the exercise's body.
+
+### Truth-tree playgrounds
+
+With `playground`, the student writes the root: the tree's first rows, in
+its first step, which **Add row** extends. A row they stack below it is the
+first step, not more of the root. The tree is done, and scored, by `finish`
+as any other, so a playground suits `points="0"`. A root list, and a
+starter, are only where the tree begins, and every row of them is the
+student's to change:
+
+```md
+::::truth-tree{#tt4 playground points="0" finish="complete"}
+Try any set of sentences.
+::::
+```
+
+A playground with nothing written begins with one empty row. Build a tree
+in one, in the preview, and **Copy as source** gives the body of an
+exercise that begins from it.
 
 ### Writing a tree theory
 

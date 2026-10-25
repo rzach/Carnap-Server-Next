@@ -123,6 +123,12 @@ intuitionistic logic (`open-logic-intuitionistic`). The authoring contract is in
   instances in the language (`✓a₁`, `\1.1,1.2`).
 - `grading.ts` — guards, the declaration resolved back to its theory, and
   the judgement: the report, and what the tree shows once it is done.
+- `starter.ts` — a starter, the tree below the root as an author writes it
+  (`label: $ row $ by rule [cites]`, `- ` for a branch, indentation for its
+  depth): read by the compiler, and written back by the editor's Copy as
+  source and Ctrl-?, labelled with the layout's line numbers, so what one
+  writes the other reads. The public data keeps it as a document below the
+  root (`starter`), which `startingTree` puts the root in front of.
 - `ask.ts` — asking the engine, for the editor and the tests alike: the
   derivation stating every candidate, and what its compile says (the
   instances and directions that held, the steps' errors, and the
@@ -155,7 +161,10 @@ of rows with its parent (`null` for the root) and an optional `end`,
 `{ type: "closed", cites }` or `{ type: "open" }`. A row is
 `{ id, text, cites, dev }`: its text as typed, the row ids it develops, and
 the development it belongs to. The root
-node's first rows must be the declared root. Ids are editing handles: the
+node's first rows must be the declared root. In a playground they are the
+student's: the root is the root node's first development, if it cites
+nothing, so a row Add row extends it with is root and one stacked under it
+is a step (`rootRowsOf` in `grading.ts`). Ids are editing handles: the
 editor remints them when it restores a tree, and citations follow.
 
 The student is not asked what the tree shows: a done tree already says, and

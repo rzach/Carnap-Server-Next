@@ -444,6 +444,47 @@ export function buildDiagnosticStrings(i18n: Translator) {
       "A truth tree's root may have at most {max} rows.",
       placeholders("max"),
     ),
+    "A truth tree's root and starter together may have at most {max} rows.":
+      i18n.t(
+        "A truth tree's root and starter together may have at most {max} rows.",
+        placeholders("max"),
+      ),
+    "This row begins a step, so it needs “by”, with the step's rule and the rows it develops.":
+      i18n.t(
+        "This row begins a step, so it needs “by”, with the step's rule and the rows it develops.",
+      ),
+    "This line is not in line with the branch it is in: a branch's lines line up with its first.":
+      i18n.t(
+        "This line is not in line with the branch it is in: a branch's lines line up with its first.",
+      ),
+    "“{label}” names no row above this one on its branch.": i18n.t(
+      "“{label}” names no row above this one on its branch.",
+      placeholders("label"),
+    ),
+    "Could not read “{line}”. A starter row reads “label: $ row $ by rule [cites]”, a branch ends “closed [cites]” or “open”, and “- ” opens a branch.":
+      i18n.t(
+        "Could not read “{line}”. A starter row reads “label: $ row $ by rule [cites]”, a branch ends “closed [cites]” or “open”, and “- ” opens a branch.",
+        placeholders("line"),
+      ),
+    "A split's step is named once, on its first branch.": i18n.t(
+      "A split's step is named once, on its first branch.",
+    ),
+    "The label “{label}” is used twice on one branch.": i18n.t(
+      "The label “{label}” is used twice on one branch.",
+      placeholders("label"),
+    ),
+    "Nothing can follow a split on its branch. Put it in the split's branches.":
+      i18n.t(
+        "Nothing can follow a split on its branch. Put it in the split's branches.",
+      ),
+    "Nothing can follow the end of a branch.": i18n.t(
+      "Nothing can follow the end of a branch.",
+    ),
+    "A branch begins with a row.": i18n.t("A branch begins with a row."),
+    "A starter grows from a root: write the root's rows above the “----”.":
+      i18n.t(
+        "A starter grows from a root: write the root's rows above the “----”.",
+      ),
 
     // The world exercise (`exercises/world/authoring.ts`).
     "The variant attribute must be evaluate, build, counterexample, distinguish, or game.":
