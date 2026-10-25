@@ -752,10 +752,10 @@ Use a tree to decide whether this set is consistent.
 
 A **syntax tree** asks for a sentence's main connective, splits the sentence
 into its immediate subsentences, and asks again, until only atomic sentences
-are left. The student clicks a connective or types it. A wrong pick starts
-the tree over; \`scoring="partial"\` instead shows the true split and scores
-the share of sentences picked right. Any language works: a quantifier or a
-modal box splits the way a conjunction does.
+are left. The student clicks a connective, or Tabs to it and presses Enter.
+A wrong pick starts the tree over; \`scoring="partial"\` instead shows the
+true split and scores the share of sentences picked right. Any language works:
+a quantifier or a modal box splits the way a conjunction does.
 
 \`\`\`md
 :::syntax-tree{id="st_split" title="Split a sentence" points="1"}
