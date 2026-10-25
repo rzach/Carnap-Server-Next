@@ -99,8 +99,8 @@ export function buildSyntaxTreeStrings(i18n: Translator) {
     // A variable leaf's button, which starts linking it: its name, then
     // the verb, so the visible letter is in what a screen reader says.
     "Link {variable}": i18n.t("Link {variable}", placeholders("variable")),
-    // Said once a variable's button is pressed: the quantifiers above it are
-    // now buttons, and so is Free.
+    // Said once a variable's button is pressed: every quantifier in the tree
+    // is now a button, and so is Free.
     "Pick the quantifier that binds {variable}, or Free.": i18n.t(
       "Pick the quantifier that binds {variable}, or Free.",
       placeholders("variable"),

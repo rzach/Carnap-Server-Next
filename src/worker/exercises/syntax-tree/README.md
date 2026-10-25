@@ -64,7 +64,10 @@ A variable whose sort some constructor binds is a leaf with a link to make.
 Its true link is `bindingSites` from `@aufbau/syntax`, the innermost binding
 occurrence, whose parent is the quantifier node the student links to. A link
 is a pick, `{ node, linked }`, scored like a split. While a variable is being
-linked, `drawnTree` turns the quantifiers above it into buttons.
+linked, `drawnTree` turns every quantifier in the tree into a button, not
+only those above it: offering just the quantifiers whose scope holds the
+variable would answer half the question. Linking to one elsewhere is a
+wrong pick.
 
 No sentence sort is needed here, so a language of terms alone is read at any
 sort; the connectives-only refusal stays for `depth="connectives"`.

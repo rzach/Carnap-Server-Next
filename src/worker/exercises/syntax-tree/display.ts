@@ -31,7 +31,7 @@ export type SyntaxTreeWords = (
  *
  * Two more are buttons at `depth="terms"`: a `variable` still to link, which
  * starts a link when pressed, and — while one is being linked — a `binder`,
- * the `main` run of each quantifier above it, which ends one.
+ * the `main` run of every quantifier split so far, which ends one.
  */
 export type SentenceRun =
   | {
@@ -206,26 +206,16 @@ function sentenceRuns(
 }
 
 /**
- * The quantifiers a variable could be linked to: every node above it that
- * binds. Offering only those is what the drawing already says — a link runs
- * up the tree — and the variable's own name is still the student's to match.
+ * The quantifiers a variable being linked is offered: every one in the tree,
+ * not only those above it. Offering just the quantifiers whose scope holds
+ * the variable would answer half the question; telling them apart is the
+ * student's work. Linking to one elsewhere is simply a wrong pick.
  */
-function binderKeys(
-  resolved: ResolvedSyntaxTree,
-  key: string | null,
-): Set<string> {
-  const leaf = key === null ? undefined : resolved.tree.byPath.get(key);
-
-  if (leaf === undefined) {
-    return new Set();
-  }
-
+function quantifierKeys(resolved: ResolvedSyntaxTree): Set<string> {
   return new Set(
-    leaf.path.flatMap((_, length) => {
-      const above = nodeAt(resolved.tree, leaf.path.slice(0, length));
-
-      return above?.binds === true ? [pathKey(above.path)] : [];
-    }),
+    resolved.tree.nodes
+      .filter((node) => node.binds)
+      .map((node) => pathKey(node.path)),
   );
 }
 
@@ -241,7 +231,8 @@ export function drawnTree(
   linking: string | null = null,
 ): DrawnNode {
   const { nodes } = resolved.tree;
-  const binders = binderKeys(resolved, linking);
+  const binders =
+    linking === null ? new Set<string>() : quantifierKeys(resolved);
   const draw = (node: SyntaxTreeNode): DrawnNode => {
     const key = pathKey(node.path);
     const boundBy = shown.links.get(key);

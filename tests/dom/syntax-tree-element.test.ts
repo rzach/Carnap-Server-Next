@@ -332,7 +332,7 @@ function freeButton(mounted: MountedExercise): HTMLElement | null {
 }
 
 describe("the syntax-tree element through its terms", () => {
-  test("a variable appears once its atom is split, and pressing it offers the quantifiers above it", async () => {
+  test("a variable appears once its atom is split, and pressing it offers every quantifier", async () => {
     const mounted = mountExercise(await syntaxTree(TERMS, TERM_ATTRS));
 
     splitAll(mounted);
@@ -342,9 +342,11 @@ describe("the syntax-tree element through its terms", () => {
     });
     expect(freeButton(mounted)?.hidden).toBe(true);
 
-    mouseClick(variable(mounted, INNER_X));
+    // The outer x has only ∀x above it, and is offered ∃x too: offering just
+    // the quantifiers whose scope holds it would answer half the question.
+    mouseClick(variable(mounted, OUTER_X));
 
-    expect(variable(mounted, INNER_X).getAttribute("aria-pressed")).toBe(
+    expect(variable(mounted, OUTER_X).getAttribute("aria-pressed")).toBe(
       "true",
     );
     expect(binders(mounted)).toEqual([":∀x", "1.1:∃x"]);
@@ -425,6 +427,19 @@ describe("the syntax-tree element through its terms", () => {
     splitAll(mounted);
     mouseClick(variable(mounted, INNER_X));
     mouseClick(shadowButton(mounted, 'button.st-bind[data-node=""]'));
+
+    expect(states(mounted)).toEqual({ "": "open" });
+    expect(message(mounted)).toBe(
+      "That is not how this variable is bound. The tree starts over.",
+    );
+  });
+
+  test("whole: linking to a quantifier that does not scope over the variable starts the tree over", async () => {
+    const mounted = mountExercise(await syntaxTree(TERMS, TERM_ATTRS));
+
+    splitAll(mounted);
+    mouseClick(variable(mounted, OUTER_X));
+    mouseClick(shadowButton(mounted, 'button.st-bind[data-node="1.1"]'));
 
     expect(states(mounted)).toEqual({ "": "open" });
     expect(message(mounted)).toBe(

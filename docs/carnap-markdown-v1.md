@@ -1435,9 +1435,9 @@ the terms it needs none.
   goes on below the atomic sentences: an atom splits at its predicate, `=`
   or function symbol, down to variables and names, and every variable a
   quantifier could bind is a leaf with one more question, which quantifier
-  binds it. The student presses the variable, and the quantifiers on the
-  lines above it become buttons, with Free beside them for a variable no
-  quantifier binds; Escape lets it go. A predicate's argument list is not a
+  binds it. The student presses the variable, and every quantifier in the
+  tree becomes a button, not only those whose scope holds it, with Free
+  beside them for a variable no quantifier binds; Escape lets it go. A predicate's argument list is not a
   node — its terms are the atom's children — and a quantifier keeps its
   variable, so `∀x` still splits off its scope as one symbol. Any sort the
   sentence reads at will do, so a language of terms alone (numerals, say)

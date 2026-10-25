@@ -11,9 +11,10 @@
  * connective in any unsplit sentence, with the mouse or from the keyboard;
  * the instructions, and the keys, are in the (?) panel in the action bar.
  *
- * A variable still to link is a button too. Pressing it makes the quantifiers
- * above it buttons, and shows Free; pressing one of those links it, and
- * Escape, or the variable again, lets it go.
+ * A variable still to link is a button too. Pressing it makes every
+ * quantifier in the tree a button, not only those above it, and shows Free;
+ * pressing one of those links it, and Escape, or the variable again, lets it
+ * go.
  *
  * Under `scoring="whole"` a wrong pick starts the tree over: the rule that
  * keeps a student from clicking every connective in turn. The restart is
@@ -291,7 +292,7 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
     }
   }
 
-  /** Press a variable: its quantifiers become buttons, and Free appears. */
+  /** Press a variable: the quantifiers become buttons, and Free appears. */
   private startLinking(key: string, keyboard: boolean): void {
     const variable = this.resolved?.tree.byPath.get(key);
 
@@ -307,8 +308,8 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
       }),
     );
 
-    // From the keyboard, to the outermost quantifier, or to Free when the
-    // variable has none above it.
+    // From the keyboard, to the first quantifier, or to Free when the tree
+    // has none.
     if (keyboard) {
       (
         this.treeHost?.querySelector<HTMLButtonElement>(
