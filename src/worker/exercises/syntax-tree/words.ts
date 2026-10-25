@@ -21,6 +21,7 @@ export const SYNTAX_TREE_DEPTH_WORDS = {
     count: "Main connectives found: {right} of {total}",
     instructions:
       "Pick the main connective of each sentence until only atomic sentences remain.",
+    missed: "You picked {picked}; the main connective is {main}.",
     wrongPartial:
       "That is not the main connective. Here is how the sentence splits.",
     wrongWhole: "That is not the main connective. The tree starts over.",
@@ -32,6 +33,7 @@ export const SYNTAX_TREE_DEPTH_WORDS = {
     count: "Splits and links right: {right} of {total}",
     instructions:
       "Split each sentence and term at its main symbol until only variables and names remain, and link each variable to the quantifier that binds it.",
+    missed: "You picked {picked}; the main symbol is {main}.",
     wrongPartial: "That is not the main symbol. Here is how it splits.",
     wrongWhole: "That is not the main symbol. The tree starts over.",
   },

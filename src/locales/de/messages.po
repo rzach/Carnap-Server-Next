@@ -6880,6 +6880,18 @@ msgstr "Sie haben für diese Aufgabe noch nichts abgegeben."
 msgid "You have used all of your attempts on this assignment. Ask your instructor if you need another."
 msgstr "Sie haben alle Ihre Versuche für diese Aufgabe verbraucht. Wenden Sie sich an Ihre Lehrkraft, wenn Sie einen weiteren benötigen."
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "You picked {picked}; the main connective is {main}."
+msgstr "Sie haben {picked} gewählt; der Hauptjunktor ist {main}."
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "You picked {picked}; the main symbol is {main}."
+msgstr "Sie haben {picked} gewählt; das Hauptzeichen ist {main}."
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "You picked {picked}."
+msgstr "Sie haben {picked} gewählt."
+
 #: src/worker/exercises/world/strings.ts
 msgid "You say {formula} is false."
 msgstr "Sie behaupten, {formula} sei falsch."

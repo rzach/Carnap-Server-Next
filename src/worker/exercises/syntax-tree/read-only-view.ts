@@ -117,7 +117,11 @@ function treeHtml(
     : `<div class="st-scroll"><ul class="st-tree">${nodeHtml(drawnTree(resolved, shown, words))}</ul></div>`;
 }
 
-const NOTHING_SHOWN: ShownAnswers = { links: new Map(), split: new Set() };
+const NOTHING_SHOWN: ShownAnswers = {
+  links: new Map(),
+  missed: new Map(),
+  split: new Set(),
+};
 
 /** The count a verdict comes to, in words. */
 export function describeSyntaxTreeVerdict(

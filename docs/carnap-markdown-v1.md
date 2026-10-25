@@ -1450,7 +1450,10 @@ the terms it needs none.
     under every `feedback`; `feedback="none"` withholds only the sentence
     that says why.
   - `partial` takes one pick per sentence and then shows its true split,
-    right or wrong. The score is the share of sentences picked right.
+    right or wrong. The score is the share of sentences picked right. Under
+    `feedback="full"` a sentence or link picked wrong keeps a squiggle, and
+    a screen reader is told what was picked; `terse` and `none` keep only
+    the count.
 
 ## Aufbau-proof directive
 

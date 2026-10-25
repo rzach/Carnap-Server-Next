@@ -16,7 +16,7 @@ import type { Pick, SyntaxTreeNode } from "./logic/tree";
 import { isRightPick, nodeAt, pathKey } from "./logic/tree";
 import type { SyntaxTreeStringId } from "./strings";
 import type { SyntaxTreePublicData } from "./types";
-import { SYNTAX_TREE_ROLE_WORDS } from "./words";
+import { SYNTAX_TREE_DEPTH_WORDS, SYNTAX_TREE_ROLE_WORDS } from "./words";
 
 export type SyntaxTreeWords = (
   id: SyntaxTreeStringId,
@@ -83,6 +83,13 @@ export interface DrawnNode {
     readonly boundBy: string | null;
     readonly note: string;
   } | null;
+  /**
+   * Under `partial`, a node picked wrong: what was picked, in words for a
+   * screen reader (empty when the pick names no node). The line itself is
+   * drawn true either way, so this is the one trace of the miss; whether to
+   * show it is the caller's, by its feedback.
+   */
+  readonly missed: { readonly note: string } | null;
 }
 
 /**
@@ -93,6 +100,8 @@ export interface DrawnNode {
 export interface ShownAnswers {
   readonly split: ReadonlySet<string>;
   readonly links: ReadonlyMap<string, string | null>;
+  /** Under `partial`, the wrong pick at each node picked wrong. */
+  readonly missed: ReadonlyMap<string, Pick>;
 }
 
 /**
@@ -220,6 +229,41 @@ function quantifierKeys(resolved: ResolvedSyntaxTree): Set<string> {
 }
 
 /**
+ * What a screen reader is told of a wrong pick: the symbol picked, and for a
+ * split the main connective, which the line shows only by a box. A link's
+ * truth is in its own note already. Empty for a pick naming no node, which
+ * only a crafted answer holds.
+ */
+function missedNote(
+  resolved: ResolvedSyntaxTree,
+  node: SyntaxTreeNode,
+  pick: Pick,
+  words: SyntaxTreeWords,
+): string {
+  if ("linked" in pick) {
+    const target =
+      pick.linked === null ? null : nodeAt(resolved.tree, pick.linked);
+
+    if (target === undefined) {
+      return "";
+    }
+
+    return words("You picked {picked}.", {
+      picked: target === null ? words("Free") : operatorText(target),
+    });
+  }
+
+  const clicked = nodeAt(resolved.tree, pick.clicked);
+
+  return clicked === undefined
+    ? ""
+    : words(SYNTAX_TREE_DEPTH_WORDS[resolved.tree.depth].missed, {
+        main: operatorText(node),
+        picked: operatorText(clicked),
+      });
+}
+
+/**
  * The tree as far as `shown` has split and linked it: the root, and under
  * each split node its immediate children, each with its line in runs.
  * `linking` is the variable being linked, whose quantifiers are buttons.
@@ -248,6 +292,7 @@ export function drawnTree(
             : "open";
     const binder =
       boundBy == null ? undefined : resolved.tree.byPath.get(boundBy);
+    const miss = shown.missed.get(key);
 
     return {
       children:
@@ -271,6 +316,10 @@ export function drawnTree(
                       quantifier: operatorText(binder),
                     }),
             },
+      missed:
+        miss === undefined
+          ? null
+          : { note: missedNote(resolved, node, miss, words) },
       runs: sentenceRuns(resolved, node, state, binders, linking, words),
       state,
     };
@@ -296,16 +345,19 @@ export function shownAnswers(
 ): ShownAnswers {
   const split = new Set<string>();
   const links = new Map<string, string | null>();
+  const missed = new Map<string, Pick>();
 
   for (const pick of countedPicks(resolved.tree, picks)) {
-    if (
-      publicData.scoring !== "partial" &&
-      !isRightPick(resolved.tree, pick)
-    ) {
-      continue;
+    const key = pathKey(pick.node);
+
+    if (!isRightPick(resolved.tree, pick)) {
+      if (publicData.scoring !== "partial") {
+        continue;
+      }
+
+      missed.set(key, pick);
     }
 
-    const key = pathKey(pick.node);
     const link = resolved.tree.byPath.get(key)?.link;
 
     if ("linked" in pick) {
@@ -315,5 +367,5 @@ export function shownAnswers(
     }
   }
 
-  return { links, split };
+  return { links, missed, split };
 }

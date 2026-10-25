@@ -161,6 +161,31 @@
   border-width: 2px;
 }
 
+/*
+ * A sentence picked wrong under partial scoring, or a variable linked wrong,
+ * takes the squiggle every exercise draws under a mistake. Its line is drawn
+ * the true way, so this is what says it was missed. Not a wavy
+ * `text-decoration`: the boxed main connective paints its background over
+ * that, and the wave breaks under it. Drawn instead as one strip the line's
+ * width, in its bottom padding, as the truth table draws one under a cell.
+ */
+.st-node[data-missed] > .st-sentence {
+  position: relative;
+}
+
+.st-node[data-missed] > .st-sentence::after {
+  background: var(--_incorrect);
+  bottom: -0.15rem;
+  content: "";
+  height: 4px;
+  inset-inline: 0.3rem;
+  mask:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpath d='M0 3Q1.5 0 3 2T6 1' fill='none' stroke='black' stroke-width='1.2'/%3E%3C/svg%3E")
+    repeat-x 0 0 / 6px 4px;
+  pointer-events: none;
+  position: absolute;
+}
+
 /* Under a variable no quantifier binds; a bound one has its line instead. */
 .st-link-note {
   color: var(--_text-muted);

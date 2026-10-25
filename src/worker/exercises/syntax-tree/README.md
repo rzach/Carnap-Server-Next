@@ -48,7 +48,10 @@ stored engine text again and judges each pick against it.
 Under `scoring="whole"` the element clears the run on a wrong pick, so what
 arrives is the run since the last restart, and the grade is all or nothing.
 Under `partial` each node keeps its first pick, and the grade is the share
-right.
+right. A node picked wrong is still drawn split the true way, so
+`shownAnswers` also returns the misses and `drawnTree` puts each on its
+node (`missed`, with a screen-reader note). Only the element shows them, and
+only under `feedback="full"`: the review page stays verdict-only.
 
 ## Through the terms
 

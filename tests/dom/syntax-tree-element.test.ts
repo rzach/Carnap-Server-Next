@@ -77,6 +77,18 @@ function message(mounted: MountedExercise): string {
   );
 }
 
+/** The nodes marked as picked wrong, each with what a screen reader is told. */
+function missed(mounted: MountedExercise): Record<string, string> {
+  return Object.fromEntries(
+    [
+      ...mounted.root.querySelectorAll<HTMLElement>(".st-node[data-missed]"),
+    ].map((node) => [
+      node.dataset.path ?? "?",
+      node.querySelector(".st-missed-note")?.textContent ?? "",
+    ]),
+  );
+}
+
 function picks(mounted: MountedExercise): unknown {
   return (JSON.parse(mounted.answerData.value) as { picks: unknown }).picks;
 }
@@ -166,6 +178,37 @@ describe("the syntax-tree element", () => {
 
     expect(message(mounted)).toBe("Main connectives found: 2 of 3");
     expect(markState(mounted)).toBe("idle");
+  });
+
+  test("partial: a finished tree marks the sentence picked wrong, and says what was picked", async () => {
+    const mounted = mountExercise(
+      await syntaxTree(PROP, '#s2 scoring="partial"'),
+    );
+
+    click(mounted, "1");
+    click(mounted, "1");
+    click(mounted, "1.1");
+
+    expect(message(mounted)).toBe("Main connectives found: 2 of 3");
+    expect(missed(mounted)).toEqual({
+      // The language's own spelling, as the buttons' names have it; Fira
+      // Code draws -> and /\ as arrow and wedge.
+      "": "You picked ->; the main connective is /\\.",
+    });
+  });
+
+  test("partial, feedback terse: the count stands, but not which sentence was missed", async () => {
+    const mounted = mountExercise(
+      await syntaxTree(PROP, '#s2 scoring="partial"'),
+      { options: { feedback: "terse" } },
+    );
+
+    click(mounted, "1");
+    click(mounted, "1");
+    click(mounted, "1.1");
+
+    expect(message(mounted)).toBe("Main connectives found: 2 of 3");
+    expect(missed(mounted)).toEqual({});
   });
 
   test("a prior answer is replayed, and a stored run that went wrong starts over", async () => {
@@ -468,9 +511,10 @@ describe("the syntax-tree element through its terms", () => {
       linked: null,
       node: [1, 0, 0, 0, 0],
     });
+    expect(missed(mounted)).toEqual({ [OUTER_X]: "You picked Free." });
   });
 
-  test("from the keyboard, a pressed variable hands focus to its outermost quantifier, and a link to the next variable", async () => {
+  test("from the keyboard, a pressed variable hands focus to the first quantifier, and a link to the next variable", async () => {
     const mounted = mountExercise(await syntaxTree(TERMS, TERM_ATTRS));
 
     splitAll(mounted);

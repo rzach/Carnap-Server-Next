@@ -6880,6 +6880,18 @@ msgstr "You have not submitted any work for this assignment."
 msgid "You have used all of your attempts on this assignment. Ask your instructor if you need another."
 msgstr "You have used all of your attempts on this assignment. Ask your instructor if you need another."
 
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "You picked {picked}; the main connective is {main}."
+msgstr "You picked {picked}; the main connective is {main}."
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "You picked {picked}; the main symbol is {main}."
+msgstr "You picked {picked}; the main symbol is {main}."
+
+#: src/worker/exercises/syntax-tree/strings.ts
+msgid "You picked {picked}."
+msgstr "You picked {picked}."
+
 #: src/worker/exercises/world/strings.ts
 msgid "You say {formula} is false."
 msgstr "You say {formula} is false."

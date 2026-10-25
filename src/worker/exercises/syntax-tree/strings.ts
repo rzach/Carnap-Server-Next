@@ -76,6 +76,23 @@ export function buildSyntaxTreeStrings(i18n: Translator) {
       placeholders("right", "total"),
     ),
     "The tree is not finished.": i18n.t("The tree is not finished."),
+    // Under scoring="partial", a screen reader's word on a sentence picked
+    // wrong, which the tree marks and then draws split the true way: the
+    // symbol picked, and the main one the line now shows boxed.
+    "You picked {picked}; the main connective is {main}.": i18n.t(
+      "You picked {picked}; the main connective is {main}.",
+      placeholders("picked", "main"),
+    ),
+    "You picked {picked}; the main symbol is {main}.": i18n.t(
+      "You picked {picked}; the main symbol is {main}.",
+      placeholders("picked", "main"),
+    ),
+    // The same for a variable linked wrong: the quantifier picked, or Free.
+    // What truly binds it is said just before, by "bound by" or "free".
+    "You picked {picked}.": i18n.t(
+      "You picked {picked}.",
+      placeholders("picked"),
+    ),
     // What depth="terms" says instead of the above, where an atom splits at
     // its predicate or function symbol and each variable is linked to the
     // quantifier binding it.

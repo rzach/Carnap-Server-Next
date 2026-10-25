@@ -583,6 +583,21 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
       item.append(note);
     }
 
+    // Under partial a miss is drawn split the true way like any other pick,
+    // so without this mark a finished tree reads as all right whatever its
+    // count says. Which sentence was missed is detail `terse` withholds.
+    if (node.missed !== null && this.feedback === "full") {
+      item.dataset.missed = "";
+
+      if (node.missed.note.length > 0) {
+        const note = document.createElement("span");
+
+        note.className = "st-missed-note visually-hidden";
+        note.textContent = node.missed.note;
+        item.append(note);
+      }
+    }
+
     if (node.state === "split") {
       const children = document.createElement("ul");
 
