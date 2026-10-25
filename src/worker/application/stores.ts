@@ -1095,6 +1095,21 @@ export interface AssessmentStore {
   listSubmissionsForAttempt(attemptId: AppId): Promise<Submission[]>;
   appendEvaluation(input: AppendEvaluationInput): Promise<Evaluation>;
   listEvaluationsForSubmission(submissionId: AppId): Promise<Evaluation[]>;
+  /**
+   * Every submission of an assignment's attempts, voided attempts included,
+   * for one student or for all of them; and every evaluation of those
+   * submissions. Whole rows, for the pages that show the work, one statement
+   * each however many attempts there are. Ordered as the per-attempt and
+   * per-submission reads are, so a group taken from them keeps that order.
+   */
+  listSubmissionsForAssignment(
+    assignmentId: AppId,
+    userId?: AppId,
+  ): Promise<Submission[]>;
+  listEvaluationsForAssignment(
+    assignmentId: AppId,
+    userId?: AppId,
+  ): Promise<Evaluation[]>;
   appendSubmissionWithEvaluation(
     submission: AppendSubmissionInput,
     evaluation: AppendEvaluationInput,

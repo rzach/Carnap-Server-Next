@@ -476,10 +476,14 @@ function compareText(left: string, right: string): number {
   return left > right ? 1 : 0;
 }
 
-function groupBy<T>(
+/**
+ * Rows grouped by a key, each group sorted by `compare`, or left in the order
+ * the rows came in without one.
+ */
+export function groupBy<T>(
   rows: readonly T[],
   key: (row: T) => string,
-  compare: (left: T, right: T) => number,
+  compare?: (left: T, right: T) => number,
 ): Map<string, T[]> {
   const groups = new Map<string, T[]>();
 
@@ -493,8 +497,10 @@ function groupBy<T>(
     }
   }
 
-  for (const group of groups.values()) {
-    group.sort(compare);
+  if (compare !== undefined) {
+    for (const group of groups.values()) {
+      group.sort(compare);
+    }
   }
 
   return groups;

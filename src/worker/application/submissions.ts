@@ -50,7 +50,7 @@ import {
   badRequest,
   contentRevisionNotFound,
 } from "./errors";
-import { GradebookService } from "./gradebook";
+import { GradebookService, groupBy } from "./gradebook";
 import { effectiveSubmissionPolicy, isActiveAttempt } from "./policies";
 import type { AppStores } from "./stores";
 
@@ -551,14 +551,25 @@ export class SubmissionService {
     // An attempt still in progress shows its work regardless — the lesson is
     // open in front of the student, restoring their answers from here.
     const now = timestampNow(this.options.now?.() ?? new Date());
+    const work = await this.workForAssignment(assignment, actor.user.id);
 
     if (workReleased(assignment, now) || isActiveAttempt(attempt, now)) {
-      return this.historyForAttempt(attempt.id, "student", i18n);
+      return this.historyForAttempt(
+        attempt.id,
+        assignment,
+        work,
+        "student",
+        i18n,
+      );
     }
 
-    return (await this.historyForAttempt(attempt.id, "student", null)).map(
-      withoutWork,
-    );
+    return this.historyForAttempt(
+      attempt.id,
+      assignment,
+      work,
+      "student",
+      null,
+    ).map(withoutWork);
   }
 
   async listResultsForStudent(
@@ -587,12 +598,16 @@ export class SubmissionService {
     const released = !gradesWithheld(assignment, now);
     const workShown = workReleased(assignment, now);
 
-    const allAttempts = (
-      await this.options.stores.assessment.listAttemptsForAssignmentUser(
+    const [userAttempts, work] = await Promise.all([
+      this.options.stores.assessment.listAttemptsForAssignmentUser(
         assignment.id,
         actor.user.id,
-      )
-    ).sort((left, right) => left.ordinal - right.ordinal);
+      ),
+      this.workForAssignment(assignment, actor.user.id),
+    ]);
+    const allAttempts = userAttempts.sort(
+      (left, right) => left.ordinal - right.ordinal,
+    );
     const attempts = allAttempts.filter(
       (attempt) => attempt.status !== "voided",
     );
@@ -604,22 +619,22 @@ export class SubmissionService {
         : [],
     );
 
-    const results = await Promise.all(
-      attempts.map(async (attempt) => {
-        const entries = await this.historyForAttempt(
-          attempt.id,
-          "student",
-          workShown ? i18n : null,
-          true,
-        );
+    const results = attempts.map((attempt) => {
+      const entries = this.historyForAttempt(
+        attempt.id,
+        assignment,
+        work,
+        "student",
+        workShown ? i18n : null,
+        true,
+      );
 
-        return {
-          entries: workShown ? entries : entries.map(withoutWork),
-          ordinal: attempt.ordinal,
-          status: attempt.status,
-        };
-      }),
-    );
+      return {
+        entries: workShown ? entries : entries.map(withoutWork),
+        ordinal: attempt.ordinal,
+        status: attempt.status,
+      };
+    });
 
     return {
       attempts: results,
@@ -675,34 +690,34 @@ export class SubmissionService {
     const studentAttempts = attempts.filter((attempt) =>
       students.has(attempt.userId),
     );
-    const [histories, counting, declarations] = await Promise.all([
-      Promise.all(
-        studentAttempts.map(async (attempt) =>
-          (
-            await this.historyForAttempt(attempt.id, "instructor", i18n, true)
-          ).map((entry) => ({
-            ...entry,
-            attemptOrdinal: attempt.ordinal,
-            attemptVoided: attempt.status === "voided",
-          })),
-        ),
-      ),
+    const [work, counting] = await Promise.all([
+      this.workForAssignment(assignment),
       new GradebookService({
         now: this.options.now,
         stores: this.options.stores,
       }).countingSubmissions(assignment, [
         ...new Set(studentAttempts.map((attempt) => attempt.userId)),
       ]),
-      this.declarationsForAssignment(assignment),
     ]);
 
     return {
-      entries: histories.flat().map((entry) => ({
-        ...entry,
-        counts: counting.has(entry.submission.id),
-      })),
+      entries: studentAttempts.flatMap((attempt) =>
+        this.historyForAttempt(
+          attempt.id,
+          assignment,
+          work,
+          "instructor",
+          i18n,
+          true,
+        ).map((entry) => ({
+          ...entry,
+          attemptOrdinal: attempt.ordinal,
+          attemptVoided: attempt.status === "voided",
+          counts: counting.has(entry.submission.id),
+        })),
+      ),
       // The manifest is in document order, and so is a map built from it.
-      exercises: [...declarations.values()].map((declaration) => ({
+      exercises: [...work.declarations.values()].map((declaration) => ({
         id: declaration.id,
         title: declaration.title ?? null,
       })),
@@ -765,79 +780,85 @@ export class SubmissionService {
     return { evaluation: evaluations[0] ?? null, submission };
   }
 
-  private async historyForAttempt(
+  /**
+   * What an assignment's histories are built from — its lesson's
+   * declarations, and its attempts' submissions and their evaluations — read
+   * once for every attempt on the page, for one student or for all of them.
+   * A page of N attempts used to parse the lesson N times and ask for each
+   * submission's evaluations on its own.
+   */
+  private async workForAssignment(
+    assignment: Assignment,
+    userId?: AppId,
+  ): Promise<AssignmentWork> {
+    const assessment = this.options.stores.assessment;
+    const [declarations, submissions, evaluations] = await Promise.all([
+      this.declarationsForAssignment(assignment),
+      assessment.listSubmissionsForAssignment(assignment.id, userId),
+      assessment.listEvaluationsForAssignment(assignment.id, userId),
+    ]);
+
+    return {
+      declarations,
+      evaluations: groupBy(evaluations, (row) => row.submissionId),
+      submissions: groupBy(submissions, (row) => row.attemptId),
+    };
+  }
+
+  /** One attempt's submissions, one entry each, from the work read for it. */
+  private historyForAttempt(
     attemptId: AppId,
+    assignment: Assignment,
+    work: AssignmentWork,
     audience: ExerciseReviewAudience,
     i18n: Translator | null,
     preferEffective = false,
-  ): Promise<SubmissionHistoryEntry[]> {
-    const attempt =
-      await this.options.stores.assessment.getAttempt(attemptId);
-
-    if (attempt === null) {
-      throw attemptNotFound();
-    }
-
-    const assignment = await this.options.stores.assignments.getById(
-      attempt.assignmentId,
-    );
-    const declarations =
-      assignment === null
-        ? new Map<string, ExerciseManifestItem>()
-        : await this.declarationsForAssignment(assignment);
-    const submissions =
-      await this.options.stores.assessment.listSubmissionsForAttempt(
-        attemptId,
-      );
+  ): SubmissionHistoryEntry[] {
+    const { declarations } = work;
     const now = timestampNow(this.options.now?.() ?? new Date());
 
-    return Promise.all(
-      submissions.map(async (submission) => {
-        const evaluations =
-          await this.options.stores.assessment.listEvaluationsForSubmission(
-            submission.id,
-          );
-        const declaration =
-          submission.exerciseId === null
-            ? undefined
-            : declarations.get(submission.exerciseId);
-        const evaluation = preferEffective
-          ? effectiveEvaluation(evaluations)
-          : (evaluations[0] ?? null);
-        // One condition, asked once, for the two things that have to agree: the
-        // recorded verdict, and the review that would otherwise recompute it.
-        const sealed =
-          audience === "student" &&
-          this.evaluationSealed(assignment, declaration, now);
+    return (work.submissions.get(attemptId) ?? []).map((submission) => {
+      const evaluations = work.evaluations.get(submission.id) ?? [];
+      const declaration =
+        submission.exerciseId === null
+          ? undefined
+          : declarations.get(submission.exerciseId);
+      const evaluation = preferEffective
+        ? effectiveEvaluation(evaluations)
+        : (evaluations[0] ?? null);
+      // One condition, asked once, for the two things that have to agree: the
+      // recorded verdict, and the review that would otherwise recompute it.
+      const sealed =
+        audience === "student" &&
+        this.evaluationSealed(assignment, declaration, now);
 
-        return {
-          answerReview:
-            i18n === null
+      return {
+        answerReview:
+          i18n === null
+            ? null
+            : this.answerReviewForSubmission(
+                submission,
+                declarations,
+                audience,
+                i18n,
+                !sealed,
+              ),
+        attemptId,
+        evaluation:
+          audience === "instructor"
+            ? evaluation === null
               ? null
-              : this.answerReviewForSubmission(
-                  submission,
-                  declarations,
-                  audience,
-                  i18n,
-                  !sealed,
-                ),
-          attemptId,
-          evaluation:
-            audience === "instructor"
-              ? evaluation === null
-                ? null
-                : viewerEvaluation(evaluation)
-              : studentEvaluation(evaluation, declaration, assignment, now),
-          exercisePromptHtml:
-            declaration === undefined
-              ? null
-              : exercisePromptHtml(declaration.publicData),
-          exerciseTitle: declaration?.title ?? null,
-          nominalPoints: declaration?.nominalPoints ?? null,
-          submission,
-        };
-      }),
-    );
+              : viewerEvaluation(evaluation)
+            : studentEvaluation(evaluation, declaration, assignment, now),
+        exercisePromptHtml:
+          declaration === undefined
+            ? null
+            : exercisePromptHtml(declaration.publicData),
+        exerciseTitle: declaration?.title ?? null,
+        nominalPoints: declaration?.nominalPoints ?? null,
+        submission,
+      };
+    });
   }
 
   /**
@@ -905,4 +926,13 @@ export class SubmissionService {
 
     return revision === null ? null : contentArtifactFromRevision(revision);
   }
+}
+
+/** An assignment's lesson and work, as {@link SubmissionService} reads them. */
+interface AssignmentWork {
+  readonly declarations: ReadonlyMap<string, ExerciseManifestItem>;
+  /** Each submission's evaluations, oldest first. */
+  readonly evaluations: ReadonlyMap<AppId, readonly Evaluation[]>;
+  /** Each attempt's submissions, oldest first. */
+  readonly submissions: ReadonlyMap<AppId, readonly Submission[]>;
 }

@@ -1843,6 +1843,31 @@ export function describeStorageContract(
             }),
           ),
         );
+        // The pages that show the work read whole rows, and in order: by
+        // (submittedAt, id) and (createdAt, id), as the per-attempt reads do.
+        await expect(
+          stores.assessment.listSubmissionsForAssignment(
+            attempt.assignmentId,
+          ),
+        ).resolves.toEqual([early, otherSubmission, late]);
+        await expect(
+          stores.assessment.listSubmissionsForAssignment(
+            attempt.assignmentId,
+            student.id,
+          ),
+        ).resolves.toEqual([early, late]);
+        await expect(
+          stores.assessment.listEvaluationsForAssignment(
+            attempt.assignmentId,
+            student.id,
+          ),
+        ).resolves.toEqual([first, second]);
+        await expect(
+          stores.assessment.listEvaluationsForAssignment(
+            attempt.assignmentId,
+            other.id,
+          ),
+        ).resolves.toEqual([]);
         // An empty scope is no query at all, and an assignment with nothing
         // in it is an empty list rather than a placeholder.
         await expect(

@@ -2783,6 +2783,42 @@ class SqliteAssessmentStore implements AssessmentStore {
     return rows.map(mapEvaluation);
   }
 
+  async listSubmissionsForAssignment(
+    assignmentId: AppId,
+    userId?: AppId,
+  ): Promise<Submission[]> {
+    const rows = await this.db
+      .select({ submission: submissions })
+      .from(submissions)
+      .innerJoin(attempts, eq(attempts.id, submissions.attemptId))
+      .where(this.assignmentWorkFilter(assignmentId, userId))
+      .orderBy(asc(submissions.submittedAt), asc(submissions.id));
+
+    return rows.map((row) => mapSubmission(row.submission));
+  }
+
+  async listEvaluationsForAssignment(
+    assignmentId: AppId,
+    userId?: AppId,
+  ): Promise<Evaluation[]> {
+    const rows = await this.db
+      .select({ evaluation: evaluations })
+      .from(evaluations)
+      .innerJoin(submissions, eq(submissions.id, evaluations.submissionId))
+      .innerJoin(attempts, eq(attempts.id, submissions.attemptId))
+      .where(this.assignmentWorkFilter(assignmentId, userId))
+      .orderBy(asc(evaluations.createdAt), asc(evaluations.id));
+
+    return rows.map((row) => mapEvaluation(row.evaluation));
+  }
+
+  private assignmentWorkFilter(assignmentId: AppId, userId?: AppId) {
+    return and(
+      eq(attempts.assignmentId, assignmentId),
+      userId === undefined ? undefined : eq(attempts.userId, userId),
+    );
+  }
+
   /**
    * The scope's student filter, on the attempt: submissions and evaluations
    * reach it through their attempt, which is the row that says whose work
