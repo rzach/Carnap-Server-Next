@@ -322,9 +322,9 @@ describe("exercise contract", () => {
       id: "mc_1",
       kind: "multiple-choice@1",
       nominalPoints: 1,
-      privateData: { correctOptionIds: ["a"], mode: "single" },
+      privateData: { correctOptionIds: ["a"] },
       publicData: {
-        mode: "single",
+        variant: "single",
         options: [
           { html: "A", id: "a" },
           { html: "B", id: "b" },

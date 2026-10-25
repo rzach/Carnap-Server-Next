@@ -3,7 +3,7 @@ import type { JsonValue } from "../../domain/json";
 import { isObject } from "../../exercise-kit/assessment";
 import type { Translator } from "../../i18n/translator";
 
-export type MultipleChoiceMode = "single" | "multiple";
+export type MultipleChoiceVariant = "single" | "multiple";
 
 export interface MultipleChoiceOptionPublicData {
   readonly html: string;
@@ -11,14 +11,13 @@ export interface MultipleChoiceOptionPublicData {
 }
 
 export interface MultipleChoicePublicData {
-  readonly mode: MultipleChoiceMode;
   readonly options: readonly MultipleChoiceOptionPublicData[];
   readonly promptHtml: string;
+  readonly variant: MultipleChoiceVariant;
 }
 
 export interface MultipleChoicePrivateData {
   readonly correctOptionIds: readonly string[];
-  readonly mode: MultipleChoiceMode;
 }
 
 export interface MultipleChoiceAnswerData {
@@ -56,7 +55,7 @@ export function isMultipleChoicePublicData(
   const options = value.options;
 
   return (
-    (value.mode === "single" || value.mode === "multiple") &&
+    (value.variant === "single" || value.variant === "multiple") &&
     typeof value.promptHtml === "string" &&
     Array.isArray(options) &&
     options.every(

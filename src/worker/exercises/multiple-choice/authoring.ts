@@ -21,10 +21,10 @@ import {
 } from "../../exercise-kit/authoring";
 import type { ExerciseCompileContext } from "../../exercise-kit/type";
 import type {
-  MultipleChoiceMode,
   MultipleChoiceOptionPublicData,
   MultipleChoicePrivateData,
   MultipleChoicePublicData,
+  MultipleChoiceVariant,
 } from "./types";
 import {
   MULTIPLE_CHOICE_ANSWER_KIND,
@@ -37,7 +37,7 @@ import {
 /** What `::::multiple-choice{…}` accepts beyond the shared exercise set. */
 const MULTIPLE_CHOICE_ATTRIBUTES = [
   ...COMMON_EXERCISE_ATTRIBUTES,
-  "mode",
+  "variant",
 ] as const;
 
 const OPTION_ID_PATTERN = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/;
@@ -48,11 +48,11 @@ interface ParsedOption {
   readonly id: string;
 }
 
-function parseMode(
+function parseVariant(
   value: string | undefined,
   line: number,
   diagnostics: CompilerDiagnostic[],
-): MultipleChoiceMode {
+): MultipleChoiceVariant {
   if (value === undefined || value === "single") {
     return "single";
   }
@@ -64,8 +64,8 @@ function parseMode(
   diagnostics.push(
     diagnostic(
       line,
-      "invalid_mode",
-      "Multiple-choice mode must be single or multiple.",
+      "unsupported_multiple_choice_variant",
+      "The variant attribute must be single or multiple.",
     ),
   );
 
@@ -151,7 +151,7 @@ async function parseOptions(
 function validateMultipleChoice(
   block: DirectiveBlock,
   id: string,
-  mode: MultipleChoiceMode,
+  variant: MultipleChoiceVariant,
   options: readonly ParsedOption[],
   diagnostics: CompilerDiagnostic[],
 ): void {
@@ -186,7 +186,7 @@ function validateMultipleChoice(
 
   const correctCount = options.filter((option) => option.correct).length;
 
-  if (mode === "single" && correctCount !== 1) {
+  if (variant === "single" && correctCount !== 1) {
     diagnostics.push(
       diagnostic(
         block.line,
@@ -196,7 +196,7 @@ function validateMultipleChoice(
     );
   }
 
-  if (mode === "multiple" && correctCount < 1) {
+  if (variant === "multiple" && correctCount < 1) {
     diagnostics.push(
       diagnostic(
         block.line,
@@ -216,7 +216,7 @@ export async function compileMultipleChoice(
 
   const id = requireAttribute(block, "id", diagnostics);
   const points = parsePoints(block.attrs.points, block.line, diagnostics);
-  const mode = parseMode(block.attrs.mode, block.line, diagnostics);
+  const variant = parseVariant(block.attrs.variant, block.line, diagnostics);
   const title = block.attrs.title?.trim();
   const exam = parseExamAttribute(block.attrs.exam, block.line, diagnostics);
   const feedback = parseFeedbackAttribute(block, diagnostics);
@@ -226,24 +226,23 @@ export async function compileMultipleChoice(
     return null;
   }
 
-  validateMultipleChoice(block, id, mode, parsed.options, diagnostics);
+  validateMultipleChoice(block, id, variant, parsed.options, diagnostics);
 
   const publicOptions: MultipleChoiceOptionPublicData[] = parsed.options.map(
     (option) => ({ html: option.html, id: option.id }),
   );
   const publicData: MultipleChoicePublicData = {
-    mode,
     options: publicOptions,
     promptHtml: await renderMarkdownSource(parsed.promptLines.join("\n"), {
       ...renderOptions,
       lineOffset: block.bodyStartLine - 1,
     }),
+    variant,
   };
   const privateData: MultipleChoicePrivateData = {
     correctOptionIds: parsed.options
       .filter((option) => option.correct)
       .map((option) => option.id),
-    mode,
   };
 
   return buildCompiledExercise({

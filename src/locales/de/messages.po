@@ -3360,10 +3360,6 @@ msgstr "{block} nach Spalte {col}, Zeile {row} verschoben."
 msgid "Moved the block at column {fromCol}, row {fromRow} to column {col}, row {row}."
 msgstr "Der Block in Spalte {fromCol}, Zeile {fromRow} wurde nach Spalte {col}, Zeile {row} verschoben."
 
-#: src/worker/application/content/diagnostic-strings.ts
-msgid "Multiple-choice mode must be single or multiple."
-msgstr "Der Multiple-Choice-Modus muss single oder multiple sein."
-
 #: src/worker/exercises/multiple-choice/types.ts
 msgid "Multiple-choice question"
 msgstr "Multiple-Choice-Übung"
@@ -5895,6 +5891,10 @@ msgstr "Das Attribut variant muss simple, validity oder constraint sein."
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The variant attribute must be simple, validity, or partial."
 msgstr "Das Attribut variant muss simple, validity oder partial sein."
+
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "The variant attribute must be single or multiple."
+msgstr "Das variant-Attribut muss single oder multiple sein."
 
 #: src/worker/infrastructure/turnstile.ts
 msgid "The verification check did not pass or has expired. Please try again."

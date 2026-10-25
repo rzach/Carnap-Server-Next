@@ -209,7 +209,6 @@ describe("content compiler", () => {
     );
     expect(compiled.artifact.manifest[0]?.privateData).toEqual({
       correctOptionIds: ["excluded_middle"],
-      mode: "single",
     });
     expect(compiled.artifact.manifest[0]?.nominalPoints).toBe(2);
     expect(compiled.artifact.manifest[0]?.schemaVersion).toBe(1);
@@ -303,13 +302,42 @@ Pick one.
     }
 
     expect(compiled.artifact.manifest[0]?.publicData).toEqual({
-      mode: "single",
       options: [
         { html: "Yes", id: "yes" },
         { html: "No", id: "no" },
       ],
       promptHtml: "<p>Pick one.</p>",
+      variant: "single",
     });
+  });
+
+  test("a multiple-choice variant is single or multiple, and nothing else", async () => {
+    const source = (attrs: string) => `::::multiple-choice{#q1 ${attrs}}
+Pick.
+
+- [x] yes | Yes
+- [x] no | No
+::::`;
+    const multiple = await compileCarnapMarkdown(
+      source('variant="multiple"'),
+    );
+
+    expect(multiple.diagnostics).toEqual([]);
+
+    const bad = await compileCarnapMarkdown(source('variant="several"'));
+
+    expect(bad.ok).toBe(false);
+    expect(bad.diagnostics.map((item) => item.code)).toContain(
+      "unsupported_multiple_choice_variant",
+    );
+
+    // The old spelling is not read as the new one.
+    const old = await compileCarnapMarkdown(source('mode="multiple"'));
+
+    expect(old.ok).toBe(false);
+    expect(old.diagnostics.map((item) => item.code)).toContain(
+      "unknown_attribute",
+    );
   });
 
   test("compiles footnotes into linked notes at the foot", async () => {
@@ -887,7 +915,7 @@ Another?
       compiled.diagnostics.find((item) => item.code === "unknown_attribute")
         ?.params,
     ).toEqual({
-      accepted: "exam, feedback, id, mode, points, title",
+      accepted: "exam, feedback, id, points, title, variant",
       name: "class",
     });
   });
@@ -911,7 +939,7 @@ Question?
     // `exam` is what decides whether a wrong answer is recorded at all. Told
     // only "unknown attribute", an author is left guessing at the spelling.
     expect(unknown?.params).toEqual({
-      accepted: "exam, feedback, id, mode, points, title",
+      accepted: "exam, feedback, id, points, title, variant",
       name: "exm",
     });
   });

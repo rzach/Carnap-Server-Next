@@ -121,11 +121,11 @@ rather than individual lines?
 
 ## 2. Multiple choice, several answers
 
-Add \`mode="multiple"\` and mark every correct option. Scoring is exact match: the
+Add \`variant="multiple"\` and mark every correct option. Scoring is exact match: the
 selection has to be precisely the marked set.
 
 \`\`\`md
-:::multiple-choice{id="mc_which" title="Dischargers" mode="multiple" points="2"}
+:::multiple-choice{id="mc_which" title="Dischargers" variant="multiple" points="2"}
 Select **every** rule that discharges an assumption.
 
 - [x] negintro | \`neg_intro\` (¬I)
@@ -137,7 +137,7 @@ Select **every** rule that discharges an assumption.
 :::
 \`\`\`
 
-:::multiple-choice{id="mc_which" title="Dischargers" mode="multiple" points="2"}
+:::multiple-choice{id="mc_which" title="Dischargers" variant="multiple" points="2"}
 Select **every** rule that discharges an assumption.
 
 - [x] negintro | \`neg_intro\` (¬I)

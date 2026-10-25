@@ -106,9 +106,6 @@ export function buildDiagnosticStrings(i18n: Translator) {
     "A multiple-choice exercise requires at least two options.": i18n.t(
       "A multiple-choice exercise requires at least two options.",
     ),
-    "Multiple-choice mode must be single or multiple.": i18n.t(
-      "Multiple-choice mode must be single or multiple.",
-    ),
     "Multiple-select exercises must have at least one correct option.":
       i18n.t(
         "Multiple-select exercises must have at least one correct option.",
@@ -129,6 +126,9 @@ export function buildDiagnosticStrings(i18n: Translator) {
     ),
     "Single-select exercises must have exactly one correct option.": i18n.t(
       "Single-select exercises must have exactly one correct option.",
+    ),
+    "The variant attribute must be single or multiple.": i18n.t(
+      "The variant attribute must be single or multiple.",
     ),
 
     // Short answer.

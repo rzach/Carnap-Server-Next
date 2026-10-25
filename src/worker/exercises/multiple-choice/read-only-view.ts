@@ -65,7 +65,7 @@ export function renderMultipleChoiceElement(
   meta: MultipleChoiceElementMeta,
   actions = "",
 ): string {
-  const inputType = publicData.mode === "single" ? "radio" : "checkbox";
+  const inputType = publicData.variant === "single" ? "radio" : "checkbox";
   const legend = exerciseLegendHtml(
     exerciseGroupLabel(multipleChoiceName(meta.i18n), meta),
   );

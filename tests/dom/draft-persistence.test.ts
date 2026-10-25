@@ -323,7 +323,7 @@ describe("a real widget", () => {
       "../../src/worker/exercises/multiple-choice/read-only-view"
     );
     const publicData = {
-      mode: "single" as const,
+      variant: "single" as const,
       options: [
         { html: "A", id: "a" },
         { html: "B", id: "b" },

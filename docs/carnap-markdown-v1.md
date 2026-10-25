@@ -408,7 +408,7 @@ Which sentence is a tautology?
 ::::
 ```
 
-The common attributes apply. `mode` is `single` by default; use `multiple`
+The common attributes apply. `variant` is `single` by default; use `multiple`
 for a question allowing several selected options.
 
 Write the prompt first, then options in this format:
@@ -2467,10 +2467,11 @@ Common groups include:
 - **Exercise identity and settings:** `missing_id`, `invalid_exercise_id`,
   `duplicate_exercise_id`, `invalid_points`, `invalid_exam`,
   `invalid_feedback`, `redundant_check_attribute`.
-- **Choice/text answers:** `invalid_mode`, `missing_answer`,
-  `not_enough_options`, `invalid_option_id`, `duplicate_option_id`,
-  `invalid_option_label`, `invalid_multiple_choice_body`,
-  `invalid_answer_key`, `invalid_case_sensitive`.
+- **Choice/text answers:** `unsupported_multiple_choice_variant`,
+  `missing_answer`, `not_enough_options`, `invalid_option_id`,
+  `duplicate_option_id`, `invalid_option_label`,
+  `invalid_multiple_choice_body`, `invalid_answer_key`,
+  `invalid_case_sensitive`.
 - **Formulas and tables:** `invalid_formula`, `no_formulas`, `too_many_atoms`,
   `no_fillable_cells`, `invalid_fill_scope`, `invalid_grading_mode`,
   `invalid_check_mode`, `invalid_counterexample_target`,

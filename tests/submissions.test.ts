@@ -613,7 +613,7 @@ theorem mp (a b: wff): $ (a → b) , a ⊢ b $
       expect(JSON.parse(hydrationJson ?? "{}")).toMatchObject({
         mode: "answer",
         priorAnswer: { selectedOptionIds: ["yes"] },
-        publicData: { mode: "single" },
+        publicData: { variant: "single" },
         version: 1,
       });
     });

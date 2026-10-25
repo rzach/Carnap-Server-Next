@@ -73,7 +73,7 @@ From P and "if P then Q", which follows?
 - [ ] neither | Neither
 ::::
 
-::::multiple-choice{id="valid_forms" title="Valid forms" points="1" mode="multiple"}
+::::multiple-choice{id="valid_forms" title="Valid forms" points="1" variant="multiple"}
 Which of these are valid? Select every one that applies.
 
 - [x] mt | Modus tollens
@@ -109,7 +109,7 @@ Which sentence can never be true?
 - [ ] contingent | P and Q
 ::::
 
-::::multiple-choice{id="ags_entailment" title="Entailment" points="1" mode="multiple"}
+::::multiple-choice{id="ags_entailment" title="Entailment" points="1" variant="multiple"}
 Which of these does "P and Q" entail? Select every one that applies.
 
 - [x] p | P

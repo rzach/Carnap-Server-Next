@@ -37,10 +37,7 @@ function isMultipleChoicePrivateData(
     return false;
   }
 
-  return (
-    (value.mode === "single" || value.mode === "multiple") &&
-    isStringArray(value.correctOptionIds ?? null)
-  );
+  return isStringArray(value.correctOptionIds ?? null);
 }
 
 function multipleChoiceAnswerData(
@@ -170,7 +167,7 @@ export const MULTIPLE_CHOICE_ASSESSMENT = {
     }
 
     if (
-      declaration.publicData.mode === "single" &&
+      declaration.publicData.variant === "single" &&
       selectedOptionIds.length > 1
     ) {
       return {
