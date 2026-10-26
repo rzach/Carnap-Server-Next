@@ -13,6 +13,7 @@ import type {
   ExerciseReviewContext,
   NormalizedAnswer,
 } from "../domain/content";
+import type { JsonValue } from "../domain/json";
 import type { Translator } from "../i18n/translator";
 import type { CompiledExercise, DirectiveBlock } from "./authoring";
 import type { ExerciseHeading } from "./group";
@@ -148,6 +149,13 @@ export interface ExerciseRenderContext {
    * the stack can observe.
    */
   readonly i18n: Translator;
+  /**
+   * The viewer's recorded answer, on a submission form. Only a type with no
+   * element reads it — the text types render it into their field, which is all
+   * the restoring they get. A type with an element restores from the hydration
+   * payload instead, where a local draft can outrank it.
+   */
+  readonly priorAnswer?: JsonValue | null;
   /**
    * The author's title for this exercise, when the caller knows it — the group's
    * visible name. Absent on paths that render a node without its manifest entry;

@@ -54,7 +54,9 @@ internal markup and the full hydration payload:
 `.exercise-submission` identifies the form. `.exercise` belongs to the
 exercise's own outer box, which also exists outside submission forms.
 The runtime prefers `answerData`; free response and short answer use native
-text fields instead.
+text fields instead. With no element to hydrate, those two render the
+viewer's recorded answer into the field on the server (the render context's
+`priorAnswer`), so a reload shows what was submitted.
 
 Every exercise has an action bar containing Submit, a polite live status
 region (`data-exercise-status`), and a correctness mark. Widgets may add Help,

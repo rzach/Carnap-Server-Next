@@ -4,6 +4,7 @@ import {
 } from "../../application/content/render-support";
 import type { ContentNode } from "../../domain/content";
 import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
+import { recordedText } from "../../exercise-kit/assessment";
 import {
   exerciseGroupLabel,
   exerciseLegendHtml,
@@ -14,6 +15,15 @@ import {
   freeResponseName,
   isFreeResponsePublicData,
 } from "./types";
+
+/**
+ * A textarea's content, escaped. The HTML parser drops one newline directly
+ * after `<textarea>`, so an answer that opens with a blank line gets a spare
+ * one to lose rather than losing its own.
+ */
+function textareaBody(text: string): string {
+  return escapeHtml(text.startsWith("\n") ? `\n${text}` : text);
+}
 
 export function renderFreeResponse(
   node: Extract<ContentNode, { readonly kind: "exercise" }>,
@@ -53,13 +63,15 @@ export function renderFreeResponse(
   // one it is a preview or a saved revision, and the field is inert: there is
   // no attempt behind it to record an answer against. Either way the closing
   // row sits unslotted — a text exercise has no shadow card to project into.
+  // The field holds the viewer's recorded answer, if any: with no element to
+  // hydrate, this is the only way a reload gets their text back.
   const field = context.actions === undefined ? " disabled" : ' name="text"';
   return `<section${rootAttributes}>
         <fieldset class="exercise-group">
           ${legend}
           <div class="exercise-prompt">${node.publicData.promptHtml}</div>
           <label for="${escapeHtml(fieldId)}">${escapeHtml(i18n.t("Answer"))}</label>
-          <textarea${field} id="${escapeHtml(fieldId)}" rows="8"></textarea>
+          <textarea${field} id="${escapeHtml(fieldId)}" rows="8">${textareaBody(recordedText(context.priorAnswer))}</textarea>
         </fieldset>
         ${context.actions ?? previewExerciseActionsHtml(i18n, false)}
       </section>`;

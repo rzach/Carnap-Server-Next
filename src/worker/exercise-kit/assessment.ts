@@ -83,6 +83,14 @@ export function isTextAnswerData(
   return isObject(value) && typeof value.text === "string";
 }
 
+/**
+ * The text a text type puts back in its field: the recorded answer's, or none
+ * where there is no answer or it is not a text answer's shape.
+ */
+export function recordedText(answer: JsonValue | null | undefined): string {
+  return answer !== undefined && isTextAnswerData(answer) ? answer.text : "";
+}
+
 export function normalizeText(value: string): string {
   return value.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
 }

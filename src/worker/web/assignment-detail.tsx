@@ -738,16 +738,22 @@ function exercisePoints(
   return submission.pointsByExercise.get(node.exerciseId) ?? 0;
 }
 
+/** The viewer's recorded answer to one exercise in this attempt, if any. */
+function priorAnswer(
+  node: Extract<ContentNode, { readonly kind: "exercise" }>,
+  submission: InlineSubmissionContext,
+): JsonValue | null {
+  return submission.runtimeState[node.exerciseId]?.submission.answer ?? null;
+}
+
 function exerciseHydration(
   node: Extract<ContentNode, { readonly kind: "exercise" }>,
   submission: InlineSubmissionContext,
 ): ExerciseHydration {
-  const priorState = submission.runtimeState[node.exerciseId];
-
   return {
     mode: "answer",
     options: submission.optionsByExercise.get(node.exerciseId) ?? {},
-    priorAnswer: priorState?.submission.answer ?? null,
+    priorAnswer: priorAnswer(node, submission),
     publicData: node.publicData,
     strings: exercises.strings(
       node.render.assetId,
@@ -865,6 +871,7 @@ function exerciseSubmissionForm(
           ),
           contentRevisionId: submission.contentRevisionId,
           i18n: submission.context.get("i18n"),
+          priorAnswer: priorAnswer(node, submission),
           ...naming,
         }),
       )}

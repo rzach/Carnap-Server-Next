@@ -3770,3 +3770,87 @@ Use a tree.
     });
   });
 });
+
+describe("text answers on an assignment", () => {
+  test("a reload puts the recorded short answer and free response back in their fields", async () => {
+    await withStorage(async (_storage, env) => {
+      const instructor = await login(
+        env,
+        "text-restore-teacher@example.test",
+      );
+      const student = await login(env, "text-restore-student@example.test");
+      const courseId = await createCourse(env, instructor);
+
+      await enrollStudent(env, instructor, student, courseId);
+
+      const revisionId = await createRevision(
+        env,
+        instructor,
+        `::::short-answer{#sa answer="yes"}
+Type yes.
+::::
+
+::::free-response{#fr}
+Explain.
+::::
+
+::::short-answer{#untouched answer="no"}
+Type no.
+::::`,
+      );
+      // An exam, so the wrong short answer is kept like any other.
+      const assignment = await createPublishedAssignment(
+        env,
+        instructor,
+        courseId,
+        revisionId,
+        { gradesVisibleAt: null },
+      );
+      const attemptId = await beginAttempt(
+        env,
+        student,
+        courseId,
+        assignment.id,
+      );
+      // Markup and quotes to escape, and a leading blank line the textarea
+      // parser would otherwise eat.
+      const shortText = `"yes" <b>&</b>`;
+      const essay = "\nFirst, P.\n<script>alert(1)</script>";
+      const answers = [
+        ["sa", "short-answer-answer@1", shortText],
+        ["fr", "free-response-answer@1", essay],
+      ] as const;
+
+      for (const [exerciseId, kind, text] of answers) {
+        const submitted = await submitAnswer(
+          env,
+          student,
+          courseId,
+          assignment.id,
+          attemptId,
+          { answer: { data: { text }, kind, schemaVersion: 1 }, exerciseId },
+        );
+
+        expect(submitted.status).toBe(201);
+      }
+
+      const response = await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/assignments/${assignment.id}/content`,
+        { headers: { Cookie: student.cookieHeader } },
+        env,
+      );
+      const document = new JSDOM(await response.text()).window.document;
+      const field = (exerciseId: string) =>
+        document.querySelector(
+          `form[data-exercise-id="${exerciseId}"] [name=text]`,
+        ) as HTMLInputElement | HTMLTextAreaElement | null;
+
+      expect(field("sa")?.value).toBe(shortText);
+      expect(field("fr")?.value).toBe(essay);
+      expect(field("untouched")?.value).toBe("");
+      expect(field("untouched")?.hasAttribute("value")).toBe(false);
+      expect(document.querySelector("form script:not([type])")).toBeNull();
+    });
+  });
+});

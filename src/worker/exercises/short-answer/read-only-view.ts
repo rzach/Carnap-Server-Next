@@ -4,6 +4,7 @@ import {
 } from "../../application/content/render-support";
 import type { ContentNode } from "../../domain/content";
 import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
+import { recordedText } from "../../exercise-kit/assessment";
 import {
   exerciseGroupLabel,
   exerciseLegendHtml,
@@ -53,13 +54,17 @@ export function renderShortAnswer(
   // one it is a preview or a saved revision, and the field is inert: there is
   // no attempt behind it to record an answer against. Either way the closing
   // row sits unslotted — a text exercise has no shadow card to project into.
+  // The field holds the viewer's recorded answer, if any: with no element to
+  // hydrate, this is the only way a reload gets their text back.
   const field = context.actions === undefined ? " disabled" : ' name="text"';
+  const recorded = recordedText(context.priorAnswer);
+  const value = recorded === "" ? "" : ` value="${escapeHtml(recorded)}"`;
   return `<section${rootAttributes}>
         <fieldset class="exercise-group">
           ${legend}
           <div class="exercise-prompt">${node.publicData.promptHtml}</div>
           <label for="${escapeHtml(fieldId)}">${escapeHtml(i18n.t("Answer"))}</label>
-          <input${field} id="${escapeHtml(fieldId)}">
+          <input${field} id="${escapeHtml(fieldId)}"${value}>
         </fieldset>
         ${context.actions ?? previewExerciseActionsHtml(i18n, false)}
       </section>`;
