@@ -632,16 +632,6 @@ export const BarField: FC<{
 );
 
 /**
- * A line of prose under a select, saying what the chosen option means.
- *
- * Every option's line is rendered and all but the selected one are `hidden`;
- * the shell's choice-note script swaps them as the select changes, and
- * without script the reader sees the stored answer's line and nothing moves.
- * The select carries `data-choice-notes={group}` (its own `name` is the
- * natural group) and shares a form with these, since that is where the script
- * looks — so a page with one such form per row needs no ids.
- */
-/**
  * The archive or unarchive control on a row of a list that has an archived
  * drawer — the content library's, the course list's: an icon in a form,
  * because it changes something and so has to POST to `path` + `/archive` or
@@ -725,6 +715,16 @@ export const ModalDialog: FC<{
   );
 };
 
+/**
+ * A line of prose under a select, saying what the chosen option means.
+ *
+ * Every option's line is rendered and all but the selected one are `hidden`;
+ * the shell's choice-note script swaps them as the select changes, and
+ * without script the reader sees the stored answer's line and nothing moves.
+ * The select carries `data-choice-notes={group}` (its own `name` is the
+ * natural group) and shares a form with these, since that is where the script
+ * looks — so a page with one such form per row needs no ids.
+ */
 export const ChoiceNotes: FC<{
   readonly group: string;
   readonly notes: readonly {

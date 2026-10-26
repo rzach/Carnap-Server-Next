@@ -165,13 +165,13 @@ account by signing in with an email link. Only a site administrator can change
 it, and each change is recorded in the audit log as
 `admin.change_native_registration`.
 
-- **Anyone with an email address** (the default): the first email sign-in from
+- **Anyone** (the default): the first email sign-in from
   a new address creates its account.
-- **Only through a course enrollment link**: a new address gets an account only
+- **Enrollment links only**: a new address gets an account only
   when its owner signs in from a valid enrollment link. Anyone holding a link
   can create an account with it, so revoke a link that has been shared beyond
   its course.
-- **Only through the LMS**: email sign-in never creates an account. Accounts
+- **LMS only**: email sign-in never creates an account. Accounts
   are created when someone opens Carnap from an LMS course.
 
 Under every setting, an existing account, including one an LMS launch created,

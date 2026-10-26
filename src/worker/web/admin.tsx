@@ -664,19 +664,24 @@ const RegistrationSheet: FC<{
       title={i18n.t("Account registration")}
     >
       {canChange ? (
+        // One setting and the button that saves it, on one line like the
+        // user search above; the note under the bar says what the choice does.
         <form action="/admin/settings/registration" method="post">
           <CsrfInput context={context} />
-          <label>
-            {i18n.t("New accounts by email")}
-            <br />
-            <select data-choice-notes="nativeRegistration" name="mode">
-              {NATIVE_REGISTRATION_MODES.map((mode) => (
-                <option selected={mode === current} value={mode}>
-                  {nativeRegistrationLabel(i18n, mode)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div class="create-bar">
+            <BarField label={i18n.t("New accounts by email")}>
+              <select data-choice-notes="nativeRegistration" name="mode">
+                {NATIVE_REGISTRATION_MODES.map((mode) => (
+                  <option selected={mode === current} value={mode}>
+                    {nativeRegistrationLabel(i18n, mode)}
+                  </option>
+                ))}
+              </select>
+            </BarField>
+            <button class="secondary" type="submit">
+              {i18n.t("Save")}
+            </button>
+          </div>
           <ChoiceNotes
             group="nativeRegistration"
             notes={NATIVE_REGISTRATION_MODES.map((mode) => ({
@@ -685,11 +690,14 @@ const RegistrationSheet: FC<{
             }))}
             selected={current}
           />
-          <button type="submit">{i18n.t("Save")}</button>
         </form>
       ) : (
         <>
-          <p>{nativeRegistrationLabel(i18n, current)}</p>
+          <p>
+            {i18n.t("New accounts by email: {setting}", {
+              setting: nativeRegistrationLabel(i18n, current),
+            })}
+          </p>
           <p class="small">{nativeRegistrationHint(i18n, current)}</p>
         </>
       )}

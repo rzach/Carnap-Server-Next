@@ -992,13 +992,13 @@ msgstr "Answer submitted."
 msgid "Answers are not recorded here."
 msgstr "Answers are not recorded here."
 
+#: src/worker/web/labels.ts
+msgid "Anyone"
+msgstr "Anyone"
+
 #: src/worker/web/content.tsx
 msgid "Anyone on the site who can author content and has the link can view this revision"
 msgstr "Anyone on the site who can author content and has the link can view this revision"
-
-#: src/worker/web/labels.ts
-msgid "Anyone with an email address"
-msgstr "Anyone with an email address"
 
 #: src/worker/web/content.tsx
 msgid "Anyone with the link"
@@ -2391,6 +2391,10 @@ msgstr "Enrollment link revoked."
 msgid "Enrollment links"
 msgstr "Enrollment links"
 
+#: src/worker/web/labels.ts
+msgid "Enrollment links only"
+msgstr "Enrollment links only"
+
 #: src/worker/exercise-kit/proof/engine-strings.ts
 msgid "Enter a proof"
 msgstr "Enter a proof"
@@ -3163,6 +3167,10 @@ msgstr "LMS activity links"
 msgid "LMS grade sync problems"
 msgstr "LMS grade sync problems"
 
+#: src/worker/web/labels.ts
+msgid "LMS only"
+msgstr "LMS only"
+
 #: src/worker/web/auth.tsx
 msgid "Log in"
 msgstr "Log in"
@@ -3434,6 +3442,10 @@ msgstr "Never"
 #: src/worker/web/admin.tsx
 msgid "New accounts by email"
 msgstr "New accounts by email"
+
+#: src/worker/web/admin.tsx
+msgid "New accounts by email: {setting}"
+msgstr "New accounts by email: {setting}"
 
 #: src/worker/web/assignments.tsx
 msgid "New assignment title"
@@ -3850,14 +3862,6 @@ msgstr "Only the end of a branch can be closed or marked open."
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Only the root's rows may follow the first of them."
 msgstr "Only the root's rows may follow the first of them."
-
-#: src/worker/web/labels.ts
-msgid "Only through a course enrollment link"
-msgstr "Only through a course enrollment link"
-
-#: src/worker/web/labels.ts
-msgid "Only through the LMS"
-msgstr "Only through the LMS"
 
 #: src/worker/web/content.tsx
 msgid "Only you"

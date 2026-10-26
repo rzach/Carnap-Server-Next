@@ -354,18 +354,22 @@ export function auditActionLabel(
   }
 }
 
-/** Who may create an account by email sign-in, as the admin page names it. */
+/**
+ * Who may create an account by email sign-in, as the admin page names it:
+ * short, because the select sits in a bar beside its Save and the note under
+ * it (`nativeRegistrationHint`) says what each choice does.
+ */
 export function nativeRegistrationLabel(
   i18n: Translator,
   mode: NativeRegistration,
 ): string {
   switch (mode) {
     case "public":
-      return i18n.t("Anyone with an email address");
+      return i18n.t("Anyone");
     case "link_only":
-      return i18n.t("Only through a course enrollment link");
+      return i18n.t("Enrollment links only");
     case "lms_only":
-      return i18n.t("Only through the LMS");
+      return i18n.t("LMS only");
   }
 }
 

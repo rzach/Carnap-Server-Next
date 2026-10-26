@@ -992,13 +992,13 @@ msgstr "Antwort abgegeben."
 msgid "Answers are not recorded here."
 msgstr "Antworten werden hier nicht erfasst."
 
+#: src/worker/web/labels.ts
+msgid "Anyone"
+msgstr "Alle"
+
 #: src/worker/web/content.tsx
 msgid "Anyone on the site who can author content and has the link can view this revision"
 msgstr "Alle auf dieser Website, die Inhalte erstellen dürfen und den Link haben, können diese Revision ansehen"
-
-#: src/worker/web/labels.ts
-msgid "Anyone with an email address"
-msgstr "Alle mit einer E-Mail-Adresse"
 
 #: src/worker/web/content.tsx
 msgid "Anyone with the link"
@@ -2391,6 +2391,10 @@ msgstr "Einschreibelink widerrufen."
 msgid "Enrollment links"
 msgstr "Einschreibelinks"
 
+#: src/worker/web/labels.ts
+msgid "Enrollment links only"
+msgstr "Nur über Einschreibelinks"
+
 #: src/worker/exercise-kit/proof/engine-strings.ts
 msgid "Enter a proof"
 msgstr "Geben Sie einen Beweis ein"
@@ -3163,6 +3167,10 @@ msgstr "LMS-Aktivitätsverknüpfungen"
 msgid "LMS grade sync problems"
 msgstr "Probleme beim Notenabgleich mit dem LMS"
 
+#: src/worker/web/labels.ts
+msgid "LMS only"
+msgstr "Nur über das LMS"
+
 #: src/worker/web/auth.tsx
 msgid "Log in"
 msgstr "Anmelden"
@@ -3434,6 +3442,10 @@ msgstr "Nie"
 #: src/worker/web/admin.tsx
 msgid "New accounts by email"
 msgstr "Neue Konten per E-Mail"
+
+#: src/worker/web/admin.tsx
+msgid "New accounts by email: {setting}"
+msgstr "Neue Konten per E-Mail: {setting}"
 
 #: src/worker/web/assignments.tsx
 msgid "New assignment title"
@@ -3850,14 +3862,6 @@ msgstr "Nur das Ende eines Asts kann geschlossen oder als offen markiert werden.
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Only the root's rows may follow the first of them."
 msgstr "Nach der ersten Zeile der Wurzel dürfen nur weitere Zeilen der Wurzel folgen."
-
-#: src/worker/web/labels.ts
-msgid "Only through a course enrollment link"
-msgstr "Nur über einen Einschreibelink eines Kurses"
-
-#: src/worker/web/labels.ts
-msgid "Only through the LMS"
-msgstr "Nur über das LMS"
 
 #: src/worker/web/content.tsx
 msgid "Only you"
