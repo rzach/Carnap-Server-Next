@@ -436,9 +436,22 @@ fieldset.world-marks {
   background: var(--_inset-bg);
 }
 
+/* Both words are always laid out, stacked in one cell, and only a finished
+   game's is shown: the slot is as wide as the longer word in any language
+   before a game ends, so the claim buttons never move when one does. */
 .world-game-result {
+  display: inline-grid;
   font-size: 0.8rem;
-  min-width: 3em;
+}
+
+.world-game-result > span {
+  grid-area: 1 / 1;
+  visibility: hidden;
+}
+
+.world-game-result[data-result="won"] > [data-outcome="won"],
+.world-game-result[data-result="lost"] > [data-outcome="lost"] {
+  visibility: visible;
 }
 
 .world-game-result[data-result="won"] {

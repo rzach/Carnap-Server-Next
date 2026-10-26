@@ -2663,11 +2663,16 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
                       </button>
                     ))}
                   </fieldset>
-                  {result === null ? null : (
-                    <span class="world-game-result" data-result={result}>
-                      {words(result === "won" ? "Won" : "Lost")}
-                    </span>
-                  )}
+                  <span
+                    class="world-game-result"
+                    data-result={result ?? undefined}
+                  >
+                    {(["won", "lost"] as const).map((outcome) => (
+                      <span data-outcome={outcome} key={outcome}>
+                        {words(outcome === "won" ? "Won" : "Lost")}
+                      </span>
+                    ))}
+                  </span>
                 </span>
               </li>
             );

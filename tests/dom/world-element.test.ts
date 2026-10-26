@@ -564,8 +564,10 @@ describe("the evaluation game", () => {
       "Square(x) is true, so you win.",
     ]);
     expect(
-      mounted.root.querySelector(".world-game-result")?.textContent,
-    ).toBe("Won");
+      mounted.root
+        .querySelector(".world-game-result")
+        ?.getAttribute("data-result"),
+    ).toBe("won");
     expect(
       cellAt(mounted, 2, 2)?.querySelector(".world-binding")?.textContent,
     ).toBe("x");
