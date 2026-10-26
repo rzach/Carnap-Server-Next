@@ -2794,6 +2794,19 @@ Continue.
       expect(cards.every((index) => index !== -1)).toBe(true);
       expect([...cards].sort((left, right) => left - right)).toEqual(cards);
 
+      // Each card names its exercise the same way: the title, else the id.
+      const metaLines = [
+        ...new JSDOM(queue).window.document.querySelectorAll(
+          ".submission-review-meta",
+        ),
+      ].map((meta) => meta.textContent?.split(" · ")[0]);
+
+      expect(metaLines).toEqual([
+        "Opening question",
+        "Opening question",
+        "Exercise alpha",
+      ]);
+
       // The form offers each exercise by its title where it has one, and
       // each student by name, both in queue order.
       const options = order(queue, [

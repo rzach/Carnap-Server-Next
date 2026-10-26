@@ -283,6 +283,8 @@ export interface InstructorSubmissionReviewEntry {
   readonly evaluation: ViewerEvaluation | null;
   /** The question the answer is to, as the lesson asked it; null for none. */
   readonly exercisePromptHtml: string | null;
+  /** The exercise's title as its author wrote it; null for an untitled one. */
+  readonly exerciseTitle: string | null;
   /** What the exercise is worth — the hand-grading form's max score. */
   readonly nominalPoints: number | null;
   readonly submission: Submission;
@@ -2257,9 +2259,15 @@ const SubmissionReviewCard: FC<{
         </span>
       </header>
       <p class="submission-review-meta">
-        {exerciseIdBefore}
-        <code>{submission.exerciseId ?? i18n.t("not recorded")}</code>
-        {exerciseIdAfter}
+        {/* By its title where the author gave one, as the narrowing form and
+            the student's results page name it (#358); the id where not. */}
+        {entry.exerciseTitle ?? (
+          <>
+            {exerciseIdBefore}
+            <code>{submission.exerciseId ?? i18n.t("not recorded")}</code>
+            {exerciseIdAfter}
+          </>
+        )}
         {" · "}
         {submittedBefore}
         <Time value={submission.submittedAt} />
