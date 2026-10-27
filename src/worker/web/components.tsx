@@ -13,7 +13,7 @@ import type { StatusTone } from "./html";
 // the layout can import from here (`LocaleSwitcher` reuses `CsrfInput`) without
 // the two forming a cycle.
 import { useI18n } from "./i18n-context";
-import { ArchiveIcon, UnarchiveIcon } from "./icons";
+import { ArchiveIcon, FilterIcon, UnarchiveIcon } from "./icons";
 
 export interface SummaryItem {
   readonly label: string;
@@ -236,6 +236,27 @@ export const SummaryStrip: FC<{ readonly items: readonly SummaryItem[] }> = ({
   </dl>
 );
 
+/**
+ * Label and value pairs as a compact two-column list, for a record whose
+ * values are dates and settings rather than figures. The {@link SummaryStrip}
+ * sets each value large, as a figure to take in at a glance; a date in that
+ * size is a line of its own, and a record of seven of them is a column to
+ * read down the page. Here the label leads and the value sits beside it in
+ * the body face.
+ */
+export const FactList: FC<{ readonly items: readonly SummaryItem[] }> = ({
+  items,
+}) => (
+  <dl class="fact-list">
+    {items.map((item) => (
+      <div>
+        <dt>{item.label}</dt>
+        <dd>{item.value}</dd>
+      </div>
+    ))}
+  </dl>
+);
+
 export interface StripLink {
   readonly href: string;
   /** A short line under the label describing where the link leads. */
@@ -372,6 +393,84 @@ export const TableScroll: FC<{
     </div>
   );
 };
+
+/** How many rows a roster holds before it gets a filter box. */
+const TABLE_FILTER_THRESHOLD = 20;
+
+/** Whether a table of this many rows gets a filter (see {@link TableFilter}). */
+export function tableFiltered(rows: number): boolean {
+  return rows > TABLE_FILTER_THRESHOLD;
+}
+
+/**
+ * A table that has grown past what an eye scans, a class's roster rather
+ * than a course's staff, with room for a filter. Below the threshold the
+ * table is passed through untouched, since a filter over a dozen rows is one
+ * more thing to read than the rows themselves.
+ *
+ * The filter itself is a {@link TableFilterControl} in the heading of the
+ * column it mostly searches. This is the host it narrows, and `empty` is the
+ * line shown under the table when nothing matches. The narrowing is the
+ * browser's (`TABLE_FILTER_SCRIPT`), since the rows are all on the page.
+ */
+export const TableFilter: FC<{
+  readonly children: Child;
+  readonly empty: string;
+  readonly id: string;
+  readonly rows: number;
+}> = ({ children, empty, id, rows }) =>
+  tableFiltered(rows) ? (
+    <div class="table-filter" data-table-filter="" id={id}>
+      {children}
+      <p class="small" data-table-filter-empty="" hidden>
+        {empty}
+      </p>
+    </div>
+  ) : (
+    // biome-ignore lint/complexity/noUselessFragments: `FC` returns an `HtmlEscapedString`, and the fragment is what makes one of the children.
+    <>{children}</>
+  );
+
+/**
+ * A {@link TableFilter}'s funnel and its search field, for the heading of the
+ * column it mostly searches (a `SortHeader`'s `aside`). The field opens in
+ * the heading itself, in the column name's place (chrome.css), so opening it
+ * moves nothing: a box above the table pushed the heading, and the funnel
+ * just pressed, down the page. Its own name, and its placeholder, is `label`.
+ *
+ * Both ship `hidden`, and the script shows the funnel: with no script there
+ * is no filter behind it. Pressed while the field is open; closing it clears
+ * the field, so a closed filter never leaves rows hidden.
+ */
+export const TableFilterControl: FC<{
+  readonly label: string;
+  readonly target: string;
+}> = ({ label, target }) => (
+  <span
+    class="table-filter-control"
+    data-table-filter-control={target}
+    hidden
+  >
+    <input
+      aria-label={label}
+      autocomplete="off"
+      class="table-filter-input"
+      hidden
+      placeholder={label}
+      type="search"
+    />
+    <button
+      aria-controls={target}
+      aria-expanded="false"
+      class="icon-button table-filter-toggle"
+      title={label}
+      type="button"
+    >
+      <FilterIcon />
+      <span class="visually-hidden">{label}</span>
+    </button>
+  </span>
+);
 
 /** Whether a child would render anything: absent, false and `[]` would not. */
 function hasContent(child: Child): boolean {

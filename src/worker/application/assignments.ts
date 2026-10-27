@@ -1645,6 +1645,22 @@ export class AssignmentService {
       deferred.i18n.t("Overrides are only available for graded assignments."),
     );
 
+    // An override is a student's own schedule, so it is set only for someone
+    // the assignment is set for: a staff member's attempts follow no schedule,
+    // and a row for a stranger would sit in the roster naming nobody.
+    const membership = await this.options.stores.courses.getMembership(
+      courseId,
+      command.userId,
+    );
+
+    if (membership?.role !== "student") {
+      throw new AppHttpError(
+        404,
+        "student_not_found",
+        deferred.i18n.t("That person is not a student in this course."),
+      );
+    }
+
     const nowDate = this.options.now?.() ?? new Date();
     const now = timestampNow(nowDate);
 
@@ -1679,6 +1695,42 @@ export class AssignmentService {
     );
 
     return override;
+  }
+
+  /**
+   * The same override as {@link upsertOverride}, with the student named the
+   * way the page's picker names one: by the address on their account.
+   */
+  async upsertOverrideByEmail(
+    actor: AuthenticatedActor,
+    courseId: AppId,
+    assignmentId: AppId,
+    command: Omit<AssignmentOverrideCommand, "userId"> & {
+      readonly email: string;
+    },
+  ): Promise<AssignmentOverride> {
+    await requireInstructor(this.options.stores, actor, courseId);
+
+    const email = command.email.trim().toLowerCase();
+    const user =
+      email.length === 0
+        ? null
+        : await this.options.stores.users.getByEmail(email);
+
+    if (user === null) {
+      throw new AppHttpError(
+        404,
+        "student_not_found",
+        deferred.i18n.t("No student in this course has that email address."),
+      );
+    }
+
+    const { email: _email, ...fields } = command;
+
+    return this.upsertOverride(actor, courseId, assignmentId, {
+      ...fields,
+      userId: user.id,
+    });
   }
 
   /**

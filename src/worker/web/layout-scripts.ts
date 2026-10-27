@@ -244,9 +244,9 @@ ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
 
   // Most timestamps read best as a full "Jul 6, 2026, 3:19 PM". The exceptions
   // are cells with a constrained width: a stat cell in a summary strip (the
-  // display serif is large, so the full form wraps and stretches the row) and a
-  // date column in a narrow table (on a phone the full form wraps to several
-  // lines). For those we keep the font uniform but measure the cell and drop to
+  // display serif is large, so the full form wraps and stretches the row), a
+  // record's value beside its label in a narrow rail, and a date column in a
+  // narrow table (on a phone the full form wraps to several lines). For those we keep the font uniform but measure the cell and drop to
   // the longest form that fits on one line — the ladder runs from fullest to a
   // bare numeric date.
   const full = new Intl.DateTimeFormat(
@@ -310,7 +310,7 @@ ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
     // is refined once web fonts settle and measurement matches the paint.
     element.textContent = forms[0].format(date);
     entries.push({
-      cell: element.closest(".summary-item dd, td"),
+      cell: element.closest(".summary-item dd, .fact-list dd, td"),
       date,
       element,
       forms,
@@ -394,12 +394,11 @@ ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
         entry.element.title = fullText;
       }
 
-      // In a table the fitted form must not wrap back onto two lines: it was
-      // chosen to fit the column's current width, so pinning it to one line
-      // only ever lets the column shrink, never overflow.
-      if (entry.cell.tagName === "TD") {
-        entry.element.style.whiteSpace = "nowrap";
-      }
+      // The fitted form must not wrap back onto two lines: it was chosen to
+      // fit the cell's current width, so pinning it to one line only ever
+      // lets a column shrink, never overflow. (A summary strip's stylesheet
+      // pins its own.)
+      entry.element.style.whiteSpace = "nowrap";
     }
   };
 
@@ -776,8 +775,12 @@ export const TABLE_SORT_SCRIPT = `
       button.className = "column-sort";
 
       // The heading's own content becomes the control's, so the button is
-      // named by the column and there is no second string to translate.
-      while (heading.firstChild) {
+      // named by the column and there is no second string to translate. A
+      // control of the column's own (marked data-column-aside, a filter funnel)
+      // stays outside it, after it: a button may not hold another.
+      const aside = heading.querySelector(":scope > [data-column-aside]");
+
+      while (heading.firstChild && heading.firstChild !== aside) {
         button.appendChild(heading.firstChild);
       }
 
@@ -786,7 +789,7 @@ export const TABLE_SORT_SCRIPT = `
       mark.className = "column-sort-mark";
       mark.setAttribute("aria-hidden", "true");
       button.appendChild(mark);
-      heading.appendChild(button);
+      heading.insertBefore(button, aside);
 
       button.addEventListener("click", () => {
         // One click sorts by this column; a second reverses it. Sorting a
@@ -841,6 +844,94 @@ export const TABLE_SORT_SCRIPT = `
   }
 })();`;
 
+/**
+ * The filter box over a long roster: typing narrows the table to the rows
+ * whose text holds what was typed, ignoring case and accents, so "garcia"
+ * finds García, by name or by address.
+ *
+ * A row's text is read once, before anything is hidden, and without the
+ * dialogs its cells keep beside their buttons: an accommodation form's labels
+ * are in every row, and would make a search for "time" match them all.
+ *
+ * The field opens from its funnel, both in the heading of the column it
+ * mostly searches (`TableFilterControl`). They ship `hidden` and are shown
+ * here, for the same reason the sort headings ship as text: with no script
+ * there is nothing behind them. Opening puts the cursor in the field;
+ * closing, or Escape in it, empties the field and brings every row back, so a
+ * closed filter never hides a row. The line saying no row matched is the
+ * server's, in the reader's language; this only shows it.
+ *
+ * Exported for `tests/dom`.
+ */
+export const TABLE_FILTER_SCRIPT = `
+(() => {
+  const fold = (text) =>
+    text.normalize("NFD").replace(/\\p{M}/gu, "").toLocaleLowerCase();
+
+  for (const host of document.querySelectorAll("[data-table-filter]")) {
+    const control = document.querySelector(
+      '[data-table-filter-control="' + host.id + '"]',
+    );
+    const input = control && control.querySelector("input");
+    const toggle = control && control.querySelector("button");
+    const body = host.querySelector("tbody");
+    const empty = host.querySelector("[data-table-filter-empty]");
+
+    if (!input || !toggle || !body) {
+      continue;
+    }
+
+    const texts = new Map(
+      Array.from(body.rows).map((row) => {
+        const copy = row.cloneNode(true);
+
+        for (const aside of copy.querySelectorAll("dialog, [hidden]")) {
+          aside.remove();
+        }
+
+        return [row, fold(copy.textContent || "")];
+      }),
+    );
+
+    const apply = () => {
+      const query = fold(input.value.trim());
+      let shown = 0;
+
+      for (const [row, text] of texts) {
+        row.hidden = query !== "" && !text.includes(query);
+        shown += row.hidden ? 0 : 1;
+      }
+
+      if (empty) {
+        empty.hidden = shown > 0;
+      }
+    };
+
+    const setOpen = (open) => {
+      input.hidden = !open;
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+
+      if (open) {
+        input.focus();
+      } else {
+        input.value = "";
+        apply();
+      }
+    };
+
+    input.addEventListener("input", apply);
+    toggle.addEventListener("click", () => setOpen(input.hidden));
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+    control.hidden = false;
+  }
+})();`;
+
 /** Every shell script, in the order they were emitted when they were inline. */
 export const SHELL_SCRIPT = [
   DIALOG_SCRIPT,
@@ -854,5 +945,6 @@ export const SHELL_SCRIPT = [
   TIMEZONE_INPUT_SCRIPT,
   CLIPBOARD_SCRIPT,
   TABLE_SORT_SCRIPT,
+  TABLE_FILTER_SCRIPT,
   LTI_DEEP_LINK_SCRIPT,
 ].join("\n");

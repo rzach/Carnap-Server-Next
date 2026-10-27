@@ -642,6 +642,100 @@ table .create-bar button {
   white-space: nowrap;
 }
 
+/* A record's facts, label beside value. The pairs are wrappers in the
+   markup (a `dl` may group them in divs) and contents to the grid, so every
+   label shares one column whatever its length. */
+.fact-list {
+  display: grid;
+  gap: 0.45rem 1.25rem;
+  grid-template-columns: max-content minmax(0, 1fr);
+  margin: 0;
+}
+
+.fact-list > div {
+  display: contents;
+}
+
+.fact-list dt {
+  color: var(--ink-muted);
+}
+
+.fact-list dd {
+  margin: 0;
+}
+
+.fact-list + p {
+  margin-top: 0.9rem;
+}
+
+/* A long roster's filter: its funnel, and the field the funnel opens, in
+   the heading of the column it searches. The field sits before the funnel,
+   in the body's type rather than the heading's small capitals, and the rows
+   it hides are hidden by attribute, which the control's flex and a phone
+   list's own display for rows would otherwise outrank. */
+.table-filter-control {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.35rem;
+  vertical-align: middle;
+}
+
+.table-filter [hidden],
+.table-filter-control[hidden],
+.table-filter-control > [hidden] {
+  display: none;
+}
+
+/* The focus ring is drawn outside the field: 3px wide, 3px out (the shared
+   :focus-visible rule in content.css). At the column's start the table's
+   scroller would clip it, so the field stands the ring's whole reach in; and
+   the funnel beside it, positioned as the icon buttons are, would paint over
+   it, so the field is raised above it. */
+.table-filter-input {
+  font: inherit;
+  font-size: 0.9rem;
+  letter-spacing: normal;
+  margin-inline-start: 6px;
+  min-height: 0;
+  padding: 0.2rem 0.5rem;
+  position: relative;
+  text-transform: none;
+  width: min(16rem, 45vw);
+  z-index: 1;
+}
+
+/* Open reads as pressed, as the review queue's funnel does. In a column
+   heading it is a glyph beside the heading's word, sized to it, without the
+   lift a row's icon buttons take to sit on a cell's first line. */
+.table-filter-toggle[aria-expanded="true"] {
+  background: var(--blue-soft);
+  filter: none;
+}
+
+.column-aside {
+  margin-inline-start: 0.35rem;
+}
+
+/* While the field is open it takes the column name's place: the field says
+   what it searches, and the name beside it was one more word on the line. */
+th:has(.table-filter-input:not([hidden])) > .column-sort {
+  display: none;
+}
+
+th:has(.table-filter-input:not([hidden])) > .column-aside {
+  margin-inline-start: 0;
+}
+
+th .table-filter-toggle {
+  bottom: 0;
+  padding: 0.1rem 0.25rem;
+  right: 0;
+}
+
+th .table-filter-toggle .icon {
+  font-size: 1.1rem;
+}
+
 /* Status badges */
 
 /* A status is a word in its tone's colour, set heavy so it reads as a flag
@@ -1015,6 +1109,25 @@ td > .create-bar {
 
   table.phone-list > thead {
     display: none;
+  }
+
+  /* Save a column's own control (the roster filter): its heading stays,
+     alone, as the line above the list, since the filter has no other place
+     to be. The sort it shares the heading with goes as the rest do. */
+  table.phone-list > thead:has([data-table-filter-control]:not([hidden])) {
+    display: block;
+  }
+
+  table.phone-list > thead th:not(:has([data-column-aside])),
+  table.phone-list > thead .column-sort-mark {
+    display: none;
+  }
+
+  /* The row it sits in already draws the line under it. */
+  table.phone-list > thead th:has([data-column-aside]) {
+    border: 0;
+    flex: 1 1 auto;
+    padding: 0;
   }
 
   /* Top-aligned, as the desktop table's cells are, so that the end sits on
@@ -1847,23 +1960,9 @@ form > .bar-field {
   fill: var(--blue-strong);
 }
 
-/* The crown is drawn larger than the text it follows and taken out of flow so
-   it cannot stretch the row's line box. That needs a positioning context on
-   the marker itself: without one the glyph resolves against whatever ancestor
-   happens to be positioned — outside the members table's scroller — and so
-   stays put while the rows scroll under it. */
-.owner-crown {
-  position: relative;
-}
-
-.owner-crown .icon {
-  font-size: 1.5em;
-  position: absolute;
-}
-
 /* The library's outdated-theory mark sits in the text after a title, at text
-   size: unlike the crown it is not decoration on a name but a status, and it
-   stays in flow so a long title wraps around it rather than under it. */
+   size: it is not decoration on a name but a status, and it stays in flow so
+   a long title wraps around it rather than under it. */
 .outdated-mark .icon {
   font-size: 1.15em;
   vertical-align: -0.15em;

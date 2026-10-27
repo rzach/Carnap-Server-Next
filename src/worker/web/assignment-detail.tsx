@@ -48,7 +48,7 @@ import type {
 import type { CourseMembership, CourseStaffTier } from "../domain/courses";
 import type { JsonValue } from "../domain/json";
 import type { Timestamp } from "../domain/time";
-import type { User } from "../domain/users";
+import { hasName, type User } from "../domain/users";
 import { exerciseActionsHtml } from "../exercise-kit/actions";
 import {
   EXERCISE_HYDRATION_VERSION,
@@ -76,6 +76,7 @@ import {
   CourseViewSwitch,
   CsrfInput,
   ErrorSummary,
+  FactList,
   LinkStrip,
   ModalDialog,
   Notice,
@@ -959,12 +960,17 @@ function renderAssignmentContent(
   );
 }
 
-function assignmentSummaryItems(
+/**
+ * What the Assignment record says: the settings that have a value, as facts,
+ * and the names of those that have none, for one line under them. Four tiles
+ * of "Not set" and "None" made the record a column to read through for the
+ * one date that was set; named together, what is missing is one fact too.
+ */
+function assignmentRecordFacts(
   i18n: Translator,
   assignment: Assignment,
-): SummaryItem[] {
-  const notSet = i18n.t("Not set");
-  const items: SummaryItem[] = [
+): { readonly facts: SummaryItem[]; readonly unset: string[] } {
+  const facts: SummaryItem[] = [
     {
       label: i18n.t("State"),
       value: assignmentStateLabel(i18n, assignment.state),
@@ -973,55 +979,99 @@ function assignmentSummaryItems(
       label: i18n.t("Type"),
       value: assessmentModeLabel(i18n, assignment.assessmentMode),
     },
-    {
-      label: i18n.t("Available from"),
-      value: <Time fallback={notSet} value={assignment.availableFrom} />,
-    },
-    {
-      label: i18n.t("Available until"),
-      value: <Time fallback={notSet} value={assignment.availableUntil} />,
-    },
   ];
+  const unset: string[] = [];
+  const dated = (label: string, value: string | null, missing: string) => {
+    if (value === null) {
+      unset.push(missing);
+    } else {
+      facts.push({ label, value: <Time value={value} /> });
+    }
+  };
+  const graded = assignment.assessmentMode === "graded";
 
-  if (assignment.assessmentMode === "graded") {
-    items.splice(
-      3,
-      0,
-      {
-        label: i18n.t("Due"),
-        value: <Time fallback={i18n.t("None")} value={assignment.dueAt} />,
-      },
-      {
-        label: i18n.t("Grades visible at"),
-        value: <Time fallback={notSet} value={assignment.gradesVisibleAt} />,
-      },
-      {
-        label: i18n.t("Submitted work visible"),
-        value:
-          assignment.workVisibility === "scheduled" ? (
-            <Time fallback={notSet} value={assignment.workVisibleAt} />
-          ) : (
-            workVisibilityLabel(i18n, assignment.workVisibility)
-          ),
-      },
-      {
-        label: i18n.t("Max attempts"),
-        value: assignment.maxAttempts.toString(),
-      },
-      {
-        label: i18n.t("Time limit"),
-        value:
-          assignment.timeLimitMinutes === null
-            ? i18n.t("None")
-            : i18n.t("{minutes} min", {
-                minutes: assignment.timeLimitMinutes,
-              }),
-      },
-    );
+  dated(
+    i18n.t("Available from"),
+    assignment.availableFrom,
+    i18n.t("opening date"),
+  );
+
+  if (graded) {
+    dated(i18n.t("Due"), assignment.dueAt, i18n.t("due date"));
   }
 
-  return items;
+  dated(
+    i18n.t("Available until"),
+    assignment.availableUntil,
+    i18n.t("closing date"),
+  );
+
+  if (!graded) {
+    return { facts, unset };
+  }
+
+  dated(
+    i18n.t("Grades visible at"),
+    assignment.gradesVisibleAt,
+    i18n.t("grade release date"),
+  );
+  facts.push(
+    {
+      label: i18n.t("Submitted work visible"),
+      value:
+        assignment.workVisibility === "scheduled" ? (
+          <Time
+            fallback={i18n.t("Not set")}
+            value={assignment.workVisibleAt}
+          />
+        ) : (
+          workVisibilityLabel(i18n, assignment.workVisibility)
+        ),
+    },
+    {
+      label: i18n.t("Max attempts"),
+      value:
+        assignment.maxAttempts === 0
+          ? i18n.t("Unlimited")
+          : assignment.maxAttempts.toString(),
+    },
+  );
+
+  if (assignment.timeLimitMinutes === null) {
+    unset.push(i18n.t("time limit"));
+  } else {
+    facts.push({
+      label: i18n.t("Time limit"),
+      value: i18n.t("{minutes} min", {
+        minutes: assignment.timeLimitMinutes,
+      }),
+    });
+  }
+
+  return { facts, unset };
 }
+
+const AssignmentRecordFacts: FC<{ readonly assignment: Assignment }> = ({
+  assignment,
+}) => {
+  const i18n = useI18n();
+  const { facts, unset } = assignmentRecordFacts(i18n, assignment);
+
+  return (
+    <>
+      <FactList items={facts} />
+      {unset.length === 0 ? null : (
+        <p class="small">
+          {i18n.t("Not set: {settings}.", {
+            settings: new Intl.ListFormat(i18n.locale, {
+              type: "conjunction",
+            }).format(unset),
+          })}
+        </p>
+      )}
+    </>
+  );
+};
 
 /**
  * The rendered assignment content on its own: the compiled markdown/exercises
@@ -1188,7 +1238,15 @@ function latePolicyText(
   policy: AssignmentLatePolicy | null,
   dueAt: string | null,
 ): string | null {
-  if (policy === null || policy.kind === "none" || dueAt === null) {
+  return dueAt === null ? null : latePenaltyText(i18n, policy);
+}
+
+/** What a late policy costs, in a sentence, or null for none at all. */
+function latePenaltyText(
+  i18n: Translator,
+  policy: AssignmentLatePolicy | null,
+): string | null {
+  if (policy === null || policy.kind === "none") {
     return null;
   }
 
@@ -1881,37 +1939,59 @@ function overrideNumber(value: number | null | undefined): string {
   return value === null || value === undefined ? "" : value.toString();
 }
 
+/** The id of the dialog that adds an override for a student without one. */
+const NEW_OVERRIDE_DIALOG_ID = "override-new";
+
+/**
+ * The override form, in a dialog: an existing override's, opened from its row
+ * and naming its student, or a new one's, which names the student itself.
+ *
+ * A new one names them in a field with the course's remaining students as
+ * suggestions (a `datalist`), by the address on their account, the way
+ * Add staff does: a select of two hundred names is a long list to scroll,
+ * and a field narrows to the one meant as soon as a few letters are typed.
+ * The suggestion shows the name beside the address it fills in.
+ */
 const OverrideDialog: FC<{
   readonly assignmentId: string;
   readonly context: Context<AppBindings>;
   readonly courseId: string;
   readonly directory: UserDirectory;
-  readonly membership: CourseMembership;
-  readonly override: AssignmentOverride | undefined;
-}> = ({
-  assignmentId,
-  context,
-  courseId,
-  directory,
-  membership,
-  override,
-}) => {
+  readonly student:
+    | {
+        readonly membership: CourseMembership;
+        readonly override: AssignmentOverride;
+      }
+    | { readonly choices: readonly CourseMembership[] };
+}> = ({ assignmentId, context, courseId, directory, student }) => {
   const i18n = useI18n();
-  const user = directory.get(membership.userId) ?? null;
-  const name = userDisplayName(i18n, user, membership.userId);
+  const existing = "membership" in student ? student : null;
+  const override = existing?.override;
+  const id =
+    existing === null
+      ? NEW_OVERRIDE_DIALOG_ID
+      : `override-${existing.membership.id}`;
+  const title =
+    existing === null
+      ? i18n.t("Add an override")
+      : i18n.t("Override for {name}", {
+          name: userDisplayName(
+            i18n,
+            directory.get(existing.membership.userId) ?? null,
+            existing.membership.userId,
+          ),
+        });
+  const choicesId = `${NEW_OVERRIDE_DIALOG_ID}-students`;
 
   return (
-    <ModalDialog
-      id={`override-${membership.id}`}
-      title={i18n.t("Override for {name}", { name })}
-    >
+    <ModalDialog id={id} title={title}>
       <form
         action={`/courses/${courseId}/instructor/assignments/${assignmentId}/overrides`}
         method="post"
       >
         <CsrfInput context={context} />
         <p class="small">
-          {override === undefined
+          {existing === null
             ? i18n.t(
                 "Leave a field blank to keep the assignment default for this student.",
               )
@@ -1919,7 +1999,39 @@ const OverrideDialog: FC<{
                 "Leave a field blank to keep the assignment default for this student. Clearing the override returns the student to the assignment's own schedule.",
               )}
         </p>
-        <input name="userId" type="hidden" value={membership.userId} />
+        {existing === null ? (
+          <label>
+            {i18n.t("Student")}
+            <br />
+            <input
+              autocomplete="off"
+              list={choicesId}
+              name="student"
+              placeholder={i18n.t("Name or email address")}
+              required
+              type="text"
+            />
+            <datalist id={choicesId}>
+              {"choices" in student
+                ? student.choices.map((membership) => {
+                    const user = directory.get(membership.userId) ?? null;
+
+                    return user === null ? null : (
+                      <option value={user.email}>
+                        {hasName(user) ? user.name : null}
+                      </option>
+                    );
+                  })
+                : null}
+            </datalist>
+          </label>
+        ) : (
+          <input
+            name="userId"
+            type="hidden"
+            value={existing.membership.userId}
+          />
+        )}
         <div class="field-grid time-fields">
           <TimestampInput
             label={i18n.t("Available from override")}
@@ -1962,27 +2074,27 @@ const OverrideDialog: FC<{
             is never this one's default, so Enter in a field still saves
             and the tab order can follow the eye. */}
         <div class="sheet-actions">
-          {override === undefined ? null : (
-            <button
-              class="danger"
-              form={`override-${membership.id}-clear`}
-              type="submit"
-            >
+          {existing === null ? null : (
+            <button class="danger" form={`${id}-clear`} type="submit">
               {i18n.t("Clear")}
             </button>
           )}
           <button type="submit">{i18n.t("Save")}</button>
         </div>
       </form>
-      {override === undefined ? null : (
+      {existing === null ? null : (
         <form
           action={`/courses/${courseId}/instructor/assignments/${assignmentId}/overrides/clear`}
           hidden
-          id={`override-${membership.id}-clear`}
+          id={`${id}-clear`}
           method="post"
         >
           <CsrfInput context={context} />
-          <input name="userId" type="hidden" value={membership.userId} />
+          <input
+            name="userId"
+            type="hidden"
+            value={existing.membership.userId}
+          />
         </form>
       )}
     </ModalDialog>
@@ -2074,7 +2186,16 @@ const OverrideSummary: FC<{
   );
 };
 
-const OverrideRoster: FC<{
+/**
+ * The students on a schedule of their own, and the way to put one there.
+ *
+ * Only the exceptions are listed. The roster used to list every student,
+ * each with "Course default" and a Set button, so the one override in a class
+ * of thirty was a row to find among twenty-nine that said nothing; a class of
+ * two hundred was a long scroll to reach anyone. Everyone not listed follows
+ * the assignment, which the description says once.
+ */
+const OverrideSheet: FC<{
   readonly assignmentId: string;
   readonly context: Context<AppBindings>;
   readonly courseId: string;
@@ -2090,76 +2211,126 @@ const OverrideRoster: FC<{
   students,
 }) => {
   const i18n = useI18n();
+  const listed = students.flatMap((membership) => {
+    const override = overrides.get(membership.userId);
 
-  if (students.length === 0) {
-    return (
-      <p class="small">
-        {i18n.t("No students are enrolled in this course yet.")}
-      </p>
-    );
-  }
+    return override === undefined ? [] : [{ membership, override }];
+  });
+  const choices = students.filter(
+    (membership) => !overrides.has(membership.userId),
+  );
+  const dialogProps = { assignmentId, context, courseId, directory };
 
   return (
-    <>
-      <TableScroll>
-        <thead>
-          <tr>
-            <th>{i18n.t("Student")}</th>
-            <th>{i18n.t("Override")}</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {students.map((membership) => {
-            const user = directory.get(membership.userId) ?? null;
-            const name = userDisplayName(i18n, user, membership.userId);
-            const override = overrides.get(membership.userId);
-            const buttonLabel =
-              override === undefined
-                ? i18n.t("Set override")
-                : i18n.t("Edit override");
-            const buttonTitle =
-              override === undefined
-                ? i18n.t("Set an override for {name}", { name })
-                : i18n.t("Edit the override for {name}", { name });
+    <Sheet
+      description={i18n.t(
+        "Different dates or attempts for one student. Everyone else follows the assignment.",
+      )}
+      footer={
+        choices.length === 0 ? undefined : (
+          <>
+            <OverrideDialog {...dialogProps} student={{ choices }} />
+            <div class="sheet-actions">
+              <button
+                class="secondary"
+                data-dialog-target={NEW_OVERRIDE_DIALOG_ID}
+                type="button"
+              >
+                {i18n.t("Add override")}
+              </button>
+            </div>
+          </>
+        )
+      }
+      title={i18n.t("Student overrides")}
+    >
+      {students.length === 0 ? (
+        <p class="small">
+          {i18n.t("No students are enrolled in this course yet.")}
+        </p>
+      ) : listed.length === 0 ? (
+        <p class="small">{i18n.t("No student has an override.")}</p>
+      ) : (
+        <TableScroll phoneList>
+          <thead>
+            <tr>
+              <th>{i18n.t("Student")}</th>
+              <th>{i18n.t("Override")}</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {listed.map((entry) => {
+              const name = userDisplayName(
+                i18n,
+                directory.get(entry.membership.userId) ?? null,
+                entry.membership.userId,
+              );
 
-            return (
-              <tr>
-                <td>
-                  <UserLabel
-                    directory={directory}
-                    identified={true}
-                    userId={membership.userId}
-                  />
-                </td>
-                <td>
-                  <OverrideSummary override={override} />
-                </td>
-                <td>
-                  <button
-                    data-dialog-target={`override-${membership.id}`}
-                    title={buttonTitle}
-                    type="button"
-                  >
-                    {buttonLabel}
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </TableScroll>
-      {students.map((membership) => (
-        <OverrideDialog
+              return (
+                <tr>
+                  <td>
+                    <UserLabel
+                      directory={directory}
+                      identified={true}
+                      userId={entry.membership.userId}
+                    />
+                  </td>
+                  <td>
+                    <OverrideSummary override={entry.override} />
+                  </td>
+                  <td>
+                    <button
+                      data-dialog-target={`override-${entry.membership.id}`}
+                      title={i18n.t("Edit the override for {name}", { name })}
+                      type="button"
+                    >
+                      {i18n.t("Edit")}
+                    </button>
+                    <OverrideDialog {...dialogProps} student={entry} />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </TableScroll>
+      )}
+    </Sheet>
+  );
+};
+
+/**
+ * The late policy as the sentence a student reads, with the form that
+ * changes it behind a button. The four fields were always open under the
+ * roster, though the policy is set once and seldom touched again; what an
+ * instructor wants at a glance is what lateness costs now.
+ */
+const LatePolicySheet: FC<{
+  readonly assignmentId: string;
+  readonly context: Context<AppBindings>;
+  readonly courseId: string;
+  readonly policy: AssignmentLatePolicy | null;
+}> = ({ assignmentId, context, courseId, policy }) => {
+  const i18n = useI18n();
+  const dialogId = "late-policy";
+
+  return (
+    <Sheet title={i18n.t("Late policy")}>
+      <div class="record-line">
+        <p>{latePenaltyText(i18n, policy) ?? i18n.t("No late penalty.")}</p>
+        <button class="secondary" data-dialog-target={dialogId} type="button">
+          {i18n.t("Change")}
+        </button>
+      </div>
+      <ModalDialog id={dialogId} title={i18n.t("Late policy")}>
+        <LatePolicyForm
           assignmentId={assignmentId}
           context={context}
           courseId={courseId}
-          directory={directory}
-          membership={membership}
-          override={overrides.get(membership.userId)}
+          policy={policy}
         />
-      ))}
-    </>
+      </ModalDialog>
+    </Sheet>
   );
 };
 
@@ -3662,21 +3833,17 @@ export function renderInstructorAssignmentPage(
     </>
   );
 
-  // Overrides and the late policy are settings, not results: they are rows
-  // keyed by assignment, nothing about them depends on students being able to
-  // see the assignment, and the server has only ever required `graded` for
-  // either one. So the sheet follows the server and appears for a draft too —
-  // setting a due-date exception or a late penalty before an assignment goes
-  // live is the natural order to work in, not something to be made to wait for.
-  //
-  // Grade export and submission review live on the gradebook page itself, so the
-  // strip here carries only the two destinations that don't: the gradebook and
-  // the attempt ledger. Those two are about student work. A draft usually has
-  // none, but one unpublished with a reset keeps its voided attempts, and the
-  // ledger is where they are on record; the gradebook, which counts none of
-  // them, waits for publication. The strip sits at the foot of the body —
-  // divided from the roster by a ruled line with breathing room — rather than
-  // flush under the header, for a softer "lines on paper" feel.
+  // The record's links lead to the assignment's student work: the gradebook
+  // (its scores, export and review queue) and the attempt ledger. They head
+  // the record, above the settings, because they are where an instructor goes
+  // from here once the assignment is live. A draft usually has no work, but
+  // one unpublished with a reset keeps its voided attempts, and the ledger is
+  // where they are on record; the gradebook, which counts none of them, waits
+  // for publication. Practice has a gradebook and no ledger: no deadline and
+  // no limited tries for one to keep.
+  const isPublishedPractice =
+    assignment.state === "published" &&
+    assignment.assessmentMode === "practice";
   const workLinks = [
     ...(isPublishedGraded
       ? [
@@ -3684,6 +3851,17 @@ export function renderInstructorAssignmentPage(
             hint: i18n.t("Scores, export, and submission review"),
             href: `${gradingBase}/gradebook`,
             label: i18n.t("Grades"),
+          },
+        ]
+      : []),
+    ...(isPublishedPractice
+      ? [
+          {
+            hint: i18n.t(
+              "Practice scores and submission review, not counted toward the course total",
+            ),
+            href: `${gradingBase}/gradebook`,
+            label: i18n.t("Scores"),
           },
         ]
       : []),
@@ -3697,23 +3875,17 @@ export function renderInstructorAssignmentPage(
         ]
       : []),
   ];
+
+  // Overrides and the late policy are settings, not results: they are rows
+  // keyed by assignment, nothing about them depends on students being able to
+  // see the assignment, and the server has only ever required `graded` for
+  // either one. So the sheets follow the server and appear for a draft too —
+  // setting a due-date exception or a late penalty before an assignment goes
+  // live is the natural order to work in, not something to be made to wait for.
   const policyControls =
     assignment.assessmentMode === "graded" ? (
-      <Sheet
-        description={i18n.t(
-          "Per-student overrides and the late policy for this assignment.",
-        )}
-        footer={
-          <LatePolicyForm
-            assignmentId={assignment.id}
-            context={context}
-            courseId={courseId}
-            policy={model.latePolicy}
-          />
-        }
-        title={i18n.t("Policy and grading controls")}
-      >
-        <OverrideRoster
+      <>
+        <OverrideSheet
           assignmentId={assignment.id}
           context={context}
           courseId={courseId}
@@ -3721,33 +3893,13 @@ export function renderInstructorAssignmentPage(
           overrides={model.overrides}
           students={model.students}
         />
-        {workLinks.length > 0 ? <LinkStrip links={workLinks} /> : null}
-      </Sheet>
-    ) : null;
-  // A practice set records points too, but has no policy sheet to hang its
-  // gradebook link from: overrides, late penalties, and the attempt ledger all
-  // belong to work with a deadline and a limited number of tries, and practice
-  // has neither. The one destination it does have gets a sheet of its own,
-  // rather than being reachable only by typing the URL.
-  const practiceResults =
-    assignment.state === "published" &&
-    assignment.assessmentMode === "practice" ? (
-      <Sheet
-        description={i18n.t(
-          "Practice scores are recorded, and do not count toward the course total.",
-        )}
-        title={i18n.t("Practice results")}
-      >
-        <LinkStrip
-          links={[
-            {
-              hint: i18n.t("Scores, export, and submission review"),
-              href: `${gradingBase}/gradebook`,
-              label: i18n.t("Scores"),
-            },
-          ]}
+        <LatePolicySheet
+          assignmentId={assignment.id}
+          context={context}
+          courseId={courseId}
+          policy={model.latePolicy}
         />
-      </Sheet>
+      </>
     ) : null;
   const correctionControls =
     assignment.state === "published" ? (
@@ -3776,9 +3928,10 @@ export function renderInstructorAssignmentPage(
 
   const recordProps = {
     footer: recordFooter,
-    summary: (
-      <SummaryStrip items={assignmentSummaryItems(i18n, assignment)} />
-    ),
+    sections: [
+      workLinks.length > 0 ? <LinkStrip links={workLinks} /> : null,
+      <AssignmentRecordFacts assignment={assignment} />,
+    ],
     title: i18n.t("Assignment record"),
     ...(assignment.description.trim().length === 0
       ? {}
@@ -3832,7 +3985,6 @@ export function renderInstructorAssignmentPage(
           <>
             <Sheet {...recordProps} />
             {policyControls}
-            {practiceResults}
             {correctionControls}
           </>
         }

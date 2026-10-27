@@ -1,4 +1,4 @@
-import type { FC } from "hono/jsx";
+import type { Child, FC } from "hono/jsx";
 
 /**
  * Reader-driven column sorting for the site's ledger tables.
@@ -28,6 +28,13 @@ import type { FC } from "hono/jsx";
  */
 export const SortHeader: FC<{
   /**
+   * A control that belongs to the column but is not the sort — the members
+   * roster's filter funnel, on its User column. It sits after the label and
+   * stays out of the sort button the script builds, so the two are separate
+   * controls rather than one inside the other.
+   */
+  readonly aside?: Child;
+  /**
    * A second, quieter line under the label: what every cell below shares, said
    * once — a gradebook column's "out of 11" — rather than in each cell. It
    * goes into the sort button with the label, so it is part of the column's
@@ -37,11 +44,16 @@ export const SortHeader: FC<{
   readonly label: string;
   /** A column of figures, set right to line up with its cells. */
   readonly numeric?: boolean;
-}> = ({ detail, label, numeric = false }) => (
+}> = ({ aside, detail, label, numeric = false }) => (
   <th class={numeric ? "numeric" : undefined} data-sort="" scope="col">
     {label}
     {detail === undefined ? null : (
       <span class="column-detail">{detail}</span>
+    )}
+    {aside === undefined ? null : (
+      <span class="column-aside" data-column-aside="">
+        {aside}
+      </span>
     )}
   </th>
 );

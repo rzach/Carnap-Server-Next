@@ -421,16 +421,19 @@ describe("native web workflow", () => {
       expect(expectLocation(archive)).toBe("/courses?archived=1");
       expect(expectLocation(unarchive)).toBe("/courses?unarchived=1");
 
-      // The status is the course's, named as such. The reader's membership
-      // status is not shown: only an active member reaches the page.
-      expect(beforeHtml).toContain("<dt>Course status</dt><dd>Active</dd>");
+      // The status is the course's, named as such, and named once it says
+      // something: an active course is the ordinary case, so the record
+      // shows the class and its clock instead. Neither the reader's own
+      // membership status nor their role is shown: only an active member
+      // reaches the page, and the page itself says which side they are on.
+      expect(beforeHtml).not.toContain("<dt>Course status</dt>");
+      expect(beforeHtml).toContain("<dt>Students</dt><dd>0</dd>");
       expect(archivedHtml).toContain(
         "<dt>Course status</dt><dd>Archived</dd>",
       );
-      expect(unarchivedHtml).toContain(
-        "<dt>Course status</dt><dd>Active</dd>",
-      );
+      expect(unarchivedHtml).not.toContain("<dt>Course status</dt>");
       expect(archivedHtml).not.toContain("Your status");
+      expect(beforeHtml).not.toContain("Your role");
 
       // The list has no status column to be misread that way: an active
       // membership goes unsaid, and only an exception is badged beside the
@@ -574,7 +577,7 @@ describe("native web workflow", () => {
 
       // What the columns sort by travels with the cells. The user column
       // carries the one name a reader looks a member up under, since the cell
-      // itself holds two lines and a crown.
+      // itself holds two lines.
       expect(roster).toContain(
         '<td class="member-user" data-sort-value="zoe@example.test">',
       );
@@ -582,7 +585,9 @@ describe("native web workflow", () => {
       // order the roster differently in every language. The status's rank
       // rides underneath, and active is first among them, so an active member
       // sorts at the head of their role and carries no badge.
-      expect(roster).toContain('<td data-sort-value="20">Instructor</td>');
+      // The instructor who made the course is its owner, and the role says
+      // so in a word, ranked with the instructors.
+      expect(roster).toContain('<td data-sort-value="20">Owner</td>');
       expect(roster).toContain(
         '<td data-sort-value="10">Teaching assistant</td>',
       );
@@ -786,7 +791,8 @@ describe("native web workflow", () => {
 
       expect(coursePage.status).toBe(200);
       expect(html).toContain("Create enrollment link");
-      expect(html).toContain("Course owner");
+      // The course's creator is named in the Role column, as its owner.
+      expect(html).toContain('<td data-sort-value="20">Owner</td>');
       expect(html).toContain("Accommodations for");
       expect(html).toContain('data-dialog-target="accommodations-');
       expect(html).toContain('/accommodations" method="post"');
@@ -917,7 +923,7 @@ describe("native web workflow", () => {
       const draftHtml = await draftPageResponse.text();
 
       expect(draftPageResponse.status).toBe(200);
-      expect(draftHtml).toContain("Policy and grading controls");
+      expect(draftHtml).toContain("Student overrides");
       expect(draftHtml).toContain("Save late policy");
       expect(draftHtml).not.toContain("link-strip");
 
@@ -938,10 +944,14 @@ describe("native web workflow", () => {
       const html = await pageResponse.text();
 
       expect(pageResponse.status).toBe(200);
-      expect(html).toContain("Policy and grading controls");
-      // The gradebook and attempts destinations sit in the link strip; grade
-      // export and submission review now live on the gradebook page itself.
+      expect(html).toContain("Student overrides");
+      // The gradebook and attempts destinations head the record, in the link
+      // strip above its settings; grade export and submission review live on
+      // the gradebook page itself.
       expect(html).toContain("link-strip");
+      expect(html.indexOf("link-strip")).toBeLessThan(
+        html.indexOf('class="fact-list"'),
+      );
       expect(html).toContain(
         `/instructor/assignments/${assignment.assignment.id}/gradebook`,
       );

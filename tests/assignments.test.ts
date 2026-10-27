@@ -2021,8 +2021,116 @@ describe("a student the instructor has overridden", () => {
       expect((await again.json()) as unknown).toEqual({ cleared: false });
       expect(restored).toContain("<dt>Attempts</dt><dd>1 of 3</dd>");
       expect(restored).toContain("Start attempt");
-      expect(roster).toContain("Course default");
+      // Only students with an override are listed, so a cleared one leaves
+      // the list, and the sheet says no one is on a schedule of their own.
+      expect(roster).toContain("No student has an override.");
       expect(roster).not.toContain("/overrides/clear");
+    });
+  });
+
+  test("an instructor adds an override by the student's address, and only for a student", async () => {
+    await withStorage(async (_storage, env) => {
+      const instructor = await login(env, "pick-teacher@example.test");
+      const student = await login(env, "pick-student@example.test");
+      // An account, signed in once, that belongs to no course: the address
+      // resolves, and the refusal is for its not being a student here.
+      await login(env, "pick-bystander@example.test");
+      const courseId = await createCourse(env, instructor);
+      const revision = await createRevision(
+        env,
+        instructor,
+        source("pick_q", "Prompt."),
+      );
+      const draft = await createDraft(
+        env,
+        instructor,
+        courseId,
+        revision.revision.id,
+        { maxAttempts: 3, title: "Picked" },
+      );
+
+      await enrollStudent(env, instructor, student, courseId);
+      await publish(env, instructor, courseId, draft.assignment.id);
+
+      const pagePath = `/courses/${courseId}/instructor/assignments/${draft.assignment.id}`;
+      const readPage = async (): Promise<string> =>
+        await (
+          await appRequest(
+            createTestApp(),
+            pagePath,
+            {
+              headers: {
+                Accept: "text/html",
+                Cookie: instructor.cookieHeader,
+              },
+            },
+            env,
+          )
+        ).text();
+      // The page's form, as a browser posts it: the student named by the
+      // address the picker fills in, in whatever case it was typed.
+      const addByEmail = async (email: string): Promise<Response> =>
+        await appRequest(
+          createTestApp(),
+          `${pagePath}/overrides`,
+          {
+            body: new URLSearchParams({
+              csrfToken: instructor.csrfToken,
+              maxAttempts: "4",
+              student: email,
+            }).toString(),
+            headers: {
+              ...authHeaders(instructor),
+              Accept: "text/html",
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            method: "POST",
+          },
+          env,
+        );
+
+      const before = await readPage();
+      const added = await addByEmail(" Pick-Student@Example.test ");
+      const after = await readPage();
+      const stranger = await addByEmail("pick-bystander@example.test");
+      const unknown = await addByEmail("nobody@example.test");
+      // The JSON route names a student by id, and is held to the same rule:
+      // an override is a student's schedule, not a staff member's.
+      const staff = await appRequest(
+        createTestApp(),
+        `${pagePath}/overrides`,
+        jsonRequest(
+          { maxAttempts: 9, userId: instructor.actorId },
+          instructor,
+        ),
+        env,
+      );
+
+      // No roster of defaults: the sheet lists exceptions, and offers the
+      // students who have none as the picker's suggestions.
+      expect(before).toContain("No student has an override.");
+      expect(before).not.toContain("Course default");
+      expect(before).toContain('<option value="pick-student@example.test">');
+      expect(added.status).toBe(303);
+      expect(after).not.toContain("No student has an override.");
+      expect(after).toContain("4 attempts");
+      expect(after).toContain(
+        "Edit the override for pick-student@example.test",
+      );
+      // Nobody is left to add, so the picker goes with its suggestions.
+      expect(after).not.toContain(
+        '<option value="pick-student@example.test">',
+      );
+      expect(after).not.toContain("Add override");
+      expect(stranger.status).toBe(404);
+      expect(await stranger.text()).toContain(
+        "That person is not a student in this course.",
+      );
+      expect(unknown.status).toBe(404);
+      expect(await unknown.text()).toContain(
+        "No student in this course has that email address.",
+      );
+      expect(staff.status).toBe(404);
     });
   });
 

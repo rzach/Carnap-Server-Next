@@ -1122,17 +1122,30 @@ async function upsertAssignmentOverride(
   const courseId = requiredParam(context, "courseId");
   const assignmentId = requiredParam(context, "assignmentId");
   const formSubmission = isFormSubmission(context);
-  const command = formSubmission
-    ? overrideCommandFromForm(await context.req.raw.formData())
-    : overrideCommandFromJson(
-        (await readJsonObject(context)) as AssignmentOverrideBody,
-      );
-  const override = await assignmentService(context).upsertOverride(
-    actor,
-    courseId,
-    assignmentId,
-    command,
-  );
+  const form = formSubmission ? await context.req.raw.formData() : null;
+  const command =
+    form === null
+      ? overrideCommandFromJson(
+          (await readJsonObject(context)) as AssignmentOverrideBody,
+        )
+      : overrideCommandFromForm(form);
+  // The page's Add override names its student by the address the picker
+  // offers; an existing row's dialog names them by id, as the JSON API does.
+  const student = form === null ? null : form.get("student");
+  const override =
+    typeof student === "string"
+      ? await assignmentService(context).upsertOverrideByEmail(
+          actor,
+          courseId,
+          assignmentId,
+          { ...command, email: student },
+        )
+      : await assignmentService(context).upsertOverride(
+          actor,
+          courseId,
+          assignmentId,
+          command,
+        );
 
   kickGradePassback(context);
 

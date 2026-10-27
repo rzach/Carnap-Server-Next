@@ -179,6 +179,10 @@ msgstr "{count, plural, one {# Versuch verwendet} other {# Versuche verwendet}}"
 msgid "{count, plural, one {# attempt} other {# attempts}}"
 msgstr "{count, plural, one {# Versuch} other {# Versuche}}"
 
+#: src/worker/web/courses.tsx
+msgid "{count, plural, one {# member.} other {# members.}}"
+msgstr "{count, plural, one {# Mitglied.} other {# Mitglieder.}}"
+
 #: src/worker/web/assignment-detail.tsx
 msgid "{count, plural, one {# student has an attempt on this assignment.} other {# students have attempts on this assignment.}} Unpublishing resets them all: their work stays on file but no longer counts toward a grade."
 msgstr "{count, plural, one {# studierende Person hat einen Versuch zu dieser Aufgabe.} other {# Studierende haben Versuche zu dieser Aufgabe.}} Wenn Sie die Veröffentlichung zurücknehmen, werden alle zurückgesetzt: Die Arbeit der Studierenden bleibt gespeichert, zählt aber nicht mehr für eine Note."
@@ -783,7 +787,6 @@ msgstr "Aktionen"
 
 #: src/worker/web/admin.tsx
 #: src/worker/web/assignment-detail.tsx
-#: src/worker/web/courses.tsx
 #: src/worker/web/labels.ts
 msgid "Active"
 msgstr "Aktiv"
@@ -837,6 +840,10 @@ msgstr "Diesem Schritt eine Zeile hinzufügen"
 msgid "Add an address"
 msgstr "Adresse hinzufügen"
 
+#: src/worker/web/assignment-detail.tsx
+msgid "Add an override"
+msgstr "Abweichung hinzufügen"
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "Add assumption above"
 msgstr "Annahme darüber hinzufügen"
@@ -868,6 +875,10 @@ msgstr "Manuelle Bewertung speichern"
 #: src/worker/web/admin.tsx
 msgid "Add membership"
 msgstr "Mitgliedschaft hinzufügen"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Add override"
+msgstr "Abweichung hinzufügen"
 
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Add premise"
@@ -1616,6 +1627,10 @@ msgstr "Schließt"
 msgid "Closes {when}"
 msgstr "Schließt {when}"
 
+#: src/worker/web/assignment-detail.tsx
+msgid "closing date"
+msgstr "Schlussdatum"
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Closing put away."
 msgstr "Schließen abgebrochen."
@@ -1972,10 +1987,6 @@ msgid "Course not updated"
 msgstr "Kurs nicht aktualisiert"
 
 #: src/worker/web/courses.tsx
-msgid "Course owner"
-msgstr "Kursinhaber"
-
-#: src/worker/web/courses.tsx
 msgid "Course record"
 msgstr "Kursdatensatz"
 
@@ -1987,10 +1998,6 @@ msgstr "Kursrolle geändert"
 msgid "Course role is not supported."
 msgstr "Diese Kursrolle wird nicht unterstützt."
 
-#: src/worker/web/courses.tsx
-msgid "Course roles and membership states. The course owner is marked with a crown."
-msgstr "Kursrollen und Mitgliedschaftsstatus. Der Kursinhaber ist mit einer Krone gekennzeichnet."
-
 #: src/worker/web/labels.ts
 msgid "Course staff added"
 msgstr "Lehrpersonal zum Kurs hinzugefügt"
@@ -1998,10 +2005,6 @@ msgstr "Lehrpersonal zum Kurs hinzugefügt"
 #: src/worker/web/courses.tsx
 msgid "Course status"
 msgstr "Kursstatus"
-
-#: src/worker/web/courses.tsx
-msgid "Course status, membership, and timezone."
-msgstr "Kursstatus, Mitgliedschaft und Zeitzone."
 
 #: src/worker/application/courses.ts
 msgid "Course timezone must be 100 characters or less."
@@ -2190,6 +2193,10 @@ msgstr "Detail"
 msgid "Details"
 msgstr "Details"
 
+#: src/worker/web/assignment-detail.tsx
+msgid "Different dates or attempts for one student. Everyone else follows the assignment."
+msgstr "Abweichende Termine oder Versuche für einzelne Studierende. Alle anderen folgen der Aufgabe."
+
 #: src/worker/application/content/registry.ts
 msgid "Directive {directiveName} is not supported."
 msgstr "Die Direktive {directiveName} wird nicht unterstützt."
@@ -2304,6 +2311,10 @@ msgstr "Abweichung: fällig am"
 msgid "Due at, optional"
 msgstr "Fällig am, optional"
 
+#: src/worker/web/assignment-detail.tsx
+msgid "due date"
+msgstr "Fälligkeitsdatum"
+
 #: src/worker/web/courses.tsx
 msgid "Due extension minutes"
 msgstr "Verlängerung der Frist in Minuten"
@@ -2324,6 +2335,10 @@ msgstr "Jeder noch zu zerlegende Satz ist umrahmt, und seine Junktoren sind Scha
 msgid "Each sentence takes one pick. After a wrong one, the tree shows how it really splits."
 msgstr "Jeder Satz erlaubt eine Wahl. Nach einer falschen zeigt der Baum, wie er tatsächlich zerfällt."
 
+#: src/worker/web/assignment-detail.tsx
+msgid "Edit"
+msgstr "Bearbeiten"
+
 #: src/worker/web/courses.tsx
 msgid "Edit {title}"
 msgstr "{title} bearbeiten"
@@ -2335,10 +2350,6 @@ msgstr "Aufgabe bearbeiten"
 #: src/worker/web/courses.tsx
 msgid "Edit course"
 msgstr "Kurs bearbeiten"
-
-#: src/worker/web/assignment-detail.tsx
-msgid "Edit override"
-msgstr "Abweichung bearbeiten"
 
 #: src/worker/web/content.tsx
 msgid "Edit revision details"
@@ -2692,6 +2703,10 @@ msgstr "Füllen Sie eine Zeile aus, in der die Formeln nicht übereinstimmen, un
 msgid "Filter by exercise or student"
 msgstr "Nach Übung oder studierender Person filtern"
 
+#: src/worker/web/courses.tsx
+msgid "Filter members"
+msgstr "Mitglieder filtern"
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Filter submissions"
 msgstr "Abgaben filtern"
@@ -2835,6 +2850,10 @@ msgstr "Notenübertragung nicht erneut versucht"
 #: src/worker/routes/courses.ts
 msgid "Grade delivery re-queued."
 msgstr "Notenübertragung erneut eingereiht."
+
+#: src/worker/web/assignment-detail.tsx
+msgid "grade release date"
+msgstr "Freigabedatum der Noten"
 
 #: src/worker/application/assignments.ts
 msgid "Grade visibility must be immediate, manual, or scheduled."
@@ -3100,6 +3119,10 @@ msgstr "Letzte Antwort"
 #: src/worker/web/courses.tsx
 msgid "Last attempt"
 msgstr "Letzter Versuch"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Late policy"
+msgstr "Verspätungsregel"
 
 #: src/worker/application/assignments.ts
 msgid "Late policy is only available for graded assignments."
@@ -3489,6 +3512,10 @@ msgstr "Benennen"
 msgid "Name must be 200 characters or less."
 msgstr "Der Name darf höchstens 200 Zeichen lang sein."
 
+#: src/worker/web/assignment-detail.tsx
+msgid "Name or email address"
+msgstr "Name oder E-Mail-Adresse"
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Name the rule this step uses: type it in the margin, after the row it develops."
 msgstr "Nennen Sie die Regel, die dieser Schritt verwendet: Geben Sie sie am Rand ein, nach der Zeile, die er entwickelt."
@@ -3640,6 +3667,10 @@ msgstr "Keine externen Identitäten."
 msgid "No late penalty"
 msgstr "Kein Verspätungsabzug"
 
+#: src/worker/web/assignment-detail.tsx
+msgid "No late penalty."
+msgstr "Kein Abzug für Verspätung."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "No line is left uncited, so there is no root to prove the goal (the lines cite each other in a cycle)."
 msgstr "Keine Zeile bleibt unzitiert, es gibt also keine Wurzel, die das Ziel beweist (die Zeilen zitieren sich im Kreis)."
@@ -3649,6 +3680,10 @@ msgstr "Keine Zeile bleibt unzitiert, es gibt also keine Wurzel, die das Ziel be
 msgid "no longer in the assignment"
 msgstr "nicht mehr in der Aufgabe"
 
+#: src/worker/web/courses.tsx
+msgid "No member matches."
+msgstr "Kein Mitglied passt."
+
 #: src/worker/exercises/multiple-choice/assessment.ts
 msgid "No option selected"
 msgstr "Keine Option ausgewählt"
@@ -3656,6 +3691,14 @@ msgstr "Keine Option ausgewählt"
 #: src/worker/web/content.tsx
 msgid "No revisions have been created yet."
 msgstr "Es wurden noch keine Revisionen angelegt."
+
+#: src/worker/web/assignment-detail.tsx
+msgid "No student has an override."
+msgstr "Für keine Studierenden gibt es eine Abweichung."
+
+#: src/worker/application/assignments.ts
+msgid "No student in this course has that email address."
+msgstr "Keine Studierenden in diesem Kurs haben diese E-Mail-Adresse."
 
 #: src/worker/web/assignment-detail.tsx
 msgid "No students are enrolled in this course yet."
@@ -3702,10 +3745,6 @@ msgstr "Kein Zeitlimit: Sie können die Seite verlassen und später zurückkehre
 #: src/worker/web/admin.tsx
 msgid "No users matched."
 msgstr "Keine Treffer."
-
-#: src/worker/web/assignment-detail.tsx
-msgid "None"
-msgstr "Keine"
 
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/ui-strings.ts
@@ -3792,6 +3831,10 @@ msgstr "nicht erfasst"
 #: src/worker/web/assignment-detail.tsx
 msgid "Not set"
 msgstr "Nicht gesetzt"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Not set: {settings}."
+msgstr "Nicht festgelegt: {settings}."
 
 #: src/worker/web/gradebook.tsx
 #: src/worker/web/student-course.tsx
@@ -3982,6 +4025,10 @@ msgid "Opened"
 msgstr "Eröffnet"
 
 #: src/worker/web/assignment-detail.tsx
+msgid "opening date"
+msgstr "Öffnungsdatum"
+
+#: src/worker/web/assignment-detail.tsx
 #: src/worker/web/student-course.tsx
 msgid "Opens {when}"
 msgstr "Öffnet {when}"
@@ -4035,6 +4082,11 @@ msgstr "Abweichung gesetzt, keine Felder weichen ab"
 msgid "Overrides are only available for graded assignments."
 msgstr "Abweichungen sind nur bei bewerteten Aufgaben verfügbar."
 
+#. In the members roster's Role column, for the instructor who created the course.
+#: src/worker/web/courses.tsx
+msgid "Owner"
+msgstr "Inhaber"
+
 #: src/worker/web/errors.tsx
 msgid "Page not found"
 msgstr "Seite nicht gefunden"
@@ -4059,10 +4111,6 @@ msgstr "Tragen Sie diese Carnap-Endpunkte im LMS ein, wenn Sie das externe Werkz
 #: src/worker/exercises/world/strings.ts
 msgid "Pentagon"
 msgstr "Fünfeck"
-
-#: src/worker/web/assignment-detail.tsx
-msgid "Per-student overrides and the late policy for this assignment."
-msgstr "Abweichungen einzelner Studierender und die Verspätungsregel dieser Aufgabe."
 
 #: src/worker/web/labels.ts
 msgid "Percent once after due"
@@ -4163,10 +4211,6 @@ msgstr "Zeigen Sie auf einen Teil eines Satzes, um zu sehen, wovon er wahr ist."
 msgid "Points"
 msgstr "Punkte"
 
-#: src/worker/web/assignment-detail.tsx
-msgid "Policy and grading controls"
-msgstr "Regeln und Bewertungssteuerung"
-
 #: src/worker/exercises/syntax-tree/strings.ts
 msgid "possibility (connective name)"
 msgstr "Möglichkeit"
@@ -4179,15 +4223,14 @@ msgstr "Übung"
 msgid "Practice activity"
 msgstr "Übungsaktivität"
 
-#: src/worker/web/assignment-detail.tsx
-msgid "Practice results"
-msgstr "Übungsergebnisse"
-
 #: src/worker/web/gradebook.tsx
 msgid "Practice scores"
 msgstr "Übungspunktzahlen"
 
 #: src/worker/web/assignment-detail.tsx
+msgid "Practice scores and submission review, not counted toward the course total"
+msgstr "Übungspunkte und Durchsicht der Abgaben, nicht in der Kursgesamtwertung"
+
 #: src/worker/web/gradebook.tsx
 msgid "Practice scores are recorded, and do not count toward the course total."
 msgstr "Übungspunkte werden erfasst und zählen nicht zur Gesamtpunktzahl des Kurses."
@@ -4941,10 +4984,6 @@ msgstr "Sätze"
 msgid "Separate sentences with commas."
 msgstr "Trennen Sie Sätze durch Kommas."
 
-#: src/worker/web/assignment-detail.tsx
-msgid "Set an override for {name}"
-msgstr "Abweichung für {name} festlegen"
-
 #: src/worker/web/admin.tsx
 msgid "Set by {platform}"
 msgstr "Festgelegt von {platform}"
@@ -4964,10 +5003,6 @@ msgstr "Von der Administration festgelegt. Starts aus Ihrem LMS ändern sie nich
 #: src/worker/web/admin.tsx
 msgid "Set by the user"
 msgstr "Festgelegt von der Person selbst"
-
-#: src/worker/web/assignment-detail.tsx
-msgid "Set override"
-msgstr "Abweichung festlegen"
 
 #: src/worker/web/content.tsx
 msgid "Set who may read {name}"
@@ -5199,6 +5234,14 @@ msgstr "Studierende"
 msgid "Student ID"
 msgstr "Matrikelnummer"
 
+#: src/worker/web/assignment-detail.tsx
+msgid "Student overrides"
+msgstr "Abweichungen für Studierende"
+
+#: src/worker/web/courses.tsx
+msgid "Students"
+msgstr "Studierende"
+
 #: src/worker/web/courses.tsx
 msgid "Students complete the course's assignments and see only their own work and grades."
 msgstr "Studierende bearbeiten die Aufgaben des Kurses und sehen nur ihre eigenen Abgaben und Noten."
@@ -5396,6 +5439,10 @@ msgstr "Dieses LMS hat keine andere Adresse für Sie."
 #: src/worker/routes/web.ts
 msgid "That login link has expired or has already been used. Enter your email address below and we will send you a new one."
 msgstr "Dieser Anmeldelink ist abgelaufen oder wurde bereits verwendet. Geben Sie unten Ihre E-Mail-Adresse ein, dann senden wir Ihnen einen neuen."
+
+#: src/worker/application/assignments.ts
+msgid "That person is not a student in this course."
+msgstr "Diese Person ist in diesem Kurs nicht als Studierende eingeschrieben."
 
 #: src/worker/exercises/truth-table/strings.ts
 msgid "That row is correct."
@@ -6509,6 +6556,10 @@ msgid "Time ends {when}"
 msgstr "Zeit endet {when}"
 
 #: src/worker/web/assignment-detail.tsx
+msgid "time limit"
+msgstr "Zeitlimit"
+
+#: src/worker/web/assignment-detail.tsx
 msgid "Time limit"
 msgstr "Zeitlimit"
 
@@ -6736,6 +6787,10 @@ msgstr "Unbekannte Wahrheitstafel-Option „{option}“."
 #: src/worker/web/users.tsx
 msgid "Unknown user {id}"
 msgstr "Unbekanntes Konto {id}"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Unlimited"
+msgstr "Unbegrenzt"
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Unlimited attempts"
@@ -7227,10 +7282,6 @@ msgstr "Ihre alte E-Mail-Adresse ist wiederhergestellt, und alle anderen Sitzung
 #: src/worker/routes/web.ts
 msgid "Your profile has been saved."
 msgstr "Ihr Profil wurde gespeichert."
-
-#: src/worker/web/courses.tsx
-msgid "Your role"
-msgstr "Ihre Rolle"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Your sentence"

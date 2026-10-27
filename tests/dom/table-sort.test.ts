@@ -172,4 +172,31 @@ describe("table column sorting", () => {
     expect(user.querySelector(".column-sort-mark")?.textContent).toBe("");
     expect(score.getAttribute("aria-sort")).toBe("ascending");
   });
+
+  test("a column's own control stays beside the sort button, not inside it", () => {
+    for (const stale of domDocument.querySelectorAll("[data-sort-fixture]")) {
+      stale.remove();
+    }
+
+    const host = domDocument.createElement("div");
+
+    host.setAttribute("data-sort-fixture", "");
+    host.innerHTML =
+      '<table><thead><tr><th data-sort="" scope="col">User' +
+      '<span class="column-aside" data-column-aside="">' +
+      '<button type="button">Filter members</button></span></th>' +
+      "</tr></thead><tbody><tr><td>Ada</td></tr></tbody></table>";
+    domDocument.body.appendChild(host);
+    new Function(TABLE_SORT_SCRIPT)();
+
+    const heading = host.querySelector("th");
+    const sort = heading?.querySelector(".column-sort");
+
+    expect(sort?.textContent).toContain("User");
+    expect(sort?.textContent).not.toContain("Filter members");
+    expect(sort?.querySelector("button")).toBeNull();
+    expect(heading?.lastElementChild?.hasAttribute("data-column-aside")).toBe(
+      true,
+    );
+  });
 });

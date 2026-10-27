@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 import { raw } from "hono/html";
-import type { FC } from "hono/jsx";
+import type { Child, FC } from "hono/jsx";
 
 import type { CompilerDiagnostic } from "../application/content/diagnostics";
 import type { GradeSyncFailure } from "../application/grade-passback";
@@ -42,17 +42,20 @@ import {
   Notice,
   Sheet,
   StatusBadge,
+  type SummaryItem,
   SummaryStrip,
   shortCreateLabel,
+  TableFilter,
+  TableFilterControl,
   TableScroll,
   Time,
   TimestampInput,
+  tableFiltered,
 } from "./components";
 import { enrollmentPath } from "./html";
 import {
   AccessibilityIcon,
   CopyIcon,
-  CrownIcon,
   PenIcon,
   ShieldUserIcon,
 } from "./icons";
@@ -640,8 +643,17 @@ const MembersTable: FC<{
   readonly context: Context<AppBindings>;
   readonly course: Course;
   readonly directory: UserDirectory;
+  /** The roster filter, for the User heading, when it has one. */
+  readonly filter?: Child;
   readonly memberships: readonly CourseMembership[];
-}> = ({ accommodations, context, course, directory, memberships }) => {
+}> = ({
+  accommodations,
+  context,
+  course,
+  directory,
+  filter,
+  memberships,
+}) => {
   const i18n = useI18n();
 
   if (memberships.length === 0) {
@@ -670,7 +682,7 @@ const MembersTable: FC<{
               "Instructor" outranking "Student" is a fact about the course,
               and sorting the labels would order the roster differently in
               every language. */}
-          <SortHeader label={i18n.t("User")} />
+          <SortHeader aside={filter} label={i18n.t("User")} />
           <SortHeader label={i18n.t("Role")} />
           <th scope="col">{i18n.t("Actions")}</th>
         </tr>
@@ -685,20 +697,23 @@ const MembersTable: FC<{
 
           return (
             <tr>
-              {/* Two lines and a crown in the cell; the one name a reader
-                  looks for it under is what it sorts by. */}
+              {/* Two lines in the cell; the one name a reader looks for it
+                  under is what it sorts by. */}
               <td class="member-user" data-sort-value={nameOf(membership)}>
                 <UserLabel directory={directory} userId={membership.userId} />
-                {membership.userId === course.createdById ? (
-                  <OwnerCrown />
-                ) : null}
               </td>
               {/* The address again, for the phone list, which reads the role
                   and the address as one line under the name and can only put
                   a cell's contents there. Only one copy is ever displayed
                   (chrome.css), so a screen reader hears it once. */}
               <td data-sort-value={membershipSortValue(membership)}>
-                {courseRoleLabel(i18n, membership.role)}
+                {membership.userId === course.createdById &&
+                membership.role === "instructor"
+                  ? i18n.t("Owner", undefined, {
+                      comment:
+                        "In the members roster's Role column, for the instructor who created the course.",
+                    })
+                  : courseRoleLabel(i18n, membership.role)}
                 <MembershipStatusBadge status={membership.status} />
                 <AccommodationBadge
                   accommodation={
@@ -910,23 +925,6 @@ const EnrollmentLinksTable: FC<{
         ))}
       </tbody>
     </TableScroll>
-  );
-};
-
-/**
- * A small crown marking the course owner (its creator) inline after the name,
- * so ownership reads at a glance without spending a whole table column on a
- * marker that applies to exactly one row.
- */
-const OwnerCrown: FC = () => {
-  const i18n = useI18n();
-  const label = i18n.t("Course owner");
-
-  return (
-    <span aria-label={label} class="owner-crown" role="img" title={label}>
-      {" "}
-      <CrownIcon />
-    </span>
   );
 };
 
@@ -1502,6 +1500,54 @@ const GradebookLinks: FC<{ readonly courseId: string }> = ({ courseId }) => {
   );
 };
 
+/**
+ * The course record's figures: the size of the class, and the clock its dates
+ * are kept in. The reader's own role and an "Active" status were here, and
+ * both told the one reading them what they already knew: the page they are on
+ * is the instructor's, and a course is active until someone archives it. So
+ * the status is shown once it says something, and the role not at all.
+ *
+ * The class size is the instructor page's alone, since that is the page that
+ * reads the roster; an assistant's grading page does not, and one more read
+ * for a figure they never asked for is not worth it.
+ */
+function courseRecordItems(
+  i18n: Translator,
+  model: CourseDetailViewModel,
+): SummaryItem[] {
+  const items: SummaryItem[] = [];
+
+  if (model.page === "instructor") {
+    items.push({
+      label: i18n.t("Students"),
+      value: String(
+        model.memberships.filter(
+          (membership) =>
+            membership.role === "student" && membership.status === "active",
+        ).length,
+      ),
+    });
+  }
+
+  items.push({
+    label: i18n.t("Timezone"),
+    value: (
+      <span title={model.course.timezone}>
+        {timezoneCity(model.course.timezone)}
+      </span>
+    ),
+  });
+
+  if (model.course.archivedAt !== null) {
+    items.push({ label: i18n.t("Course status"), value: i18n.t("Archived") });
+  }
+
+  return items;
+}
+
+/** The members roster's filter, which the User heading's funnel opens. */
+const MEMBERS_FILTER_ID = "members-filter";
+
 export function renderCourseDetail(
   context: Context<AppBindings>,
   model: CourseDetailViewModel,
@@ -1525,37 +1571,7 @@ export function renderCourseDetail(
   };
   const courseRecord = (
     <Sheet
-      description={i18n.t("Course status, membership, and timezone.")}
-      summary={
-        // The course's status exists in both states: it is what an instructor
-        // checks after archiving, and a cell that appeared only once a course
-        // was archived would leave a reader who saw no change with nothing to
-        // read. The reader's own membership status is not here: only an
-        // active member reaches this page, so it could only ever say "Active".
-        <SummaryStrip
-          items={[
-            {
-              label: i18n.t("Timezone"),
-              value: (
-                <span title={model.course.timezone}>
-                  {timezoneCity(model.course.timezone)}
-                </span>
-              ),
-            },
-            {
-              label: i18n.t("Course status"),
-              value:
-                model.course.archivedAt === null
-                  ? i18n.t("Active")
-                  : i18n.t("Archived"),
-            },
-            {
-              label: i18n.t("Your role"),
-              value: courseRoleLabel(i18n, model.membership.role),
-            },
-          ]}
-        />
-      }
+      summary={<SummaryStrip items={courseRecordItems(i18n, model)} />}
       title={i18n.t("Course record")}
     >
       {/* The instructor's alone: an assistant authors and grades, and the
@@ -1656,20 +1672,35 @@ export function renderCourseDetail(
         content={
           <Sheet
             description={i18n.t(
-              "Course roles and membership states. The course owner is marked with a crown.",
+              "{count, plural, one {# member.} other {# members.}}",
+              { count: model.memberships.length },
             )}
             footer={
               <AddStaffBar context={context} courseId={model.course.id} />
             }
             title={i18n.t("Members")}
           >
-            <MembersTable
-              accommodations={model.accommodations}
-              context={context}
-              course={model.course}
-              directory={model.directory}
-              memberships={model.memberships}
-            />
+            <TableFilter
+              empty={i18n.t("No member matches.")}
+              id={MEMBERS_FILTER_ID}
+              rows={model.memberships.length}
+            >
+              <MembersTable
+                accommodations={model.accommodations}
+                context={context}
+                course={model.course}
+                directory={model.directory}
+                filter={
+                  tableFiltered(model.memberships.length) ? (
+                    <TableFilterControl
+                      label={i18n.t("Filter members")}
+                      target={MEMBERS_FILTER_ID}
+                    />
+                  ) : undefined
+                }
+                memberships={model.memberships}
+              />
+            </TableFilter>
           </Sheet>
         }
         rail={
