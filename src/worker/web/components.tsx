@@ -27,20 +27,92 @@ export interface SummaryItem {
  *
  * `day` writes the date without the time, for a fact whose minute nobody
  * wants — when an account was made, not when a link expires.
+ *
+ * `weekday` leads with the day of the week and leaves out the year while it is
+ * this one — "Wed, Oct 28" — for a date a student plans a week around, where
+ * the weekday is what they know it by. `relative` adds how far off that day
+ * is — "in 2 days", "yesterday" — within a fortnight either side. Both are
+ * the reader's own calendar, so the script writes them; without it the
+ * instant stands, and the distance is simply absent.
  */
 export const Time: FC<{
   readonly day?: boolean;
   readonly fallback?: string;
+  readonly relative?: boolean;
   readonly value: string | null | undefined;
-}> = ({ day = false, fallback = "", value }) =>
+  readonly weekday?: boolean;
+}> = ({
+  day = false,
+  fallback = "",
+  relative = false,
+  value,
+  weekday = false,
+}) =>
   value === null || value === undefined || value === "" ? (
     // biome-ignore lint/complexity/noUselessFragments: `FC` returns an `HtmlEscapedString`, and the fragment is what makes one of a plain string.
     <>{fallback}</>
   ) : (
-    <time data-day={day ? "" : undefined} datetime={value}>
-      {value}
-    </time>
+    <>
+      <time
+        data-day={day ? "" : undefined}
+        data-weekday={weekday ? "" : undefined}
+        datetime={value}
+      >
+        {value}
+      </time>
+      {relative ? (
+        <span class="time-relative" data-relative-day={value} />
+      ) : null}
+    </>
   );
+
+/**
+ * A cell with no score in it: a mark for the eye, explained once by
+ * {@link ScoreLegend}, and the words a screen reader hears in its place.
+ */
+export interface UnscoredMarkText {
+  readonly label: string;
+  readonly mark: string;
+}
+
+export const UnscoredMark: FC<UnscoredMarkText> = ({ label, mark }) => (
+  <>
+    <span aria-hidden="true">{mark}</span>
+    <span class="visually-hidden">{label}</span>
+  </>
+);
+
+/**
+ * What the marks in a gradebook mean, under the table that uses them: one
+ * line per mark, the first explanation given for it.
+ */
+export const ScoreLegend: FC<{
+  readonly marks: readonly UnscoredMarkText[];
+}> = ({ marks }) => {
+  const lines = new Map<string, string>();
+
+  for (const { label, mark } of marks) {
+    if (!lines.has(mark)) {
+      lines.set(mark, label);
+    }
+  }
+
+  if (lines.size === 0) {
+    return null;
+  }
+
+  // Hidden from the accessibility tree: each cell already says its own words,
+  // so read aloud this would be the same phrases again, out of context.
+  return (
+    <p aria-hidden="true" class="small score-legend">
+      {[...lines].map(([mark, label]) => (
+        <span>
+          <span class="score-legend-mark">{mark}</span> {label}
+        </span>
+      ))}
+    </p>
+  );
+};
 
 export const StatusBadge: FC<{
   /** Usually a word; markup where the badge carries a date, as `<Time>`. */

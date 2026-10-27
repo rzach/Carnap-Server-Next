@@ -1156,9 +1156,16 @@ Choose yes.
       const hiddenCourseHtml = await hiddenCoursePage.text();
 
       expect(hiddenCourseHtml).toContain(
-        '<th data-sort="" scope="col">Score</th>',
+        '<th class="numeric" scope="col">Score</th>',
       );
-      expect(hiddenCourseHtml).toContain("not released");
+      // The worth with the points held back, and the dash said once, under
+      // the table, as well as in each cell's own words.
+      expect(hiddenCourseHtml).toContain(
+        '<span class="visually-hidden">Score not released yet</span>/2',
+      );
+      expect(hiddenCourseHtml).toContain(
+        '<span class="score-legend-mark">—</span> Score not released yet',
+      );
       expect(hiddenCourseHtml).not.toContain(resultsPath);
 
       const hiddenResults = await appRequest(

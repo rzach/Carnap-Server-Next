@@ -75,6 +75,7 @@ import type {
   SetContentItemArchivedInput,
   SetContentItemTitleInput,
   SetCourseArchivedInput,
+  SetCourseDescriptionInput,
   SetGradesVisibleAtInput,
   SiteSettingsStore,
   UnpublishAssignmentInput,
@@ -144,6 +145,7 @@ import {
   type LtiResourceLink,
   ltiProviderSubject,
 } from "../../domain/lti";
+import type { CompiledProse } from "../../domain/prose";
 import {
   type AboutPage,
   DEFAULT_SITE_SETTINGS,
@@ -573,6 +575,30 @@ function mapAssignmentOverride(
     createdById: row.createdById,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+  };
+}
+
+/**
+ * A course row as the domain reads it: the description's two columns as one
+ * value, present only when both are (they are written together, by
+ * {@link descriptionColumns}).
+ */
+function mapCourse(row: typeof courses.$inferSelect): Course {
+  const { descriptionHtml, descriptionSource, ...course } = row;
+
+  return {
+    ...course,
+    description:
+      descriptionHtml === null || descriptionSource === null
+        ? null
+        : { html: descriptionHtml, source: descriptionSource },
+  };
+}
+
+function descriptionColumns(description: CompiledProse | null) {
+  return {
+    descriptionHtml: description?.html ?? null,
+    descriptionSource: description?.source ?? null,
   };
 }
 
@@ -1351,35 +1377,42 @@ class SqliteCourseStore implements CourseStore {
   constructor(private readonly db: AppDatabase) {}
 
   async create(input: CreateCourseInput): Promise<Course> {
-    return single(
-      await this.db
-        .insert(courses)
-        .values({
-          id: input.id,
-          title: input.title,
-          timezone: input.timezone,
-          createdById: input.createdById,
-          createdAt: input.createdAt,
-          updatedAt: input.createdAt,
-        })
-        .returning(),
+    return mapCourse(
+      single(
+        await this.db
+          .insert(courses)
+          .values({
+            id: input.id,
+            title: input.title,
+            timezone: input.timezone,
+            createdById: input.createdById,
+            createdAt: input.createdAt,
+            updatedAt: input.createdAt,
+            ...descriptionColumns(input.description ?? null),
+          })
+          .returning(),
+      ),
     );
   }
 
   async getById(id: AppId): Promise<Course | null> {
-    return nullableSingle(
+    const row = nullableSingle(
       await this.db.select().from(courses).where(eq(courses.id, id)).limit(1),
     );
+
+    return row === null ? null : mapCourse(row);
   }
 
   async listByIds(ids: readonly AppId[]): Promise<Course[]> {
-    return overSlices(unique(ids), (slice) =>
+    const rows = await overSlices(unique(ids), (slice) =>
       this.db.select().from(courses).where(inArray(courses.id, slice)),
     );
+
+    return rows.map(mapCourse);
   }
 
   async updateInfo(input: UpdateCourseInfoInput): Promise<Course | null> {
-    return nullableSingle(
+    const row = nullableSingle(
       await this.db
         .update(courses)
         .set({
@@ -1390,10 +1423,29 @@ class SqliteCourseStore implements CourseStore {
         .where(eq(courses.id, input.id))
         .returning(),
     );
+
+    return row === null ? null : mapCourse(row);
+  }
+
+  async setDescription(
+    input: SetCourseDescriptionInput,
+  ): Promise<Course | null> {
+    const row = nullableSingle(
+      await this.db
+        .update(courses)
+        .set({
+          ...descriptionColumns(input.description),
+          updatedAt: input.updatedAt,
+        })
+        .where(eq(courses.id, input.id))
+        .returning(),
+    );
+
+    return row === null ? null : mapCourse(row);
   }
 
   async setArchived(input: SetCourseArchivedInput): Promise<Course | null> {
-    return nullableSingle(
+    const row = nullableSingle(
       await this.db
         .update(courses)
         .set({
@@ -1403,6 +1455,8 @@ class SqliteCourseStore implements CourseStore {
         .where(eq(courses.id, input.id))
         .returning(),
     );
+
+    return row === null ? null : mapCourse(row);
   }
 
   async addMembership(
@@ -1521,7 +1575,7 @@ class SqliteCourseStore implements CourseStore {
       .orderBy(asc(courses.createdAt), asc(courses.id));
 
     return rows.map((row) => ({
-      course: row.course,
+      course: mapCourse(row.course),
       membership: row.membership,
     }));
   }
@@ -1548,10 +1602,12 @@ class SqliteCourseStore implements CourseStore {
   }
 
   async listAll(): Promise<Course[]> {
-    return this.db
+    const rows = await this.db
       .select()
       .from(courses)
       .orderBy(asc(courses.title), asc(courses.id));
+
+    return rows.map(mapCourse);
   }
 
   async listMembershipsForCourse(

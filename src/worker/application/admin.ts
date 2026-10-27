@@ -16,14 +16,11 @@ import {
 import type { User } from "../domain/users";
 import { deferred } from "../i18n/deferred";
 import type { EventLog } from "../log";
-import {
-  ABOUT_PAGE_MAX_LENGTH,
-  type AboutPageCompileResult,
-  compileAboutPage,
-} from "./about";
+import { ABOUT_PAGE_MAX_LENGTH } from "./about";
 import { appendAdminAudit, auditMoment } from "./admin-audit";
 import { type AuthenticatedActor, assertEmail, normalizeEmail } from "./auth";
 import { requirePlatformCapability } from "./authorization";
+import { compileProse, type ProseCompileResult } from "./content/prose";
 import { assertCourseRole, assertMembershipStatus } from "./courses";
 import { emailChangeRefusal, loadEmailAuthority } from "./email-authority";
 import {
@@ -227,7 +224,7 @@ export class AdminService {
   async setAboutPage(
     actor: AuthenticatedActor,
     source: string,
-  ): Promise<AboutPageCompileResult> {
+  ): Promise<ProseCompileResult> {
     requirePlatformCapability(actor, ["site_admin"]);
 
     if (source.length > ABOUT_PAGE_MAX_LENGTH) {
@@ -239,7 +236,7 @@ export class AdminService {
       );
     }
 
-    const compiled = await compileAboutPage(source);
+    const compiled = await compileProse(source);
 
     if (!compiled.ok) {
       return compiled;
@@ -247,7 +244,7 @@ export class AdminService {
 
     const current = (await this.options.stores.siteSettings.read()).about;
 
-    if ((current?.source ?? null) === (compiled.page?.source ?? null)) {
+    if ((current?.source ?? null) === (compiled.prose?.source ?? null)) {
       return compiled;
     }
 
@@ -256,12 +253,12 @@ export class AdminService {
     await this.options.stores.siteSettings.setAboutPage({
       updatedAt: now.timestamp,
       updatedById: actor.user.id,
-      value: compiled.page,
+      value: compiled.prose,
     });
     await appendAdminAudit(this.options, {
       action: "admin.change_about_page",
       actorUserId: actor.user.id,
-      metadata: { cleared: compiled.page === null },
+      metadata: { cleared: compiled.prose === null },
       timestamp: now.timestamp,
     });
 

@@ -1,4 +1,5 @@
 import type { AppId } from "./ids";
+import type { CompiledProse } from "./prose";
 import type { Timestamp } from "./time";
 
 /** The roles a course membership can carry, least to most privileged. */
@@ -53,6 +54,11 @@ export interface Course {
   readonly createdAt: Timestamp;
   readonly updatedAt: Timestamp;
   readonly archivedAt: Timestamp | null;
+  /**
+   * What students read at the top of the course page — a syllabus link,
+   * office hours — or null where the instructor has written none.
+   */
+  readonly description: CompiledProse | null;
 }
 
 export interface CourseMembership {

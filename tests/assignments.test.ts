@@ -933,7 +933,6 @@ describe("assignment publication", () => {
   test("the assignments table hands its columns what they sort by", async () => {
     await withStorage(async (_storage, env) => {
       const instructor = await login(env, "sorting-teacher@example.test");
-      const student = await login(env, "sorting-student@example.test");
       const courseId = await createCourse(env, instructor);
       const revision = await createRevision(
         env,
@@ -958,12 +957,11 @@ describe("assignment publication", () => {
         await publish(env, instructor, courseId, draft.assignment.id);
       }
 
-      await enrollStudent(env, instructor, student, courseId);
-
+      // The staff's list: a student's is grouped by date and does not sort.
       const page = await appRequest(
         createTestApp(),
         `/courses/${courseId}`,
-        { headers: { Accept: "text/html", Cookie: student.cookieHeader } },
+        { headers: { Accept: "text/html", Cookie: instructor.cookieHeader } },
         env,
       );
 

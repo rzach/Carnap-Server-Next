@@ -538,7 +538,7 @@ adminRoutes.post("/about", async (context) => {
     }
 
     return result.ok
-      ? context.json({ about: result.page })
+      ? context.json({ about: result.prose })
       : context.json({ diagnostics: result.diagnostics }, 400);
   } catch (error) {
     const i18n = context.get("i18n");

@@ -25,6 +25,7 @@ import {
   requireInstructor,
   requirePlatformCapability,
 } from "./authorization";
+import { compileProse, type ProseCompileResult } from "./content/prose";
 import {
   AppHttpError,
   badRequest,
@@ -34,6 +35,12 @@ import {
 import { GradebookService } from "./gradebook";
 import type { AppStores } from "./stores";
 import { createAuthToken, hashAuthToken } from "./tokens";
+
+/**
+ * Room for a syllabus summary, office hours and a reading list; a course's
+ * whole syllabus belongs in a lesson or a linked document.
+ */
+export const COURSE_DESCRIPTION_MAX_LENGTH = 20_000;
 
 export const ENROLLMENT_LINK_TTL_SECONDS = 60 * 60 * 24 * 14;
 
@@ -320,6 +327,64 @@ export class CourseService {
     }
 
     return updated;
+  }
+
+  /** A course as its instructor edits it: the description editor's source. */
+  async getCourseForInstructor(
+    actor: AuthenticatedActor,
+    courseId: AppId,
+  ): Promise<Course> {
+    await requireInstructor(this.options.stores, actor, courseId);
+
+    const course = await this.options.stores.courses.getById(courseId);
+
+    if (course === null) {
+      throw courseNotFound();
+    }
+
+    return course;
+  }
+
+  /**
+   * Set the description students read at the top of the course page, from
+   * the Carnap Markdown the instructor wrote; blank clears it. A text the
+   * compiler refuses is returned with its diagnostics and nothing is saved,
+   * so the editor can show both again.
+   */
+  async setCourseDescription(
+    actor: AuthenticatedActor,
+    courseId: AppId,
+    source: string,
+  ): Promise<ProseCompileResult> {
+    await requireInstructor(this.options.stores, actor, courseId);
+
+    if (source.length > COURSE_DESCRIPTION_MAX_LENGTH) {
+      throw badRequest(
+        "course_description_too_long",
+        deferred.i18n.t(
+          "A course description can be at most {max} characters.",
+          { max: COURSE_DESCRIPTION_MAX_LENGTH },
+        ),
+      );
+    }
+
+    const compiled = await compileProse(source);
+
+    if (!compiled.ok) {
+      return compiled;
+    }
+
+    const updated = await this.options.stores.courses.setDescription({
+      description: compiled.prose,
+      id: courseId,
+      updatedAt: timestampNow(this.options.now?.() ?? new Date()),
+    });
+
+    if (updated === null) {
+      throw courseNotFound();
+    }
+
+    return compiled;
   }
 
   async setCourseArchived(
@@ -859,6 +924,7 @@ export class CourseService {
     const course = await this.options.stores.courses.create({
       createdAt: now,
       createdById: actor.user.id,
+      description: source.description,
       id: createAppId(nowDate.getTime()),
       timezone: source.timezone,
       title,

@@ -26,6 +26,7 @@ import { coursesCrumb } from "../web/breadcrumbs";
 import type { CourseView } from "../web/components";
 import {
   type CourseDetailPage,
+  renderCourseDescriptionEditor,
   renderCourseDetail,
   renderCourseError,
   renderCourseList,
@@ -114,6 +115,7 @@ function publicCourse(course: Course) {
     createdAt: course.createdAt,
     updatedAt: course.updatedAt,
     archivedAt: course.archivedAt,
+    description: course.description,
   };
 }
 
@@ -393,7 +395,7 @@ async function courseDetailPage(
             actor,
             detail.course.id,
           )
-        : [];
+        : { entries: [], progress: [] };
     const unmappedLtiLinks = isInstructor
       ? await ltiServiceForContext(context).listUnmappedResourceLinks(
           actor,
@@ -698,6 +700,82 @@ courseRoutes.post("/:courseId", async (context) => {
   );
 
   return context.json({ course: publicCourse(course) });
+});
+
+courseRoutes.get("/:courseId/description", async (context) => {
+  const loginRedirect = webActorOrLogin(context);
+
+  if (loginRedirect !== null) {
+    return loginRedirect;
+  }
+
+  const actor = requireAuthenticated(context);
+  const i18n = context.get("i18n");
+
+  try {
+    const course = await courseService(context).getCourseForInstructor(
+      actor,
+      requiredParam(context, "courseId"),
+    );
+
+    return renderCourseDescriptionEditor(context, {
+      course,
+      diagnostics: [],
+      saved: new URL(context.req.url).searchParams.has("saved"),
+      source: course.description?.source ?? "",
+    });
+  } catch (error) {
+    if (error instanceof AppHttpError) {
+      return renderCourseError(context, {
+        message: error.localize(i18n),
+        status: error.status,
+        title: i18n.t("Course unavailable"),
+      });
+    }
+
+    throw error;
+  }
+});
+
+courseRoutes.post("/:courseId/description", async (context) => {
+  const actor = requireAuthenticated(context);
+  const courseId = requiredParam(context, "courseId");
+  const form = isFormSubmission(context);
+
+  try {
+    const source = form
+      ? fieldValue((await context.req.raw.formData()).get("source"))
+      : (await readJsonObject(context)).source;
+    const text = typeof source === "string" ? source : "";
+    const service = courseService(context);
+    const result = await service.setCourseDescription(actor, courseId, text);
+
+    if (form) {
+      // A refusal keeps the page, and the text, where they were, as the
+      // About editor does: an error page would lose what was typed.
+      return result.ok
+        ? redirect(`/courses/${courseId}/description?saved=1`)
+        : renderCourseDescriptionEditor(context, {
+            course: await service.getCourseForInstructor(actor, courseId),
+            diagnostics: result.diagnostics,
+            saved: false,
+            source: text,
+          });
+    }
+
+    return result.ok
+      ? context.json({ description: result.prose })
+      : context.json({ diagnostics: result.diagnostics }, 400);
+  } catch (error) {
+    const i18n = context.get("i18n");
+
+    return formErrorOrThrow(
+      context,
+      error,
+      COURSES_CHROME,
+      i18n.t("Course description not changed"),
+    );
+  }
 });
 
 courseRoutes.post("/:courseId/archive", async (context) => {

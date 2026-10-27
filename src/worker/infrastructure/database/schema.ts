@@ -171,6 +171,9 @@ export const courses = sqliteTable(
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
     archivedAt: text("archived_at"),
+    // Both or neither: see `CompiledProse`.
+    descriptionSource: text("description_source"),
+    descriptionHtml: text("description_html"),
   },
   (table) => [index("courses_created_by_id_idx").on(table.createdById)],
 );

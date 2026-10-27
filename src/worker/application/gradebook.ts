@@ -73,6 +73,35 @@ export interface StudentScorecardEntry {
 }
 
 /**
+ * How far a student has got with one assignment, for the course page's status
+ * column: the counted exercises, and how many of them the student's latest
+ * attempt holds an answer to.
+ *
+ * The latest attempt and not every attempt, because that is the one the
+ * student is looking at: on a second attempt the questions start blank, and a
+ * course page saying "Completed" beside an assignment whose page shows none of
+ * it answered would be talking about something else. The score, which takes
+ * the best across attempts, says what the earlier ones were worth.
+ *
+ * "Answered" is a submission on file, whatever it scored. Where an exercise
+ * records only correct answers (`exam="false"`), that is what the exercise's
+ * own status line on the assignment page already says, so the count tells the
+ * student nothing that page does not.
+ */
+export interface StudentAssignmentProgress {
+  readonly answered: number;
+  readonly assignmentId: AppId;
+  readonly questions: number;
+}
+
+/** {@link GradebookService.getStudentCourseScorecard}'s answer. */
+export interface StudentCourseScorecard {
+  readonly entries: readonly StudentScorecardEntry[];
+  /** One per assignment that takes work: none for a reading. */
+  readonly progress: readonly StudentAssignmentProgress[];
+}
+
+/**
  * One exercise as this assignment counts it: the manifest's id and title, and
  * what it is worth.
  *
@@ -762,6 +791,28 @@ function calculateAssignmentScore(
   };
 }
 
+/** One student's {@link StudentAssignmentProgress}, from rows in hand. */
+function assignmentProgress(
+  assignment: Assignment,
+  userId: AppId,
+  inputs: ScoringInputs,
+): StudentAssignmentProgress {
+  const exercises = exercisesFor(inputs, assignment);
+  const counted = new Set(exercises.map((exercise) => exercise.id));
+  const latest = liveAttempts(assignment, userId, inputs).at(-1);
+  const answered = new Set(
+    (latest === undefined ? [] : (inputs.submissions.get(latest.id) ?? []))
+      .map((submission) => submission.exerciseId)
+      .filter((id): id is string => id !== null && counted.has(id)),
+  );
+
+  return {
+    answered: answered.size,
+    assignmentId: assignment.id,
+    questions: exercises.length,
+  };
+}
+
 /**
  * A student's scorecard entry for one assignment, or null where it has none.
  *
@@ -1344,7 +1395,7 @@ export class GradebookService {
   async getStudentCourseScorecard(
     actor: AuthenticatedActor,
     courseId: AppId,
-  ): Promise<StudentScorecardEntry[]> {
+  ): Promise<StudentCourseScorecard> {
     await requireCourseRole(this.options.stores, actor, courseId, ["member"]);
 
     const assignments = (
@@ -1353,16 +1404,25 @@ export class GradebookService {
     const now = timestampNow(this.options.now?.() ?? new Date());
     const inputs = await this.scoringInputs(assignments, actor.user.id);
 
-    return assignments
-      .map((assignment) =>
-        scorecardEntry(
-          assignment,
-          calculateAssignmentScore(assignment, actor.user.id, inputs, now)
-            .score,
-          now,
+    return {
+      entries: assignments
+        .map((assignment) =>
+          scorecardEntry(
+            assignment,
+            calculateAssignmentScore(assignment, actor.user.id, inputs, now)
+              .score,
+            now,
+          ),
+        )
+        .filter((entry): entry is StudentScorecardEntry => entry !== null),
+      // From the rows the scores were read from: progress costs no statement
+      // of its own.
+      progress: assignments
+        .filter((assignment) => assignment.assessmentMode !== "none")
+        .map((assignment) =>
+          assignmentProgress(assignment, actor.user.id, inputs),
         ),
-      )
-      .filter((entry): entry is StudentScorecardEntry => entry !== null);
+    };
   }
 
   /**

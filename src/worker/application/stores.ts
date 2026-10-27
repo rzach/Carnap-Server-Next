@@ -47,6 +47,7 @@ import type {
   LtiPlatform,
   LtiResourceLink,
 } from "../domain/lti";
+import type { CompiledProse } from "../domain/prose";
 import type {
   SetAboutPageInput,
   SetNativeRegistrationInput,
@@ -395,6 +396,14 @@ export interface CreateCourseInput {
   readonly timezone: string;
   readonly createdById: AppId;
   readonly createdAt: Timestamp;
+  /** A clone's copy of its source's; a new course has none. */
+  readonly description?: CompiledProse | null;
+}
+
+export interface SetCourseDescriptionInput {
+  readonly id: AppId;
+  readonly description: CompiledProse | null;
+  readonly updatedAt: Timestamp;
 }
 
 export interface UpdateCourseInfoInput {
@@ -481,6 +490,7 @@ export interface CourseStore {
   /** The courses among `ids` that exist, once each, in no particular order. */
   listByIds(ids: readonly AppId[]): Promise<Course[]>;
   updateInfo(input: UpdateCourseInfoInput): Promise<Course | null>;
+  setDescription(input: SetCourseDescriptionInput): Promise<Course | null>;
   setArchived(input: SetCourseArchivedInput): Promise<Course | null>;
   addMembership(input: AddCourseMembershipInput): Promise<CourseMembership>;
   /**

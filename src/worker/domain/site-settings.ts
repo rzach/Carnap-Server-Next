@@ -1,4 +1,5 @@
 import type { AppId } from "./ids";
+import type { CompiledProse } from "./prose";
 import type { Timestamp } from "./time";
 
 /**
@@ -32,15 +33,8 @@ export function isNativeRegistration(
  * instance shows (what Carnap is, where its source lives, which commit is
  * running). It is where an operator puts what the law may ask of them — an
  * Impressum, a privacy notice, whom to contact — so it is readable signed out.
- *
- * Kept as the administrator wrote it and as it compiled, the way a lesson keeps
- * its source and its artifact: the source is what the editor shows again, and
- * the HTML is what a reader is served without compiling anything.
  */
-export interface AboutPage {
-  readonly html: string;
-  readonly source: string;
-}
+export type AboutPage = CompiledProse;
 
 export interface SiteSettings {
   /** Null until an administrator writes one; the page then shows only its own part. */

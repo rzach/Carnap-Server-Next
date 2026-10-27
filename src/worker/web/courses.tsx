@@ -1,8 +1,10 @@
 import type { Context } from "hono";
+import { raw } from "hono/html";
 import type { FC } from "hono/jsx";
 
+import type { CompilerDiagnostic } from "../application/content/diagnostics";
 import type { GradeSyncFailure } from "../application/grade-passback";
-import type { StudentScorecardEntry } from "../application/gradebook";
+import type { StudentCourseScorecard } from "../application/gradebook";
 import type { UserDirectory } from "../application/users";
 import type { Assignment } from "../domain/assignments";
 import type {
@@ -22,7 +24,7 @@ import {
   AssignmentsTable,
   GradingTable,
 } from "./assignments";
-import { coursesCrumb } from "./breadcrumbs";
+import { courseCrumb, coursesCrumb } from "./breadcrumbs";
 import {
   ArchiveToggle,
   BarField,
@@ -62,6 +64,8 @@ import {
   membershipStatusOptions,
 } from "./labels";
 import { type PageStatus, renderShell, useI18n } from "./layout";
+import { ProseEditor } from "./prose-editor";
+import { StudentAssignmentsTable } from "./student-course";
 import { SortHeader, sortRank } from "./table-sort";
 import { UserLabel, userDetail, userDisplayName } from "./users";
 
@@ -1346,7 +1350,8 @@ export interface CourseDetailViewModel {
   readonly now: Timestamp;
   /** Which of the three pages this is; see {@link CourseDetailPage}. */
   readonly page: CourseDetailPage;
-  readonly scorecard: readonly StudentScorecardEntry[];
+  /** The reader's own progress and scores; empty on the staff pages. */
+  readonly scorecard: StudentCourseScorecard;
   /** The reader's staff tier, or null for a student — who gets no switch. */
   readonly staffTier: CourseStaffTier | null;
   readonly unmappedLtiLinks: readonly LtiResourceLink[];
@@ -1552,7 +1557,24 @@ export function renderCourseDetail(
         />
       }
       title={i18n.t("Course record")}
-    />
+    >
+      {/* The instructor's alone: an assistant authors and grades, and the
+          description is the course's own face to its students. */}
+      {model.page === "instructor" ? (
+        <LinkStrip
+          links={[
+            {
+              hint:
+                model.course.description === null
+                  ? i18n.t("Not written yet: what students read first")
+                  : i18n.t("What students read at the top of the course"),
+              href: `${courseHref}/description`,
+              label: i18n.t("Course description"),
+            },
+          ]}
+        />
+      ) : null}
+    </Sheet>
   );
 
   if (model.page === "student") {
@@ -1566,18 +1588,24 @@ export function renderCourseDetail(
         {/* No course record here: its timezone, status and role are for
             someone telling several courses apart from the staff side, and a
             student's page is the course's assignments. */}
+        {model.course.description === null ? null : (
+          // Compiled and sanitized on save; see `compileProse`.
+          <Sheet className="course-description">
+            {raw(model.course.description.html)}
+          </Sheet>
+        )}
         <Sheet
           description={i18n.t(
             "Published assignments available to you in this course.",
           )}
           title={i18n.t("Assignments")}
         >
-          <AssignmentsTable
+          <StudentAssignmentsTable
             assignments={model.assignments}
             courseId={model.course.id}
-            instructor={false}
             now={model.now}
-            scores={model.scorecard}
+            progress={model.scorecard.progress}
+            scores={model.scorecard.entries}
           />
         </Sheet>
       </>,
@@ -1662,8 +1690,6 @@ export function renderCourseDetail(
               <AssignmentsTable
                 assignments={model.assignments}
                 courseId={model.course.id}
-                instructor={true}
-                now={model.now}
               />
               <GradebookLinks courseId={model.course.id} />
             </Sheet>
@@ -1715,6 +1741,52 @@ export function renderCourseDetail(
             </Sheet>
           </>
         }
+      />
+    </>,
+  );
+}
+
+/**
+ * The course description's editor, the instructor's (see `ProseEditor`): what
+ * students read at the top of the course page, above what is due next.
+ */
+export function renderCourseDescriptionEditor(
+  context: Context<AppBindings>,
+  model: {
+    readonly course: Course;
+    readonly diagnostics: readonly CompilerDiagnostic[];
+    readonly saved: boolean;
+    readonly source: string;
+  },
+): Response {
+  const i18n = context.get("i18n");
+  const courseHref = `/courses/${model.course.id}`;
+
+  return renderShell(
+    context,
+    {
+      breadcrumb: [
+        coursesCrumb(i18n),
+        courseCrumb(model.course.id, model.course.title),
+      ],
+      title: i18n.t("Course description"),
+    },
+    <>
+      {model.saved ? <Notice>{i18n.t("Change saved.")}</Notice> : null}
+      <ProseEditor
+        action={`${courseHref}/description`}
+        context={context}
+        description={i18n.t(
+          "Shown to students at the top of the course page: a syllabus link, office hours, the textbook. Write it in Carnap Markdown, as a lesson's prose; leave it empty to show none.",
+        )}
+        diagnostics={model.diagnostics}
+        footerLink={
+          <a href={`${courseHref}?view=student`}>
+            {i18n.t("View the course as a student")}
+          </a>
+        }
+        source={model.source}
+        title={i18n.t("Description")}
       />
     </>,
   );

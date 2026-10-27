@@ -333,9 +333,7 @@ describe("native web workflow", () => {
       expect(studentCourseHtml).toContain("Intro Logic");
       expect(studentCourseHtml).toContain("Assignments");
       expect(studentCourseHtml).toContain("Inline homework");
-      expect(studentCourseHtml).toContain(
-        '<th data-sort="" scope="col">Type</th>',
-      );
+      expect(studentCourseHtml).toContain('<th scope="col">Type</th>');
       expect(studentCourseHtml).toContain(">Graded<");
       // An open assignment is the ordinary case and says nothing about it.
       expect(studentCourseHtml).not.toContain("Availability");

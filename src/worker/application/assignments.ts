@@ -198,8 +198,12 @@ export interface AssignmentDetail {
  * showing any of it.
  */
 export interface AssignmentBriefing {
-  /** The exercises that count: the manifest's, less the excused ones. */
-  readonly exerciseCount: number;
+  /**
+   * The exercises that count, by id: the manifest's, less the excused ones.
+   * Their number is the briefing's question count, and the open attempt's
+   * line counts its answers among them.
+   */
+  readonly exerciseIds: readonly string[];
   /** What those exercises are worth together. */
   readonly points: number;
   /** Whether scores are out already (`gradesReleased`), as of the read. */
@@ -214,7 +218,7 @@ export interface StudentAssignmentDetail extends AssignmentDetail {
 
 function briefingSize(
   detail: AssignmentDetail,
-): Pick<AssignmentBriefing, "exerciseCount" | "points"> {
+): Pick<AssignmentBriefing, "exerciseIds" | "points"> {
   const excused = new Set(
     detail.exerciseExcuses
       .filter((excuse) => excuse.status === "excused")
@@ -225,7 +229,7 @@ function briefingSize(
   );
 
   return {
-    exerciseCount: counting.length,
+    exerciseIds: counting.map((item) => item.id),
     points: roundPoints(
       counting.reduce((total, item) => total + item.nominalPoints, 0),
     ),

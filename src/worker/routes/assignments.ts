@@ -52,7 +52,7 @@ import {
   viewerEvaluation,
 } from "../domain/feedback";
 import { assertJsonValue } from "../domain/json";
-import { timestampNow } from "../domain/time";
+import { type Timestamp, timestampNow } from "../domain/time";
 import { type AppBindings, requireAuthenticated } from "../http";
 import { deferred } from "../i18n/deferred";
 import type { Translator } from "../i18n/translator";
@@ -1241,6 +1241,8 @@ interface StudentAssignmentView {
   readonly activity: AttemptActivity;
   readonly attempts: readonly Attempt[];
   readonly detail: StudentAssignmentDetail;
+  /** The clock the policy above was read against. */
+  readonly now: Timestamp;
   readonly policy: EffectiveAssignmentPolicy;
   readonly showWorkView: boolean;
   readonly submissionContext: InlineSubmissionContext | null;
@@ -1358,6 +1360,7 @@ async function loadStudentAssignmentView(
     activity,
     attempts,
     detail,
+    now,
     policy,
     showWorkView,
     submissionContext,
@@ -1392,6 +1395,7 @@ async function studentDetailPage(
     courseTitle: await courseTitleFor(context, courseId),
     detail: view.detail,
     notRecorded: url.searchParams.has("notRecorded"),
+    now: view.now,
     policy: view.policy,
     showWorkView: view.showWorkView,
     staffTier: await courseStaffTierFor(

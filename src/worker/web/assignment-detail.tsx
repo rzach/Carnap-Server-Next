@@ -1144,7 +1144,10 @@ function attemptBriefingItems(
     },
     // How big the thing is that the clock starts on — counted, not shown,
     // since the questions stay withheld until it does.
-    { label: i18n.t("Questions"), value: String(briefing.exerciseCount) },
+    {
+      label: i18n.t("Questions"),
+      value: String(briefing.exerciseIds.length),
+    },
     { label: i18n.t("Points"), value: String(briefing.points) },
   ];
 
@@ -3275,6 +3278,95 @@ export function renderEditAssignmentPage(
   );
 }
 
+/**
+ * One quiet line above an open attempt's lesson, outside the content frame so
+ * no author's CSS can hide it: which attempt this is, when it is due, how many
+ * of the questions it holds an answer to, and the way to the results once
+ * there are any. Past its due date graded work says so in gold, with what
+ * lateness costs; a timed attempt says when its time runs out (a live count
+ * down is #393's).
+ *
+ * The answered count is as of the page load. Each question's own status line
+ * updates as the student submits, which is where they are looking then.
+ */
+const AttemptLine: FC<{
+  readonly activity: AttemptActivity;
+  readonly assignment: Assignment;
+  readonly briefing: AssignmentBriefing;
+  readonly now: Timestamp;
+  readonly resultsHref: string;
+  readonly runtimeState: ExerciseRuntimeState;
+}> = ({ activity, assignment, briefing, now, resultsHref, runtimeState }) => {
+  const i18n = useI18n();
+  const graded = assignment.assessmentMode === "graded";
+  const counted = new Set(briefing.exerciseIds);
+  const answered = Object.keys(runtimeState).filter((id) =>
+    counted.has(id),
+  ).length;
+  const pastDue = assignment.dueAt !== null && assignment.dueAt <= now;
+  const late =
+    graded && pastDue
+      ? latePolicyText(i18n, briefing.latePolicy, assignment.dueAt)
+      : null;
+  const expiresAt = activity.activeAttempt?.expiresAt ?? null;
+  const [dueBefore, dueAfter] = splitAtValue(
+    pastDue
+      ? i18n.t("Past due since {when}", { when: VALUE })
+      : i18n.t("Due {when}", { when: VALUE }),
+  );
+  const [endsBefore, endsAfter] = splitAtValue(
+    i18n.t("Time ends {when}", { when: VALUE }),
+  );
+
+  return (
+    <p
+      class={
+        graded && pastDue ? "attempt-line attempt-line-late" : "attempt-line"
+      }
+    >
+      {graded ? (
+        <span>
+          {assignment.maxAttempts === null
+            ? i18n.t("Attempt {number}", { number: activity.attemptsUsed })
+            : i18n.t("Attempt {number} of {allowed}", {
+                allowed: assignment.maxAttempts,
+                number: activity.attemptsUsed,
+              })}
+        </span>
+      ) : null}
+      {assignment.dueAt === null ? null : (
+        <span>
+          {dueBefore}
+          <Time relative={!pastDue} value={assignment.dueAt} weekday />
+          {dueAfter}
+        </span>
+      )}
+      {briefing.exerciseIds.length === 0 ? null : (
+        <span>
+          {i18n.t("{answered} of {questions} answered", {
+            answered,
+            questions: briefing.exerciseIds.length,
+          })}
+        </span>
+      )}
+      {answered === 0 ? null : (
+        <span>
+          <a href={resultsHref}>{i18n.t("Results")}</a>
+        </span>
+      )}
+      {/* Last of the facts: a sentence, with its own full stop. */}
+      {late === null ? null : <span>{late}</span>}
+      {expiresAt === null ? null : (
+        <span class="attempt-line-end">
+          {endsBefore}
+          <Time value={expiresAt} />
+          {endsAfter}
+        </span>
+      )}
+    </p>
+  );
+};
+
 export function renderStudentAssignmentPage(
   context: Context<AppBindings>,
   model: {
@@ -3285,6 +3377,8 @@ export function renderStudentAssignmentPage(
     readonly courseTitle: string;
     readonly detail: StudentAssignmentDetail;
     readonly notRecorded: boolean;
+    /** The clock the policy was read against, for the attempt line. */
+    readonly now: Timestamp;
     readonly policy: EffectiveAssignmentPolicy;
     readonly showWorkView: boolean;
     /** The reader's staff tier, for the switch back; null for a student. */
@@ -3342,6 +3436,16 @@ export function renderStudentAssignmentPage(
         <Notice>{exerciseUiStrings(i18n).notRecorded}</Notice>
       ) : null}
       {model.started ? <Notice>{i18n.t("Attempt started.")}</Notice> : null}
+      {showContent && model.submissionContext !== null ? (
+        <AttemptLine
+          activity={model.activity}
+          assignment={detail.assignment}
+          briefing={detail.briefing}
+          now={model.now}
+          resultsHref={`${studentBase}/results`}
+          runtimeState={model.submissionContext.runtimeState}
+        />
+      ) : null}
       {showContent ? (
         <ContentFrame
           fullscreenHref={studentContentUrl}

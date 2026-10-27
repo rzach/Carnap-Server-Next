@@ -17,10 +17,6 @@ msgstr ""
 msgid "—/{worth}"
 msgstr "—/{worth}"
 
-#: src/worker/web/assignments.tsx
-msgid "—/{worth} (not released)"
-msgstr "—/{worth} (nicht freigegeben)"
-
 #: src/worker/application/content/diagnostic-strings.ts
 #: src/worker/logic/specs/strings.ts
 msgid "“{chunk}” is not part of this language."
@@ -126,6 +122,10 @@ msgstr "„{value}“ ist kein möglicher Wert für „{field}“."
 msgid "“{word}” is not a shape or size this world knows."
 msgstr "„{word}“ ist keine Form oder Größe, die diese Welt kennt."
 
+#: src/worker/web/assignment-detail.tsx
+msgid "{answered} of {questions} answered"
+msgstr "{answered} von {questions} beantwortet"
+
 #: src/worker/exercises/world/strings.ts
 msgid "{block} at column {col}, row {row}"
 msgstr "{block} in Spalte {col}, Zeile {row}"
@@ -186,6 +186,10 @@ msgstr "{count, plural, one {# studierende Person hat einen Versuch zu dieser Au
 #: src/worker/web/revisions.ts
 msgid "{date}: {details}"
 msgstr "{date}: {details}"
+
+#: src/worker/web/student-course.tsx
+msgid "{earned}/{possible} · {percent}%"
+msgstr "{earned}/{possible} · {percent} %"
 
 #: src/worker/web/assignment-detail.tsx
 msgid "{exercise} — {reason}"
@@ -274,6 +278,10 @@ msgstr "{formula}: Zeugen {objects} und weitere, insgesamt {count}."
 #: src/worker/exercises/world/strings.ts
 msgid "{formula}: witnesses {objects}."
 msgstr "{formula}: Zeugen {objects}."
+
+#: src/worker/web/student-course.tsx
+msgid "{incomplete} · {answered} of {questions}"
+msgstr "{incomplete} · {answered} von {questions}"
 
 #. Beside an error shown below a proof: it is error {index} of the {count} errors in the proof, counted in the order F8 visits them.
 #. Beside an error shown below a proof: it is error {index} of the {count} errors in the proof, counted in the order F8 visits them.
@@ -425,6 +433,10 @@ msgstr "Eine Bedingungsaufgabe braucht mindestens eine Bedingung vor dem ':'."
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Square(a) :|-: Large(a)'."
 msgstr "Eine Gegenbeispiel-Aufgabe braucht ein Argument mit dem Ableitungszeichen ':|-:', z. B. 'Square(a) :|-: Large(a)'."
+
+#: src/worker/application/courses.ts
+msgid "A course description can be at most {max} characters."
+msgstr "Eine Kursbeschreibung darf höchstens {max} Zeichen lang sein."
 
 #: src/worker/application/courses.ts
 msgid "A course must keep at least one active instructor."
@@ -1180,6 +1192,14 @@ msgid "Attempt"
 msgstr "Versuch"
 
 #: src/worker/web/assignment-detail.tsx
+msgid "Attempt {number}"
+msgstr "Versuch {number}"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Attempt {number} of {allowed}"
+msgstr "Versuch {number} von {allowed}"
+
+#: src/worker/web/assignment-detail.tsx
 #: src/worker/web/gradebook.tsx
 msgid "Attempt {ordinal}"
 msgstr "Versuch {ordinal}"
@@ -1410,8 +1430,8 @@ msgstr "Carnap-Startseite"
 msgid "Carnap is a platform for teaching and practicing formal logic. Its source code is on {github}."
 msgstr "Carnap ist eine Plattform zum Lehren und Üben formaler Logik. Der Quellcode liegt auf {github}."
 
-#: src/worker/web/about.tsx
 #: src/worker/web/content.tsx
+#: src/worker/web/prose-editor.tsx
 msgid "Carnap Markdown"
 msgstr "Carnap-Markdown"
 
@@ -1442,6 +1462,7 @@ msgstr "E-Mail-Adresse ändern"
 
 #: src/worker/web/about.tsx
 #: src/worker/web/admin.tsx
+#: src/worker/web/courses.tsx
 msgid "Change saved."
 msgstr "Änderung gespeichert."
 
@@ -1583,7 +1604,7 @@ msgid "Close the error message"
 msgstr "Schließt die Fehlermeldung"
 
 #. Disambiguating id; only the word Closed is shown. A badge beside an assignment past its closing date.
-#: src/worker/web/assignments.tsx
+#: src/worker/web/student-course.tsx
 msgid "Closed (assignment availability)"
 msgstr "Geschlossen"
 
@@ -1634,6 +1655,10 @@ msgstr "Schließen Sie die Überprüfung ab, um einen Anmeldelink anzufordern. W
 #: src/worker/web/profile-prompt.tsx
 msgid "Complete your profile"
 msgstr "Profil vervollständigen"
+
+#: src/worker/web/student-course.tsx
+msgid "Completed"
+msgstr "Abgeschlossen"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Conclusion"
@@ -1906,6 +1931,14 @@ msgstr "Kursanlegende Person"
 msgid "Course default"
 msgstr "Kursvorgabe"
 
+#: src/worker/web/courses.tsx
+msgid "Course description"
+msgstr "Kursbeschreibung"
+
+#: src/worker/routes/courses.ts
+msgid "Course description not changed"
+msgstr "Kursbeschreibung nicht geändert"
+
 #: src/worker/web/gradebook.tsx
 msgid "Course gradebook"
 msgstr "Notenbuch des Kurses"
@@ -1986,7 +2019,7 @@ msgstr "Kurstitel"
 msgid "Course title must be between 1 and 200 characters."
 msgstr "Der Kurstitel muss zwischen 1 und 200 Zeichen lang sein."
 
-#: src/worker/web/assignments.tsx
+#: src/worker/web/student-course.tsx
 msgid "Course total"
 msgstr "Kursgesamtwertung"
 
@@ -2145,6 +2178,7 @@ msgid "Deployment removed."
 msgstr "Deployment entfernt."
 
 #: src/worker/web/assignment-detail.tsx
+#: src/worker/web/courses.tsx
 msgid "Description"
 msgstr "Beschreibung"
 
@@ -2254,6 +2288,7 @@ msgstr "Abgemeldet"
 
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/assignments.tsx
+#: src/worker/web/student-course.tsx
 msgid "Due"
 msgstr "Fällig"
 
@@ -2934,6 +2969,10 @@ msgstr "Falls Sie diese Änderung nicht vorgenommen haben, machen Sie sie über 
 msgid "Immutable snapshots that published assignments point to. Each is shared, or not, on its own."
 msgstr "Unveränderliche Momentaufnahmen, auf die veröffentlichte Aufgaben verweisen. Jede wird für sich freigegeben – oder nicht."
 
+#: src/worker/web/student-course.tsx
+msgid "In progress · {answered} of {questions}"
+msgstr "In Bearbeitung · {answered} von {questions}"
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "In the starter, assumption line “{line}” can't have premises."
 msgstr "In der Vorgabe darf die Annahmezeile „{line}“ keine Prämissen haben."
@@ -2953,6 +2992,10 @@ msgstr "In diesem Modell hat {field} mehr als einen Wert für {argument}."
 #: src/worker/exercises/model/strings.ts
 msgid "In this model {field} has no value for {argument}."
 msgstr "In diesem Modell hat {field} keinen Wert für {argument}."
+
+#: src/worker/web/student-course.tsx
+msgid "Incomplete"
+msgstr "Unvollständig"
 
 #. A checked truth-table cell's verdict, spoken as part of the cell's accessible name: “Q, row 3: false, incorrect”. Lowercase, mid-sentence. Use a word that cannot be heard as the value “false”.
 #: src/worker/exercises/truth-table/strings.ts
@@ -3531,7 +3574,7 @@ msgstr "Noch keine administrativen Prüfereignisse."
 msgid "No answer review is available."
 msgstr "Es ist keine Antwortübersicht verfügbar."
 
-#: src/worker/web/assignments.tsx
+#: src/worker/web/student-course.tsx
 msgid "No assignments are available."
 msgstr "Es sind keine Aufgaben verfügbar."
 
@@ -3572,6 +3615,7 @@ msgid "No details given"
 msgstr "Keine Details angegeben"
 
 #: src/worker/web/assignment-detail.tsx
+#: src/worker/web/student-course.tsx
 msgid "No due date"
 msgstr "Keine Frist"
 
@@ -3750,12 +3794,17 @@ msgid "Not set"
 msgstr "Nicht gesetzt"
 
 #: src/worker/web/gradebook.tsx
+#: src/worker/web/student-course.tsx
 msgid "Not started"
 msgstr "Nicht begonnen"
 
 #: src/worker/web/ui-strings.ts
 msgid "not verified"
 msgstr "nicht verifiziert"
+
+#: src/worker/web/courses.tsx
+msgid "Not written yet: what students read first"
+msgstr "Noch nicht verfasst: das, was Studierende zuerst lesen"
 
 #: src/worker/web/gradebook.tsx
 msgid "Not yet graded"
@@ -3784,6 +3833,10 @@ msgstr "Nichts in der Welt heißt „{name}“, das „{formula}“ verwendet."
 #: src/worker/exercises/world/strings.ts
 msgid "Nothing in this world is named {names}."
 msgstr "Nichts in dieser Welt heißt {names}."
+
+#: src/worker/web/student-course.tsx
+msgid "Nothing submitted"
+msgstr "Nichts abgegeben"
 
 #: src/worker/web/content.tsx
 msgid "Nothing to preview yet"
@@ -3929,7 +3982,7 @@ msgid "Opened"
 msgstr "Eröffnet"
 
 #: src/worker/web/assignment-detail.tsx
-#: src/worker/web/assignments.tsx
+#: src/worker/web/student-course.tsx
 msgid "Opens {when}"
 msgstr "Öffnet {when}"
 
@@ -3990,6 +4043,14 @@ msgstr "Seite nicht gefunden"
 #: src/worker/logic/specs/strings.ts
 msgid "Parentheses may only enclose a sentence joined by a two-place connective."
 msgstr "Klammern dürfen nur einen Satz einschließen, dessen Hauptjunktor zweistellig ist."
+
+#: src/worker/web/student-course.tsx
+msgid "Past"
+msgstr "Vergangen"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Past due since {when}"
+msgstr "Überfällig seit {when}"
 
 #: src/worker/web/admin-lti.tsx
 msgid "Paste these Carnap endpoints into the LMS when registering the external tool."
@@ -4130,6 +4191,10 @@ msgstr "Übungspunktzahlen"
 #: src/worker/web/gradebook.tsx
 msgid "Practice scores are recorded, and do not count toward the course total."
 msgstr "Übungspunkte werden erfasst und zählen nicht zur Gesamtpunktzahl des Kurses."
+
+#: src/worker/web/student-course.tsx
+msgid "Practice scores do not count toward the course total."
+msgstr "Übungspunkte zählen nicht zur Kursgesamtwertung."
 
 #: src/worker/exercises/aufbau-proof-prawitz/types.ts
 msgid "Prawitz proof"
@@ -4492,6 +4557,7 @@ msgid "Result"
 msgstr "Ergebnis"
 
 #: src/worker/web/admin.tsx
+#: src/worker/web/assignment-detail.tsx
 #: src/worker/web/gradebook.tsx
 msgid "Results"
 msgstr "Ergebnisse"
@@ -4722,10 +4788,10 @@ msgstr "Regeln"
 msgid "Rules a proof can cite: {names}."
 msgstr "Regeln, die ein Beweis zitieren kann: {names}."
 
-#: src/worker/web/about.tsx
 #: src/worker/web/admin.tsx
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/courses.tsx
+#: src/worker/web/prose-editor.tsx
 msgid "Save"
 msgstr "Speichern"
 
@@ -4774,8 +4840,8 @@ msgid "Scheduling and presentation can be changed after publishing. Content and 
 msgstr "Zeitplan und Darstellung lassen sich nach der Veröffentlichung ändern. Inhalt und Bewertungsart bleiben fest."
 
 #: src/worker/web/assignment-detail.tsx
-#: src/worker/web/assignments.tsx
 #: src/worker/web/gradebook.tsx
+#: src/worker/web/student-course.tsx
 msgid "Score"
 msgstr "Punktzahl"
 
@@ -4784,6 +4850,7 @@ msgid "Score must be zero or greater."
 msgstr "Die Punktzahl muss null oder größer sein."
 
 #: src/worker/web/gradebook.tsx
+#: src/worker/web/student-course.tsx
 msgid "Score not released yet"
 msgstr "Punkte noch nicht freigegeben"
 
@@ -4954,6 +5021,10 @@ msgstr "Ihre Arbeit als Quelltext anzeigen"
 msgid "Shown to everyone at /about, signed in or not, above what every Carnap instance says about itself. Write it in Carnap Markdown, as a lesson's prose; leave it empty to show only that part."
 msgstr "Wird allen unter /about angezeigt, ob angemeldet oder nicht, über dem Teil, den jede Carnap-Instanz über sich selbst sagt. Schreiben Sie ihn in Carnap-Markdown wie den Fließtext einer Lektion; lassen Sie ihn leer, um nur jenen Teil anzuzeigen."
 
+#: src/worker/web/courses.tsx
+msgid "Shown to students at the top of the course page: a syllabus link, office hours, the textbook. Write it in Carnap Markdown, as a lesson's prose; leave it empty to show none."
+msgstr "Wird Studierenden oben auf der Kursseite angezeigt: ein Link zum Syllabus, Sprechzeiten, das Lehrbuch. Schreiben Sie sie in Carnap-Markdown wie den Fließtext einer Lektion; lassen Sie sie leer, um keine anzuzeigen."
+
 #: src/worker/infrastructure/email/resend.ts
 msgid "Sign in"
 msgstr "Anmelden"
@@ -5107,6 +5178,7 @@ msgstr "Zustand"
 #: src/worker/web/admin.tsx
 #: src/worker/web/courses.tsx
 #: src/worker/web/lti.tsx
+#: src/worker/web/student-course.tsx
 msgid "Status"
 msgstr "Status"
 
@@ -6433,6 +6505,10 @@ msgid "Time"
 msgstr "Zeit"
 
 #: src/worker/web/assignment-detail.tsx
+msgid "Time ends {when}"
+msgstr "Zeit endet {when}"
+
+#: src/worker/web/assignment-detail.tsx
 msgid "Time limit"
 msgstr "Zeitlimit"
 
@@ -6460,6 +6536,7 @@ msgstr "Zeitzone"
 #: src/worker/web/assignments.tsx
 #: src/worker/web/content.tsx
 #: src/worker/web/courses.tsx
+#: src/worker/web/student-course.tsx
 msgid "Title"
 msgstr "Titel"
 
@@ -6550,6 +6627,7 @@ msgstr "Zwei Objekte stehen in Spalte {col}, Zeile {row}."
 
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/assignments.tsx
+#: src/worker/web/student-course.tsx
 msgid "Type"
 msgstr "Art"
 
@@ -6684,6 +6762,10 @@ msgstr "Ungeprüft ({count})"
 msgid "Unverified"
 msgstr "Nicht bestätigt"
 
+#: src/worker/web/student-course.tsx
+msgid "Upcoming"
+msgstr "Anstehend"
+
 #: src/worker/web/courses.tsx
 msgid "Update membership"
 msgstr "Mitgliedschaft aktualisieren"
@@ -6794,6 +6876,10 @@ msgstr "Bestätigt {when}"
 msgid "View the About page"
 msgstr "Seite „Über“ ansehen"
 
+#: src/worker/web/courses.tsx
+msgid "View the course as a student"
+msgstr "Kurs aus Sicht der Studierenden ansehen"
+
 #: src/worker/web/components.tsx
 msgid "View this course as"
 msgstr "Diesen Kurs ansehen als"
@@ -6822,6 +6908,10 @@ msgstr "Wir senden einen Link an die neue Adresse und ändern nichts, bis er ge�
 #: src/worker/web/content.tsx
 msgid "What changed, optional"
 msgstr "Was sich geändert hat, optional"
+
+#: src/worker/web/courses.tsx
+msgid "What students read at the top of the course"
+msgstr "Was Studierende oben im Kurs lesen"
 
 #: src/worker/web/admin.tsx
 msgid "What this instance says about itself, such as an Impressum or privacy notice"

@@ -265,6 +265,30 @@ ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
     new Intl.DateTimeFormat(locale, { dateStyle: "short" }),
   ];
   const ladder = [full, ...dateOnly];
+  // A weekday timestamp (\`Time\`'s \`weekday\`) leads with "Wed, Oct 28",
+  // to the minute unless it is also day-only, and names the year only when it
+  // is not this one; the plain rungs follow it down.
+  const thisYear = new Date().getFullYear();
+  const weekdayForms = (date, withTime) => {
+    const fields = { day: "numeric", month: "short", weekday: "short" };
+
+    if (date.getFullYear() !== thisYear) {
+      fields.year = "numeric";
+    }
+
+    const dated = new Intl.DateTimeFormat(locale, fields);
+
+    return withTime
+      ? [
+          new Intl.DateTimeFormat(locale, {
+            ...fields,
+            hour: "numeric",
+            minute: "2-digit",
+          }),
+          dated,
+        ]
+      : [dated];
+  };
 
   const entries = [];
 
@@ -275,7 +299,12 @@ ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
       continue;
     }
 
-    const forms = element.hasAttribute("data-day") ? dateOnly : ladder;
+    const day = element.hasAttribute("data-day");
+    const forms = element.hasAttribute("data-weekday")
+      ? [...weekdayForms(date, !day), ...dateOnly]
+      : day
+        ? dateOnly
+        : ladder;
 
     // Localize immediately so no ISO string flashes; a cell that needs to fit
     // is refined once web fonts settle and measurement matches the paint.
@@ -286,6 +315,30 @@ ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
       element,
       forms,
     });
+  }
+
+  // How many of the reader's days off a date is, said the way the language
+  // says it ("tomorrow", "in 2 days", "3 days ago"), within a fortnight either
+  // side; past that the date says enough. Counted between midnights, so 11 PM
+  // tonight is "today" however few hours remain, and rounded, so a day that a
+  // clock change made 23 or 25 hours long still counts as one.
+  const relative = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  const midnight = (date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const today = midnight(new Date());
+
+  for (const element of document.querySelectorAll("[data-relative-day]")) {
+    const date = new Date(element.getAttribute("data-relative-day"));
+
+    if (Number.isNaN(date.getTime())) {
+      continue;
+    }
+
+    const days = Math.round((midnight(date) - today) / 86400000);
+
+    if (Math.abs(days) < 14) {
+      element.textContent = relative.format(days, "day");
+    }
   }
 
   const fit = () => {

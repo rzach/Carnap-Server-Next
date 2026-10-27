@@ -711,6 +711,100 @@ a.score-uncounted {
   color: var(--ink-muted);
 }
 
+/* A student's status for a piece of work, in the colour its exception earns:
+   red for graded work past its due date with nothing in, gold for the word
+   "Incomplete" on graded work past its due date with some of it unanswered.
+   The other states are the cell's plain text. */
+.work-status-warn,
+.work-status-danger {
+  font-weight: 600;
+}
+
+.work-status-warn {
+  color: var(--gold);
+}
+
+.work-status-danger {
+  color: var(--red);
+}
+
+/* A table's rows in groups under headings of their own (the student course
+   list's Upcoming, Past and No due date): the body face at the row's size,
+   in full ink and weight, with the rule under it that a column heading has. */
+tr.table-group th {
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  padding-block: 1.1rem 0.45rem;
+  text-transform: none;
+}
+
+tbody:first-of-type tr.table-group th {
+  padding-top: 0.6rem;
+}
+
+/* How far off a date is ("in 2 days"), which the shell script writes in the
+   reader's calendar and leaves empty past a fortnight. In a ledger cell it
+   takes a quieter line under the date; anywhere else it follows on the same
+   line after a dot. */
+.time-relative:empty {
+  display: none;
+}
+
+.time-relative::before {
+  content: "·" / "";
+  margin-inline: 0.4em;
+}
+
+td .time-relative {
+  color: var(--ink-muted);
+  display: block;
+  font-size: 0.85rem;
+}
+
+td .time-relative::before {
+  content: none;
+}
+
+/* The line above an open attempt's lesson (see `AttemptLine`): its facts in
+   a row, a dot between each, and the time limit held at the far end. Past
+   due it takes the warning's gold ground, as a notice does. */
+.attempt-line {
+  align-items: baseline;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  gap: 0.2rem 0;
+  margin: 0 0 1rem;
+  padding: 0.55rem 0.9rem;
+}
+
+.attempt-line > span + span::before {
+  color: var(--ink-muted);
+  content: "·" / "";
+  margin-inline: 0.5em;
+}
+
+.attempt-line > .attempt-line-end {
+  margin-inline-start: auto;
+  padding-inline-start: 1rem;
+}
+
+.attempt-line > .attempt-line-end::before {
+  content: none;
+}
+
+.attempt-line-late {
+  background: var(--gold-soft);
+  border-color: color-mix(in srgb, var(--gold) 25%, transparent);
+  color: var(--gold);
+}
+
 /* Ledger tables: the sortable headings, the scroller, and the audit log.
    Here rather than in content.css, which every content document also loads:
    these are the app shell's own furniture, and a lesson has none of it. */
@@ -1060,6 +1154,30 @@ td > .create-bar {
   /* As specific as the dot's own rule above, which it overrides. */
   table.phone-list td.phone-own-line + td:not(:first-child)::before {
     content: none;
+  }
+
+  /* A date's distance joins the line under a name like any other value,
+     after a dot, rather than taking the line of its own a desktop cell gives
+     it. */
+  table.phone-list td .time-relative:not(:empty) {
+    display: inline;
+    font-size: inherit;
+  }
+
+  table.phone-list td .time-relative::before {
+    content: "·" / "";
+    margin-inline: 0.4em;
+  }
+
+  /* A group's heading is the whole row, ruled by the row's own line. */
+  table.phone-list tr.table-group {
+    padding-block: 0.9rem 0.35rem;
+  }
+
+  table.phone-list tr.table-group th {
+    border-bottom: 0;
+    flex-basis: 100%;
+    padding: 0;
   }
 }
 

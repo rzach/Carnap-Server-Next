@@ -260,9 +260,9 @@ describe("about page", () => {
       );
       expect(html).toContain('href="/admin"');
       expect(html).toContain("Change saved.");
-      // The lesson editor's bundle, told to compile this as an About text.
-      expect(html).toContain('data-source-format="about"');
-      expect(html).toContain('id="about-source-label"');
+      // The lesson editor's bundle, told to compile this as chrome prose.
+      expect(html).toContain('data-source-format="prose"');
+      expect(html).toContain('id="prose-source-label"');
       expect(html).toContain("data-editor-diagnostics");
       expect(html).toContain('src="/assets/editor-preview.js"');
     });

@@ -33,11 +33,14 @@ import {
   LinkStrip,
   Notice,
   PointsDriftNote,
+  ScoreLegend,
   Sheet,
   type SummaryItem,
   SummaryStrip,
   TableScroll,
   Time,
+  UnscoredMark,
+  type UnscoredMarkText,
 } from "./components";
 import { renderShell, useI18n } from "./layout";
 import { SortHeader, sortNumber } from "./table-sort";
@@ -63,15 +66,6 @@ function isUnscored(
   return status in STATUS_MARKS;
 }
 
-/**
- * A cell with no score in it: a mark for the eye, explained once by
- * {@link ScoreLegend}, and the words a screen reader hears in its place.
- */
-interface UnscoredMarkText {
-  readonly label: string;
-  readonly mark: string;
-}
-
 function statusMark(
   i18n: Translator,
   status: UnscoredStatus,
@@ -92,45 +86,6 @@ function statusMark(
 function ungradedMark(i18n: Translator): UnscoredMarkText {
   return { label: i18n.t("Nothing graded"), mark: DASH };
 }
-
-const UnscoredMark: FC<UnscoredMarkText> = ({ label, mark }) => (
-  <>
-    <span aria-hidden="true">{mark}</span>
-    <span class="visually-hidden">{label}</span>
-  </>
-);
-
-/**
- * What the marks in a gradebook mean, under the table that uses them: one
- * line per mark, the first explanation given for it.
- */
-const ScoreLegend: FC<{ readonly marks: readonly UnscoredMarkText[] }> = ({
-  marks,
-}) => {
-  const lines = new Map<string, string>();
-
-  for (const { label, mark } of marks) {
-    if (!lines.has(mark)) {
-      lines.set(mark, label);
-    }
-  }
-
-  if (lines.size === 0) {
-    return null;
-  }
-
-  // Hidden from the accessibility tree: each cell already says its own words,
-  // so read aloud this would be the same phrases again, out of context.
-  return (
-    <p aria-hidden="true" class="small score-legend">
-      {[...lines].map(([mark, label]) => (
-        <span>
-          <span class="score-legend-mark">{mark}</span> {label}
-        </span>
-      ))}
-    </p>
-  );
-};
 
 /** The marks a set of scores shows, in the legend's order. */
 function statusMarks(

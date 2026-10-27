@@ -1239,6 +1239,60 @@ export function describeStorageContract(
       });
     });
 
+    test("a course description is kept, read wherever the course is, and cleared", async () => {
+      await withStorage(async ({ stores }) => {
+        const { course, student } = await createCourseSlice(stores);
+
+        expect(course.description).toBeNull();
+
+        const description = {
+          html: "<p>Office hours: Tuesdays.</p>",
+          source: "Office hours: Tuesdays.",
+        };
+        const described = await stores.courses.setDescription({
+          description,
+          id: course.id,
+          updatedAt: NOW,
+        });
+
+        expect(described?.description).toEqual(description);
+        await expect(stores.courses.getById(course.id)).resolves.toEqual(
+          described,
+        );
+        expect(
+          (await stores.courses.listForUser(student.id))[0]?.course
+            .description,
+        ).toEqual(description);
+
+        // A clone is created with its source's description.
+        const copy = await stores.courses.create({
+          createdAt: NOW,
+          createdById: course.createdById,
+          description,
+          id: "course-description-copy",
+          timezone: course.timezone,
+          title: "Copy",
+        });
+
+        expect(copy.description).toEqual(description);
+
+        const cleared = await stores.courses.setDescription({
+          description: null,
+          id: course.id,
+          updatedAt: NOW,
+        });
+
+        expect(cleared?.description).toBeNull();
+        await expect(
+          stores.courses.setDescription({
+            description,
+            id: "course-missing",
+            updatedAt: NOW,
+          }),
+        ).resolves.toBeNull();
+      });
+    });
+
     test("a revision keeps its theory origins, and they are read in bulk", async () => {
       await withStorage(async ({ stores }) => {
         const { instructor, item, revision } =

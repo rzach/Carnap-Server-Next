@@ -566,6 +566,14 @@ const ABOUT_FIXTURE_SOURCE = [
   "- [logiklabor.example](https://logiklabor.example)",
 ].join("\n");
 
+/** A course description with the parts one has: a heading, a list, a link. */
+const COURSE_DESCRIPTION_FIXTURE_SOURCE = [
+  "## Office hours",
+  "",
+  "- Tuesdays, 2–4 pm, room 214",
+  "- [Syllabus](https://logiklabor.example/syllabus)",
+].join("\n");
+
 function noticeQuery(...params: readonly string[]): string {
   return `?${params.map((param) => `${param}=1`).join("&")}`;
 }
@@ -810,9 +818,12 @@ export async function collectFixtures(
 
   // One published assignment not yet open and one already closed: the
   // student's course list badges only these exceptions, beside the title.
+  // And one still open long past its due date with nothing in, the status
+  // the list colours red.
   for (const window of [
     { availableFrom: "2999-01-01T00:00:00.000Z", title: "Homework upcoming" },
     { availableUntil: "2000-01-01T00:00:00.000Z", title: "Homework closed" },
+    { dueAt: "2000-01-01T00:00:00.000Z", title: "Homework missed" },
   ]) {
     const response = await appRequest(
       createTestApp(),
@@ -1001,6 +1012,40 @@ export async function collectFixtures(
   await add("course-detail-instructor", `/courses/${courseId}`, instructor);
   await add("course-detail-student", `/courses/${courseId}`, student);
   await add("course-detail-assistant", `/courses/${courseId}`, assistant);
+  // The course description: refused (its text back, with diagnostics),
+  // saved, and then read at the top of the student's page.
+  await add(
+    "course-description",
+    `/courses/${courseId}/description`,
+    instructor,
+  );
+  await addPost(
+    "course-description-refused",
+    `/courses/${courseId}/description`,
+    { source: "Office hours\n\n:::style\np { color: red; }\n:::" },
+    instructor,
+  );
+  const descriptionSaved = await formPost(
+    env,
+    `/courses/${courseId}/description`,
+    { source: COURSE_DESCRIPTION_FIXTURE_SOURCE },
+    instructor,
+    headers,
+  );
+
+  if (descriptionSaved.status !== 303) {
+    throw new Error(`fixture description save → ${descriptionSaved.status}`);
+  }
+  await add(
+    "course-description-saved",
+    `/courses/${courseId}/description${noticeQuery("saved")}`,
+    instructor,
+  );
+  await add(
+    "course-detail-student-described",
+    `/courses/${courseId}`,
+    student,
+  );
   // The staff side's other half: what the Staff | Student switch shows an
   // instructor who presses it — the student page, with the switch kept.
   await add(

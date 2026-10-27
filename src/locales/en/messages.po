@@ -17,10 +17,6 @@ msgstr ""
 msgid "—/{worth}"
 msgstr "—/{worth}"
 
-#: src/worker/web/assignments.tsx
-msgid "—/{worth} (not released)"
-msgstr "—/{worth} (not released)"
-
 #: src/worker/application/content/diagnostic-strings.ts
 #: src/worker/logic/specs/strings.ts
 msgid "“{chunk}” is not part of this language."
@@ -126,6 +122,10 @@ msgstr "“{value}” is not something “{field}” can contain."
 msgid "“{word}” is not a shape or size this world knows."
 msgstr "“{word}” is not a shape or size this world knows."
 
+#: src/worker/web/assignment-detail.tsx
+msgid "{answered} of {questions} answered"
+msgstr "{answered} of {questions} answered"
+
 #: src/worker/exercises/world/strings.ts
 msgid "{block} at column {col}, row {row}"
 msgstr "{block} at column {col}, row {row}"
@@ -186,6 +186,10 @@ msgstr "{count, plural, one {# student has an attempt on this assignment.} other
 #: src/worker/web/revisions.ts
 msgid "{date}: {details}"
 msgstr "{date}: {details}"
+
+#: src/worker/web/student-course.tsx
+msgid "{earned}/{possible} · {percent}%"
+msgstr "{earned}/{possible} · {percent}%"
 
 #: src/worker/web/assignment-detail.tsx
 msgid "{exercise} — {reason}"
@@ -274,6 +278,10 @@ msgstr "{formula}: witnesses {objects}, and others: {count} in all."
 #: src/worker/exercises/world/strings.ts
 msgid "{formula}: witnesses {objects}."
 msgstr "{formula}: witnesses {objects}."
+
+#: src/worker/web/student-course.tsx
+msgid "{incomplete} · {answered} of {questions}"
+msgstr "{incomplete} · {answered} of {questions}"
 
 #. Beside an error shown below a proof: it is error {index} of the {count} errors in the proof, counted in the order F8 visits them.
 #. Beside an error shown below a proof: it is error {index} of the {count} errors in the proof, counted in the order F8 visits them.
@@ -425,6 +433,10 @@ msgstr "A constraint exercise needs at least one constraint before the ':'."
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Square(a) :|-: Large(a)'."
 msgstr "A counterexample exercise needs one argument with the ':|-:' turnstile, e.g. 'Square(a) :|-: Large(a)'."
+
+#: src/worker/application/courses.ts
+msgid "A course description can be at most {max} characters."
+msgstr "A course description can be at most {max} characters."
 
 #: src/worker/application/courses.ts
 msgid "A course must keep at least one active instructor."
@@ -1180,6 +1192,14 @@ msgid "Attempt"
 msgstr "Attempt"
 
 #: src/worker/web/assignment-detail.tsx
+msgid "Attempt {number}"
+msgstr "Attempt {number}"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Attempt {number} of {allowed}"
+msgstr "Attempt {number} of {allowed}"
+
+#: src/worker/web/assignment-detail.tsx
 #: src/worker/web/gradebook.tsx
 msgid "Attempt {ordinal}"
 msgstr "Attempt {ordinal}"
@@ -1410,8 +1430,8 @@ msgstr "Carnap home"
 msgid "Carnap is a platform for teaching and practicing formal logic. Its source code is on {github}."
 msgstr "Carnap is a platform for teaching and practicing formal logic. Its source code is on {github}."
 
-#: src/worker/web/about.tsx
 #: src/worker/web/content.tsx
+#: src/worker/web/prose-editor.tsx
 msgid "Carnap Markdown"
 msgstr "Carnap Markdown"
 
@@ -1442,6 +1462,7 @@ msgstr "Change email address"
 
 #: src/worker/web/about.tsx
 #: src/worker/web/admin.tsx
+#: src/worker/web/courses.tsx
 msgid "Change saved."
 msgstr "Change saved."
 
@@ -1583,7 +1604,7 @@ msgid "Close the error message"
 msgstr "Close the error message"
 
 #. Disambiguating id; only the word Closed is shown. A badge beside an assignment past its closing date.
-#: src/worker/web/assignments.tsx
+#: src/worker/web/student-course.tsx
 msgid "Closed (assignment availability)"
 msgstr "Closed"
 
@@ -1634,6 +1655,10 @@ msgstr "Complete the verification check to request a login link. If no check app
 #: src/worker/web/profile-prompt.tsx
 msgid "Complete your profile"
 msgstr "Complete your profile"
+
+#: src/worker/web/student-course.tsx
+msgid "Completed"
+msgstr "Completed"
 
 #: src/worker/exercises/world/strings.ts
 msgid "Conclusion"
@@ -1906,6 +1931,14 @@ msgstr "Course creator"
 msgid "Course default"
 msgstr "Course default"
 
+#: src/worker/web/courses.tsx
+msgid "Course description"
+msgstr "Course description"
+
+#: src/worker/routes/courses.ts
+msgid "Course description not changed"
+msgstr "Course description not changed"
+
 #: src/worker/web/gradebook.tsx
 msgid "Course gradebook"
 msgstr "Course gradebook"
@@ -1986,7 +2019,7 @@ msgstr "Course title"
 msgid "Course title must be between 1 and 200 characters."
 msgstr "Course title must be between 1 and 200 characters."
 
-#: src/worker/web/assignments.tsx
+#: src/worker/web/student-course.tsx
 msgid "Course total"
 msgstr "Course total"
 
@@ -2145,6 +2178,7 @@ msgid "Deployment removed."
 msgstr "Deployment removed."
 
 #: src/worker/web/assignment-detail.tsx
+#: src/worker/web/courses.tsx
 msgid "Description"
 msgstr "Description"
 
@@ -2254,6 +2288,7 @@ msgstr "Dropped"
 
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/assignments.tsx
+#: src/worker/web/student-course.tsx
 msgid "Due"
 msgstr "Due"
 
@@ -2934,6 +2969,10 @@ msgstr "If you did not make this change, use the link below to undo it and sign 
 msgid "Immutable snapshots that published assignments point to. Each is shared, or not, on its own."
 msgstr "Immutable snapshots that published assignments point to. Each is shared, or not, on its own."
 
+#: src/worker/web/student-course.tsx
+msgid "In progress · {answered} of {questions}"
+msgstr "In progress · {answered} of {questions}"
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "In the starter, assumption line “{line}” can't have premises."
 msgstr "In the starter, assumption line “{line}” can't have premises."
@@ -2953,6 +2992,10 @@ msgstr "In this model {field} has more than one value for {argument}."
 #: src/worker/exercises/model/strings.ts
 msgid "In this model {field} has no value for {argument}."
 msgstr "In this model {field} has no value for {argument}."
+
+#: src/worker/web/student-course.tsx
+msgid "Incomplete"
+msgstr "Incomplete"
 
 #. A checked truth-table cell's verdict, spoken as part of the cell's accessible name: “Q, row 3: false, incorrect”. Lowercase, mid-sentence. Use a word that cannot be heard as the value “false”.
 #: src/worker/exercises/truth-table/strings.ts
@@ -3531,7 +3574,7 @@ msgstr "No admin audit events yet."
 msgid "No answer review is available."
 msgstr "No answer review is available."
 
-#: src/worker/web/assignments.tsx
+#: src/worker/web/student-course.tsx
 msgid "No assignments are available."
 msgstr "No assignments are available."
 
@@ -3572,6 +3615,7 @@ msgid "No details given"
 msgstr "No details given"
 
 #: src/worker/web/assignment-detail.tsx
+#: src/worker/web/student-course.tsx
 msgid "No due date"
 msgstr "No due date"
 
@@ -3750,12 +3794,17 @@ msgid "Not set"
 msgstr "Not set"
 
 #: src/worker/web/gradebook.tsx
+#: src/worker/web/student-course.tsx
 msgid "Not started"
 msgstr "Not started"
 
 #: src/worker/web/ui-strings.ts
 msgid "not verified"
 msgstr "not verified"
+
+#: src/worker/web/courses.tsx
+msgid "Not written yet: what students read first"
+msgstr "Not written yet: what students read first"
 
 #: src/worker/web/gradebook.tsx
 msgid "Not yet graded"
@@ -3784,6 +3833,10 @@ msgstr "Nothing in the world is named “{name}”, which “{formula}” uses."
 #: src/worker/exercises/world/strings.ts
 msgid "Nothing in this world is named {names}."
 msgstr "Nothing in this world is named {names}."
+
+#: src/worker/web/student-course.tsx
+msgid "Nothing submitted"
+msgstr "Nothing submitted"
 
 #: src/worker/web/content.tsx
 msgid "Nothing to preview yet"
@@ -3929,7 +3982,7 @@ msgid "Opened"
 msgstr "Opened"
 
 #: src/worker/web/assignment-detail.tsx
-#: src/worker/web/assignments.tsx
+#: src/worker/web/student-course.tsx
 msgid "Opens {when}"
 msgstr "Opens {when}"
 
@@ -3990,6 +4043,14 @@ msgstr "Page not found"
 #: src/worker/logic/specs/strings.ts
 msgid "Parentheses may only enclose a sentence joined by a two-place connective."
 msgstr "Parentheses may only enclose a sentence joined by a two-place connective."
+
+#: src/worker/web/student-course.tsx
+msgid "Past"
+msgstr "Past"
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Past due since {when}"
+msgstr "Past due since {when}"
 
 #: src/worker/web/admin-lti.tsx
 msgid "Paste these Carnap endpoints into the LMS when registering the external tool."
@@ -4130,6 +4191,10 @@ msgstr "Practice scores"
 #: src/worker/web/gradebook.tsx
 msgid "Practice scores are recorded, and do not count toward the course total."
 msgstr "Practice scores are recorded, and do not count toward the course total."
+
+#: src/worker/web/student-course.tsx
+msgid "Practice scores do not count toward the course total."
+msgstr "Practice scores do not count toward the course total."
 
 #: src/worker/exercises/aufbau-proof-prawitz/types.ts
 msgid "Prawitz proof"
@@ -4492,6 +4557,7 @@ msgid "Result"
 msgstr "Result"
 
 #: src/worker/web/admin.tsx
+#: src/worker/web/assignment-detail.tsx
 #: src/worker/web/gradebook.tsx
 msgid "Results"
 msgstr "Results"
@@ -4722,10 +4788,10 @@ msgstr "Rules"
 msgid "Rules a proof can cite: {names}."
 msgstr "Rules a proof can cite: {names}."
 
-#: src/worker/web/about.tsx
 #: src/worker/web/admin.tsx
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/courses.tsx
+#: src/worker/web/prose-editor.tsx
 msgid "Save"
 msgstr "Save"
 
@@ -4774,8 +4840,8 @@ msgid "Scheduling and presentation can be changed after publishing. Content and 
 msgstr "Scheduling and presentation can be changed after publishing. Content and grading type stay fixed."
 
 #: src/worker/web/assignment-detail.tsx
-#: src/worker/web/assignments.tsx
 #: src/worker/web/gradebook.tsx
+#: src/worker/web/student-course.tsx
 msgid "Score"
 msgstr "Score"
 
@@ -4784,6 +4850,7 @@ msgid "Score must be zero or greater."
 msgstr "Score must be zero or greater."
 
 #: src/worker/web/gradebook.tsx
+#: src/worker/web/student-course.tsx
 msgid "Score not released yet"
 msgstr "Score not released yet"
 
@@ -4954,6 +5021,10 @@ msgstr "Show your work as source"
 msgid "Shown to everyone at /about, signed in or not, above what every Carnap instance says about itself. Write it in Carnap Markdown, as a lesson's prose; leave it empty to show only that part."
 msgstr "Shown to everyone at /about, signed in or not, above what every Carnap instance says about itself. Write it in Carnap Markdown, as a lesson's prose; leave it empty to show only that part."
 
+#: src/worker/web/courses.tsx
+msgid "Shown to students at the top of the course page: a syllabus link, office hours, the textbook. Write it in Carnap Markdown, as a lesson's prose; leave it empty to show none."
+msgstr "Shown to students at the top of the course page: a syllabus link, office hours, the textbook. Write it in Carnap Markdown, as a lesson's prose; leave it empty to show none."
+
 #: src/worker/infrastructure/email/resend.ts
 msgid "Sign in"
 msgstr "Sign in"
@@ -5107,6 +5178,7 @@ msgstr "State"
 #: src/worker/web/admin.tsx
 #: src/worker/web/courses.tsx
 #: src/worker/web/lti.tsx
+#: src/worker/web/student-course.tsx
 msgid "Status"
 msgstr "Status"
 
@@ -6433,6 +6505,10 @@ msgid "Time"
 msgstr "Time"
 
 #: src/worker/web/assignment-detail.tsx
+msgid "Time ends {when}"
+msgstr "Time ends {when}"
+
+#: src/worker/web/assignment-detail.tsx
 msgid "Time limit"
 msgstr "Time limit"
 
@@ -6460,6 +6536,7 @@ msgstr "Timezone"
 #: src/worker/web/assignments.tsx
 #: src/worker/web/content.tsx
 #: src/worker/web/courses.tsx
+#: src/worker/web/student-course.tsx
 msgid "Title"
 msgstr "Title"
 
@@ -6550,6 +6627,7 @@ msgstr "Two objects stand on column {col}, row {row}."
 
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/assignments.tsx
+#: src/worker/web/student-course.tsx
 msgid "Type"
 msgstr "Type"
 
@@ -6684,6 +6762,10 @@ msgstr "Unreviewed ({count})"
 msgid "Unverified"
 msgstr "Unverified"
 
+#: src/worker/web/student-course.tsx
+msgid "Upcoming"
+msgstr "Upcoming"
+
 #: src/worker/web/courses.tsx
 msgid "Update membership"
 msgstr "Update membership"
@@ -6794,6 +6876,10 @@ msgstr "Verified {when}"
 msgid "View the About page"
 msgstr "View the About page"
 
+#: src/worker/web/courses.tsx
+msgid "View the course as a student"
+msgstr "View the course as a student"
+
 #: src/worker/web/components.tsx
 msgid "View this course as"
 msgstr "View this course as"
@@ -6822,6 +6908,10 @@ msgstr "We'll send a link to the new address, and change nothing until it is ope
 #: src/worker/web/content.tsx
 msgid "What changed, optional"
 msgstr "What changed, optional"
+
+#: src/worker/web/courses.tsx
+msgid "What students read at the top of the course"
+msgstr "What students read at the top of the course"
 
 #: src/worker/web/admin.tsx
 msgid "What this instance says about itself, such as an Impressum or privacy notice"
