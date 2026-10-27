@@ -936,6 +936,10 @@ export interface AssignmentStore {
   listExerciseExcusesForAssignments(
     assignmentIds: readonly AppId[],
   ): Promise<AssignmentExerciseExcuse[]>;
+  /**
+   * In course order: soonest due first, then the undated. Display order
+   * breaks a tie and orders the undated, so it only needs setting there.
+   */
   listForCourse(courseId: AppId): Promise<Assignment[]>;
   /** Every late policy any of these assignments has. */
   listLatePolicies(

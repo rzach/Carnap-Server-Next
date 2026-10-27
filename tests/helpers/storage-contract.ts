@@ -1656,6 +1656,57 @@ export function describeStorageContract(
       });
     });
 
+    test("a course's assignments come back soonest due first, display order breaking ties", async () => {
+      await withStorage(async ({ stores }) => {
+        const { assignment, instructor } =
+          await createAssignmentSlice(stores);
+        const add = (
+          id: string,
+          displayOrder: number,
+          dueAt: string | null,
+        ) =>
+          stores.assignments.create({
+            id,
+            courseId: assignment.courseId,
+            contentRevisionId: assignment.contentRevisionId,
+            title: id,
+            description: "",
+            assessmentMode: "graded",
+            displayOrder,
+            availableFrom: null,
+            dueAt,
+            availableUntil: null,
+            gradesVisibleAt: null,
+            workVisibility: "with_grades",
+            workVisibleAt: null,
+            listed: true,
+            maxAttempts: 1,
+            timeLimitMinutes: null,
+            createdById: instructor.id,
+            createdAt: NOW,
+          });
+
+        // assignment-1 is undated at display order 0. SQLite sorts a null
+        // first, so the undated going last is the query's doing.
+        await add("late", 0, "2030-03-01T00:00:00.000Z");
+        await add("tied-second", 2, "2030-02-01T00:00:00.000Z");
+        await add("tied-first", 1, "2030-02-01T00:00:00.000Z");
+        await add("undated-second", 5, null);
+
+        expect(
+          (await stores.assignments.listForCourse(assignment.courseId)).map(
+            (listed) => listed.id,
+          ),
+        ).toEqual([
+          "tied-first",
+          "tied-second",
+          "late",
+          assignment.id,
+          "undated-second",
+        ]);
+      });
+    });
+
     test("a student's overrides come back scoped to their course", async () => {
       await withStorage(async ({ stores }) => {
         const { assignment, instructor, student } =

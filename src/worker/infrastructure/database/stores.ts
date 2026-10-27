@@ -2309,6 +2309,8 @@ class SqliteAssignmentStore implements AssignmentStore {
       .from(assignments)
       .where(eq(assignments.courseId, courseId))
       .orderBy(
+        asc(sql`${assignments.dueAt} is null`),
+        asc(assignments.dueAt),
         asc(assignments.displayOrder),
         asc(assignments.createdAt),
         asc(assignments.id),

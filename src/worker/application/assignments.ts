@@ -1474,10 +1474,10 @@ export class AssignmentService {
    * Instructors can land on drafts (published still wins); everyone else — a
    * TA included, whose `listForAssistant` leaves drafts out for the same
    * reason — resolves published assignments only. When several assignments
-   * publish revisions of the same
-   * item, listed ones win, then course display order (the `listForCourse`
-   * ordering) decides. The returned role lets the route pick the instructor
-   * or student assignment page.
+   * publish revisions of the same item, listed ones win, then course order
+   * (the `listForCourse` ordering: soonest due first, then display order)
+   * decides. The returned role lets the route pick the instructor or student
+   * assignment page.
    */
   async resolveContentItem(
     actor: AuthenticatedActor,

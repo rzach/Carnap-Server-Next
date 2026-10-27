@@ -220,7 +220,8 @@ preview, it opens the library page. If no course publication is available,
 the reader gets a content-not-available page.
 
 If several assignments publish the item, listed assignments take precedence,
-then display order decides. A malformed ID produces `invalid_item_link`.
+then the course's order decides: soonest due first, then display order. A
+malformed ID produces `invalid_item_link`.
 
 Item links work in prompts and option labels too. Content links navigate the
 top-level window, not the content iframe.
