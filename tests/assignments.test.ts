@@ -1801,6 +1801,114 @@ describe("the attempt gate", () => {
   });
 });
 
+describe("the briefing before an attempt", () => {
+  test("says how big the work is, what lateness costs, and when scores arrive", async () => {
+    await withStorage(async (_storage, env) => {
+      const instructor = await login(env, "brief-teacher@example.test");
+      const student = await login(env, "brief-student@example.test");
+      const courseId = await createCourse(env, instructor);
+      const revision = await createRevision(
+        env,
+        instructor,
+        `# Lesson
+
+::::multiple-choice{#brief_a points="1"}
+Choose yes.
+
+- [x] yes | Yes
+- [ ] no | No
+::::
+
+::::multiple-choice{#brief_b points="3"}
+Choose yes again.
+
+- [x] yes | Yes
+- [ ] no | No
+::::`,
+      );
+      // Untimed, due in the future, scores held for a manual release.
+      const untimed = await createDraft(
+        env,
+        instructor,
+        courseId,
+        revision.revision.id,
+        { dueAt: "2999-01-01T00:00:00.000Z", title: "Untimed" },
+      );
+      // Timed, and its scores out the moment they are recorded.
+      const timed = await createDraft(
+        env,
+        instructor,
+        courseId,
+        revision.revision.id,
+        {
+          gradesVisibility: "immediate",
+          timeLimitMinutes: 20,
+          title: "Timed",
+        },
+      );
+
+      await enrollStudent(env, instructor, student, courseId);
+      await publish(env, instructor, courseId, untimed.assignment.id);
+      await publish(env, instructor, courseId, timed.assignment.id);
+
+      const policy = await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/instructor/assignments/${untimed.assignment.id}/late-policy`,
+        jsonRequest(
+          {
+            graceMinutes: 15,
+            kind: "percent_per_day",
+            maxPercentPenalty: 50,
+            percentPenalty: 10,
+          },
+          instructor,
+        ),
+        env,
+      );
+
+      expect(policy.status).toBe(200);
+
+      const briefing = async (assignmentId: string) => {
+        const page = await appRequest(
+          createTestApp(),
+          `/courses/${courseId}/assignments/${assignmentId}`,
+          { headers: { Accept: "text/html", Cookie: student.cookieHeader } },
+          env,
+        );
+
+        expect(page.status).toBe(200);
+
+        return await page.text();
+      };
+      const untimedHtml = await briefing(untimed.assignment.id);
+      const timedHtml = await briefing(timed.assignment.id);
+
+      // Counted from the content the page still withholds.
+      expect(untimedHtml).toContain("<dt>Questions</dt><dd>2</dd>");
+      expect(untimedHtml).toContain("<dt>Points</dt><dd>4</dd>");
+      expect(untimedHtml).not.toContain("Choose yes");
+      // No "Time limit: None" tile; the sentence says what that means.
+      expect(untimedHtml).not.toContain("<dt>Time limit</dt>");
+      expect(untimedHtml).toContain(
+        "No time limit: you can leave and come back.",
+      );
+      expect(untimedHtml).toContain(
+        "Late work loses 10% for each day it is late, up to 50%. Work within 15 minutes of the due date is not late.",
+      );
+      expect(untimedHtml).toContain(
+        "Scores appear when your instructor releases them.",
+      );
+
+      // Timed, with no due date and its scores already out: the tile, and
+      // none of the three sentences.
+      expect(timedHtml).toContain("<dt>Time limit</dt><dd>20 min</dd>");
+      expect(timedHtml).not.toContain("No time limit");
+      expect(timedHtml).not.toContain("Late work");
+      expect(timedHtml).not.toContain("Scores appear");
+    });
+  });
+});
+
 describe("a student the instructor has overridden", () => {
   test("the briefing states that student's own allowance, not the assignment's", async () => {
     await withStorage(async (storage, env) => {

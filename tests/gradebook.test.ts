@@ -1185,6 +1185,14 @@ Choose yes.
         '<div class="result-exercise-prompt"><p>Choose yes.</p>',
       );
       expect(hiddenResultsHtml).not.toContain("2/2");
+      // Headed by the course page's own figure — its worth, the earned
+      // points held back — and a way back to the assignment.
+      expect(hiddenResultsHtml).toContain("<dt>Score</dt><dd>—/2</dd>");
+      expect(hiddenResultsHtml).toContain("<dt>Attempts</dt><dd>1</dd>");
+      expect(hiddenResultsHtml).toContain("<dt>Last answer</dt>");
+      expect(hiddenResultsHtml).toContain(
+        `<a class="link-strip-item" href="/courses/${courseId}/assignments/${assignmentId}">`,
+      );
 
       // The grader's card carries the same question, folded away: a queue is
       // many answers to the same few exercises.
@@ -1248,6 +1256,7 @@ Choose yes.
 
       expect(releasedResultsHtml).toContain("Attempt 1");
       expect(releasedResultsHtml).toContain("<strong>Say yes</strong>");
+      expect(releasedResultsHtml).toContain("<dt>Score</dt><dd>2/2</dd>");
     });
   });
 

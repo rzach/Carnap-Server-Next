@@ -143,8 +143,8 @@ describe("profile page", () => {
       expect(response.status).toBe(200);
       expect(html).toContain('name="name" value="Ada Lovelace"');
       expect(html).toContain("ada@example.test");
-      expect(html).toContain("Sign-in");
       expect(html).toContain("Member since");
+      expect(html).toContain("You sign in with a link sent to this address.");
       // No student ID on an account no LMS has launched into, and no empty
       // field where one would go.
       expect(html).not.toContain("Student ID");

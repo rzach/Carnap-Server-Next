@@ -15,7 +15,7 @@ import type { CourseAccommodation } from "../domain/courses";
 import { type AssignmentScore, roundPoints } from "../domain/grades";
 import type { AppId } from "../domain/ids";
 import type { LtiResourceLink } from "../domain/lti";
-import { timestampNow } from "../domain/time";
+import { type Timestamp, timestampNow } from "../domain/time";
 import type { User } from "../domain/users";
 import { deferred } from "../i18n/deferred";
 import { assignmentInCourse } from "./assignment-lookup";
@@ -763,6 +763,46 @@ function calculateAssignmentScore(
 }
 
 /**
+ * A student's scorecard entry for one assignment, or null where it has none.
+ *
+ * A graded score is withheld until release, its worth shown regardless.
+ * Practice shows its score immediately, but only once the student has
+ * answered something — an untouched assignment reads as a dash rather than a
+ * misleading 0, and so does a reading, which takes no answers.
+ */
+function scorecardEntry(
+  assignment: Assignment,
+  score: AssignmentScore,
+  now: Timestamp,
+): StudentScorecardEntry | null {
+  if (assignment.assessmentMode === "graded") {
+    const isReleased = gradesReleased(assignment, now);
+
+    return {
+      assignmentId: assignment.id,
+      counts: true,
+      earned: isReleased ? score.score : null,
+      released: isReleased,
+      status: isReleased ? score.status : null,
+      worth: score.maxScore,
+    };
+  }
+
+  if (score.status !== "partial" && score.status !== "complete") {
+    return null;
+  }
+
+  return {
+    assignmentId: assignment.id,
+    counts: false,
+    earned: score.score,
+    released: true,
+    status: score.status,
+    worth: score.maxScore,
+  };
+}
+
+/**
  * Scores, two ways.
  *
  * Everything a person is shown — a student's scorecard, the gradebooks, the
@@ -1313,48 +1353,42 @@ export class GradebookService {
     const now = timestampNow(this.options.now?.() ?? new Date());
     const inputs = await this.scoringInputs(assignments, actor.user.id);
 
-    const entries = assignments.map(
-      (assignment): StudentScorecardEntry | null => {
-        const score = calculateAssignmentScore(
+    return assignments
+      .map((assignment) =>
+        scorecardEntry(
           assignment,
-          actor.user.id,
-          inputs,
+          calculateAssignmentScore(assignment, actor.user.id, inputs, now)
+            .score,
           now,
-        ).score;
+        ),
+      )
+      .filter((entry): entry is StudentScorecardEntry => entry !== null);
+  }
 
-        if (assignment.assessmentMode === "graded") {
-          const isReleased = gradesReleased(assignment, now);
+  /**
+   * One assignment's row of {@link getStudentCourseScorecard}, for the page
+   * that heads a student's results with it — the same figure, withheld the
+   * same way, as the course page links from.
+   */
+  async getStudentScorecardEntry(
+    actor: AuthenticatedActor,
+    courseId: AppId,
+    assignmentId: AppId,
+  ): Promise<StudentScorecardEntry | null> {
+    await requireCourseRole(this.options.stores, actor, courseId, ["member"]);
 
-          return {
-            assignmentId: assignment.id,
-            counts: true,
-            earned: isReleased ? score.score : null,
-            released: isReleased,
-            status: isReleased ? score.status : null,
-            worth: score.maxScore,
-          } satisfies StudentScorecardEntry;
-        }
-
-        // Practice shows its score immediately, but only once the student has
-        // answered something — an untouched assignment reads as a dash rather
-        // than a misleading 0, and so does a reading, which takes no answers.
-        if (score.status !== "partial" && score.status !== "complete") {
-          return null;
-        }
-
-        return {
-          assignmentId: assignment.id,
-          counts: false,
-          earned: score.score,
-          released: true,
-          status: score.status,
-          worth: score.maxScore,
-        } satisfies StudentScorecardEntry;
-      },
+    const assignment = await assignmentInCourse(
+      this.options.stores,
+      courseId,
+      assignmentId,
     );
+    const now = timestampNow(this.options.now?.() ?? new Date());
+    const inputs = await this.scoringInputs([assignment], actor.user.id);
 
-    return entries.filter(
-      (entry): entry is StudentScorecardEntry => entry !== null,
+    return scorecardEntry(
+      assignment,
+      calculateAssignmentScore(assignment, actor.user.id, inputs, now).score,
+      now,
     );
   }
 

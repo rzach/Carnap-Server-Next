@@ -250,12 +250,19 @@ async function studentResults(context: Context<AppBindings>) {
   const courseId = requiredParam(context, "courseId");
   const assignmentId = requiredParam(context, "assignmentId");
   const i18n = context.get("i18n");
-  const results = await submissionService(context).listResultsForStudent(
-    actor,
-    courseId,
-    assignmentId,
-    i18n,
-  );
+  const [results, score] = await Promise.all([
+    submissionService(context).listResultsForStudent(
+      actor,
+      courseId,
+      assignmentId,
+      i18n,
+    ),
+    gradebookService(context).getStudentScorecardEntry(
+      actor,
+      courseId,
+      assignmentId,
+    ),
+  ]);
   const assignment =
     await storesForContext(context).assignments.getById(assignmentId);
 
@@ -265,6 +272,7 @@ async function studentResults(context: Context<AppBindings>) {
     courseId,
     courseTitle: await courseTitleFor(context, courseId),
     results,
+    score,
   });
 }
 

@@ -13,6 +13,7 @@ import {
 } from "../worker/infrastructure/database/libsql";
 import { applyPendingMigrations } from "../worker/infrastructure/database/migrate";
 import { errorMessage, logEvent } from "../worker/log";
+import { notFoundHandler } from "../worker/middleware/errors";
 import { NOSNIFF_HEADER } from "../worker/middleware/security-headers";
 import { runGradePassback } from "../worker/passback";
 import { FONT_CACHE_CONTROL, FONT_ROUTE_PREFIX } from "../worker/web/fonts";
@@ -209,6 +210,10 @@ function socketPeerAddress(request: Request): string | null {
 }
 
 app.route("/", createApp({ connectingAddress: socketPeerAddress }));
+// Hono answers a miss with the outermost app's handler, never a mounted one's,
+// so without this an unknown URL here gets the bare "404 Not Found" text while
+// the Worker, which serves the app itself, renders the page.
+app.notFound(notFoundHandler);
 
 let sweeping = false;
 

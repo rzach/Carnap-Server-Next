@@ -1,4 +1,4 @@
-import type { FC } from "hono/jsx";
+import type { Child, FC } from "hono/jsx";
 import type { UserDirectory } from "../application/users";
 import { hasName, type User } from "../domain/users";
 import type { Translator } from "../i18n/translator";
@@ -21,21 +21,22 @@ export function userDisplayName(
   return user.name?.trim() || user.email;
 }
 
-/** A secondary detail line to sit under {@link userDisplayName}. */
+/**
+ * A secondary detail line to sit under {@link userDisplayName}: the email
+ * under a name, or the full id of a user the directory has no record of.
+ * Null for a user with no name, whose email is already the first line and
+ * tells them apart on its own.
+ */
 export function userDisplayMeta(
   i18n: Translator,
   user: User | null,
   fallbackId: string,
-): string {
+): string | null {
   if (user === null) {
     return i18n.t("User ID {id}", { id: fallbackId });
   }
 
-  if ((user.name?.trim().length ?? 0) > 0) {
-    return user.email;
-  }
-
-  return i18n.t("User ID {id}", { id: user.id });
+  return hasName(user) ? user.email : null;
 }
 
 /**
@@ -43,16 +44,20 @@ export function userDisplayMeta(
  * second line when a name is present. Never prints a raw id when a name or
  * email is known.
  *
- * `identified` adds the second line for a user with nothing to put there —
- * "User ID …" — for a ledger whose rows have to stay tellable apart even
- * when the directory has no name or email for one of them.
+ * `identified` adds the second line for a user the directory has no record
+ * of — "User ID …" — for a ledger whose rows have to stay tellable apart.
+ *
+ * `badge` sits beside the name, on the first line, for a row's exceptional
+ * state (see `StatusBadge`).
  */
 export const UserLabel: FC<{
+  readonly badge?: Child;
   readonly directory: UserDirectory;
   readonly identified?: boolean;
   readonly userId: string;
-}> = ({ directory, identified = false, userId }) => (
+}> = ({ badge, directory, identified = false, userId }) => (
   <UserRecordLabel
+    badge={badge}
     identified={identified}
     user={directory.get(userId) ?? null}
     userId={userId}
@@ -77,16 +82,18 @@ export function userDetail(
 
 /** {@link UserLabel} for a user record already in hand. */
 export const UserRecordLabel: FC<{
+  readonly badge?: Child;
   readonly identified?: boolean;
   readonly user: User | null;
   readonly userId: string;
-}> = ({ identified = false, user, userId }) => {
+}> = ({ badge, identified = false, user, userId }) => {
   const i18n = useI18n();
   const detail = userDetail(i18n, user, userId, identified);
 
   return (
     <>
       {userDisplayName(i18n, user, userId)}
+      {badge === undefined ? null : <> {badge}</>}
       {detail === null ? null : (
         <>
           <br />

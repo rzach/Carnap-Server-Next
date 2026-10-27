@@ -59,7 +59,6 @@ import type { Translator } from "../i18n/translator";
 import { kickGradePassback } from "../passback";
 import { storesForContext } from "../stores";
 import {
-  type AssignmentDetail,
   type AssignmentRevisionOption,
   editAssignmentAction,
   type InlineSubmissionContext,
@@ -75,6 +74,7 @@ import {
   renderNewAssignmentPage,
   renderStudentAssignmentPage,
   reviewQueryString,
+  type StudentAssignmentDetail,
   type SubmissionReviewQuery,
 } from "../web/assignment-detail";
 import {
@@ -1240,7 +1240,7 @@ async function excuseAssignmentExercise(
 interface StudentAssignmentView {
   readonly activity: AttemptActivity;
   readonly attempts: readonly Attempt[];
-  readonly detail: AssignmentDetail;
+  readonly detail: StudentAssignmentDetail;
   readonly policy: EffectiveAssignmentPolicy;
   readonly showWorkView: boolean;
   readonly submissionContext: InlineSubmissionContext | null;

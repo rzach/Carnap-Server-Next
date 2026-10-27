@@ -437,11 +437,13 @@ describe("native web workflow", () => {
       // The list has no status column to be misread that way: an active
       // membership goes unsaid, and only an exception is badged beside the
       // role. Nor a timezone column, which told nobody which course was
-      // which; the course's actions follow the role. The archived drawer only
-      // exists once something is in it — with the count on the summary, so a
-      // closed drawer still says where the course went.
+      // which — nor, for a reader who holds the same role in every course, a
+      // Role column saying it on each row; the course's actions follow the
+      // title. The archived drawer only exists once something is in it — with
+      // the count on the summary, so a closed drawer still says where the
+      // course went.
       expect(beforeListHtml).toContain(
-        '<th data-sort="" scope="col">Role</th><th scope="col">Actions</th></tr>',
+        '<th data-sort="" scope="col">Course</th><th scope="col">Actions</th></tr>',
       );
       expect(beforeListHtml).not.toContain("America/New_York</td>");
       expect(beforeListHtml).not.toContain('<span class="status-badge');
@@ -1060,6 +1062,14 @@ describe("native web workflow", () => {
       expect(html).toContain("Page not found");
       expect(html).toContain("We could not find that page");
       expect(html).toContain('href="/login"');
+      // The 404 is set as a page of its own, not the generic error sheet.
+      expect(html).toContain('class="status-page"');
+      expect(html).toContain(
+        "Whereof one cannot speak, thereof one must be silent.",
+      );
+      expect(html).toContain(
+        'href="https://people.umass.edu/klement/tlp/tlp.html#p7"',
+      );
 
       expect(envelope.status).toBe(404);
       expect(envelope.headers.get("Content-Type")).toContain(
@@ -1088,6 +1098,14 @@ describe("native web workflow", () => {
       expect(html).toContain("You are not allowed to do that.");
       // Signed in, so the way onward is their own courses.
       expect(html).toContain('href="/courses"');
+      // A dead end, set like the 404 with its own epigraph.
+      expect(html).toContain('class="status-page"');
+      expect(html).toContain(
+        "The limits of my language mean the limits of my world.",
+      );
+      expect(html).toContain(
+        'href="https://people.umass.edu/klement/tlp/tlp.html#p5.6"',
+      );
     });
   });
 

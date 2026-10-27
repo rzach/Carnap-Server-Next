@@ -253,8 +253,9 @@ ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
     locale,
     ${JSON.stringify(LOCAL_TIMESTAMP_FIELDS)},
   );
-  const ladder = [
-    full,
+  // The rungs below the first carry no time, and a day-only timestamp (see
+  // \`Time\`'s \`day\`) climbs only those.
+  const dateOnly = [
     new Intl.DateTimeFormat(locale, { dateStyle: "medium" }),
     new Intl.DateTimeFormat(locale, {
       day: "numeric",
@@ -263,6 +264,7 @@ ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
     }),
     new Intl.DateTimeFormat(locale, { dateStyle: "short" }),
   ];
+  const ladder = [full, ...dateOnly];
 
   const entries = [];
 
@@ -273,13 +275,16 @@ ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
       continue;
     }
 
+    const forms = element.hasAttribute("data-day") ? dateOnly : ladder;
+
     // Localize immediately so no ISO string flashes; a cell that needs to fit
     // is refined once web fonts settle and measurement matches the paint.
-    element.textContent = full.format(date);
+    element.textContent = forms[0].format(date);
     entries.push({
       cell: element.closest(".summary-item dd, td"),
       date,
       element,
+      forms,
     });
   }
 
@@ -312,9 +317,9 @@ ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
         parseFloat(cellStyle.paddingLeft) -
         parseFloat(cellStyle.paddingRight);
 
-      let text = ladder[ladder.length - 1].format(entry.date);
+      let text = entry.forms[entry.forms.length - 1].format(entry.date);
 
-      for (const formatter of ladder) {
+      for (const formatter of entry.forms) {
         const candidate = formatter.format(entry.date);
 
         if (context.measureText(candidate).width <= available) {
@@ -326,8 +331,9 @@ ${readStringsPrelude(LAYOUT_UI_STRINGS_ATTRIBUTE)}
       entry.element.textContent = text;
 
       // When the shown form dropped detail (the time, or part of the date),
-      // keep the full "Jul 6, 2026, 3:19 PM" reachable as a hover tooltip.
-      const fullText = full.format(entry.date);
+      // keep the full "Jul 6, 2026, 3:19 PM" reachable as a hover tooltip —
+      // or, for a day-only one, the full date.
+      const fullText = entry.forms[0].format(entry.date);
 
       if (text === fullText) {
         entry.element.removeAttribute("title");

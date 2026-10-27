@@ -60,6 +60,34 @@ describe("worker app", () => {
     expect(body.error.requestId).toBeString();
   });
 
+  test("a browser shown a 500 gets the status page, with its reference", async () => {
+    const logged = spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      const app = createTestApp({
+        configure(configuredApp) {
+          configuredApp.get("/boom", () => {
+            throw new Error("boom");
+          });
+        },
+      });
+      const response = await appRequest(app, "/boom", {
+        headers: { Accept: "text/html" },
+      });
+      const html = await response.text();
+
+      expect(response.status).toBe(500);
+      expect(html).toContain('class="status-page"');
+      expect(html).toContain("⊢ 0 = 1");
+      expect(html).toContain('aria-label="A proof that 0 = 1"');
+      expect(html).toContain(
+        `Reference: ${response.headers.get(REQUEST_ID_HEADER)}`,
+      );
+    } finally {
+      logged.mockRestore();
+    }
+  });
+
   /**
    * The envelope has always carried a `requestId`, and until this it appeared
    * in no log: the identifier a reader is invited to quote back correlated with

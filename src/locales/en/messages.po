@@ -13,6 +13,10 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/worker/web/gradebook.tsx
+msgid "—/{worth}"
+msgstr "—/{worth}"
+
 #: src/worker/web/assignments.tsx
 msgid "—/{worth} (not released)"
 msgstr "—/{worth} (not released)"
@@ -328,6 +332,10 @@ msgstr "{name} already names {block}."
 msgid "{name} names both {block} and {other}."
 msgstr "{name} names both {block} and {other}."
 
+#: src/worker/web/assignment-detail.tsx
+msgid "{penalty} Work within {minutes} minutes of the due date is not late."
+msgstr "{penalty} Work within {minutes} minutes of the due date is not late."
+
 #: src/worker/web/profile.tsx
 msgid "{platform} has a different address for you: {address}"
 msgstr "{platform} has a different address for you: {address}"
@@ -523,6 +531,11 @@ msgstr "A Prawitz proof has no “#n” hypothesis leaves — write each premise
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A proof exercise needs a 'theorem <name>: $ … $' line declaring the goal."
 msgstr "A proof exercise needs a 'theorem <name>: $ … $' line declaring the goal."
+
+#. Read aloud in place of the formula ⊢ 0 = 1 on the server error page: the server has proved a contradiction.
+#: src/worker/web/errors.tsx
+msgid "A proof that 0 = 1"
+msgstr "A proof that 0 = 1"
 
 #: src/worker/exercise-kit/proof/engine-strings.ts
 msgid "A proof with lines admitted with sorry! cannot be submitted."
@@ -1072,6 +1085,7 @@ msgstr "Assessment mode must be none, practice, or graded."
 #: src/worker/routes/assignments.ts
 #: src/worker/routes/gradebook.ts
 #: src/worker/web/courses.tsx
+#: src/worker/web/gradebook.tsx
 #: src/worker/web/lti.tsx
 msgid "Assignment"
 msgstr "Assignment"
@@ -1199,6 +1213,7 @@ msgid "Attempt started."
 msgstr "Attempt started."
 
 #: src/worker/web/assignment-detail.tsx
+#: src/worker/web/gradebook.tsx
 msgid "Attempts"
 msgstr "Attempts"
 
@@ -1267,6 +1282,10 @@ msgstr "Available-from must be before available-until."
 #: src/worker/web/courses.tsx
 msgid "Available-until extension minutes"
 msgstr "Available-until extension minutes"
+
+#: src/worker/web/gradebook.tsx
+msgid "Back to its questions"
+msgstr "Back to its questions"
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Before you start"
@@ -3031,6 +3050,10 @@ msgstr "large square"
 msgid "large triangle"
 msgstr "large triangle"
 
+#: src/worker/web/gradebook.tsx
+msgid "Last answer"
+msgstr "Last answer"
+
 #: src/worker/web/courses.tsx
 msgid "Last attempt"
 msgstr "Last attempt"
@@ -3054,6 +3077,14 @@ msgstr "Late policy percentages must be between 0 and 100."
 #: src/worker/routes/assignments.ts
 msgid "Late policy saved."
 msgstr "Late policy saved."
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Late work loses {percent}% for each day it is late, up to {max}%."
+msgstr "Late work loses {percent}% for each day it is late, up to {max}%."
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Late work loses {percent}% for each day it is late."
+msgstr "Late work loses {percent}% for each day it is late."
 
 #: src/worker/web/lti.tsx
 msgid "Launch failed"
@@ -3620,6 +3651,10 @@ msgstr "No system named “{name}” is in scope. This document declares: {decla
 msgid "No theory is served at “{path}”. This site ships: {available}. A theory of your own is at the address on its revision page."
 msgstr "No theory is served at “{path}”. This site ships: {available}. A theory of your own is at the address on its revision page."
 
+#: src/worker/web/assignment-detail.tsx
+msgid "No time limit: you can leave and come back."
+msgstr "No time limit: you can leave and come back."
+
 #: src/worker/web/admin.tsx
 msgid "No users matched."
 msgstr "No users matched."
@@ -4064,6 +4099,10 @@ msgid "Point at part of a sentence to see what it is true of."
 msgstr "Point at part of a sentence to see what it is true of."
 
 #: src/worker/web/assignment-detail.tsx
+msgid "Points"
+msgstr "Points"
+
+#: src/worker/web/assignment-detail.tsx
 msgid "Policy and grading controls"
 msgstr "Policy and grading controls"
 
@@ -4239,6 +4278,10 @@ msgstr "Put my old address back"
 msgid "Put the block at column {col}, row {row} back."
 msgstr "Put the block at column {col}, row {row} back."
 
+#: src/worker/web/assignment-detail.tsx
+msgid "Questions"
+msgstr "Questions"
+
 #: src/worker/web/content.tsx
 msgid "Quote this address in an aufbau-mm0 block's src to build proofs on this theory. It names this revision, so later revisions leave existing lessons alone."
 msgstr "Quote this address in an aufbau-mm0 block's src to build proofs on this theory. It names this revision, so later revisions leave existing lessons alone."
@@ -4394,6 +4437,11 @@ msgstr "Request"
 msgid "Reset"
 msgstr "Reset"
 
+#. Disambiguating id; only the word Reset is shown. Heading of the attempt ledger's column that holds either a Reset button or when and by whom the attempt was reset; a noun here, where the button's Reset is a verb.
+#: src/worker/web/assignment-detail.tsx
+msgid "Reset (attempt ledger column)"
+msgstr "Reset"
+
 #. Disambiguating id; only the word Reset is shown. A submission whose attempt staff reset: past participle, not the Reset button.
 #: src/worker/web/labels.ts
 msgid "Reset (review state)"
@@ -4527,8 +4575,8 @@ msgid "Revoke"
 msgstr "Revoke"
 
 #: src/worker/web/courses.tsx
-msgid "Revoked"
-msgstr "Revoked"
+msgid "Revoked {when}"
+msgstr "Revoked {when}"
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Right: every branch closes."
@@ -4757,6 +4805,14 @@ msgid "Scores already sent to the LMS are corrected to zero."
 msgstr "Scores already sent to the LMS are corrected to zero."
 
 #: src/worker/web/assignment-detail.tsx
+msgid "Scores appear on {date}."
+msgstr "Scores appear on {date}."
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Scores appear when your instructor releases them."
+msgstr "Scores appear when your instructor releases them."
+
+#: src/worker/web/assignment-detail.tsx
 msgid "Scores have already been recorded on this assignment. A correction keeps each recorded score and the points it was graded out of; assignment totals will count every exercise at the new revision's points."
 msgstr "Scores have already been recorded on this assignment. A correction keeps each recorded score and the points it was graded out of; assignment totals will count every exercise at the new revision's points."
 
@@ -4901,10 +4957,6 @@ msgstr "Shown to everyone at /about, signed in or not, above what every Carnap i
 #: src/worker/infrastructure/email/resend.ts
 msgid "Sign in"
 msgstr "Sign in"
-
-#: src/worker/web/profile.tsx
-msgid "Sign-in"
-msgstr "Sign-in"
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Single-select exercises must have exactly one correct option."
@@ -5053,7 +5105,6 @@ msgid "State"
 msgstr "State"
 
 #: src/worker/web/admin.tsx
-#: src/worker/web/assignment-detail.tsx
 #: src/worker/web/courses.tsx
 #: src/worker/web/lti.tsx
 msgid "Status"
@@ -5583,6 +5634,11 @@ msgstr "The launch from the LMS was incomplete."
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "The law “{formula}” is false in the starting world."
 msgstr "The law “{formula}” is false in the starting world."
+
+#. The 403 page's epigraph: Wittgenstein, Tractatus Logico-Philosophicus, proposition 5.6. Use the published translation in your language; German has the original, "Die Grenzen meiner Sprache bedeuten die Grenzen meiner Welt."
+#: src/worker/web/errors.tsx
+msgid "The limits of my language mean the limits of my world."
+msgstr "The limits of my language mean the limits of my world."
 
 #: src/worker/web/courses.tsx
 msgid "The linked assignment is no longer graded."
@@ -6665,7 +6721,6 @@ msgstr "Use this address"
 msgid "Use this link to sign in to Carnap:"
 msgstr "Use this link to sign in to Carnap:"
 
-#: src/worker/web/assignment-detail.tsx
 #: src/worker/web/courses.tsx
 msgid "User"
 msgstr "User"
@@ -6743,7 +6798,6 @@ msgstr "View the About page"
 msgid "View this course as"
 msgstr "View this course as"
 
-#: src/worker/web/assignment-detail.tsx
 #: src/worker/web/labels.ts
 msgid "Voided"
 msgstr "Voided"
@@ -6785,6 +6839,11 @@ msgstr "When I release them"
 msgid "When the game asks for a block, click or tap it on the board."
 msgstr "When the game asks for a block, click or tap it on the board."
 
+#. The 404 page's epigraph: Wittgenstein, Tractatus Logico-Philosophicus, proposition 7. Use the published translation in your language; German has the original, "Wovon man nicht sprechen kann, darüber muss man schweigen."
+#: src/worker/web/errors.tsx
+msgid "Whereof one cannot speak, thereof one must be silent."
+msgstr "Whereof one cannot speak, thereof one must be silent."
+
 #: src/worker/web/admin.tsx
 msgid "Who can create an account by signing in with an email link. Existing accounts can always sign in by email, and LMS launches always create accounts."
 msgstr "Who can create an account by signing in with an email link. Existing accounts can always sign in by email, and LMS launches always create accounts."
@@ -6797,6 +6856,16 @@ msgstr "Whoever names this from a lesson freezes its text into that lesson, and 
 msgid "With the grades"
 msgstr "With the grades"
 
+#. Names the source of the 403 page's epigraph, for the footnote mark that links to it. The title is the book's own and stays in Latin.
+#: src/worker/web/errors.tsx
+msgid "Wittgenstein, Tractatus Logico-Philosophicus, proposition 5.6"
+msgstr "Wittgenstein, Tractatus Logico-Philosophicus, proposition 5.6"
+
+#. Names the source of the 404 page's epigraph, for the footnote mark that links to it. The title is the book's own and stays in Latin.
+#: src/worker/web/errors.tsx
+msgid "Wittgenstein, Tractatus Logico-Philosophicus, proposition 7"
+msgstr "Wittgenstein, Tractatus Logico-Philosophicus, proposition 7"
+
 #: src/worker/exercises/world/strings.ts
 msgid "Won"
 msgstr "Won"
@@ -6808,6 +6877,10 @@ msgstr "Won: {won} of {total}."
 #: src/worker/exercises/world/strings.ts
 msgid "Won: {won} of {total}. Take another look at: {formulas}."
 msgstr "Won: {won} of {total}. Take another look at: {formulas}."
+
+#: src/worker/web/assignment-detail.tsx
+msgid "Work submitted after the due date loses {percent}%."
+msgstr "Work submitted after the due date loses {percent}%."
 
 #: src/worker/exercises/world/types.ts
 msgid "World"
@@ -6988,6 +7061,10 @@ msgstr "You say {left} is true and {right} is false."
 #: src/worker/web/profile.tsx
 msgid "You set this address. Launches from your LMS won't change it."
 msgstr "You set this address. Launches from your LMS won't change it."
+
+#: src/worker/web/profile.tsx
+msgid "You sign in with a link sent to this address."
+msgstr "You sign in with a link sent to this address."
 
 #: src/worker/exercises/world/strings.ts
 msgid "You won every game."

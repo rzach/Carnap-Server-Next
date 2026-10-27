@@ -24,16 +24,22 @@ export interface SummaryItem {
  * A machine-readable timestamp. The ISO instant lives in the `datetime`
  * attribute and is the visible fallback; a client script (see the layout)
  * localizes the text on load. Renders `fallback` for a null/empty value.
+ *
+ * `day` writes the date without the time, for a fact whose minute nobody
+ * wants — when an account was made, not when a link expires.
  */
 export const Time: FC<{
+  readonly day?: boolean;
   readonly fallback?: string;
   readonly value: string | null | undefined;
-}> = ({ fallback = "", value }) =>
+}> = ({ day = false, fallback = "", value }) =>
   value === null || value === undefined || value === "" ? (
     // biome-ignore lint/complexity/noUselessFragments: `FC` returns an `HtmlEscapedString`, and the fragment is what makes one of a plain string.
     <>{fallback}</>
   ) : (
-    <time datetime={value}>{value}</time>
+    <time data-day={day ? "" : undefined} datetime={value}>
+      {value}
+    </time>
   );
 
 export const StatusBadge: FC<{

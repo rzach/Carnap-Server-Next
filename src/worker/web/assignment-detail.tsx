@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import { raw } from "hono/html";
 import type { Child, FC } from "hono/jsx";
+import type { AssignmentBriefing } from "../application/assignments";
 import type { AssignmentOutdatedTheory } from "../application/content";
 import { createDefaultExerciseRegistry } from "../application/content/registry";
 import { jsonScriptContent } from "../application/content/render-support";
@@ -80,6 +81,7 @@ import {
   Notice,
   PointsDriftNote,
   Sheet,
+  StatusBadge,
   type SummaryItem,
   SummaryStrip,
   TableScroll,
@@ -208,6 +210,11 @@ export interface AssignmentDetail {
   readonly contentRevision: ContentRevision;
   readonly contentVersions: readonly AssignmentContentVersion[];
   readonly exerciseExcuses: readonly AssignmentExerciseExcuse[];
+}
+
+/** {@link AssignmentDetail} as a student reads it: with the briefing's facts. */
+export interface StudentAssignmentDetail extends AssignmentDetail {
+  readonly briefing: AssignmentBriefing;
 }
 
 /**
@@ -1125,6 +1132,7 @@ function attemptCountText(
 function attemptBriefingItems(
   i18n: Translator,
   assignment: Assignment,
+  briefing: AssignmentBriefing,
   attemptsUsed: number,
 ): SummaryItem[] {
   const items: SummaryItem[] = [
@@ -1134,18 +1142,27 @@ function attemptBriefingItems(
         <Time fallback={i18n.t("No due date")} value={assignment.dueAt} />
       ),
     },
-    {
-      label: i18n.t("Time limit"),
-      value:
-        assignment.timeLimitMinutes === null
-          ? i18n.t("None")
-          : i18n.t("{minutes} min", { minutes: assignment.timeLimitMinutes }),
-    },
-    {
-      label: i18n.t("Attempts"),
-      value: attemptCountText(i18n, assignment, attemptsUsed),
-    },
+    // How big the thing is that the clock starts on — counted, not shown,
+    // since the questions stay withheld until it does.
+    { label: i18n.t("Questions"), value: String(briefing.exerciseCount) },
+    { label: i18n.t("Points"), value: String(briefing.points) },
   ];
+
+  // Only a real limit is a tile; "no time limit" is said in a sentence below,
+  // with what it means for the student.
+  if (assignment.timeLimitMinutes !== null) {
+    items.push({
+      label: i18n.t("Time limit"),
+      value: i18n.t("{minutes} min", {
+        minutes: assignment.timeLimitMinutes,
+      }),
+    });
+  }
+
+  items.push({
+    label: i18n.t("Attempts"),
+    value: attemptCountText(i18n, assignment, attemptsUsed),
+  });
 
   if (assignment.availableUntil !== null) {
     items.push({
@@ -1156,6 +1173,82 @@ function attemptBriefingItems(
 
   return items;
 }
+
+/**
+ * What lateness costs, in a sentence, or null where it costs nothing: no
+ * policy, or no due date for one to count from. The penalty is worded the way
+ * the gradebook applies it (`applyLatePolicy`): a share of the score, once or
+ * per day begun, capped, after the grace period.
+ */
+function latePolicyText(
+  i18n: Translator,
+  policy: AssignmentLatePolicy | null,
+  dueAt: string | null,
+): string | null {
+  if (policy === null || policy.kind === "none" || dueAt === null) {
+    return null;
+  }
+
+  const penalty =
+    policy.kind === "percent_once_after_due"
+      ? i18n.t("Work submitted after the due date loses {percent}%.", {
+          percent: Math.min(policy.percentPenalty, policy.maxPercentPenalty),
+        })
+      : policy.maxPercentPenalty < 100
+        ? i18n.t(
+            "Late work loses {percent}% for each day it is late, up to {max}%.",
+            { max: policy.maxPercentPenalty, percent: policy.percentPenalty },
+          )
+        : i18n.t("Late work loses {percent}% for each day it is late.", {
+            percent: policy.percentPenalty,
+          });
+
+  return policy.graceMinutes === 0
+    ? penalty
+    : i18n.t(
+        "{penalty} Work within {minutes} minutes of the due date is not late.",
+        {
+          minutes: policy.graceMinutes,
+          penalty,
+        },
+      );
+}
+
+/**
+ * The rest of what a student should know before the clock starts, a sentence
+ * each: whether they can leave and come back, what lateness costs, and when
+ * the scores arrive. Each is said only where there is something to say.
+ */
+const AttemptBriefingNotes: FC<{
+  readonly assignment: Assignment;
+  readonly briefing: AssignmentBriefing;
+}> = ({ assignment, briefing }) => {
+  const i18n = useI18n();
+  const late = latePolicyText(i18n, briefing.latePolicy, assignment.dueAt);
+  const [releaseBefore, releaseAfter] = splitAtValue(
+    i18n.t("Scores appear on {date}.", { date: VALUE }),
+  );
+
+  return (
+    <>
+      {assignment.timeLimitMinutes === null ? (
+        <p>{i18n.t("No time limit: you can leave and come back.")}</p>
+      ) : null}
+      {late === null ? null : <p>{late}</p>}
+      {/* Nothing where scores are already out: there is no wait to warn of. */}
+      {briefing.gradesReleased ? null : assignment.gradesVisibleAt ===
+        null ? (
+        <p>{i18n.t("Scores appear when your instructor releases them.")}</p>
+      ) : (
+        <p>
+          {releaseBefore}
+          <Time value={assignment.gradesVisibleAt} />
+          {releaseAfter}
+        </p>
+      )}
+    </>
+  );
+};
 
 /**
  * Why there is no button, in the student's terms. Only reached when the policy
@@ -1233,10 +1326,20 @@ const AttemptBriefing: FC<{
   readonly activity: AttemptActivity;
   readonly assignment: Assignment;
   readonly attempts: readonly Attempt[];
+  readonly briefing: AssignmentBriefing;
   readonly context: Context<AppBindings>;
   readonly policy: EffectiveAssignmentPolicy;
   readonly title: string;
-}> = ({ action, activity, assignment, attempts, context, policy, title }) => {
+}> = ({
+  action,
+  activity,
+  assignment,
+  attempts,
+  briefing,
+  context,
+  policy,
+  title,
+}) => {
   const i18n = useI18n();
 
   return (
@@ -1249,6 +1352,7 @@ const AttemptBriefing: FC<{
           items={attemptBriefingItems(
             i18n,
             assignment,
+            briefing,
             activity.attemptsUsed,
           )}
         />
@@ -1258,6 +1362,7 @@ const AttemptBriefing: FC<{
       {assignment.description.trim().length === 0 ? null : (
         <p>{assignment.description}</p>
       )}
+      <AttemptBriefingNotes assignment={assignment} briefing={briefing} />
       <StudentAttemptPanel
         action={action}
         activity={activity}
@@ -1292,7 +1397,7 @@ export function renderAttemptGatePage(
     readonly assignmentId: string;
     readonly attempts: readonly Attempt[];
     readonly courseId: string;
-    readonly detail: AssignmentDetail;
+    readonly detail: StudentAssignmentDetail;
     readonly policy: EffectiveAssignmentPolicy;
   },
 ): Response {
@@ -1306,6 +1411,7 @@ export function renderAttemptGatePage(
       activity={model.activity}
       assignment={assignment}
       attempts={model.attempts}
+      briefing={model.detail.briefing}
       context={context}
       policy={model.policy}
       // The assignment's own name, since there is no breadcrumb above it to say
@@ -2235,6 +2341,7 @@ const SubmissionReviewCard: FC<{
   const [submittedBefore, submittedAfter] = splitAtValue(
     i18n.t("Submitted {when}", { when: VALUE }),
   );
+  const userMeta = userDisplayMeta(i18n, entry.user, submission.userId);
   // Drift is a warning about grades that count.
   const drift = entry.counts
     ? storedPointsDrift(entry.evaluation, entry.nominalPoints)
@@ -2245,9 +2352,7 @@ const SubmissionReviewCard: FC<{
       <header class="submission-review-header">
         <div>
           <h2>{userDisplayName(i18n, entry.user, submission.userId)}</h2>
-          <p class="small">
-            {userDisplayMeta(i18n, entry.user, submission.userId)}
-          </p>
+          {userMeta === null ? null : <p class="small">{userMeta}</p>}
         </div>
         {/* The data attribute is for the review script, which re-derives the
             drift after grading in place: a fresh manual grade is stamped with
@@ -2707,20 +2812,22 @@ function reviewChoices(
             right.entry.submission.userId,
           ),
       )
-      .map(({ entry, name }) => ({
-        label:
+      .map(({ entry, name }) => {
+        // Only a name two students share needs more; a student with no name
+        // is listed by their email, which no one else has.
+        const detail =
           (holders.get(name) ?? 0) > 1
-            ? i18n.t("{name} ({detail})", {
-                detail: userDisplayMeta(
-                  i18n,
-                  entry.user,
-                  entry.submission.userId,
-                ),
-                name,
-              })
-            : name,
-        value: entry.submission.userId,
-      })),
+            ? userDisplayMeta(i18n, entry.user, entry.submission.userId)
+            : null;
+
+        return {
+          label:
+            detail === null
+              ? name
+              : i18n.t("{name} ({detail})", { detail, name }),
+          value: entry.submission.userId,
+        };
+      }),
   };
 }
 
@@ -2924,9 +3031,10 @@ const ResetAttemptForm: FC<{
         method="post"
       >
         <CsrfInput context={context} />
-        <button class="danger" type="submit">
-          {i18n.t("Reset")}
-        </button>
+        {/* In ink: the red is for the dialog's button, the step that
+            actually voids. On every row of the ledger it read as a column of
+            warnings. */}
+        <button type="submit">{i18n.t("Reset")}</button>
       </form>
     </>
   );
@@ -2945,17 +3053,31 @@ const AttemptsTable: FC<{
     return <p>{i18n.t("No attempts have been opened.")}</p>;
   }
 
+  // A column only where some row has something for it: Expires on a timed
+  // assignment. A column of blanks on every row was most of the table on an
+  // untimed assignment. The Reset column holds both halves of a reset, which
+  // no row has at once: the button on an attempt still open to it, and when
+  // and by whom on one already voided.
+  const showExpires = attempts.some((attempt) => attempt.expiresAt !== null);
+
   return (
     <TableScroll>
       <thead>
         <tr>
-          <th>{i18n.t("User")}</th>
+          <th>{i18n.t("Student")}</th>
           <th>{i18n.t("Attempt")}</th>
-          <th>{i18n.t("Status")}</th>
           <th>{i18n.t("Opened")}</th>
-          <th>{i18n.t("Expires")}</th>
-          <th>{i18n.t("Voided")}</th>
-          <th>{i18n.t("Reset")}</th>
+          {showExpires ? <th>{i18n.t("Expires")}</th> : null}
+          <th>
+            {i18n.t("Reset (attempt ledger column)", undefined, {
+              comment:
+                "Disambiguating id; only the word Reset is shown. " +
+                "Heading of the attempt ledger's column that holds either " +
+                "a Reset button or when and by whom the attempt was reset; " +
+                "a noun here, where the button's Reset is a verb.",
+              message: "Reset",
+            })}
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -2963,38 +3085,50 @@ const AttemptsTable: FC<{
           <tr>
             <td>
               <UserLabel
+                // Only the exception is marked: nearly every attempt is
+                // active, and a Status column saying so on each row buried
+                // the reset or expired one it was there to point out.
+                badge={
+                  attempt.status === "active" ? undefined : (
+                    <StatusBadge
+                      label={attemptStatusLabel(i18n, attempt.status)}
+                    />
+                  )
+                }
                 directory={directory}
                 identified={true}
                 userId={attempt.userId}
               />
             </td>
             <td>{attempt.ordinal}</td>
-            <td>{attemptStatusLabel(i18n, attempt.status)}</td>
             <td>
               <Time value={attempt.openedAt} />
             </td>
+            {showExpires ? (
+              <td>
+                <Time value={attempt.expiresAt} />
+              </td>
+            ) : null}
             <td>
-              <Time value={attempt.expiresAt} />
-            </td>
-            <td>
-              <Time value={attempt.voidedAt} />
-              {attempt.voidedById === null ? null : (
+              {attempt.status === "voided" ? (
                 <>
-                  <br />
-                  <span class="small">
-                    {i18n.t("Reset by {name}", {
-                      name: userDisplayName(
-                        i18n,
-                        directory.get(attempt.voidedById) ?? null,
-                        attempt.voidedById,
-                      ),
-                    })}
-                  </span>
+                  <Time value={attempt.voidedAt} />
+                  {attempt.voidedById === null ? null : (
+                    <>
+                      <br />
+                      <span class="small">
+                        {i18n.t("Reset by {name}", {
+                          name: userDisplayName(
+                            i18n,
+                            directory.get(attempt.voidedById) ?? null,
+                            attempt.voidedById,
+                          ),
+                        })}
+                      </span>
+                    </>
+                  )}
                 </>
-              )}
-            </td>
-            <td>
-              {attempt.status === "voided" ? null : (
+              ) : (
                 <ResetAttemptForm
                   action={`/courses/${courseId}/instructor/assignments/${assignmentId}/attempts/${attempt.id}/reset`}
                   attempt={attempt}
@@ -3149,7 +3283,7 @@ export function renderStudentAssignmentPage(
     readonly attempts: readonly Attempt[];
     readonly courseId: string;
     readonly courseTitle: string;
-    readonly detail: AssignmentDetail;
+    readonly detail: StudentAssignmentDetail;
     readonly notRecorded: boolean;
     readonly policy: EffectiveAssignmentPolicy;
     readonly showWorkView: boolean;
@@ -3223,6 +3357,7 @@ export function renderStudentAssignmentPage(
           activity={model.activity}
           assignment={detail.assignment}
           attempts={model.attempts}
+          briefing={detail.briefing}
           context={context}
           policy={model.policy}
           title={i18n.t("Before you start")}

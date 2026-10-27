@@ -6,6 +6,7 @@ import type {
   AssignmentGradebook,
   CourseGradebook,
   GradebookExercise,
+  StudentScorecardEntry,
 } from "../application/gradebook";
 import type {
   StudentAssignmentResults,
@@ -33,6 +34,8 @@ import {
   Notice,
   PointsDriftNote,
   Sheet,
+  type SummaryItem,
+  SummaryStrip,
   TableScroll,
   Time,
 } from "./components";
@@ -659,6 +662,69 @@ const ResetAttemptNote: FC<{
   );
 };
 
+/**
+ * The head of the results page: the score the course page shows for this
+ * assignment, how many attempts there were, and when the last answer went in,
+ * with the way back to the assignment. Without it the page opened straight
+ * into its first question, and the total was only on the course page.
+ *
+ * No attempt is named as the one that counts: an assignment's score takes
+ * each exercise's best across its attempts, so every attempt can count.
+ */
+const ResultsSummary: FC<{
+  readonly assignmentHref: string;
+  readonly assignmentTitle: string;
+  readonly results: StudentAssignmentResults;
+  readonly score: StudentScorecardEntry | null;
+}> = ({ assignmentHref, assignmentTitle, results, score }) => {
+  const i18n = useI18n();
+  const submittedAt = results.attempts
+    .flatMap((attempt) =>
+      attempt.entries.map((entry) => entry.submission.submittedAt),
+    )
+    .reduce<string | null>(
+      (latest, at) => (latest === null || at > latest ? at : latest),
+      null,
+    );
+  const items: SummaryItem[] = [];
+
+  if (score !== null) {
+    items.push({
+      label: i18n.t("Score"),
+      value:
+        score.earned === null
+          ? i18n.t("—/{worth}", { worth: score.worth })
+          : `${score.earned}/${score.worth}`,
+    });
+  }
+
+  items.push({
+    label: i18n.t("Attempts"),
+    value: String(results.attempts.length),
+  });
+
+  if (submittedAt !== null) {
+    items.push({
+      label: i18n.t("Last answer"),
+      value: <Time value={submittedAt} />,
+    });
+  }
+
+  return (
+    <Sheet summary={<SummaryStrip items={items} />} title={assignmentTitle}>
+      <LinkStrip
+        links={[
+          {
+            hint: i18n.t("Back to its questions"),
+            href: assignmentHref,
+            label: i18n.t("Assignment"),
+          },
+        ]}
+      />
+    </Sheet>
+  );
+};
+
 export function renderStudentAssignmentResults(
   context: Context<AppBindings>,
   model: {
@@ -667,6 +733,8 @@ export function renderStudentAssignmentResults(
     readonly courseId: string;
     readonly courseTitle: string;
     readonly results: StudentAssignmentResults;
+    /** The course page's figure for this assignment; null where it has none. */
+    readonly score: StudentScorecardEntry | null;
   },
 ): Response {
   const i18n = context.get("i18n");
@@ -725,6 +793,12 @@ export function renderStudentAssignmentResults(
     // upstream. Saying so once at the top beats a page of "Not yet graded"
     // with nothing to explain it.
     <>
+      <ResultsSummary
+        assignmentHref={`/courses/${model.courseId}/assignments/${model.assignmentId}`}
+        assignmentTitle={model.assignmentTitle}
+        results={model.results}
+        score={model.score}
+      />
       {resetNotes}
       {anyDrift ? (
         <Notice tone="warn">

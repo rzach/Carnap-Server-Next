@@ -16,7 +16,7 @@ import type {
 import type { LtiGradeFailureReason, LtiResourceLink } from "../domain/lti";
 import type { Timestamp } from "../domain/time";
 import type { AppBindings } from "../http";
-import type { Translator } from "../i18n/translator";
+import { splitAtValue, type Translator, VALUE } from "../i18n/translator";
 import {
   AssignmentCreateBar,
   AssignmentsTable,
@@ -221,7 +221,8 @@ const CourseRow: FC<{
     readonly membership: CourseMembership;
   };
   readonly showActions: boolean;
-}> = ({ context, entry, showActions }) => {
+  readonly showRole: boolean;
+}> = ({ context, entry, showActions, showRole }) => {
   const i18n = useI18n();
 
   return (
@@ -229,10 +230,12 @@ const CourseRow: FC<{
       <td>
         <a href={`/courses/${entry.course.id}`}>{entry.course.title}</a>
       </td>
-      <td data-sort-value={membershipSortValue(entry.membership)}>
-        {courseRoleLabel(i18n, entry.membership.role)}
-        <MembershipStatusBadge status={entry.membership.status} />
-      </td>
+      {showRole ? (
+        <td data-sort-value={membershipSortValue(entry.membership)}>
+          {courseRoleLabel(i18n, entry.membership.role)}
+          <MembershipStatusBadge status={entry.membership.status} />
+        </td>
+      ) : null}
       {showActions ? (
         <td>
           {managesCourse(entry.membership) ? (
@@ -319,13 +322,19 @@ const CoursesTable: FC<{
   const showActions = courses.some((entry) =>
     managesCourse(entry.membership),
   );
+  // And no Role column for a reader who holds one role everywhere — a
+  // student's list said "Student" on every row. It stays while any membership
+  // is not active, since the cell is where that exception is marked.
+  const showRole =
+    new Set(courses.map((entry) => entry.membership.role)).size > 1 ||
+    courses.some((entry) => entry.membership.status !== "active");
 
   return (
     <TableScroll phoneList>
       <thead>
         <tr>
           <SortHeader label={i18n.t("Course")} />
-          <SortHeader label={i18n.t("Role")} />
+          {showRole ? <SortHeader label={i18n.t("Role")} /> : null}
           {showActions ? <th scope="col">{i18n.t("Actions")}</th> : null}
         </tr>
       </thead>
@@ -335,6 +344,7 @@ const CoursesTable: FC<{
             context={context}
             entry={entry}
             showActions={showActions}
+            showRole={showRole}
           />
         ))}
       </tbody>
@@ -837,13 +847,21 @@ const EnrollmentLinksTable: FC<{
     );
   }
 
+  // The Revoke buttons get a column only while a link is left to revoke; a
+  // revoked link says so beside its date, the exception in a list of live
+  // ones.
+  const showRevoke = links.some((link) => link.revokedAt === null);
+  const [revokedBefore, revokedAfter] = splitAtValue(
+    i18n.t("Revoked {when}", { when: VALUE }),
+  );
+
   return (
     <TableScroll>
       <thead>
         <tr>
           <th>{i18n.t("Created")}</th>
           <th>{i18n.t("Expires")}</th>
-          <th>{i18n.t("Revoked")}</th>
+          {showRevoke ? <th>{i18n.t("Actions")}</th> : null}
         </tr>
       </thead>
       <tbody>
@@ -851,25 +869,39 @@ const EnrollmentLinksTable: FC<{
           <tr>
             <td>
               <Time value={link.createdAt} />
+              {link.revokedAt === null ? null : (
+                <>
+                  {" "}
+                  <StatusBadge
+                    label={
+                      <>
+                        {revokedBefore}
+                        <Time value={link.revokedAt} />
+                        {revokedAfter}
+                      </>
+                    }
+                  />
+                </>
+              )}
             </td>
             <td>
               <Time value={link.expiresAt} />
             </td>
-            <td>
-              {link.revokedAt !== null ? (
-                <Time value={link.revokedAt} />
-              ) : (
-                <form
-                  action={`/courses/${courseId}/enrollment-links/${link.id}/revoke`}
-                  method="post"
-                >
-                  <CsrfInput context={context} />
-                  <button class="danger" type="submit">
-                    {i18n.t("Revoke")}
-                  </button>
-                </form>
-              )}
-            </td>
+            {showRevoke ? (
+              <td>
+                {link.revokedAt === null ? (
+                  <form
+                    action={`/courses/${courseId}/enrollment-links/${link.id}/revoke`}
+                    method="post"
+                  >
+                    <CsrfInput context={context} />
+                    <button class="danger" type="submit">
+                      {i18n.t("Revoke")}
+                    </button>
+                  </form>
+                ) : null}
+              </td>
+            ) : null}
           </tr>
         ))}
       </tbody>

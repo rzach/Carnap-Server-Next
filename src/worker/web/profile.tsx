@@ -19,7 +19,7 @@ import {
   TableScroll,
   Time,
 } from "./components";
-import { capabilityLabel, identityProviderLabel } from "./labels";
+import { capabilityLabel } from "./labels";
 import { type PageStatus, renderShell, useI18n } from "./layout";
 
 /** An external identity resolved for display: LTI ones carry the platform name. */
@@ -89,21 +89,15 @@ export function renderProfile(
     (identity) => identity.provider === "lti",
   );
 
-  const facts: SummaryItem[] = [];
-
-  facts.push({
-    label: i18n.t("Sign-in"),
-    value: joinDistinct(
-      identities.map((identity) =>
-        identityProviderLabel(i18n, identity.provider),
-      ),
-    ),
-  });
-
-  facts.push({
-    label: i18n.t("Member since"),
-    value: <Time value={user.createdAt} />,
-  });
+  // How the account signs in is said beside the address it signs in with, not
+  // here: a tile's value is a figure, and the word "Email" set as one read as
+  // a heading.
+  const facts: SummaryItem[] = [
+    {
+      label: i18n.t("Member since"),
+      value: <Time day={true} value={user.createdAt} />,
+    },
+  ];
 
   // A fact, not a field: this is the institution's identifier for the account
   // holder, asserted by their LMS, and neither a preference of theirs nor
@@ -172,6 +166,9 @@ export function renderProfile(
           <EmailSection
             context={context}
             email={account.email}
+            emailSignIn={identities.some(
+              (identity) => identity.provider === "native",
+            )}
             emailValue={options.emailValue ?? ""}
             lmsLinked={lmsLinked}
             verified={user.emailVerifiedAt !== null}
@@ -259,12 +256,15 @@ function ProfileForm({
 function EmailSection({
   context,
   email,
+  emailSignIn,
   emailValue,
   lmsLinked,
   verified,
 }: {
   readonly context: Context<AppBindings>;
   readonly email: EmailAuthority;
+  /** Whether the holder has signed in by email link, not only from an LMS. */
+  readonly emailSignIn: boolean;
   readonly emailValue: string;
   readonly lmsLinked: boolean;
   readonly verified: boolean;
@@ -312,6 +312,11 @@ function EmailSection({
         </button>
       </div>
       {source === null ? null : <p class="small">{source}</p>}
+      {email.email !== null && emailSignIn ? (
+        <p class="small">
+          {i18n.t("You sign in with a link sent to this address.")}
+        </p>
+      ) : null}
       {email.email !== null && !verified ? (
         <p class="small">
           {i18n.t(

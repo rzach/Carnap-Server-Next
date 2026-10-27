@@ -5,6 +5,7 @@ import { createApp } from "../src/worker/app";
 import type { AppStores } from "../src/worker/application/stores";
 import type { Env } from "../src/worker/env";
 import type { AppBindings } from "../src/worker/http";
+import { notFoundHandler } from "../src/worker/middleware/errors";
 import { cookieHeader } from "./helpers/http";
 import { createLibSqlTestStorage } from "./helpers/storage";
 
@@ -27,6 +28,7 @@ function serverApp(stores: AppStores): Hono<AppBindings> {
     await next();
   });
   app.route("/", createApp());
+  app.notFound(notFoundHandler);
 
   return app;
 }
@@ -84,5 +86,25 @@ describe("serving without a D1 binding", () => {
     const response = await app.request("/auth/me", undefined, SERVER_ENV);
 
     expect(response.status).toBe(401);
+  });
+
+  test("answers an unknown URL with the app's page, not the bare text", async () => {
+    const storage = await createLibSqlTestStorage();
+    const app = serverApp(storage.stores);
+    const page = await app.request(
+      "/no-such-page",
+      { headers: { Accept: "text/html" } },
+      SERVER_ENV,
+    );
+
+    expect(page.status).toBe(404);
+    expect(await page.text()).toContain("Page not found");
+
+    const json = await app.request("/no-such-page", undefined, SERVER_ENV);
+
+    expect(json.status).toBe(404);
+    await expect(json.json()).resolves.toMatchObject({
+      error: { code: "not_found" },
+    });
   });
 });

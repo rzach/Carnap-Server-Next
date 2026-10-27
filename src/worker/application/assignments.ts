@@ -7,12 +7,14 @@ import type {
   GradesVisibility,
   WorkVisibility,
 } from "../domain/assignments";
+import { gradesReleased } from "../domain/assignments";
 import type {
   CompiledContentArtifact,
   ContentItem,
   ContentRevision,
 } from "../domain/content";
 import type { CourseRole } from "../domain/courses";
+import { roundPoints } from "../domain/grades";
 import type { AppId } from "../domain/ids";
 import { createAppId } from "../domain/ids";
 import type { Timestamp } from "../domain/time";
@@ -187,6 +189,47 @@ export interface AssignmentDetail {
   readonly contentRevision: ContentRevision;
   readonly contentVersions: readonly AssignmentContentVersion[];
   readonly exerciseExcuses: readonly AssignmentExerciseExcuse[];
+}
+
+/**
+ * What a student sees before a graded attempt begins, beyond the assignment's
+ * own dates and limits: how big it is and what lateness costs. Read before
+ * the content is withheld, so the size of the work can be said without
+ * showing any of it.
+ */
+export interface AssignmentBriefing {
+  /** The exercises that count: the manifest's, less the excused ones. */
+  readonly exerciseCount: number;
+  /** What those exercises are worth together. */
+  readonly points: number;
+  /** Whether scores are out already (`gradesReleased`), as of the read. */
+  readonly gradesReleased: boolean;
+  readonly latePolicy: AssignmentLatePolicy | null;
+}
+
+/** {@link AssignmentDetail} for a student, with the briefing's facts. */
+export interface StudentAssignmentDetail extends AssignmentDetail {
+  readonly briefing: AssignmentBriefing;
+}
+
+function briefingSize(
+  detail: AssignmentDetail,
+): Pick<AssignmentBriefing, "exerciseCount" | "points"> {
+  const excused = new Set(
+    detail.exerciseExcuses
+      .filter((excuse) => excuse.status === "excused")
+      .map((excuse) => excuse.exerciseId),
+  );
+  const counting = detail.artifact.manifest.filter(
+    (item) => !excused.has(item.id),
+  );
+
+  return {
+    exerciseCount: counting.length,
+    points: roundPoints(
+      counting.reduce((total, item) => total + item.nominalPoints, 0),
+    ),
+  };
 }
 
 function normalizeTitle(title: string): string {
@@ -1477,7 +1520,7 @@ export class AssignmentService {
     actor: AuthenticatedActor,
     courseId: AppId,
     assignmentId: AppId,
-  ): Promise<AssignmentDetail> {
+  ): Promise<StudentAssignmentDetail> {
     await requireCourseRole(this.options.stores, actor, courseId, ["member"]);
 
     const now = timestampNow(this.options.now?.() ?? new Date());
@@ -1505,17 +1548,31 @@ export class AssignmentService {
       throw assignmentNotFound();
     }
 
-    const detail = await this.detailForAssignment(assignment);
+    const graded = assignment.assessmentMode === "graded";
+    const [detail, latePolicy] = await Promise.all([
+      this.detailForAssignment(assignment),
+      // Only graded work is ever late.
+      graded
+        ? this.options.stores.assignments.getLatePolicy(assignment.id)
+        : null,
+    ]);
+    const briefing = {
+      ...briefingSize(detail),
+      gradesReleased: gradesReleased(assignment, now),
+      latePolicy,
+    };
     const activity = attemptActivity(attempts, now);
-    const contentReleased =
-      assignment.assessmentMode !== "graded" ||
-      activity.activeAttempt !== null;
+    const contentReleased = !graded || activity.activeAttempt !== null;
 
     if (contentReleased) {
-      return detail;
+      return { ...detail, briefing };
     }
 
-    return { ...detail, artifact: withheldContentArtifact(detail.artifact) };
+    return {
+      ...detail,
+      artifact: withheldContentArtifact(detail.artifact),
+      briefing,
+    };
   }
 
   async upsertLatePolicy(

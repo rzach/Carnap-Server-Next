@@ -772,6 +772,8 @@ export async function collectFixtures(
       {
         contentRevisionId: revisionId,
         description: "Read chapter 2 first.",
+        // A due date, so the late policy set below has one to count from.
+        dueAt: "2999-01-01T00:00:00.000Z",
         maxAttempts: 2,
         timeLimitMinutes: 30,
         title: "Homework briefing",
@@ -787,6 +789,22 @@ export async function collectFixtures(
     createTestApp(),
     `/courses/${courseId}/assignments/${briefingAssignmentId}/publish`,
     { headers: authHeaders(instructor), method: "POST" },
+    env,
+  );
+  // The longest of the briefing's late-policy sentences: per day, capped,
+  // with a grace period.
+  await appRequest(
+    createTestApp(),
+    `/courses/${courseId}/instructor/assignments/${briefingAssignmentId}/late-policy`,
+    jsonRequest(
+      {
+        graceMinutes: 15,
+        kind: "percent_per_day",
+        maxPercentPenalty: 50,
+        percentPenalty: 10,
+      },
+      instructor,
+    ),
     env,
   );
 
@@ -1269,6 +1287,41 @@ export async function collectFixtures(
   // indistinguishable, hence 403 where content answers a plain 404.
   await add("error-course", `/courses/${courseId}zzz`, instructor, 403);
   await add("error-content", `/content/${itemId}zzz`, instructor, 404);
+  {
+    // No route fails on purpose, so the 500 comes from one added here. Its
+    // failure is logged as every 500 is; the log line is noise in a fixture.
+    const logError = console.error;
+    console.error = () => {};
+
+    try {
+      const response = await appRequest(
+        createTestApp({
+          configure(app) {
+            app.get("/a11y-fixture-failure", () => {
+              throw new Error("fixture failure");
+            });
+          },
+        }),
+        "/a11y-fixture-failure",
+        {
+          headers: {
+            Accept: "text/html",
+            Cookie: instructor.cookieHeader,
+            ...headers,
+          },
+        },
+        env,
+      );
+
+      if (response.status !== 500) {
+        throw new Error(`fixture 500 page → ${response.status}`);
+      }
+
+      fixtures.push({ html: await response.text(), name: "error-server" });
+    } finally {
+      console.error = logError;
+    }
+  }
   await addPost(
     "error-login",
     "/login",

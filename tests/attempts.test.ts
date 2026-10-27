@@ -1,4 +1,5 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
+import { JSDOM } from "jsdom";
 
 import type { Env } from "../src/worker/env";
 import { CONTENT_SCRIPT_ASSET } from "../src/worker/web/script-assets";
@@ -295,6 +296,87 @@ describe("attempt policy", () => {
       expect(againResponse.status).toBe(201);
       expect(again.attempt.ordinal).toBe(2);
       expect(again.attempt.expiresAt).not.toBeNull();
+    });
+  });
+});
+
+describe("the attempt ledger", () => {
+  test("shows a column only where some row fills it, and marks only a reset attempt", async () => {
+    await withStorage(async (_storage, env) => {
+      const instructor = await login(env, "ledger-teacher@example.test");
+      const student = await login(env, "ledger-student@example.test");
+      const courseId = await createCourse(env, instructor);
+      const revisionId = await createRevision(env, instructor);
+
+      await enrollStudent(env, instructor, student, courseId);
+
+      const assignmentId = await createPublishedAssignment(
+        env,
+        instructor,
+        courseId,
+        revisionId,
+        { maxAttempts: 2 },
+      );
+      const ledger = async () => {
+        const response = await appRequest(
+          createTestApp(),
+          `/courses/${courseId}/instructor/assignments/${assignmentId}/attempts`,
+          {
+            headers: { Accept: "text/html", Cookie: instructor.cookieHeader },
+          },
+          env,
+        );
+
+        expect(response.status).toBe(200);
+
+        const document = new JSDOM(await response.text()).window.document;
+
+        return {
+          badges: [...document.querySelectorAll("tbody .status-badge")].map(
+            (badge) => badge.textContent,
+          ),
+          headings: [...document.querySelectorAll("thead th")].map(
+            (heading) => heading.textContent,
+          ),
+          resets: document.querySelectorAll('tbody form[method="post"]')
+            .length,
+        };
+      };
+      const first = (await (
+        await beginAttempt(env, student, courseId, assignmentId)
+      ).json()) as BeginAttemptResponse;
+
+      // Untimed: no Expires, and no Status column saying "Active" on the one
+      // row.
+      expect(await ledger()).toEqual({
+        badges: [],
+        headings: ["Student", "Attempt", "Opened", "Reset"],
+        resets: 1,
+      });
+
+      const resetResponse = await appRequest(
+        createTestApp(),
+        `/courses/${courseId}/instructor/assignments/${assignmentId}` +
+          `/attempts/${first.attempt.id}/reset`,
+        { headers: authHeaders(instructor), method: "POST" },
+        env,
+      );
+
+      expect(resetResponse.status).toBe(200);
+      // The Reset column now says when and by whom, in place of the button.
+      expect(await ledger()).toEqual({
+        badges: ["Voided"],
+        headings: ["Student", "Attempt", "Opened", "Reset"],
+        resets: 0,
+      });
+
+      await beginAttempt(env, student, courseId, assignmentId);
+
+      expect(await ledger()).toEqual({
+        badges: ["Voided"],
+        headings: ["Student", "Attempt", "Opened", "Reset"],
+        resets: 1,
+      });
     });
   });
 });
