@@ -178,13 +178,13 @@ describe("exercise contract", () => {
    * Which directives take a raw body is the type's to say, not the compiler's:
    * the compiler kept its own list of the two proof kinds, so a third raw-body
    * type would have compiled with raw-HTML diagnostics for every `<` in its
-   * body and an "unsupported directive" for every `:token`, and nothing would
+   * body and an "unsupported directive" for every `:token[…]`, and nothing would
    * have said why. The same fake type, with and without the flag.
    */
   test("a type that declares a raw body is spared the markdown lints", async () => {
     const source = [
       ":::fake",
-      "a < b :not-a-directive",
+      "a < b :not-a-directive[label]",
       "<b>raw</b>",
       ":::",
     ].join("\n");

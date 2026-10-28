@@ -48,7 +48,7 @@ const BROKEN_SOURCES: readonly (readonly [string, string])[] = [
   ],
   ["unknown directive", "::::carnap-nonexistent{#x}\n::::"],
   ["raw html", "<script>alert(1)</script>\n"],
-  ["bad item link", "[a link](item:not valid)\n"],
+  ["bad item link", "[a link](item:!bang)\n"],
   // Both wordings of the miss: with no block declared, and with one, which
   // the message then lists. The fixture used to write `theory=absent`, which
   // since #192 is an unknown *attribute*, so neither template was reached.

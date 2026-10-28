@@ -1,6 +1,6 @@
 import type { ElementContent } from "hast";
-import type { Root, RootContent } from "mdast";
-import type { ContainerDirective } from "mdast-util-directive";
+import type { Parent, Root, RootContent, Text } from "mdast";
+import type { ContainerDirective, TextDirective } from "mdast-util-directive";
 import type { Extension as FromMarkdownExtension } from "mdast-util-from-markdown";
 import { gfmFootnoteFromMarkdown } from "mdast-util-gfm-footnote";
 import { gfmTableFromMarkdown } from "mdast-util-gfm-table";
@@ -255,9 +255,57 @@ export function inlineMathKind(
   return /^\s|\s$/.test(content) ? "literal" : "inline";
 }
 
+/**
+ * A bare `:name` in running text is prose, not a text directive.
+ *
+ * micromark reads a colon followed by any name character as a text
+ * directive, digits included, so `10:30`, `3:2` and `x:y` each arrive as text
+ * plus a directive named `30`, `2` or `y` — which the compiler then refuses
+ * as unsupported, and which would vanish from the page if it did not. The
+ * dialect has no text directives, and one written with neither a label nor
+ * attributes is all but always a colon in prose, so it goes back to being the
+ * text it was typed as. One with a `[label]` or `{attributes}` was meant as
+ * a directive and is still refused.
+ *
+ * Over `mdast-util-directive`'s own exit handler, as
+ * {@link inlineMathFromMarkdown} is over the math one; the text that follows
+ * joins the restored node, as it would have joined the text before.
+ */
+const bareTextDirectiveFromMarkdown: FromMarkdownExtension = {
+  exit: {
+    directiveText(token) {
+      const node = this.stack[this.stack.length - 1] as TextDirective;
+
+      this.exit(token);
+
+      const source = this.sliceSerialize(token);
+
+      if (source === `:${node.name}`) {
+        const parent = this.stack[this.stack.length - 1] as Parent;
+
+        parent.children[parent.children.length - 1] = {
+          position: node.position,
+          type: "text",
+          value: source,
+        } satisfies Text;
+      }
+    },
+  },
+};
+
+function remarkBareTextDirectives(this: Processor): void {
+  const data = this.data();
+
+  data.fromMarkdownExtensions = [
+    ...(data.fromMarkdownExtensions ?? []),
+    bareTextDirectiveFromMarkdown,
+  ];
+}
+
 export const markdownParser = unified()
   .use(remarkParse)
   .use(remarkDirective)
+  .use(remarkBareTextDirectives)
   .use(remarkTablesAndFootnotes)
   .use(remarkMath);
 

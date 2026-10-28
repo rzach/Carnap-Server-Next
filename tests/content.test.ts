@@ -817,6 +817,37 @@ Body
     );
   });
 
+  test("a colon in prose is text, not a text directive", async () => {
+    // micromark reads `:30` in `10:30` as a text directive named "30".
+    const compiled = await compileCarnapMarkdown(
+      "Office hours 10:30–11:45, a ratio of 3:2, and x:y.",
+    );
+
+    if (!compiled.ok) {
+      throw new Error("Expected successful compilation.");
+    }
+
+    const prose = compiled.artifact.document.nodes[0];
+
+    if (prose?.kind !== "markdown") {
+      throw new Error("Expected a Markdown node.");
+    }
+
+    expect(prose.html).toBe(
+      "<p>Office hours 10:30–11:45, a ratio of 3:2, and x:y.</p>",
+    );
+
+    // One with a label or attributes was meant as a directive.
+    const labelled = await compileCarnapMarkdown(
+      "An :abbr[HTML]{title=x} element.",
+    );
+
+    expect(labelled.ok).toBe(false);
+    expect(labelled.diagnostics.map((item) => item.code)).toEqual([
+      "unsupported_directive",
+    ]);
+  });
+
   test("legacy directive syntax is rejected", async () => {
     const compiled = await compileCarnapMarkdown(`::::multiple-choice id="old"
 Question?
