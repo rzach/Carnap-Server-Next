@@ -187,18 +187,6 @@
   padding: 0 0.1rem;
 }
 
-.tableau-cite-input {
-  width: 3.5rem;
-}
-
-.tableau-rule-input {
-  width: 4rem;
-}
-
-:is(.tableau-cite-input, .tableau-rule-input)[data-empty] {
-  width: 3.4ch;
-}
-
 .truth-tree-prompt {
   align-items: center;
   display: flex;

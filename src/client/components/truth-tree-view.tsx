@@ -207,6 +207,12 @@ export function TableauView(props: TableauViewProps) {
             onInput={(event) => props.onMarginText(event.currentTarget.value)}
             onKeyDown={(event) => props.onMarginTextKey(event)}
             spellcheck={false}
+            // As wide as its text and a place for the caret, as the row's
+            // field is, so the fields beside it stay where they were; empty,
+            // as wide as the slot it replaces.
+            style={{
+              width: `${marginEdit.draft === "" ? 3.4 : marginEdit.draft.length + 1}ch`,
+            }}
             type="text"
             value={marginEdit.draft}
           />

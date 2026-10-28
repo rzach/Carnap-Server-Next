@@ -202,6 +202,38 @@ describe("upgrading", () => {
     ).toBe(true);
   });
 
+  test("a toolbar button that would do nothing where the cursor is is disabled", async () => {
+    const mounted = mountExercise(await treeExercise("", "- P & Q\n- ¬P"));
+    const enabled = () =>
+      [
+        ...mounted.root.querySelectorAll<HTMLButtonElement>(
+          "[role='toolbar'] button",
+        ),
+      ]
+        .filter((button) => !button.disabled)
+        .map((button) => button.getAttribute("aria-label"));
+
+    // At the end of the branch, it can grow and close; the root's rows are
+    // given, so none is added or deleted there; nothing is to undo.
+    expect(enabled()).toEqual(["Stack", "Split", "Close"]);
+
+    press(cursor(mounted), "s");
+    press(mounted.root.querySelector(".tableau-input") as Element, "Escape");
+    expect(enabled()).toEqual([
+      "Stack",
+      "Split",
+      "Add row",
+      "Close",
+      "Delete",
+      "Undo",
+    ]);
+
+    // A row above a split is not where a branch grows or closes.
+    press(cursor(mounted), "ArrowUp");
+    expect(cursor(mounted).getAttribute("aria-label")).toBe("Row 2: ¬P");
+    expect(enabled()).toEqual(["Undo"]);
+  });
+
   test("the island draws the root as a tree, and the answer is the root", async () => {
     const mounted = mountExercise(await treeExercise("", "- P & Q\n- ¬P"));
 
@@ -1223,6 +1255,42 @@ describe("type mode", () => {
     // Undo brings the rule back.
     press(active(), "z", { ctrlKey: true });
     expect(Object.values(answerOf(mounted).rules ?? {})).toEqual(["∨"]);
+  });
+
+  test("a rule takes as soon as its name is typed, with one undo step for the edit", async () => {
+    const mounted = mountExercise(await treeExercise("", "- A ∨ B"));
+    const active = () => mounted.root.activeElement as HTMLElement;
+
+    press(cursor(mounted), "t");
+    write(mounted, "A", "1");
+    press(cursor(mounted), "j");
+
+    // Named on the way to another name, and then that one: each takes, and
+    // the field stays open.
+    fill(active() as HTMLInputElement, "v");
+    expect(answerOf(mounted).rules).toBeUndefined();
+    fill(active() as HTMLInputElement, "\\/");
+    expect(Object.values(answerOf(mounted).rules ?? {})).toEqual(["∨"]);
+    expect(active().classList.contains("tableau-rule-input")).toBe(true);
+    expect(announced(mounted)).toBe("Row 2 now names the rule ∨.");
+
+    // A name not yet whole leaves the rule taken until the field is left,
+    // and is flagged only then.
+    fill(active() as HTMLInputElement, "\\/x");
+    expect(Object.values(answerOf(mounted).rules ?? {})).toEqual(["∨"]);
+    press(active(), "Enter");
+    expect(answerOf(mounted).rules).toBeUndefined();
+    expect(
+      marginField(mounted, 2, "rule")?.hasAttribute("data-flagged"),
+    ).toBe(true);
+
+    // The whole edit is one step: undo goes back to before it, citation kept.
+    press(cursor(mounted), "z", { ctrlKey: true });
+    expect(answerOf(mounted).rules).toBeUndefined();
+    expect(
+      marginField(mounted, 2, "rule")?.hasAttribute("data-flagged"),
+    ).toBe(false);
+    expect(answerOf(mounted).nodes[0]?.rows[1]?.cites).toHaveLength(1);
   });
 
   test("opening a row and leaving it untouched records no undo step", async () => {

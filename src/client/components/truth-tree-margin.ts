@@ -48,6 +48,11 @@ export interface MarginEdit {
   readonly row: string;
   readonly draft: string;
   readonly field: MarginField;
+  /**
+   * Whether the edit has recorded its undo step: a rule taken as it is typed
+   * records one for the whole edit, not one per rule it passes on the way.
+   */
+  readonly recorded?: boolean;
 }
 
 /** The tree as the margin reads it, at one layout. */
@@ -253,6 +258,8 @@ export interface RuleTyped {
   readonly rules: ReadonlyMap<string, string>;
   readonly drafts: ReadonlyMap<string, MarginDraft>;
   readonly announcement: string;
+  /** The rule the step now names, or `null` when it names none. */
+  readonly rule: string | null;
 }
 
 /**
@@ -283,6 +290,7 @@ export function typeRule(
         rule: spelled,
       }),
       drafts: nextDrafts,
+      rule: spelled,
       rules: nextRules,
     };
   }
@@ -295,6 +303,7 @@ export function typeRule(
     return {
       announcement: t("Row {row} no longer names a rule.", { row }),
       drafts: nextDrafts,
+      rule: null,
       rules: nextRules,
     };
   }
@@ -304,7 +313,7 @@ export function typeRule(
   });
   nextDrafts.set(dev, { problem: announcement, text });
 
-  return { announcement, drafts: nextDrafts, rules: nextRules };
+  return { announcement, drafts: nextDrafts, rule: null, rules: nextRules };
 }
 
 /** Typed row numbers as the rows above `rowId` they name, or what is wrong. */

@@ -143,6 +143,7 @@ import {
   marginLabel,
   marginMove,
   marginToRight,
+  type RuleTyped,
   typeCitation,
   typeRule,
   withDrafts,
@@ -852,26 +853,79 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
       : this.cursor;
   }
 
-  /** The leaf a branch action at the cursor works on, or a refusal. */
-  private leafAtCursor(): string | null {
-    const index = this.index;
-
+  /**
+   * The leaf a branch action at the cursor works on: the end mark it is on,
+   * or the node of a row at the end of a branch; `null` anywhere else.
+   */
+  private cursorLeaf(): string | null {
     if (this.cursor !== null && this.isEnd(this.cursor)) {
       return this.cursor;
     }
 
-    const location = this.cursor === null ? null : index.row(this.cursor);
+    const location =
+      this.cursor === null ? null : this.index.row(this.cursor);
 
-    if (location === null) {
-      return null;
-    }
+    return location === null ||
+      this.index.children(location.node.id).length > 0
+      ? null
+      : location.node.id;
+  }
 
-    if (index.children(location.node.id).length > 0) {
+  /** The leaf a branch action at the cursor works on, or a refusal. */
+  private leafAtCursor(): string | null {
+    const leaf = this.cursorLeaf();
+
+    if (leaf === null && this.cursorRowId() !== null) {
       this.refuse(this.t("Move to the end of a branch first."));
-      return null;
     }
 
-    return location.node.id;
+    return leaf;
+  }
+
+  /** Why the row `rowId` cannot be deleted, or `null` when it can. */
+  private deleteRefusal(rowId: string): string | null {
+    if (this.isGivenRow(rowId)) {
+      return this.t("The root's rows are given, and cannot be changed.");
+    }
+
+    // A playground's root keeps a row to write in: with none, there would be
+    // nowhere for Add a row to put one.
+    return this.isRootRow(rowId) && this.rootRows() === 1
+      ? this.t("The root needs a row.")
+      : null;
+  }
+
+  /**
+   * Whether a toolbar action would do anything where the selection is: a
+   * button that would only refuse is disabled, since the refusal is said
+   * only to a screen reader and a tap on it would seem to do nothing. The
+   * keys still refuse aloud. Each answer is the check its command makes.
+   */
+  private available(action: TableauKeyAction): boolean {
+    const leaf = this.cursorLeaf();
+    const ended = leaf !== null && this.isEnd(leaf);
+    const row = this.cursorRowId();
+
+    switch (action) {
+      case "stack":
+      case "split":
+        return leaf !== null && !ended;
+      case "close":
+        return this.closing !== null || leaf !== null;
+      case "open":
+        return leaf !== null;
+      case "add-row":
+        return row !== null && !this.isGivenRow(row);
+      case "delete":
+        // On a margin field, Delete clears it; on an end mark, takes it back.
+        return (
+          this.onMarginStop() ||
+          ended ||
+          (row !== null && this.deleteRefusal(row) === null)
+        );
+      default:
+        return true;
+    }
   }
 
   private readonly act = (action: TableauKeyAction): void => {
@@ -1366,17 +1420,10 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
       return;
     }
 
-    if (this.isGivenRow(row)) {
-      this.refuse(
-        this.t("The root's rows are given, and cannot be changed."),
-      );
-      return;
-    }
+    const refusal = this.deleteRefusal(row);
 
-    // A playground's root keeps a row to write in: with none, there would be
-    // nowhere for Add a row to put one.
-    if (this.isRootRow(row) && this.rootRows() === 1) {
-      this.refuse(this.t("The root needs a row."));
+    if (refusal !== null) {
+      this.refuse(refusal);
       return;
     }
 
@@ -1574,8 +1621,25 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
   };
 
   private readonly onMarginText = (text: string): void => {
-    if (this.marginEdit !== null) {
-      this.marginEdit = { ...this.marginEdit, draft: text };
+    const edit = this.marginEdit;
+
+    if (edit === null) {
+      return;
+    }
+
+    this.marginEdit = { ...edit, draft: text };
+
+    // A rule takes as soon as its name is typed, as a row's sentence does,
+    // so the tree is checked without leaving the field. Anything else waits
+    // for the field to be left, where a name the system lacks is flagged,
+    // rather than flagging every name on its way to being typed.
+    const typed =
+      edit.field === "rule" ? this.typedRule(this.marginEdit) : null;
+
+    if (typed !== null && typed.rule !== null) {
+      this.marginEdit = { ...this.marginEdit, recorded: true };
+      this.takeRule(typed, edit.recorded === true);
+    } else {
       this.rerender();
     }
   };
@@ -1648,23 +1712,36 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
    * {@link commitCite}.
    */
   private commitRule(edit: MarginEdit, refocus: boolean): void {
-    const location = this.index.row(edit.row);
-    const text = edit.draft.trim();
-    const language = this.resolved?.language;
+    const typed = this.typedRule(edit);
 
     this.marginEdit = null;
     this.focusTree = refocus;
+
+    if (typed === null) {
+      this.rerender();
+    } else {
+      this.takeRule(typed, edit.recorded === true);
+    }
+  }
+
+  /**
+   * What the rule typed in `edit` would make of the step (`typeRule`);
+   * `null` where it would change nothing.
+   */
+  private typedRule(edit: MarginEdit): RuleTyped | null {
+    const location = this.index.row(edit.row);
+    const text = edit.draft.trim();
+    const language = this.resolved?.language;
 
     if (
       location === null ||
       language === undefined ||
       text === this.fieldText(edit.row, "rule")
     ) {
-      this.rerender();
-      return;
+      return null;
     }
 
-    const typed = typeRule(
+    return typeRule(
       language,
       this.rules,
       this.drafts,
@@ -1673,8 +1750,17 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
       text,
       (id, values) => this.t(id, values),
     );
+  }
 
-    this.remember();
+  /**
+   * Keep a typed rule, recording the undo step unless the edit it is typed
+   * in has `recorded` its own already.
+   */
+  private takeRule(typed: RuleTyped, recorded: boolean): void {
+    if (!recorded) {
+      this.remember();
+    }
+
     this.rules = typed.rules;
     this.drafts = { ...this.drafts, rule: typed.drafts };
     this.announce(typed.announcement);
@@ -1935,6 +2021,7 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
       <button
         aria-label={this.t(label)}
         aria-pressed={action === "close" ? this.closing !== null : undefined}
+        disabled={!this.available(action)}
         key={action}
         onClick={() => this.act(action)}
         title={this.t(label)}
