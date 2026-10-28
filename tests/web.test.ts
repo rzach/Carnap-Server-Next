@@ -945,11 +945,11 @@ describe("native web workflow", () => {
 
       expect(pageResponse.status).toBe(200);
       expect(html).toContain("Student overrides");
-      // The gradebook and attempts destinations head the record, in the link
-      // strip above its settings; grade export and submission review live on
-      // the gradebook page itself.
+      // The gradebook and attempts destinations close the record, in the link
+      // strip under its settings, where every page keeps its strip; grade
+      // export and submission review live on the gradebook page itself.
       expect(html).toContain("link-strip");
-      expect(html.indexOf("link-strip")).toBeLessThan(
+      expect(html.indexOf("link-strip")).toBeGreaterThan(
         html.indexOf('class="fact-list"'),
       );
       expect(html).toContain(

@@ -3929,8 +3929,8 @@ export function renderInstructorAssignmentPage(
   const recordProps = {
     footer: recordFooter,
     sections: [
-      workLinks.length > 0 ? <LinkStrip links={workLinks} /> : null,
       <AssignmentRecordFacts assignment={assignment} />,
+      workLinks.length > 0 ? <LinkStrip links={workLinks} /> : null,
     ],
     title: i18n.t("Assignment record"),
     ...(assignment.description.trim().length === 0
