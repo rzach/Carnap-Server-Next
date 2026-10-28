@@ -72,9 +72,8 @@ async function hover(
   text: string,
 ): Promise<void> {
   field.dispatchEvent(
-    new dom.window.PointerEvent("pointerover", {
+    new dom.window.MouseEvent("mouseover", {
       bubbles: true,
-      pointerType: "mouse",
     }),
   );
   await until(() => popup?.hidden === false && popup.textContent === text);

@@ -42,16 +42,16 @@ function fixture() {
   return { controller, field, popup, scope };
 }
 
+/** The mouse arriving at or leaving `target`, as a phone's tap also does
+ *  (the browser makes mouse events of it): the popup hears nothing else. */
 function pointer(
-  type: "pointerover" | "pointerout",
+  type: "over" | "out",
   target: Element,
   related: Element | null = null,
-  pointerType = "mouse",
 ): void {
   target.dispatchEvent(
-    new dom.window.PointerEvent(type, {
+    new dom.window.MouseEvent(`mouse${type}`, {
       bubbles: true,
-      pointerType,
       relatedTarget: related,
     }),
   );
@@ -68,7 +68,7 @@ describe("the problem popup", () => {
     const { field, popup } = fixture();
 
     expect(popup().hidden).toBe(true);
-    pointer("pointerover", field("a"));
+    pointer("over", field("a"));
     expect(popup().hidden).toBe(true);
     await settle(350);
 
@@ -82,17 +82,16 @@ describe("the problem popup", () => {
   test("says when the problem is a warning", async () => {
     const { field, popup } = fixture();
 
-    pointer("pointerover", field("b"));
+    pointer("over", field("b"));
     await settle(350);
 
     expect(popup().dataset.severity).toBe("warning");
   });
 
-  test("floats nothing over a field without a problem, or for a touch", async () => {
+  test("floats nothing over a field without a problem", async () => {
     const { field, popup } = fixture();
 
-    pointer("pointerover", field("c"));
-    pointer("pointerover", field("a"), null, "touch");
+    pointer("over", field("c"));
     await settle(350);
 
     expect(popup().hidden).toBe(true);
@@ -101,15 +100,15 @@ describe("the problem popup", () => {
   test("stays while the pointer crosses onto it, and goes when it leaves both", async () => {
     const { field, popup } = fixture();
 
-    pointer("pointerover", field("a"));
+    pointer("over", field("a"));
     await settle(350);
-    pointer("pointerout", field("a"), popup());
-    pointer("pointerover", popup());
+    pointer("out", field("a"), popup());
+    pointer("over", popup());
     await settle(200);
     expect(popup().hidden).toBe(false);
 
-    pointer("pointerout", popup(), field("c"));
-    pointer("pointerover", field("c"));
+    pointer("out", popup(), field("c"));
+    pointer("over", field("c"));
     await settle(200);
     expect(popup().hidden).toBe(true);
   });
@@ -117,10 +116,10 @@ describe("the problem popup", () => {
   test("moves straight to the next field's problem once one is shown", async () => {
     const { field, popup } = fixture();
 
-    pointer("pointerover", field("a"));
+    pointer("over", field("a"));
     await settle(350);
-    pointer("pointerout", field("a"), field("b"));
-    pointer("pointerover", field("b"));
+    pointer("out", field("a"), field("b"));
+    pointer("over", field("b"));
 
     expect(popup().textContent).toBe("Cites a line out of scope.");
   });
@@ -128,19 +127,19 @@ describe("the problem popup", () => {
   test("Escape dismisses it, and resting on the field does not bring it back", async () => {
     const { field, popup } = fixture();
 
-    pointer("pointerover", field("a"));
+    pointer("over", field("a"));
     await settle(350);
     pressEscape();
     expect(popup().hidden).toBe(true);
 
-    pointer("pointerover", field("a"));
+    pointer("over", field("a"));
     await settle(350);
     expect(popup().hidden).toBe(true);
 
-    pointer("pointerout", field("a"), field("c"));
-    pointer("pointerover", field("c"));
-    pointer("pointerout", field("c"), field("a"));
-    pointer("pointerover", field("a"));
+    pointer("out", field("a"), field("c"));
+    pointer("over", field("c"));
+    pointer("out", field("c"), field("a"));
+    pointer("over", field("a"));
     await settle(350);
     expect(popup().hidden).toBe(false);
   });
@@ -148,14 +147,14 @@ describe("the problem popup", () => {
   test("goes when the field's problem changes or the field does", async () => {
     const { field, popup, scope } = fixture();
 
-    pointer("pointerover", field("a"));
+    pointer("over", field("a"));
     await settle(350);
     field("a").setAttribute("data-problem", "Expected a rule.");
     await settle(0);
     expect(popup().hidden).toBe(true);
 
-    pointer("pointerout", field("a"), field("b"));
-    pointer("pointerover", field("b"));
+    pointer("out", field("a"), field("b"));
+    pointer("over", field("b"));
     await settle(350);
     expect(popup().hidden).toBe(false);
     scope.removeChild(field("b"));
@@ -166,7 +165,7 @@ describe("the problem popup", () => {
   test("lets go when its widget does", async () => {
     const { controller, field, popup } = fixture();
 
-    pointer("pointerover", field("a"));
+    pointer("over", field("a"));
     controller.abort();
     await settle(350);
 

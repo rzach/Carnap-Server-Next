@@ -20,7 +20,12 @@ import { copyOfDrawing } from "./proof-problem";
  * shows a copy of the drawing instead; the text is still what tells it the
  * problem changed. It is
  * `aria-hidden`: a screen reader hears the same text through the field's
- * hidden note, and a touch, which floats no title either, floats nothing.
+ * hidden note.
+ *
+ * Mouse events, not pointer events, as CodeMirror's hover tooltips use: a
+ * phone makes mouse events of a tap, so a tap floats the bubble where it
+ * landed and the next tap elsewhere is the pointer leaving, which is what a
+ * lint message does under a tap in the linear and Fitch editors.
  *
  * Framework-free, like the problem line, so the Preact islands share it; it is
  * mounted outside any render tree.
@@ -136,11 +141,8 @@ export function mountProblemPopup(
     (popup.contains(target) || (anchor?.contains(target) ?? false));
 
   scope.addEventListener(
-    "pointerover",
+    "mouseover",
     (event) => {
-      if (event.pointerType === "touch") {
-        return;
-      }
       const field = problemOf(event.target as Element | null);
       if (field === anchor) {
         // Back on the field it is shown for: stay.
@@ -173,7 +175,7 @@ export function mountProblemPopup(
     { signal },
   );
 
-  const leave = (event: PointerEvent): void => {
+  const leave = (event: MouseEvent): void => {
     if (anchor === null || isOver(event.relatedTarget)) {
       return;
     }
@@ -184,10 +186,10 @@ export function mountProblemPopup(
     }
     timer = setTimeout(hide, LEAVE_GRACE_MS);
   };
-  scope.addEventListener("pointerout", leave, { signal });
-  popup.addEventListener("pointerout", leave, { signal });
+  scope.addEventListener("mouseout", leave, { signal });
+  popup.addEventListener("mouseout", leave, { signal });
   popup.addEventListener(
-    "pointerover",
+    "mouseover",
     () => {
       clearTimeout(timer);
     },

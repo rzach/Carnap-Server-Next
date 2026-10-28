@@ -100,9 +100,8 @@ describe("a rule's shape in the Prawitz editor", () => {
 
     // A hover floats the same drawing.
     field.dispatchEvent(
-      new dom.window.PointerEvent("pointerover", {
+      new dom.window.MouseEvent("mouseover", {
         bubbles: true,
-        pointerType: "mouse",
       }),
     );
     const popup = mounted.root.querySelector<HTMLElement>(".problem-popup");
