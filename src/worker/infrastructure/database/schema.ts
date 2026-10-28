@@ -206,6 +206,25 @@ export const courseMemberships = sqliteTable(
   ],
 );
 
+/**
+ * A user's private calendar feed: one per user, kept as the hash of the
+ * token its address carries, the way an enrollment link is. Making a new link
+ * replaces the row, and turning the feed off deletes it.
+ */
+export const calendarFeeds = sqliteTable(
+  "calendar_feeds",
+  {
+    userId: text("user_id")
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("calendar_feeds_token_hash_unique").on(table.tokenHash),
+  ],
+);
+
 export const courseEnrollmentLinks = sqliteTable(
   "course_enrollment_links",
   {

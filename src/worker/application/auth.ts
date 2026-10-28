@@ -23,7 +23,7 @@ import {
   createStoredLoginRateLimiter,
   type LoginRateLimiter,
 } from "./login-rate-limit";
-import type { AppStores } from "./stores";
+import type { AppStores, CalendarFeed } from "./stores";
 import { createAuthToken, hashAuthToken } from "./tokens";
 
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 14;
@@ -187,6 +187,8 @@ export type ConfirmedNativeLogin =
 
 /** One of the actor's own identities, an LTI one named by its platform. */
 export interface OwnAccount {
+  /** The account's private calendar feed, or null while it is off. */
+  readonly calendarFeed: CalendarFeed | null;
   readonly email: EmailAuthority;
   readonly identities: readonly OwnIdentity[];
 }
@@ -538,14 +540,15 @@ export class AuthService {
   /**
    * What the profile page shows about the actor's account beyond the user row:
    * the identities that sign in to it (a native email login, plus any LMS
-   * links, each named by its platform), and who owns its address. No
-   * capability check: an actor may always read their own account.
+   * links, each named by its platform), who owns its address, and whether
+   * its calendar feed is on. No capability check: an actor may always read
+   * their own account.
    */
   async describeOwnAccount(actor: AuthenticatedActor): Promise<OwnAccount> {
-    const identities =
-      await this.options.stores.users.listExternalIdentitiesForUser(
-        actor.user.id,
-      );
+    const [identities, calendarFeed] = await Promise.all([
+      this.options.stores.users.listExternalIdentitiesForUser(actor.user.id),
+      this.options.stores.calendarFeeds.getForUser(actor.user.id),
+    ]);
     // A platform deleted since linking names nothing; the identity is still
     // listed, and still removable.
     const names = await platformNames(this.options.stores, [
@@ -554,6 +557,7 @@ export class AuthService {
     ]);
 
     return {
+      calendarFeed,
       email: emailAuthority(actor.user, identities, names),
       identities: identities.map((identity) => {
         const platformId = identityPlatformId(identity);

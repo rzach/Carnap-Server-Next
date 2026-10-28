@@ -129,18 +129,22 @@ describe("the roster filter", () => {
     expect(roster.shown()).toHaveLength(2);
   });
 
-  test("does not match the text of a row's closed dialog", () => {
-    // Every member's row keeps an accommodation dialog beside its button; its
-    // field labels are in every row, and must not make every row match.
-    const dialog =
+  test("does not match the text of a row's controls", () => {
+    // Every member's row keeps an accommodation dialog beside its button, and
+    // every library row an Archive button: the same words in every row, which
+    // must not make every row match.
+    const controls =
+      '<button type="button"><span class="visually-hidden">Archive</span></button>' +
       "<dialog><label>Extra time minutes<input></label></dialog>";
     const roster = fixture([
-      row("Ada Okafor", "ada.0@students.example.test", dialog),
-      row("Ben Lindqvist", "ben.1@students.example.test", dialog),
+      row("Ada Okafor", "ada.0@students.example.test", controls),
+      row("Ben Lindqvist", "ben.1@students.example.test", controls),
     ]);
 
     roster.toggle.click();
     roster.type("time");
+    expect(roster.shown()).toEqual([]);
+    roster.type("archive");
     expect(roster.shown()).toEqual([]);
   });
 });

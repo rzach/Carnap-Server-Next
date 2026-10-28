@@ -2,6 +2,7 @@ import type { Assignment } from "../domain/assignments";
 import type { AppId } from "../domain/ids";
 import { assignmentNotFound } from "./errors";
 import {
+  assignmentAsAppliedTo,
   effectivePolicyAssignment,
   type PolicyAdjustments,
   type PolicyAssignment,
@@ -56,4 +57,36 @@ export async function effectiveAssignmentForUser(
     assignment,
     await adjustmentsForUser(stores, assignment, userId),
   );
+}
+
+/**
+ * What one member is shown of a course: every published, listed assignment,
+ * each as applied to them, so its dates are the ones they are held to. Only
+ * drafts and unlisted assignments stay out; when each may be opened is the
+ * detail page's question (it requires `canView`), not this list's.
+ */
+export async function assignmentsAsAppliedTo(
+  stores: AppStores,
+  courseId: AppId,
+  userId: AppId,
+): Promise<Assignment[]> {
+  const [assignments, accommodation, overrides] = await Promise.all([
+    stores.assignments.listForCourse(courseId),
+    stores.courses.getAccommodation(courseId, userId),
+    stores.assignments.listOverridesForCourseUser(courseId, userId),
+  ]);
+  const overrideByAssignment = new Map(
+    overrides.map((override) => [override.assignmentId, override] as const),
+  );
+
+  return assignments
+    .filter(
+      (assignment) => assignment.listed && assignment.state === "published",
+    )
+    .map((assignment) =>
+      assignmentAsAppliedTo(assignment, {
+        accommodation,
+        override: overrideByAssignment.get(assignment.id) ?? null,
+      }),
+    );
 }

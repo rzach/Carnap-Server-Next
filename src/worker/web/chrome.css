@@ -241,6 +241,7 @@ table .create-bar button {
 
 /* The admin user record's sections (`.record-*`) are laid out as the
    profile's are: the same facts, seen from the other side. */
+.profile-calendar p,
 .profile-email p,
 .profile-roles p,
 .record-section p {
@@ -265,11 +266,13 @@ table .create-bar button {
 }
 
 /* A line of the Email section with its action: the address and Change, an
-   LMS's offer and Use that instead. Text and button sit on one line, centred
-   on each other, wrapping to two on a narrow sheet. The button drops the top
-   margin every form button otherwise takes from the content layer — that
-   margin is what sat it below the text. */
+   LMS's offer and Use that instead; and the Calendar section's buttons, each
+   in its own form. Text and button sit on one line, centred on each other,
+   wrapping to two on a narrow sheet. The button drops the top margin every
+   form button otherwise takes from the content layer — that margin is what
+   sat it below the text. */
 .profile-email-line,
+.profile-actions,
 .record-line {
   align-items: center;
   display: flex;
@@ -284,6 +287,7 @@ table .create-bar button {
 }
 
 .profile-email-line button,
+.profile-actions :is(form, button),
 .record-line :is(form, button) {
   margin: 0;
 }

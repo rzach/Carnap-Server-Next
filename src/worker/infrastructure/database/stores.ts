@@ -34,6 +34,8 @@ import type {
   AssignmentStore,
   AuthStore,
   BeginAttemptInput,
+  CalendarFeed,
+  CalendarFeedStore,
   ContentStore,
   CourseStore,
   CreateAdminAuditEventInput,
@@ -67,6 +69,7 @@ import type {
   PlatformCapabilityStore,
   PublishAssignmentInput,
   RecordLoginRateLimitHitInput,
+  ReplaceCalendarFeedInput,
   RepointPublishedAssignmentInput,
   RevokeEnrollmentLinkInput,
   RevokePlatformCapabilityInput,
@@ -171,6 +174,7 @@ import {
   assignments,
   attempts,
   authSessions,
+  calendarFeeds,
   contentItems,
   contentRevisions,
   courseAccommodations,
@@ -3194,6 +3198,52 @@ function aboutPageFromRow(value: string): AboutPage {
   return { html: page.html, source: page.source };
 }
 
+class SqliteCalendarFeedStore implements CalendarFeedStore {
+  constructor(private readonly db: AppDatabase) {}
+
+  async getForUser(userId: AppId): Promise<CalendarFeed | null> {
+    const [row] = await this.db
+      .select({
+        createdAt: calendarFeeds.createdAt,
+        userId: calendarFeeds.userId,
+      })
+      .from(calendarFeeds)
+      .where(eq(calendarFeeds.userId, userId));
+
+    return row ?? null;
+  }
+
+  async getByTokenHash(tokenHash: string): Promise<CalendarFeed | null> {
+    const [row] = await this.db
+      .select({
+        createdAt: calendarFeeds.createdAt,
+        userId: calendarFeeds.userId,
+      })
+      .from(calendarFeeds)
+      .where(eq(calendarFeeds.tokenHash, tokenHash));
+
+    return row ?? null;
+  }
+
+  async replace(input: ReplaceCalendarFeedInput): Promise<CalendarFeed> {
+    await this.db
+      .insert(calendarFeeds)
+      .values(input)
+      .onConflictDoUpdate({
+        set: { createdAt: input.createdAt, tokenHash: input.tokenHash },
+        target: calendarFeeds.userId,
+      });
+
+    return { createdAt: input.createdAt, userId: input.userId };
+  }
+
+  async delete(userId: AppId): Promise<void> {
+    await this.db
+      .delete(calendarFeeds)
+      .where(eq(calendarFeeds.userId, userId));
+  }
+}
+
 class SqliteSiteSettingsStore implements SiteSettingsStore {
   constructor(private readonly db: AppDatabase) {}
 
@@ -4132,6 +4182,7 @@ export function createStores(db: AppDatabase): AppStores {
     assignments: new SqliteAssignmentStore(db),
     assessment: new SqliteAssessmentStore(db),
     auth: new SqliteAuthStore(db),
+    calendarFeeds: new SqliteCalendarFeedStore(db),
     content: new SqliteContentStore(db),
     courses: new SqliteCourseStore(db),
     emailChanges: new SqliteEmailChangeStore(db),

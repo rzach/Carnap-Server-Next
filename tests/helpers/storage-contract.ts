@@ -1707,6 +1707,37 @@ export function describeStorageContract(
       });
     });
 
+    test("a calendar feed answers to its latest hash alone, and not once turned off", async () => {
+      await withStorage(async ({ stores }) => {
+        const { student } = await createAssignmentSlice(stores);
+        const feeds = stores.calendarFeeds;
+
+        await expect(feeds.getForUser(student.id)).resolves.toBeNull();
+        await feeds.replace({
+          createdAt: NOW,
+          tokenHash: "hash-first",
+          userId: student.id,
+        });
+        // A new link replaces the row: the first hash opens nothing now.
+        await feeds.replace({
+          createdAt: "2026-02-01T00:00:00.000Z",
+          tokenHash: "hash-second",
+          userId: student.id,
+        });
+
+        await expect(feeds.getByTokenHash("hash-first")).resolves.toBeNull();
+        await expect(feeds.getByTokenHash("hash-second")).resolves.toEqual({
+          createdAt: "2026-02-01T00:00:00.000Z",
+          userId: student.id,
+        });
+
+        await feeds.delete(student.id);
+
+        await expect(feeds.getForUser(student.id)).resolves.toBeNull();
+        await expect(feeds.getByTokenHash("hash-second")).resolves.toBeNull();
+      });
+    });
+
     test("a student's overrides come back scoped to their course", async () => {
       await withStorage(async ({ stores }) => {
         const { assignment, instructor, student } =

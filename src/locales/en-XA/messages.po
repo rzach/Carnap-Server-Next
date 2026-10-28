@@ -126,6 +126,10 @@ msgstr ""
 msgid "{answered} of {questions} answered"
 msgstr ""
 
+#: src/worker/web/calendar.ts
+msgid "{assignment} ({course})"
+msgstr ""
+
 #: src/worker/exercises/world/strings.ts
 msgid "{block} at column {col}, row {row}"
 msgstr ""
@@ -1040,6 +1044,10 @@ msgstr ""
 msgid "Anyone with the link"
 msgstr ""
 
+#: src/worker/web/profile.tsx
+msgid "Anyone with the link can see your due dates. A new link stops the old one working."
+msgstr ""
+
 #: src/worker/web/content.tsx
 msgid "Anyone with the link can view this revision"
 msgstr ""
@@ -1383,6 +1391,18 @@ msgstr ""
 msgid "Breadcrumb"
 msgstr ""
 
+#: src/worker/web/profile.tsx
+msgid "Calendar"
+msgstr ""
+
+#: src/worker/web/profile.tsx
+msgid "Calendar link"
+msgstr ""
+
+#: src/worker/web/profile.tsx
+msgid "Calendar link made. Copy it now — for security it is not stored and cannot be shown again. In your calendar app, add a calendar from a URL and paste it there."
+msgstr ""
+
 #: src/worker/web/admin-lti.tsx
 msgid "Campus Moodle"
 msgstr ""
@@ -1427,6 +1447,10 @@ msgstr ""
 
 #: src/worker/web/courses.tsx
 msgid "Carnap could not reach the LMS."
+msgstr ""
+
+#: src/worker/web/calendar.ts
+msgid "Carnap due dates"
 msgstr ""
 
 #: src/worker/routes/lti.ts
@@ -2703,6 +2727,10 @@ msgstr ""
 msgid "Filter by exercise or student"
 msgstr ""
 
+#: src/worker/web/content.tsx
+msgid "Filter content"
+msgstr ""
+
 #: src/worker/web/courses.tsx
 msgid "Filter members"
 msgstr ""
@@ -2741,6 +2769,10 @@ msgstr ""
 
 #: src/worker/web/ui-strings.ts
 msgid "Fold this block"
+msgstr ""
+
+#: src/worker/web/profile.tsx
+msgid "Follow your due dates in Google Calendar, Apple Calendar or Outlook, through a private link to every course you belong to."
 msgstr ""
 
 #. Disambiguating id; only the word Formula is shown. Names a proof line's formula text field.
@@ -3318,6 +3350,14 @@ msgstr ""
 msgid "Main navigation"
 msgstr ""
 
+#: src/worker/web/profile.tsx
+msgid "Make a calendar link"
+msgstr ""
+
+#: src/worker/web/profile.tsx
+msgid "Make a new link"
+msgstr ""
+
 #: src/worker/exercises/world/strings.ts
 msgid "Make false"
 msgstr ""
@@ -3619,6 +3659,14 @@ msgstr ""
 
 #: src/worker/exercises/world/strings.ts
 msgid "No blocks yet."
+msgstr ""
+
+#: src/worker/routes/web.ts
+msgid "No calendar answers at this address."
+msgstr ""
+
+#: src/worker/web/content.tsx
+msgid "No content item matches."
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -6664,6 +6712,10 @@ msgstr ""
 msgid "Truth tree"
 msgstr ""
 
+#: src/worker/web/profile.tsx
+msgid "Turn off"
+msgstr ""
+
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Turnstile"
 msgstr ""
@@ -7233,6 +7285,14 @@ msgstr ""
 
 #: src/worker/web/gradebook.tsx
 msgid "Your answers, the expected results, and instructor comments."
+msgstr ""
+
+#: src/worker/web/profile.tsx
+msgid "Your calendar link was made on {date}."
+msgstr ""
+
+#: src/worker/routes/web.ts
+msgid "Your calendar link was turned off."
 msgstr ""
 
 #: src/worker/application/lti.ts

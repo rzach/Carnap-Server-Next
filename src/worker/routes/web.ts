@@ -6,6 +6,7 @@ import type {
   StartedNativeLogin,
 } from "../application/auth";
 import { LOGIN_TTL_SECONDS } from "../application/auth";
+import { CalendarService } from "../application/calendar";
 import { AppHttpError, badRequest } from "../application/errors";
 import {
   clearLocaleCookie,
@@ -33,6 +34,7 @@ import {
   renderLoginPage,
   renderLoginSent,
 } from "../web/auth";
+import { renderCalendarFeed } from "../web/calendar";
 import { renderDonatePage } from "../web/donate";
 import {
   renderEmailChangeConfirm,
@@ -297,7 +299,9 @@ webRoutes.get("/profile", async (context) => {
             ? i18n.t(
                 "Your old email address is back, and every other session on your account has been signed out.",
               )
-            : undefined;
+            : url.searchParams.has("calendarOff")
+              ? i18n.t("Your calendar link was turned off.")
+              : undefined;
 
   return renderProfile(
     context,
@@ -305,6 +309,58 @@ webRoutes.get("/profile", async (context) => {
     account,
     notice === undefined ? {} : { notice },
   );
+});
+
+function calendarService(context: Context<AppBindings>): CalendarService {
+  return new CalendarService({ stores: storesForContext(context) });
+}
+
+/**
+ * A calendar app's request for a feed. No session: the token is the
+ * credential, and it travels in the query, which is the part of a URL the
+ * error log leaves out (`logServerError`). A token that opens nothing gets
+ * the same 404 whatever the reason.
+ */
+webRoutes.get("/calendar.ics", async (context) => {
+  const token = new URL(context.req.url).searchParams.get("token") ?? "";
+  const contents = await calendarService(context).readFeed(token);
+
+  if (contents === null) {
+    throw new AppHttpError(
+      404,
+      "calendar_feed_not_found",
+      deferred.i18n.t("No calendar answers at this address."),
+    );
+  }
+
+  return renderCalendarFeed(context, contents);
+});
+
+/**
+ * Make the actor a calendar link, or a new one in place of the old, and show
+ * it on the profile this once. A page rather than a redirect, because only
+ * this response can carry the link: its hash is all that is kept.
+ */
+webRoutes.post("/profile/calendar", async (context) => {
+  const actor = requireAuthenticated(context);
+  const { token } = await calendarService(context).replaceFeed(actor);
+  const account =
+    await authServiceForContext(context).describeOwnAccount(actor);
+  const feedUrl = new URL("/calendar.ics", publicRequestUrl(context));
+
+  feedUrl.searchParams.set("token", token);
+
+  return renderProfile(context, actor, account, {
+    newCalendarUrl: feedUrl.toString(),
+  });
+});
+
+webRoutes.post("/profile/calendar/off", async (context) => {
+  const actor = requireAuthenticated(context);
+
+  await calendarService(context).turnOffFeed(actor);
+
+  return redirect("/profile?calendarOff=1", 303);
 });
 
 /**

@@ -42,8 +42,11 @@ import {
   SummaryStrip,
   shortCreateLabel,
   splitView,
+  TableFilter,
+  TableFilterControl,
   TableScroll,
   Time,
+  tableFiltered,
 } from "./components";
 import type { ContentDocumentModel } from "./content-document";
 import { renderContentDocument } from "./content-document";
@@ -230,55 +233,74 @@ const ItemsTable: FC<{
     );
   }
 
+  // Each drawer filters its own rows, so each has its own id.
+  const filterId = archived ? "archived-content-filter" : "content-filter";
+
   return (
-    <TableScroll phoneList>
-      <thead>
-        <tr>
-          <SortHeader label={i18n.t("Title")} />
-          {/* Sortable, because the reason to look is usually "where are my
+    <TableFilter
+      empty={i18n.t("No content item matches.")}
+      id={filterId}
+      rows={items.length}
+    >
+      <TableScroll phoneList>
+        <thead>
+          <tr>
+            <SortHeader
+              aside={
+                tableFiltered(items.length) ? (
+                  <TableFilterControl
+                    label={i18n.t("Filter content")}
+                    target={filterId}
+                  />
+                ) : undefined
+              }
+              label={i18n.t("Title")}
+            />
+            {/* Sortable, because the reason to look is usually "where are my
               theories" — an author has many lessons and a few of these. */}
-          <SortHeader label={i18n.t("Kind")} />
-          <SortHeader
-            label={archived ? i18n.t("Archived") : i18n.t("Updated")}
-          />
-          {/* Renaming and archiving need the permission that made the item,
+            <SortHeader label={i18n.t("Kind")} />
+            <SortHeader
+              label={archived ? i18n.t("Archived") : i18n.t("Updated")}
+            />
+            {/* Renaming and archiving need the permission that made the item,
               as sharing does; an author who has lost it is not offered a
               control the server would refuse, and with nothing to put in it
               the column is not drawn. */}
-          {canAuthor ? <th scope="col">{i18n.t("Actions")}</th> : null}
-        </tr>
-      </thead>
-      <tbody>
-        {items.map((item) => {
-          const when = archived ? (item.archivedAt ?? "") : item.updatedAt;
+            {canAuthor ? <th scope="col">{i18n.t("Actions")}</th> : null}
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => {
+            const when = archived ? (item.archivedAt ?? "") : item.updatedAt;
 
-          return (
-            <tr>
-              <td>
-                <a href={`/content/${item.id}`}>{item.title}</a>
-                {outdated.has(item.id) ? <OutdatedMark /> : null}
-              </td>
-              <td>{sourceFormatLabel(i18n, item.sourceFormat)}</td>
-              {/* The instant behind the localized date, which does not sort. */}
-              <td data-sort-value={when}>
-                {when.length === 0 ? null : <Time value={when} />}
-              </td>
-              {canAuthor ? (
+            return (
+              <tr>
                 <td>
-                  <ItemTitleEdit context={context} item={item} />
-                  <ArchiveToggle
-                    archived={item.archivedAt !== null}
-                    context={context}
-                    name={item.title}
-                    path={`/content/${item.id}`}
-                  />
+                  <a href={`/content/${item.id}`}>{item.title}</a>
+                  {outdated.has(item.id) ? <OutdatedMark /> : null}
                 </td>
-              ) : null}
-            </tr>
-          );
-        })}
-      </tbody>
-    </TableScroll>
+                <td>{sourceFormatLabel(i18n, item.sourceFormat)}</td>
+                {/* The instant behind the localized date, which does not sort. */}
+                <td data-sort-value={when}>
+                  {when.length === 0 ? null : <Time value={when} />}
+                </td>
+                {canAuthor ? (
+                  <td>
+                    <ItemTitleEdit context={context} item={item} />
+                    <ArchiveToggle
+                      archived={item.archivedAt !== null}
+                      context={context}
+                      name={item.title}
+                      path={`/content/${item.id}`}
+                    />
+                  </td>
+                ) : null}
+              </tr>
+            );
+          })}
+        </tbody>
+      </TableScroll>
+    </TableFilter>
   );
 };
 

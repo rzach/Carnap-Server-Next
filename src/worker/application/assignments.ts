@@ -21,7 +21,11 @@ import type { Timestamp } from "../domain/time";
 import { isTimestamp, timestampNow } from "../domain/time";
 import { deferred } from "../i18n/deferred";
 import type { TranslatableMessage } from "../i18n/translator";
-import { adjustmentsForUser, assignmentInCourse } from "./assignment-lookup";
+import {
+  adjustmentsForUser,
+  assignmentInCourse,
+  assignmentsAsAppliedTo,
+} from "./assignment-lookup";
 import type { AuthenticatedActor } from "./auth";
 import {
   requireCourseRole,
@@ -1436,36 +1440,15 @@ export class AssignmentService {
   ): Promise<Assignment[]> {
     await requireCourseRole(this.options.stores, actor, courseId, ["member"]);
 
-    const [assignments, accommodation, overrides] = await Promise.all([
-      this.options.stores.assignments.listForCourse(courseId),
-      this.options.stores.courses.getAccommodation(courseId, actor.user.id),
-      this.options.stores.assignments.listOverridesForCourseUser(
-        courseId,
-        actor.user.id,
-      ),
-    ]);
-    const overrideByAssignment = new Map(
-      overrides.map((override) => [override.assignmentId, override] as const),
+    // Closed ones included: the view labels each as upcoming, open or closed,
+    // and closed ones linger for reference. Each row is the assignment as
+    // applied to this student, so a row stays linked when an override keeps
+    // their window open past the course's.
+    return assignmentsAsAppliedTo(
+      this.options.stores,
+      courseId,
+      actor.user.id,
     );
-
-    // Students see every published, listed assignment regardless of timing: the
-    // view labels each as upcoming, open, or closed, and closed ones linger for
-    // reference. Only drafts and unlisted assignments stay hidden, and the detail
-    // page remains gated outside the open window (getForStudent requires canView).
-    //
-    // Each row is the assignment as it applies to this student, so the dates the
-    // list labels are the ones they are actually held to — and so a row stays
-    // linked when an override keeps their window open past the course's.
-    return assignments
-      .filter(
-        (assignment) => assignment.listed && assignment.state === "published",
-      )
-      .map((assignment) =>
-        assignmentAsAppliedTo(assignment, {
-          accommodation,
-          override: overrideByAssignment.get(assignment.id) ?? null,
-        }),
-      );
   }
 
   /**

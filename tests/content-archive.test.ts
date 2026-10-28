@@ -234,6 +234,33 @@ describe("archiving a content item", () => {
     });
   });
 
+  test("a long library gets a filter in its Title heading, and a short one none", async () => {
+    await withStorage(async (_storage, env) => {
+      const author = await login(env, "author@example.test");
+      const library = async () =>
+        (
+          await appRequest(createTestApp(), "/content", asPage(author), env)
+        ).text();
+
+      for (let index = 1; index <= 20; index += 1) {
+        await createItem(env, author, `Lesson ${index}`);
+      }
+
+      // Twenty rows are still scanned by eye; the filter starts past them.
+      expect(await library()).not.toContain('data-table-filter-control="');
+
+      await createItem(env, author, "Lesson 21");
+
+      const html = await library();
+
+      expect(html).toContain('id="content-filter"');
+      expect(html).toContain('data-table-filter-control="content-filter"');
+      expect(html).toContain("No content item matches.");
+      // The archived drawer is empty, so it is not drawn, filter and all.
+      expect(html).not.toContain("archived-content-filter");
+    });
+  });
+
   test("a shared revision stays readable at its address", async () => {
     await withStorage(async (_storage, env) => {
       const author = await login(env, "author@example.test");

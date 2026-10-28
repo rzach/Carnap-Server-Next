@@ -126,6 +126,10 @@ msgstr "“{word}” is not a shape or size this world knows."
 msgid "{answered} of {questions} answered"
 msgstr "{answered} of {questions} answered"
 
+#: src/worker/web/calendar.ts
+msgid "{assignment} ({course})"
+msgstr "{assignment} ({course})"
+
 #: src/worker/exercises/world/strings.ts
 msgid "{block} at column {col}, row {row}"
 msgstr "{block} at column {col}, row {row}"
@@ -1040,6 +1044,10 @@ msgstr "Anyone on the site who can author content and has the link can view this
 msgid "Anyone with the link"
 msgstr "Anyone with the link"
 
+#: src/worker/web/profile.tsx
+msgid "Anyone with the link can see your due dates. A new link stops the old one working."
+msgstr "Anyone with the link can see your due dates. A new link stops the old one working."
+
 #: src/worker/web/content.tsx
 msgid "Anyone with the link can view this revision"
 msgstr "Anyone with the link can view this revision"
@@ -1383,6 +1391,18 @@ msgstr "Branch reopened."
 msgid "Breadcrumb"
 msgstr "Breadcrumb"
 
+#: src/worker/web/profile.tsx
+msgid "Calendar"
+msgstr "Calendar"
+
+#: src/worker/web/profile.tsx
+msgid "Calendar link"
+msgstr "Calendar link"
+
+#: src/worker/web/profile.tsx
+msgid "Calendar link made. Copy it now — for security it is not stored and cannot be shown again. In your calendar app, add a calendar from a URL and paste it there."
+msgstr "Calendar link made. Copy it now — for security it is not stored and cannot be shown again. In your calendar app, add a calendar from a URL and paste it there."
+
 #: src/worker/web/admin-lti.tsx
 msgid "Campus Moodle"
 msgstr "Campus Moodle"
@@ -1428,6 +1448,10 @@ msgstr "Carnap cannot send the account-link confirmation email in this environme
 #: src/worker/web/courses.tsx
 msgid "Carnap could not reach the LMS."
 msgstr "Carnap could not reach the LMS."
+
+#: src/worker/web/calendar.ts
+msgid "Carnap due dates"
+msgstr "Carnap due dates"
 
 #: src/worker/routes/lti.ts
 msgid "Carnap has no signing key configured, so content selection cannot complete. Contact your Carnap administrator."
@@ -2703,6 +2727,10 @@ msgstr "Fill in a row where the formulas disagree, then mark it as your countere
 msgid "Filter by exercise or student"
 msgstr "Filter by exercise or student"
 
+#: src/worker/web/content.tsx
+msgid "Filter content"
+msgstr "Filter content"
+
 #: src/worker/web/courses.tsx
 msgid "Filter members"
 msgstr "Filter members"
@@ -2742,6 +2770,10 @@ msgstr "Fitch proof editor"
 #: src/worker/web/ui-strings.ts
 msgid "Fold this block"
 msgstr "Fold this block"
+
+#: src/worker/web/profile.tsx
+msgid "Follow your due dates in Google Calendar, Apple Calendar or Outlook, through a private link to every course you belong to."
+msgstr "Follow your due dates in Google Calendar, Apple Calendar or Outlook, through a private link to every course you belong to."
 
 #. Disambiguating id; only the word Formula is shown. Names a proof line's formula text field.
 #. Disambiguating id; only the word Formula is shown. Names the formula text field of a line in the proof tree.
@@ -3318,6 +3350,14 @@ msgstr "Main connectives found: {right} of {total}"
 msgid "Main navigation"
 msgstr "Main navigation"
 
+#: src/worker/web/profile.tsx
+msgid "Make a calendar link"
+msgstr "Make a calendar link"
+
+#: src/worker/web/profile.tsx
+msgid "Make a new link"
+msgstr "Make a new link"
+
 #: src/worker/exercises/world/strings.ts
 msgid "Make false"
 msgstr "Make false"
@@ -3620,6 +3660,14 @@ msgstr "No attempts have been opened."
 #: src/worker/exercises/world/strings.ts
 msgid "No blocks yet."
 msgstr "No blocks yet."
+
+#: src/worker/routes/web.ts
+msgid "No calendar answers at this address."
+msgstr "No calendar answers at this address."
+
+#: src/worker/web/content.tsx
+msgid "No content item matches."
+msgstr "No content item matches."
 
 #: src/worker/web/assignment-detail.tsx
 msgid "No corrections have been published for this assignment."
@@ -6664,6 +6712,10 @@ msgstr "Truth table"
 msgid "Truth tree"
 msgstr "Truth tree"
 
+#: src/worker/web/profile.tsx
+msgid "Turn off"
+msgstr "Turn off"
+
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Turnstile"
 msgstr "Turnstile"
@@ -7234,6 +7286,14 @@ msgstr "Your answers and any instructor comments for this assignment will be sho
 #: src/worker/web/gradebook.tsx
 msgid "Your answers, the expected results, and instructor comments."
 msgstr "Your answers, the expected results, and instructor comments."
+
+#: src/worker/web/profile.tsx
+msgid "Your calendar link was made on {date}."
+msgstr "Your calendar link was made on {date}."
+
+#: src/worker/routes/web.ts
+msgid "Your calendar link was turned off."
+msgstr "Your calendar link was turned off."
 
 #: src/worker/application/lti.ts
 msgid "Your Carnap account is disabled."

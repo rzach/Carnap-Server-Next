@@ -126,6 +126,10 @@ msgstr "„{word}“ ist keine Form oder Größe, die diese Welt kennt."
 msgid "{answered} of {questions} answered"
 msgstr "{answered} von {questions} beantwortet"
 
+#: src/worker/web/calendar.ts
+msgid "{assignment} ({course})"
+msgstr "{assignment} ({course})"
+
 #: src/worker/exercises/world/strings.ts
 msgid "{block} at column {col}, row {row}"
 msgstr "{block} in Spalte {col}, Zeile {row}"
@@ -1040,6 +1044,10 @@ msgstr "Alle auf dieser Website, die Inhalte erstellen dürfen und den Link habe
 msgid "Anyone with the link"
 msgstr "Alle mit dem Link"
 
+#: src/worker/web/profile.tsx
+msgid "Anyone with the link can see your due dates. A new link stops the old one working."
+msgstr "Wer den Link hat, sieht Ihre Abgabetermine. Ein neuer Link setzt den alten außer Kraft."
+
 #: src/worker/web/content.tsx
 msgid "Anyone with the link can view this revision"
 msgstr "Alle mit dem Link können diese Revision ansehen"
@@ -1383,6 +1391,18 @@ msgstr "Ast wieder geöffnet."
 msgid "Breadcrumb"
 msgstr "Navigationspfad"
 
+#: src/worker/web/profile.tsx
+msgid "Calendar"
+msgstr "Kalender"
+
+#: src/worker/web/profile.tsx
+msgid "Calendar link"
+msgstr "Kalenderlink"
+
+#: src/worker/web/profile.tsx
+msgid "Calendar link made. Copy it now — for security it is not stored and cannot be shown again. In your calendar app, add a calendar from a URL and paste it there."
+msgstr "Kalenderlink angelegt. Kopieren Sie ihn jetzt — aus Sicherheitsgründen wird er nicht gespeichert und kann nicht erneut angezeigt werden. Fügen Sie ihn in Ihrer Kalender-App als Kalender per URL hinzu."
+
 #: src/worker/web/admin-lti.tsx
 msgid "Campus Moodle"
 msgstr "Campus-Moodle"
@@ -1428,6 +1448,10 @@ msgstr "Carnap kann die Bestätigungs-E-Mail zur Kontoverknüpfung in dieser Umg
 #: src/worker/web/courses.tsx
 msgid "Carnap could not reach the LMS."
 msgstr "Carnap konnte das LMS nicht erreichen."
+
+#: src/worker/web/calendar.ts
+msgid "Carnap due dates"
+msgstr "Carnap-Abgabetermine"
 
 #: src/worker/routes/lti.ts
 msgid "Carnap has no signing key configured, so content selection cannot complete. Contact your Carnap administrator."
@@ -2703,6 +2727,10 @@ msgstr "Füllen Sie eine Zeile aus, in der die Formeln nicht übereinstimmen, un
 msgid "Filter by exercise or student"
 msgstr "Nach Übung oder studierender Person filtern"
 
+#: src/worker/web/content.tsx
+msgid "Filter content"
+msgstr "Inhalte filtern"
+
 #: src/worker/web/courses.tsx
 msgid "Filter members"
 msgstr "Mitglieder filtern"
@@ -2742,6 +2770,10 @@ msgstr "Fitch-Beweiseditor"
 #: src/worker/web/ui-strings.ts
 msgid "Fold this block"
 msgstr "Diesen Block einklappen"
+
+#: src/worker/web/profile.tsx
+msgid "Follow your due dates in Google Calendar, Apple Calendar or Outlook, through a private link to every course you belong to."
+msgstr "Verfolgen Sie Ihre Abgabetermine in Google Kalender, Apple Kalender oder Outlook – über einen privaten Link zu allen Kursen, denen Sie angehören."
 
 #. Disambiguating id; only the word Formula is shown. Names a proof line's formula text field.
 #. Disambiguating id; only the word Formula is shown. Names the formula text field of a line in the proof tree.
@@ -3318,6 +3350,14 @@ msgstr "Gefundene Hauptjunktoren: {right} von {total}"
 msgid "Main navigation"
 msgstr "Hauptnavigation"
 
+#: src/worker/web/profile.tsx
+msgid "Make a calendar link"
+msgstr "Kalenderlink anlegen"
+
+#: src/worker/web/profile.tsx
+msgid "Make a new link"
+msgstr "Neuen Link anlegen"
+
 #: src/worker/exercises/world/strings.ts
 msgid "Make false"
 msgstr "Falsch machen"
@@ -3620,6 +3660,14 @@ msgstr "Es wurden noch keine Versuche eröffnet."
 #: src/worker/exercises/world/strings.ts
 msgid "No blocks yet."
 msgstr "Noch keine Blöcke."
+
+#: src/worker/routes/web.ts
+msgid "No calendar answers at this address."
+msgstr "Unter dieser Adresse gibt es keinen Kalender."
+
+#: src/worker/web/content.tsx
+msgid "No content item matches."
+msgstr "Kein Inhalt passt."
 
 #: src/worker/web/assignment-detail.tsx
 msgid "No corrections have been published for this assignment."
@@ -6664,6 +6712,10 @@ msgstr "Wahrheitstafel"
 msgid "Truth tree"
 msgstr "Wahrheitsbaum"
 
+#: src/worker/web/profile.tsx
+msgid "Turn off"
+msgstr "Ausschalten"
+
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Turnstile"
 msgstr "Ableitbarkeitszeichen"
@@ -7234,6 +7286,14 @@ msgstr "Ihre Antworten und etwaige Kommentare der Lehrperson zu dieser Aufgabe w
 #: src/worker/web/gradebook.tsx
 msgid "Your answers, the expected results, and instructor comments."
 msgstr "Ihre Antworten, die erwarteten Ergebnisse und Kommentare der Lehrperson."
+
+#: src/worker/web/profile.tsx
+msgid "Your calendar link was made on {date}."
+msgstr "Ihr Kalenderlink wurde am {date} angelegt."
+
+#: src/worker/routes/web.ts
+msgid "Your calendar link was turned off."
+msgstr "Ihr Kalenderlink wurde ausgeschaltet."
 
 #: src/worker/application/lti.ts
 msgid "Your Carnap account is disabled."

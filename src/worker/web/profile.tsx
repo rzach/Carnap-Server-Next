@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 
 import type { AuthenticatedActor } from "../application/auth";
+import type { CalendarFeed } from "../application/stores";
 import type {
   EmailAuthority,
   ExternalIdentityProvider,
@@ -10,6 +11,7 @@ import { LOCALE_NAMES, SELECTABLE_LOCALES } from "../i18n/locales";
 import { splitAtValue, VALUE } from "../i18n/translator";
 import type { SummaryItem } from "./components";
 import {
+  CopyField,
   CsrfInput,
   ErrorSummary,
   ModalDialog,
@@ -33,6 +35,8 @@ export interface ProfileIdentity {
 
 /** What the profile shows about the account beyond the user row. */
 export interface ProfileAccount {
+  /** The account's private calendar feed, or null while it is off. */
+  readonly calendarFeed: CalendarFeed | null;
   readonly email: EmailAuthority;
   readonly identities: readonly ProfileIdentity[];
 }
@@ -60,6 +64,11 @@ interface ProfileViewOptions {
   readonly localeValue?: string;
   /** The name to prefill (the rejected input on error; otherwise the stored name). */
   readonly nameValue?: string;
+  /**
+   * A calendar link just made, shown this once: only its hash is kept, so
+   * no later page can show it again.
+   */
+  readonly newCalendarUrl?: string;
   /** A confirmation banner, e.g. after a successful save. */
   readonly notice?: string;
   /** The response status: a refused action's, alongside its {@link error}. */
@@ -172,6 +181,11 @@ export function renderProfile(
             emailValue={options.emailValue ?? ""}
             lmsLinked={lmsLinked}
             verified={user.emailVerifiedAt !== null}
+          />,
+          <CalendarSection
+            context={context}
+            feed={account.calendarFeed}
+            newUrl={options.newCalendarUrl}
           />,
           // Null rather than an element that renders nothing: the sheet can
           // only skip a section it can see is empty.
@@ -360,6 +374,87 @@ function EmailSection({
         lmsOwned={email.source === "lti" && email.email !== null}
         value={emailValue}
       />
+    </section>
+  );
+}
+
+/**
+ * The account's private calendar feed: off, on, or just made. A feed is an
+ * address a calendar app subscribes to, so the address is the credential, and
+ * it is shown once, when made, the way an enrollment link is. Making another
+ * retires it, which is the remedy for one shared by mistake.
+ */
+function CalendarSection({
+  context,
+  feed,
+  newUrl,
+}: {
+  readonly context: Context<AppBindings>;
+  readonly feed: CalendarFeed | null;
+  readonly newUrl: string | undefined;
+}) {
+  const i18n = useI18n();
+  const [before, after] = splitAtValue(
+    i18n.t("Your calendar link was made on {date}.", { date: VALUE }),
+  );
+
+  return (
+    <section
+      aria-labelledby="profile-calendar-heading"
+      class="profile-calendar"
+    >
+      <h3 id="profile-calendar-heading">{i18n.t("Calendar")}</h3>
+      {newUrl === undefined ? null : (
+        <Notice>
+          <p>
+            {i18n.t(
+              "Calendar link made. Copy it now — for security it is not stored and cannot be shown again. In your calendar app, add a calendar from a URL and paste it there.",
+            )}
+          </p>
+          <label for="new-calendar-link">
+            {i18n.t("Calendar link")}
+            <CopyField id="new-calendar-link" value={newUrl} />
+          </label>
+        </Notice>
+      )}
+      {feed === null ? (
+        <p class="small">
+          {i18n.t(
+            "Follow your due dates in Google Calendar, Apple Calendar or Outlook, through a private link to every course you belong to.",
+          )}
+        </p>
+      ) : (
+        <>
+          <p class="small">
+            {before}
+            <Time day={true} value={feed.createdAt} />
+            {after}
+          </p>
+          <p class="small">
+            {i18n.t(
+              "Anyone with the link can see your due dates. A new link stops the old one working.",
+            )}
+          </p>
+        </>
+      )}
+      <div class="profile-actions">
+        <form action="/profile/calendar" method="post">
+          <CsrfInput context={context} />
+          <button class="ghost" type="submit">
+            {feed === null
+              ? i18n.t("Make a calendar link")
+              : i18n.t("Make a new link")}
+          </button>
+        </form>
+        {feed === null ? null : (
+          <form action="/profile/calendar/off" method="post">
+            <CsrfInput context={context} />
+            <button class="ghost" type="submit">
+              {i18n.t("Turn off")}
+            </button>
+          </form>
+        )}
+      </div>
     </section>
   );
 }

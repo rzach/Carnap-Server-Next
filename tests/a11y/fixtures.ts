@@ -1143,6 +1143,10 @@ export async function collectFixtures(
     400,
   );
   await add("profile", "/profile", instructor);
+  // The calendar section's other two states: the link shown once, as made,
+  // and the feed on afterwards.
+  await addPost("profile-calendar-made", "/profile/calendar", {}, instructor);
+  await add("profile-calendar-on", "/profile", instructor);
   await emailChangeFixtures(env, headers, fixtures);
 
   await add("assignment-instructor", assignmentPath, instructor);

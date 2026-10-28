@@ -220,6 +220,23 @@ LTI resource links and Deep Linking may refer to non-graded items. AGS line
 items and grade passback are graded-only. Keep this check in the LTI adapter
 as well as in score-delivery code.
 
+## Calendar feed
+
+Each user can make one private calendar feed from their profile:
+`/calendar.ics?token=…`, an iCalendar document a calendar app subscribes to.
+It holds every dated item, of any mode, in the active courses the user is an
+active member of, with the dates as applied to them (accommodations and
+overrides included), exactly as their course page lists them: published and
+listed only. Each due date is a zero-length event.
+
+The token is the only credential, since a calendar app sends no session.
+Only its hash is stored (`calendar_feeds`), so the profile shows the link
+once, when made. Making a new link replaces the old one, and turning the
+feed off deletes it; either way the old address answers 404, as does an
+unknown token or a disabled account. The token travels in the query, which
+the error log leaves out. The feed is written in the owner's stored
+language, falling back to the request's.
+
 ## Proposed course organization
 
 Sections are not implemented. The proposed model is a one-level outline:

@@ -845,13 +845,14 @@ export const TABLE_SORT_SCRIPT = `
 })();`;
 
 /**
- * The filter box over a long roster: typing narrows the table to the rows
- * whose text holds what was typed, ignoring case and accents, so "garcia"
- * finds García, by name or by address.
+ * The filter box over a long table: typing narrows it to the rows whose
+ * text holds what was typed, ignoring case and accents, so "garcia" finds
+ * García, by name or by address.
  *
- * A row's text is read once, before anything is hidden, and without the
- * dialogs its cells keep beside their buttons: an accommodation form's labels
- * are in every row, and would make a search for "time" match them all.
+ * A row's text is read once, before anything is hidden, and without its
+ * controls: the buttons and the dialogs beside them say the same in every
+ * row (an accommodation form's labels, an Archive button's name), and would
+ * make a search for "time" or "archive" match them all.
  *
  * The field opens from its funnel, both in the heading of the column it
  * mostly searches (`TableFilterControl`). They ship `hidden` and are shown
@@ -885,7 +886,7 @@ export const TABLE_FILTER_SCRIPT = `
       Array.from(body.rows).map((row) => {
         const copy = row.cloneNode(true);
 
-        for (const aside of copy.querySelectorAll("dialog, [hidden]")) {
+        for (const aside of copy.querySelectorAll("button, dialog, [hidden]")) {
           aside.remove();
         }
 

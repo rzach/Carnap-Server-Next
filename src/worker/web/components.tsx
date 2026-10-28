@@ -394,7 +394,7 @@ export const TableScroll: FC<{
   );
 };
 
-/** How many rows a roster holds before it gets a filter box. */
+/** How many rows a table holds before it gets a filter. */
 const TABLE_FILTER_THRESHOLD = 20;
 
 /** Whether a table of this many rows gets a filter (see {@link TableFilter}). */
@@ -404,9 +404,9 @@ export function tableFiltered(rows: number): boolean {
 
 /**
  * A table that has grown past what an eye scans, a class's roster rather
- * than a course's staff, with room for a filter. Below the threshold the
- * table is passed through untouched, since a filter over a dozen rows is one
- * more thing to read than the rows themselves.
+ * than a course's staff, or a long-used library, with room for a filter.
+ * Below the threshold the table is passed through untouched, since a filter
+ * over a dozen rows is one more thing to read than the rows themselves.
  *
  * The filter itself is a {@link TableFilterControl} in the heading of the
  * column it mostly searches. This is the host it narrows, and `empty` is the

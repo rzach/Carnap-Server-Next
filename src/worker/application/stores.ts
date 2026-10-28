@@ -1454,12 +1454,43 @@ export interface SiteSettingsStore {
   setNativeRegistration(input: SetNativeRegistrationInput): Promise<void>;
 }
 
+/** A user's calendar feed, as far as anyone may know it: the token is not kept. */
+export interface CalendarFeed {
+  readonly userId: AppId;
+  readonly createdAt: Timestamp;
+}
+
+export interface ReplaceCalendarFeedInput {
+  readonly userId: AppId;
+  readonly tokenHash: string;
+  readonly createdAt: Timestamp;
+}
+
+/** Each user's one private calendar feed, by the hash of its token. */
+export interface CalendarFeedStore {
+  /** The user's feed, or null while it is off. */
+  getForUser(userId: AppId): Promise<CalendarFeed | null>;
+  /**
+   * The feed a token's hash opens, or null: never issued, replaced by a newer
+   * link, or turned off all answer alike.
+   */
+  getByTokenHash(tokenHash: string): Promise<CalendarFeed | null>;
+  /**
+   * Make the user's feed answer to this hash alone. One already on is
+   * replaced in the same statement, so its old address stops answering.
+   */
+  replace(input: ReplaceCalendarFeedInput): Promise<CalendarFeed>;
+  /** Turn the user's feed off. Nothing to do when it already is. */
+  delete(userId: AppId): Promise<void>;
+}
+
 export interface AppStores {
   readonly adminAudit: AdminAuditStore;
   readonly adminStats: AdminStatsStore;
   readonly assignments: AssignmentStore;
   readonly assessment: AssessmentStore;
   readonly auth: AuthStore;
+  readonly calendarFeeds: CalendarFeedStore;
   readonly content: ContentStore;
   readonly courses: CourseStore;
   readonly emailChanges: EmailChangeStore;
