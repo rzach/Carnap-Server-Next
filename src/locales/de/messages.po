@@ -2131,6 +2131,10 @@ msgstr "Revision anlegen"
 msgid "Created"
 msgstr "Angelegt"
 
+#: src/worker/web/courses.tsx
+msgid "Created {when}"
+msgstr "Angelegt am {when}"
+
 #: src/worker/web/gradebook.tsx
 msgid "CSV of the current grades"
 msgstr "CSV der aktuellen Noten"
@@ -2668,6 +2672,10 @@ msgstr "Abgelaufen"
 #: src/worker/web/courses.tsx
 msgid "Expires"
 msgstr "Läuft ab"
+
+#: src/worker/web/courses.tsx
+msgid "Expires {when}"
+msgstr "Läuft ab am {when}"
 
 #: src/worker/web/courses.tsx
 msgid "Expires at, optional"

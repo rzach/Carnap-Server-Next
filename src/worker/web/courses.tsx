@@ -873,9 +873,16 @@ const EnrollmentLinksTable: FC<{
   const [revokedBefore, revokedAfter] = splitAtValue(
     i18n.t("Revoked {when}", { when: VALUE }),
   );
+  // On a phone the list has no headings to say which date is which, so each
+  // says so itself (see `PhoneLabelled`).
+  const created = splitAtValue(i18n.t("Created {when}", { when: VALUE }));
+  const expires = splitAtValue(i18n.t("Expires {when}", { when: VALUE }));
 
+  // A phone list, since a revoked link's badge held the first column open
+  // wider than a phone and pushed Revoke out of sight; with nothing left to
+  // revoke, a row has no end, and its expiry is the whole line under it.
   return (
-    <TableScroll>
+    <TableScroll phoneList={showRevoke ? true : "flat"}>
       <thead>
         <tr>
           <th>{i18n.t("Created")}</th>
@@ -884,49 +891,81 @@ const EnrollmentLinksTable: FC<{
         </tr>
       </thead>
       <tbody>
-        {links.map((link) => (
-          <tr>
-            <td>
-              <Time value={link.createdAt} />
-              {link.revokedAt === null ? null : (
-                <>
-                  {" "}
-                  <StatusBadge
-                    label={
-                      <>
-                        {revokedBefore}
-                        <Time value={link.revokedAt} />
-                        {revokedAfter}
-                      </>
-                    }
-                  />
-                </>
-              )}
-            </td>
-            <td>
-              <Time value={link.expiresAt} />
-            </td>
-            {showRevoke ? (
+        {links.map((link) => {
+          const revoked =
+            link.revokedAt === null ? null : (
+              <StatusBadge
+                label={
+                  <>
+                    {revokedBefore}
+                    <Time value={link.revokedAt} />
+                    {revokedAfter}
+                  </>
+                }
+              />
+            );
+
+          return (
+            <tr>
               <td>
-                {link.revokedAt === null ? (
-                  <form
-                    action={`/courses/${courseId}/enrollment-links/${link.id}/revoke`}
-                    method="post"
-                  >
-                    <CsrfInput context={context} />
-                    <button class="danger" type="submit">
-                      {i18n.t("Revoke")}
-                    </button>
-                  </form>
-                ) : null}
+                <PhoneLabelled parts={created}>
+                  <Time value={link.createdAt} />
+                </PhoneLabelled>
+                {revoked === null ? null : (
+                  <span class="wide-only"> {revoked}</span>
+                )}
               </td>
-            ) : null}
-          </tr>
-        ))}
+              {/* The revoked badge again, for the phone list, which ends the
+                  line under the date with a row's badges; one copy is ever
+                  shown. */}
+              <td>
+                <PhoneLabelled parts={expires}>
+                  <Time value={link.expiresAt} />
+                </PhoneLabelled>
+                {revoked === null ? null : (
+                  <span class="phone-only">{revoked}</span>
+                )}
+              </td>
+              {showRevoke ? (
+                <td>
+                  {link.revokedAt === null ? (
+                    <form
+                      action={`/courses/${courseId}/enrollment-links/${link.id}/revoke`}
+                      method="post"
+                    >
+                      <CsrfInput context={context} />
+                      <button class="danger" type="submit">
+                        {i18n.t("Revoke")}
+                      </button>
+                    </form>
+                  ) : null}
+                </td>
+              ) : null}
+            </tr>
+          );
+        })}
       </tbody>
     </TableScroll>
   );
 };
+
+/**
+ * A value with the words that name it — "Created" before a date — shown in a
+ * phone list only, where the column headings that name it on a wider screen
+ * are gone. `parts` is a sentence split at its value (`splitAtValue`).
+ */
+const PhoneLabelled: FC<{
+  readonly children: Child;
+  readonly parts: readonly [string, string];
+}> = ({ children, parts: [before, after] }) => (
+  // One inline box, so that inside the flex line under a row's name the
+  // words keep their spaces and their place before the value.
+  <span>
+    {before.length === 0 ? null : <span class="phone-only">{before}</span>}
+    {children}
+    {after.length === 0 ? null : <span class="phone-only">{after}</span>}
+  </span>
+);
 
 /**
  * One seen-but-unmapped LMS activity link with a picker to attach it to an

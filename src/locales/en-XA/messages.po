@@ -2131,6 +2131,10 @@ msgstr ""
 msgid "Created"
 msgstr ""
 
+#: src/worker/web/courses.tsx
+msgid "Created {when}"
+msgstr ""
+
 #: src/worker/web/gradebook.tsx
 msgid "CSV of the current grades"
 msgstr ""
@@ -2667,6 +2671,10 @@ msgstr ""
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/courses.tsx
 msgid "Expires"
+msgstr ""
+
+#: src/worker/web/courses.tsx
+msgid "Expires {when}"
 msgstr ""
 
 #: src/worker/web/courses.tsx
