@@ -62,6 +62,7 @@ import type {
 } from "../exercise-kit/type";
 import type { AppBindings } from "../http";
 import { splitAtValue, type Translator, VALUE } from "../i18n/translator";
+import { AttemptTimer, timedAttemptEnd } from "./attempt-timer";
 import {
   courseCrumb,
   coursesCrumb,
@@ -91,6 +92,7 @@ import {
 } from "./components";
 import {
   artifactDocumentProps,
+  isAppFrameRequest,
   renderContentDocument,
 } from "./content-document";
 import { FilterIcon } from "./icons";
@@ -1127,15 +1129,38 @@ export function renderAssignmentContentDocument(
   context: Context<AppBindings>,
   model: {
     readonly detail: AssignmentDetail;
+    /** The student's attempt, for its timer; absent on the staff preview. */
+    readonly student?: {
+      readonly activity: AttemptActivity;
+      readonly now: Timestamp;
+    };
     readonly submission: InlineSubmissionContext | null;
   },
 ): Response {
+  // Standing on its own — an LMS launch, or the fullscreen link — the document
+  // carries the attempt's timer itself. In our own frame the attempt line
+  // above it already does.
+  const endsAt =
+    model.student === undefined || isAppFrameRequest(context)
+      ? null
+      : timedAttemptEnd(
+          model.detail.assignment,
+          model.student.activity.activeAttempt,
+        );
+
   return renderContentDocument(context, {
     body: (
-      <AssignmentContent
-        detail={model.detail}
-        submission={model.submission}
-      />
+      <>
+        {endsAt === null || model.student === undefined ? null : (
+          <p class="attempt-timer-line" data-attempt-timer-line="">
+            <AttemptTimer endsAt={endsAt} now={model.student.now} />
+          </p>
+        )}
+        <AssignmentContent
+          detail={model.detail}
+          submission={model.submission}
+        />
+      </>
     ),
     componentAssets: componentAssetsForArtifact(model.detail.artifact),
     ...(model.submission === null
@@ -3454,8 +3479,8 @@ export function renderEditAssignmentPage(
  * no author's CSS can hide it: which attempt this is, when it is due, how many
  * of the questions it holds an answer to, and the way to the results once
  * there are any. Past its due date graded work says so in gold, with what
- * lateness costs; a timed attempt says when its time runs out (a live count
- * down is #393's).
+ * lateness costs; a timed attempt ends with its {@link AttemptTimer}, and
+ * the line is what the timer pins to the top of the window.
  *
  * The answered count is as of the page load. Each question's own status line
  * updates as the student submits, which is where they are looking then.
@@ -3479,14 +3504,11 @@ const AttemptLine: FC<{
     graded && pastDue
       ? latePolicyText(i18n, briefing.latePolicy, assignment.dueAt)
       : null;
-  const expiresAt = activity.activeAttempt?.expiresAt ?? null;
+  const endsAt = timedAttemptEnd(assignment, activity.activeAttempt);
   const [dueBefore, dueAfter] = splitAtValue(
     pastDue
       ? i18n.t("Past due since {when}", { when: VALUE })
       : i18n.t("Due {when}", { when: VALUE }),
-  );
-  const [endsBefore, endsAfter] = splitAtValue(
-    i18n.t("Time ends {when}", { when: VALUE }),
   );
 
   return (
@@ -3494,6 +3516,7 @@ const AttemptLine: FC<{
       class={
         graded && pastDue ? "attempt-line attempt-line-late" : "attempt-line"
       }
+      data-attempt-timer-line={endsAt === null ? undefined : ""}
     >
       {graded ? (
         <span>
@@ -3527,12 +3550,8 @@ const AttemptLine: FC<{
       )}
       {/* Last of the facts: a sentence, with its own full stop. */}
       {late === null ? null : <span>{late}</span>}
-      {expiresAt === null ? null : (
-        <span class="attempt-line-end">
-          {endsBefore}
-          <Time value={expiresAt} />
-          {endsAfter}
-        </span>
+      {endsAt === null ? null : (
+        <AttemptTimer class="attempt-line-timer" endsAt={endsAt} now={now} />
       )}
     </p>
   );

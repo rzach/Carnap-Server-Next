@@ -195,6 +195,10 @@ msgstr "{count, plural, one {# studierende Person hat einen Versuch zu dieser Au
 msgid "{date}: {details}"
 msgstr "{date}: {details}"
 
+#: src/worker/web/ui-strings.ts
+msgid "{duration} left"
+msgstr "Noch {duration}"
+
 #: src/worker/web/student-course.tsx
 msgid "{earned}/{possible} · {percent}%"
 msgstr "{earned}/{possible} · {percent} %"
@@ -397,6 +401,18 @@ msgstr "{title}, {date}: {details}"
 #: src/worker/web/assignment-detail.tsx
 msgid "{used} of {allowed}"
 msgstr "{used} von {allowed}"
+
+#: src/worker/web/ui-strings.ts
+msgid "1 minute left."
+msgstr "Noch 1 Minute."
+
+#: src/worker/web/ui-strings.ts
+msgid "10 minutes left."
+msgstr "Noch 10 Minuten."
+
+#: src/worker/web/ui-strings.ts
+msgid "5 minutes left."
+msgstr "Noch 5 Minuten."
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A “-- label:” comment must sit at the end of the proof line it marks, not on its own line."
@@ -2972,6 +2988,10 @@ msgstr "Aus der Liste oben und aus neuen Aufgaben ausgeblendet; alles, was berei
 msgid "Hide grades"
 msgstr "Noten verbergen"
 
+#: src/worker/web/ui-strings.ts
+msgid "Hide time left"
+msgstr "Verbleibende Zeit ausblenden"
+
 #: src/worker/infrastructure/turnstile.ts
 msgid "Human verification is misconfigured for this deployment."
 msgstr "Die Überprüfung auf menschliche Nutzung ist für diese Installation falsch eingerichtet."
@@ -3122,6 +3142,10 @@ msgstr "Objektlinks müssen die Form item:<content-item-id> haben."
 #: src/worker/web/courses.tsx
 msgid "Join course"
 msgstr "Kurs beitreten"
+
+#: src/worker/web/ui-strings.ts
+msgid "Keep in view while scrolling"
+msgstr "Beim Scrollen sichtbar halten"
 
 #: src/worker/exercise-kit/help-strings.ts
 #: src/worker/web/assignment-detail.tsx
@@ -5104,6 +5128,10 @@ msgstr "Kurzantwort-Übung"
 msgid "Show in student assignment lists"
 msgstr "In den Aufgabenlisten der Studierenden anzeigen"
 
+#: src/worker/web/ui-strings.ts
+msgid "Show time left"
+msgstr "Verbleibende Zeit anzeigen"
+
 #: src/worker/exercise-kit/copy-source-strings.ts
 msgid "Show your work as source"
 msgstr "Ihre Arbeit als Quelltext anzeigen"
@@ -6607,9 +6635,17 @@ msgstr "Setzt oder entfernt das Häkchen der Zeile"
 msgid "Time"
 msgstr "Zeit"
 
-#: src/worker/web/assignment-detail.tsx
+#: src/worker/web/attempt-timer.tsx
 msgid "Time ends {when}"
 msgstr "Zeit endet {when}"
+
+#: src/worker/web/ui-strings.ts
+msgid "Time is up"
+msgstr "Die Zeit ist abgelaufen"
+
+#: src/worker/web/ui-strings.ts
+msgid "Time is up. Answers can no longer be submitted."
+msgstr "Die Zeit ist abgelaufen. Antworten können nicht mehr abgegeben werden."
 
 #: src/worker/web/assignment-detail.tsx
 msgid "time limit"

@@ -9,6 +9,7 @@ import {
 } from "../exercise-kit/correctness-mark";
 import { LOCAL_TIMESTAMP_FIELDS } from "./timestamp-formats";
 import {
+  ATTEMPT_TIMER_UI_STRINGS_ATTRIBUTE,
   EXERCISE_UI_STRINGS_ATTRIBUTE,
   REVIEW_UI_STRINGS_ATTRIBUTE,
   readStringsPrelude,
@@ -919,13 +920,227 @@ ${readStringsPrelude(REVIEW_UI_STRINGS_ATTRIBUTE)}
 export { EXERCISE_RUNTIME_SCRIPT };
 
 /**
+ * The timed attempt's countdown (see `AttemptTimer` in `./attempt-timer.tsx`).
+ * In both documents a timer can sit in — the assignment page, through the
+ * shell script, and a content document standing on its own, through the
+ * runtime — and a no-op wherever there is none.
+ *
+ * What is left is measured against the server's clock: the page carries the
+ * instant it was rendered, and the difference from the reader's clock at load
+ * is held for the life of the page. A reader's clock some minutes out would
+ * otherwise count down to the wrong moment, and the server refuses answers by
+ * its own.
+ *
+ * The count reads in minutes, or hours and minutes, rounded down so it never
+ * promises time there is not; in the last minute it reads in seconds. It is
+ * rewritten only when its text changes. The reader's choice of shown, pinned
+ * or hidden is one value in local storage, so it carries to the next timed
+ * attempt; a browser that refuses storage just forgets it.
+ */
+const ATTEMPT_TIMER_SCRIPT = `
+(() => {
+  const timer = document.querySelector("[data-attempt-timer]");
+
+  if (timer === null) {
+    return;
+  }
+
+${readStringsPrelude(ATTEMPT_TIMER_UI_STRINGS_ATTRIBUTE)}
+
+  const ends = Date.parse(timer.getAttribute("data-ends") || "");
+  const served = Date.parse(timer.getAttribute("data-now") || "");
+  const pin = timer.querySelector("[data-attempt-timer-pin]");
+  const text = timer.querySelector("[data-attempt-timer-text]");
+  const pill = timer.querySelector("[data-attempt-timer-pill]");
+  const hide = timer.querySelector("[data-attempt-timer-hide]");
+  const show = timer.querySelector("[data-attempt-timer-show]");
+  const status = timer.querySelector("[data-attempt-timer-status]");
+
+  if (
+    Number.isNaN(ends) ||
+    Number.isNaN(served) ||
+    pin === null ||
+    text === null ||
+    pill === null ||
+    hide === null ||
+    show === null ||
+    status === null
+  ) {
+    return;
+  }
+
+  const line = timer.closest("[data-attempt-timer-line]") || timer;
+  const locale = S.locale || undefined;
+  const skew = served - Date.now();
+  const remaining = () => ends - (Date.now() + skew);
+
+  // The end as a time of day, which is what a student watching a clock wants;
+  // with the weekday when it is not today. This document may have no shell
+  // script to localize it, and where it has one this is the better form.
+  const end = timer.querySelector("time[datetime]");
+
+  if (end !== null) {
+    const date = new Date(ends);
+    const fields = { hour: "numeric", minute: "2-digit" };
+
+    if (date.toDateString() !== new Date().toDateString()) {
+      fields.weekday = "short";
+    }
+
+    end.textContent = new Intl.DateTimeFormat(locale, fields).format(date);
+  }
+
+  const durationFormat =
+    typeof Intl.DurationFormat === "function"
+      ? new Intl.DurationFormat(locale, { style: "short" })
+      : null;
+  const unitFormats = {};
+  const unitFormat = (unit) =>
+    (unitFormats[unit] =
+      unitFormats[unit] ||
+      new Intl.NumberFormat(locale, {
+        style: "unit",
+        unit,
+        unitDisplay: "short",
+      }));
+  const duration = (ms) => {
+    const total = Math.max(0, Math.floor(ms / 1000));
+
+    if (total < 60) {
+      return durationFormat
+        ? durationFormat.format({ seconds: total })
+        : unitFormat("second").format(total);
+    }
+
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+
+    if (durationFormat) {
+      return durationFormat.format({ hours, minutes });
+    }
+
+    return [
+      hours > 0 ? unitFormat("hour").format(hours) : "",
+      minutes > 0 ? unitFormat("minute").format(minutes) : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  };
+
+  const LOW = 5 * 60000;
+  const WARNINGS = [
+    [10 * 60000, S.tenMinutes || "10 minutes left."],
+    [5 * 60000, S.fiveMinutes || "5 minutes left."],
+    [60000, S.oneMinute || "1 minute left."],
+  ];
+  // A warning already behind the reader when the page loaded is not news.
+  let warned = WARNINGS.filter(([at]) => remaining() <= at).length;
+
+  const STORAGE_KEY = "carnap:attempt-timer";
+  let mode = "shown";
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+
+    if (stored === "pinned" || stored === "hidden") {
+      mode = stored;
+    }
+  } catch (_error) {}
+
+  const setMode = (next) => {
+    mode = next;
+
+    try {
+      if (next === "shown") {
+        localStorage.removeItem(STORAGE_KEY);
+      } else {
+        localStorage.setItem(STORAGE_KEY, next);
+      }
+    } catch (_error) {}
+
+    render();
+  };
+
+  let interval;
+
+  const render = () => {
+    const ms = remaining();
+    const over = ms <= 0;
+
+    timer.setAttribute("data-state", over ? "over" : ms <= LOW ? "low" : "running");
+    line.toggleAttribute("data-pinned", mode === "pinned");
+    pin.setAttribute("aria-pressed", mode === "pinned" ? "true" : "false");
+    // Time being up is said whether the count was hidden or not, and then
+    // there is nothing left to hide.
+    const hidden = mode === "hidden" && !over;
+
+    if (over && document.activeElement === show) {
+      pin.focus();
+    }
+
+    pill.hidden = hidden;
+    show.hidden = !hidden;
+    hide.hidden = over;
+
+    const next = over
+      ? S.timeUp || "Time is up"
+      : (S.left || "{duration} left").replace("{duration}", () => duration(ms));
+
+    if (text.textContent !== next) {
+      text.textContent = next;
+    }
+
+    if (over) {
+      status.textContent =
+        S.timeUpAnnouncement || "Time is up. Answers can no longer be submitted.";
+      clearInterval(interval);
+      return;
+    }
+
+    let warning = null;
+
+    while (warned < WARNINGS.length && ms <= WARNINGS[warned][0]) {
+      warning = WARNINGS[warned][1];
+      warned += 1;
+    }
+
+    if (warning !== null) {
+      status.textContent = warning;
+    }
+  };
+
+  pin.addEventListener("click", () =>
+    setMode(mode === "pinned" ? "shown" : "pinned"),
+  );
+  // Each takes away the button it was pressed on, so focus moves to the one
+  // that stands in its place.
+  hide.addEventListener("click", () => {
+    setMode("hidden");
+    show.focus();
+  });
+  show.addEventListener("click", () => {
+    setMode("shown");
+    pin.focus();
+  });
+  // A background tab's timers are slowed; coming back, catch up at once.
+  document.addEventListener("visibilitychange", render);
+  render();
+  interval = setInterval(render, 1000);
+})();
+`;
+
+export { ATTEMPT_TIMER_SCRIPT };
+
+/**
  * The answering page: the runtime first, then the failure guard that reports a
  * component which never arrived — the order they were emitted in when both
- * were inline, and the order the guard's deadline assumes.
+ * were inline, and the order the guard's deadline assumes — and the timer,
+ * for a document standing on its own.
  */
 export const EXERCISE_SCRIPT = [
   EXERCISE_RUNTIME_SCRIPT,
   COMPONENT_FAILURE_SCRIPT,
+  ATTEMPT_TIMER_SCRIPT,
 ].join("\n");
 
 /** The review page, which runs no exercise runtime of its own. */

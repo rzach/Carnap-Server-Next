@@ -175,6 +175,50 @@ export function exerciseUiStrings(i18n: Translator): ExerciseUiStrings {
 }
 
 /**
+ * The timed attempt's countdown (`./attempt-timer.tsx`), on the assignment page
+ * and in a content document standing on its own.
+ *
+ * The warnings are three whole sentences, not one with a count in it: the
+ * browser substitutes values but cannot choose a plural, and these are the
+ * only counts it ever says.
+ */
+export interface AttemptTimerUiStrings {
+  readonly fiveMinutes: string;
+  readonly hide: string;
+  /** How long is left, with the duration the script formats. */
+  readonly left: string;
+  /** The page's resolved locale, for the end time and the duration. */
+  readonly locale: string;
+  readonly oneMinute: string;
+  readonly pin: string;
+  readonly show: string;
+  readonly tenMinutes: string;
+  /** In the countdown's place once the time has run out. */
+  readonly timeUp: string;
+  /** Said once, when it runs out. */
+  readonly timeUpAnnouncement: string;
+}
+
+export function attemptTimerUiStrings(
+  i18n: Translator,
+): AttemptTimerUiStrings {
+  return {
+    fiveMinutes: i18n.t("5 minutes left."),
+    hide: i18n.t("Hide time left"),
+    left: i18n.t("{duration} left", placeholders("duration")),
+    locale: i18n.locale,
+    oneMinute: i18n.t("1 minute left."),
+    pin: i18n.t("Keep in view while scrolling"),
+    show: i18n.t("Show time left"),
+    tenMinutes: i18n.t("10 minutes left."),
+    timeUp: i18n.t("Time is up"),
+    timeUpAnnouncement: i18n.t(
+      "Time is up. Answers can no longer be submitted.",
+    ),
+  };
+}
+
+/**
  * Names for the fold controls in a Carnap Markdown source view — the gutter
  * button on a foldable line, and the placeholder that stands in for a folded
  * block.
@@ -417,3 +461,4 @@ export const LAYOUT_UI_STRINGS_ATTRIBUTE = "data-carnap-ui-strings";
 export const EXERCISE_UI_STRINGS_ATTRIBUTE = "data-carnap-exercise-strings";
 export const REVIEW_UI_STRINGS_ATTRIBUTE = "data-carnap-review-strings";
 export const EDITOR_UI_STRINGS_ATTRIBUTE = "data-carnap-editor-strings";
+export const ATTEMPT_TIMER_UI_STRINGS_ATTRIBUTE = "data-carnap-timer-strings";

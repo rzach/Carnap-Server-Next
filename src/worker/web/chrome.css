@@ -867,7 +867,7 @@ td .time-relative::before {
 }
 
 /* The line above an open attempt's lesson (see `AttemptLine`): its facts in
-   a row, a dot between each, and the time limit held at the far end. Past
+   a row, a dot between each, the timer last among them. Past
    due it takes the warning's gold ground, as a notice does. */
 .attempt-line {
   align-items: baseline;
@@ -888,19 +888,36 @@ td .time-relative::before {
   margin-inline: 0.5em;
 }
 
-.attempt-line > .attempt-line-end {
-  margin-inline-start: auto;
-  padding-inline-start: 1rem;
-}
-
-.attempt-line > .attempt-line-end::before {
-  content: none;
+.attempt-line > .attempt-line-timer::before {
+  /* The timer lays its parts out with a gap, which spaces the dot from
+     them as the margin does elsewhere. */
+  margin-inline-end: 0;
 }
 
 .attempt-line-late {
   background: var(--gold-soft);
   border-color: color-mix(in srgb, var(--gold) 25%, transparent);
   color: var(--gold);
+}
+
+/* Pinned by its timer (see attempt-timer.css), lifted off the lesson that
+   scrolls under it. */
+.attempt-line[data-pinned] {
+  box-shadow: 0 8px 18px -12px
+    color-mix(in srgb, var(--shadow-color) 55%, transparent);
+}
+
+/* On a phone the line wraps to three or four rows, which pinned would hold a
+   fifth of the screen over the lesson. What was pinned is the timer, so
+   pinned it is all the line keeps; unpinned, the rest comes back. */
+@media (max-width: 480px) {
+  .attempt-line[data-pinned] > :not(.attempt-line-timer) {
+    display: none;
+  }
+
+  .attempt-line[data-pinned] > .attempt-line-timer::before {
+    content: none;
+  }
 }
 
 /* Ledger tables: the sortable headings, the scroller, and the audit log.

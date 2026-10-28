@@ -138,3 +138,17 @@ a[data-footnote-backref]:focus-visible {
   margin: 0 0 1rem;
   padding: 0.75rem 1rem;
 }
+
+/* A timed attempt's timer, when this document stands on its own (an LMS
+   launch, the fullscreen link) and there is no attempt line above it to hold
+   it. The line is the document's own sheet colour, so pinned it covers the
+   lesson scrolling under it. */
+.attempt-timer-line {
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  font-size: 0.9rem;
+  margin: -0.5rem 0 1rem;
+  max-width: none;
+  padding: 0.5rem 0;
+}

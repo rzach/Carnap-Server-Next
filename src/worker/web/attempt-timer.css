@@ -1,0 +1,131 @@
+/* The timed attempt's countdown (see `AttemptTimer`), in both documents it
+   can sit in: the end of the assignment page's attempt line, and the top of a
+   content document standing on its own. Here rather than in chrome.css
+   because the second has no chrome; the line each sits in is styled by its
+   own document. */
+
+.attempt-timer {
+  align-items: baseline;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+}
+
+/* The count in a pill at the end of the line, in the line's own ink rather
+   than an action button's blue, because nothing in it does anything to the
+   attempt. The pill is two buttons — the count, which pins the line, and a
+   cross, which hides the count — so the pill draws the edge and the fill and
+   each button only its own hover. When the count is hidden a round stopwatch
+   of the same height stands in its place. */
+.attempt-timer-pill {
+  align-items: stretch;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink);
+  display: inline-flex;
+}
+
+/* Each button rounds its own outer end rather than the pill clipping them,
+   which would clip their focus rings too. */
+.attempt-timer button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 999px 0 0 999px;
+  color: inherit;
+  font-size: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: 560;
+  gap: 0.35rem;
+  min-height: 1.75rem;
+  padding: 0 0.65rem;
+}
+
+/* The cross: a hairline from the count, and wide enough to hit (WCAG 2.5.8
+   asks 24px). */
+.attempt-timer .attempt-timer-hide {
+  border-inline-start: 1px solid var(--rule);
+  border-radius: 0 999px 999px 0;
+  justify-content: center;
+  min-width: 1.85rem;
+  padding: 0 0.55rem 0 0.45rem;
+}
+
+.attempt-timer-hide .icon {
+  font-size: 0.7rem;
+}
+
+.attempt-timer-show .icon {
+  font-size: 1.05rem;
+}
+
+.attempt-timer .attempt-timer-show {
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink);
+  min-width: 1.75rem;
+  padding: 0;
+}
+
+/* The base button rule's display would otherwise outrank the attribute, and
+   the pill and the stopwatch both start hidden until the script has decided
+   which one to show. */
+.attempt-timer [hidden] {
+  display: none;
+}
+
+.attempt-timer button:hover {
+  background: var(--blue-soft);
+  color: var(--blue-strong);
+}
+
+/* The icons are drawn in the pill's own colour, faint until the line is
+   pinned; this document may not carry the chrome's duotone colours. */
+.attempt-timer .icon-duo-back {
+  fill: currentColor;
+  fill-opacity: 0.3;
+}
+
+.attempt-timer .icon-duo-fore {
+  fill: currentColor;
+  fill-opacity: 0.55;
+}
+
+.attempt-timer-pill:has([aria-pressed="true"]) {
+  background: var(--blue-soft);
+  border-color: var(--blue);
+  color: var(--blue-strong);
+}
+
+.attempt-timer-pill:has([aria-pressed="true"]) .attempt-timer-hide {
+  border-inline-start-color: color-mix(in srgb, var(--blue) 40%, transparent);
+}
+
+.attempt-timer-left[aria-pressed="true"] .icon-duo-back,
+.attempt-timer-left[aria-pressed="true"] .icon-duo-fore {
+  fill-opacity: 1;
+}
+
+/* The last five minutes, and the end: the warning's gold, as a notice has. */
+.attempt-timer:is([data-state="low"], [data-state="over"])
+.attempt-timer-pill {
+  background: var(--gold-soft);
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+  color: var(--gold);
+}
+
+.attempt-timer[data-state="low"] .attempt-timer-hide {
+  border-inline-start-color: color-mix(in srgb, var(--gold) 35%, transparent);
+}
+
+.attempt-timer[data-state="over"] .attempt-timer-left {
+  font-weight: 650;
+}
+
+/* Pinned, the line holding the timer stays at the top of the window while
+   the lesson scrolls under it. */
+[data-attempt-timer-line][data-pinned] {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}

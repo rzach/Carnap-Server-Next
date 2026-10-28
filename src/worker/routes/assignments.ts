@@ -1533,6 +1533,7 @@ async function studentContentDocument(
 
   return renderAssignmentContentDocument(context, {
     detail: view.detail,
+    student: { activity: view.activity, now: view.now },
     submission: view.submissionContext,
   });
 }

@@ -154,7 +154,9 @@ Use Tab, Shift-Tab, arrows, Enter, Space, and Escape.
 - [ ] **2.3.1 Three flashes:** nothing flashes more than three times per
       second unless it meets the criterion's threshold exception.
 - [ ] **2.2.2 Pause, stop, hide:** review persistent animation, including
-      checking spinners, for the applicable pause or stop requirements.
+      checking spinners, for the applicable pause or stop requirements. A
+      timed attempt's countdown updates on its own: its Hide control must
+      hide it, and the choice must hold on the next page.
 
 ## Documents and contrast
 

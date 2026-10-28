@@ -363,6 +363,8 @@ describe("the student course page", () => {
 
       expect(line).toContain("Attempt 1 of 3");
       expect(line).toContain("Due <time");
+      // Not timed, so nothing counts down.
+      expect(line).not.toContain("data-attempt-timer");
       expect(line).toContain("1 of 2 answered");
       expect(line).toContain(
         `href="/courses/${courseId}/assignments/${ahead}/results">Results</a>`,
@@ -385,6 +387,65 @@ describe("the student course page", () => {
       );
       expect(late.html).toContain("0 of 2 answered");
       expect(late.html).not.toContain(`${overdue}/results">Results</a>`);
+    });
+  });
+});
+
+describe("a timed attempt's timer", () => {
+  test("ends the attempt line, and heads the content only where it stands on its own", async () => {
+    await withStorage(async (_storage, env) => {
+      const instructor = await login(env, "timer-teacher@example.test");
+      const student = await login(env, "timer-student@example.test");
+      const courseId = await createCourse(env, instructor);
+      const revisionId = await createRevision(env, instructor);
+      // Thirty minutes allowed, but the assignment closes in ten: the server
+      // stops taking answers at the close, so that is what the timer counts
+      // down to.
+      const closes = new Date(Date.now() + 10 * 60_000).toISOString();
+
+      await enrollStudent(env, instructor, student, courseId);
+
+      const timed = await publishedAssignment(
+        env,
+        instructor,
+        courseId,
+        revisionId,
+        { availableUntil: closes, timeLimitMinutes: 30, title: "Quiz" },
+      );
+
+      await startAttempt(env, student, courseId, timed);
+
+      const base = `/courses/${courseId}/assignments/${timed}`;
+      const open = await page(env, student, base);
+      const lineStart = open.html.indexOf('class="attempt-line"');
+
+      expect(lineStart).toBeGreaterThan(-1);
+
+      const line = open.html.slice(
+        lineStart,
+        open.html.indexOf("</p>", lineStart),
+      );
+
+      expect(line).toContain("data-attempt-timer-line");
+      expect(line).toContain(`data-ends="${closes}"`);
+      expect(line).toContain(`Time ends <time datetime="${closes}">`);
+      // The count and its controls wait for the script, which fills them.
+      expect(line).toContain('aria-pressed="false"');
+      expect(line).toContain('role="status"');
+      expect(line).toContain("data-carnap-timer-strings");
+
+      // Standing on its own — an LMS launch, the fullscreen link — the
+      // content carries the timer itself; in our frame, under the line, not.
+      const standalone = await page(env, student, `${base}/content`);
+      const framed = await page(env, student, `${base}/content?appframe=1`);
+
+      expect(standalone.status).toBe(200);
+      expect(standalone.html).toContain(
+        '<p class="attempt-timer-line" data-attempt-timer-line="">',
+      );
+      expect(standalone.html).toContain(`data-ends="${closes}"`);
+      expect(framed.status).toBe(200);
+      expect(framed.html).not.toContain("data-attempt-timer");
     });
   });
 });

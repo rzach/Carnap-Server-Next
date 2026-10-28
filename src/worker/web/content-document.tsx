@@ -33,6 +33,11 @@ import { CONTENT_STYLES } from "./styles";
  */
 export const APP_FRAME_PARAM = "appframe";
 
+/** Is this request for the body of one of our own content frames? */
+export function isAppFrameRequest(context: Context): boolean {
+  return new URL(context.req.url).searchParams.has(APP_FRAME_PARAM);
+}
+
 export interface ContentDocumentModel {
   /**
    * The default content styles as cacheable stylesheets — what a document
@@ -243,7 +248,7 @@ export function renderContentDocument(
       // Asked once here rather than in each of the three routes that serve a
       // content document: whether we are the framer is a property of the
       // request, not of what is being rendered.
-      escapeFrame: new URL(context.req.url).searchParams.has(APP_FRAME_PARAM),
+      escapeFrame: isAppFrameRequest(context),
       ...model,
       i18n: context.get("i18n"),
       locale: context.get("language"),

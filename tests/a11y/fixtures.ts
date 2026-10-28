@@ -709,6 +709,8 @@ export async function collectFixtures(
       {
         contentRevisionId: revisionId,
         description: "Submission practice.",
+        // Timed, so the open attempt's line carries the countdown.
+        timeLimitMinutes: 60,
         title: "Homework",
       },
       instructor,

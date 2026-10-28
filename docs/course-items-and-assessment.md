@@ -68,6 +68,12 @@ Use this mode for homework, quizzes, and exams.
 - Students must explicitly begin an attempt before viewing its content.
 - The policy service applies availability, attempt limits, time limits,
   accommodations, overrides, expirations, and resets.
+- A timed attempt counts down to when answers stop being accepted: its
+  expiry or the assignment's close, whichever is first. The count ends the
+  attempt line on the assignment page and heads the content document when
+  that stands on its own (an LMS launch, the fullscreen link). The student
+  can pin it to the top of the window or hide it; ten, five and one minute
+  before the end a polite status announces the time left.
 - Server evaluation produces the recorded grade evidence.
 - Scores appear in the course gradebook and contribute to course totals.
 - Released scores can be sent to an LMS when an AGS line item is mapped.

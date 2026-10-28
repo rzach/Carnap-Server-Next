@@ -195,6 +195,10 @@ msgstr ""
 msgid "{date}: {details}"
 msgstr ""
 
+#: src/worker/web/ui-strings.ts
+msgid "{duration} left"
+msgstr ""
+
 #: src/worker/web/student-course.tsx
 msgid "{earned}/{possible} · {percent}%"
 msgstr ""
@@ -396,6 +400,18 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "{used} of {allowed}"
+msgstr ""
+
+#: src/worker/web/ui-strings.ts
+msgid "1 minute left."
+msgstr ""
+
+#: src/worker/web/ui-strings.ts
+msgid "10 minutes left."
+msgstr ""
+
+#: src/worker/web/ui-strings.ts
+msgid "5 minutes left."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
@@ -2972,6 +2988,10 @@ msgstr ""
 msgid "Hide grades"
 msgstr ""
 
+#: src/worker/web/ui-strings.ts
+msgid "Hide time left"
+msgstr ""
+
 #: src/worker/infrastructure/turnstile.ts
 msgid "Human verification is misconfigured for this deployment."
 msgstr ""
@@ -3121,6 +3141,10 @@ msgstr ""
 
 #: src/worker/web/courses.tsx
 msgid "Join course"
+msgstr ""
+
+#: src/worker/web/ui-strings.ts
+msgid "Keep in view while scrolling"
 msgstr ""
 
 #: src/worker/exercise-kit/help-strings.ts
@@ -5104,6 +5128,10 @@ msgstr ""
 msgid "Show in student assignment lists"
 msgstr ""
 
+#: src/worker/web/ui-strings.ts
+msgid "Show time left"
+msgstr ""
+
 #: src/worker/exercise-kit/copy-source-strings.ts
 msgid "Show your work as source"
 msgstr ""
@@ -6607,8 +6635,16 @@ msgstr ""
 msgid "Time"
 msgstr ""
 
-#: src/worker/web/assignment-detail.tsx
+#: src/worker/web/attempt-timer.tsx
 msgid "Time ends {when}"
+msgstr ""
+
+#: src/worker/web/ui-strings.ts
+msgid "Time is up"
+msgstr ""
+
+#: src/worker/web/ui-strings.ts
+msgid "Time is up. Answers can no longer be submitted."
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx

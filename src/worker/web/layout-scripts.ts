@@ -1,3 +1,4 @@
+import { ATTEMPT_TIMER_SCRIPT } from "./assignment-scripts";
 import {
   LOCAL_TIMESTAMP_FIELDS,
   ZONED_TIMESTAMP_FIELDS,
@@ -939,6 +940,8 @@ export const SHELL_SCRIPT = [
   CONFIRM_SUBMIT_SCRIPT,
   CONTENT_FRAME_SCRIPT,
   TIMESTAMP_DISPLAY_SCRIPT,
+  // After the timestamps, which it rewrites in its own form.
+  ATTEMPT_TIMER_SCRIPT,
   REVISION_OPTION_SCRIPT,
   TIMESTAMP_INPUT_SCRIPT,
   GATED_FIELD_SCRIPT,

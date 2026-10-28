@@ -213,16 +213,25 @@ function earlierTimestamp(
   return first <= second ? first : second;
 }
 
+/**
+ * When an attempt stops accepting answers: its own expiry or the assignment's
+ * close, whichever comes first, or null when neither is set. A timed attempt
+ * begun near the close ends at the close, not when its time limit would.
+ */
+export function submissionCutoff(
+  assignment: Pick<PolicyAssignment, "availableUntil">,
+  attempt: Pick<Attempt, "expiresAt">,
+): Timestamp | null {
+  return earlierTimestamp(assignment.availableUntil, attempt.expiresAt);
+}
+
 export function effectiveSubmissionPolicy(
   assignment: PolicyAssignment,
   attempt: Attempt,
   now: Timestamp,
 ): EffectiveSubmissionPolicy {
   const reasons: SubmissionPolicyReason[] = [];
-  const cutoff = earlierTimestamp(
-    assignment.availableUntil,
-    attempt.expiresAt,
-  );
+  const cutoff = submissionCutoff(assignment, attempt);
 
   if (assignment.state !== "published") {
     reasons.push("assignment_draft");

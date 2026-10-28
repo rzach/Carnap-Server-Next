@@ -3,6 +3,7 @@ import exerciseStyles from "../exercise-kit/exercise.css" with {
   type: "text",
 };
 import { EXERCISE_GROUP_STYLES } from "../exercise-kit/group";
+import attemptTimerStyles from "./attempt-timer.css" with { type: "text" };
 import chromeStyles from "./chrome.css" with { type: "text" };
 import contentStyles from "./content.css" with { type: "text" };
 import dialogStyles from "./dialog.css" with { type: "text" };
@@ -40,6 +41,8 @@ export const CONTENT_STYLES = [
   EXERCISE_GROUP_STYLES,
   exerciseStyles,
   utilityStyles,
+  // Both documents an attempt's timer sits in; see the file.
+  attemptTimerStyles,
   // Last because it may be: everything in it is under `.aufbau-theory`.
   THEORY_PANEL_STYLES,
 ].join("\n");

@@ -195,6 +195,10 @@ msgstr "{count, plural, one {# student has an attempt on this assignment.} other
 msgid "{date}: {details}"
 msgstr "{date}: {details}"
 
+#: src/worker/web/ui-strings.ts
+msgid "{duration} left"
+msgstr "{duration} left"
+
 #: src/worker/web/student-course.tsx
 msgid "{earned}/{possible} · {percent}%"
 msgstr "{earned}/{possible} · {percent}%"
@@ -397,6 +401,18 @@ msgstr "{title}, {date}: {details}"
 #: src/worker/web/assignment-detail.tsx
 msgid "{used} of {allowed}"
 msgstr "{used} of {allowed}"
+
+#: src/worker/web/ui-strings.ts
+msgid "1 minute left."
+msgstr "1 minute left."
+
+#: src/worker/web/ui-strings.ts
+msgid "10 minutes left."
+msgstr "10 minutes left."
+
+#: src/worker/web/ui-strings.ts
+msgid "5 minutes left."
+msgstr "5 minutes left."
 
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "A “-- label:” comment must sit at the end of the proof line it marks, not on its own line."
@@ -2972,6 +2988,10 @@ msgstr "Hidden from the list above and from new assignments; everything set on t
 msgid "Hide grades"
 msgstr "Hide grades"
 
+#: src/worker/web/ui-strings.ts
+msgid "Hide time left"
+msgstr "Hide time left"
+
 #: src/worker/infrastructure/turnstile.ts
 msgid "Human verification is misconfigured for this deployment."
 msgstr "Human verification is misconfigured for this deployment."
@@ -3122,6 +3142,10 @@ msgstr "Item links must look like item:<content-item-id>."
 #: src/worker/web/courses.tsx
 msgid "Join course"
 msgstr "Join course"
+
+#: src/worker/web/ui-strings.ts
+msgid "Keep in view while scrolling"
+msgstr "Keep in view while scrolling"
 
 #: src/worker/exercise-kit/help-strings.ts
 #: src/worker/web/assignment-detail.tsx
@@ -5104,6 +5128,10 @@ msgstr "Short-answer question"
 msgid "Show in student assignment lists"
 msgstr "Show in student assignment lists"
 
+#: src/worker/web/ui-strings.ts
+msgid "Show time left"
+msgstr "Show time left"
+
 #: src/worker/exercise-kit/copy-source-strings.ts
 msgid "Show your work as source"
 msgstr "Show your work as source"
@@ -6607,9 +6635,17 @@ msgstr "Tick or untick the line"
 msgid "Time"
 msgstr "Time"
 
-#: src/worker/web/assignment-detail.tsx
+#: src/worker/web/attempt-timer.tsx
 msgid "Time ends {when}"
 msgstr "Time ends {when}"
+
+#: src/worker/web/ui-strings.ts
+msgid "Time is up"
+msgstr "Time is up"
+
+#: src/worker/web/ui-strings.ts
+msgid "Time is up. Answers can no longer be submitted."
+msgstr "Time is up. Answers can no longer be submitted."
 
 #: src/worker/web/assignment-detail.tsx
 msgid "time limit"
