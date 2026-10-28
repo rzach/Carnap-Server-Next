@@ -1563,6 +1563,16 @@ td > .create-bar {
   min-width: min-content;
 }
 
+/* A phone's sheet is narrower than that basis plus the short "Create", which
+   put the button on a line of its own; the min-content floor still wraps a
+   date control that cannot fit. */
+@media (max-width: 480px) {
+  .create-bar > input[type="datetime-local"],
+  .bar-field:has(> input[type="datetime-local"]) {
+    flex-basis: 8rem;
+  }
+}
+
 /* Chromium's date control stands a couple of pixels taller than a text field
    of the same font, padding and border; held to the field's box, so the
    button beside it lines up as it does beside any other field. */
