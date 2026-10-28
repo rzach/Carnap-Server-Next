@@ -95,12 +95,12 @@ describe("upgrading", () => {
     expect(mounted.element.dataset.enhanced).toBe("true");
     expect(cells(mounted)).toHaveLength(4);
     expect(cells(mounted).every((cell) => !cell.disabled)).toBe(true);
-    // The order the bar reads in: Check · Find counterexample · Submit.
+    // The order the bar reads in: Check · Counterexample · Submit.
     expect(
       Array.from(
         mounted.form.querySelectorAll(".exercise-actions button"),
       ).map((button) => button.textContent),
-    ).toEqual(["Check", "Find counterexample", "Submit answer"]);
+    ).toEqual(["Check", "Counterexample", "Submit"]);
     // The mirror is the grid as drawn: the given atoms, in the reference
     // columns and again under the formula's own letters, and one blank per
     // row where the connective goes — the worker's grader reads positions.
@@ -130,7 +130,7 @@ describe("upgrading", () => {
 
     expect(barButton(mounted, "Check")).toBeNull();
     // The counterexample control is a way of answering, not of checking.
-    expect(barButton(mounted, "Find counterexample")).not.toBeNull();
+    expect(barButton(mounted, "Counterexample")).not.toBeNull();
   });
 });
 
@@ -268,9 +268,9 @@ describe("a counterexample", () => {
     const mounted = mountExercise(await connectiveTable());
     fillColumn(mounted, "TFTT");
 
-    click(mounted, "Find counterexample");
+    click(mounted, "Counterexample");
 
-    const toggle = barButton(mounted, "Cancel counterexample");
+    const toggle = barButton(mounted, "Counterexample");
     expect(toggle?.getAttribute("aria-pressed")).toBe("true");
     expect(statusText(mounted)).toBe(
       "Fill in a row where every formula is false, then mark it as your counterexample.",
@@ -303,9 +303,9 @@ describe("a counterexample", () => {
     expect(markState(mounted)).toBe("ok");
 
     // Leaving the mode makes it an ordinary submission of the whole grid.
-    click(mounted, "Cancel counterexample");
+    click(mounted, "Counterexample");
     expect(answerOf(mounted).counterexample).toBeNull();
-    expect(barButton(mounted, "Find counterexample")).not.toBeNull();
+    expect(barButton(mounted, "Counterexample")).not.toBeNull();
   });
 });
 
@@ -337,7 +337,7 @@ describe("a prior answer", () => {
       "",
       "T",
     ]);
-    expect(barButton(mounted, "Cancel counterexample")).not.toBeNull();
+    expect(barButton(mounted, "Counterexample")).not.toBeNull();
     expect(
       mounted.root.querySelector<HTMLInputElement>(
         'input.tt-ce-radio[value="1"]',

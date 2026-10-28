@@ -607,7 +607,7 @@ class CarnapTruthTable extends CarnapExerciseElement<TruthTableStringId> {
       const ce = mountActionButton(
         this,
         "tt-check tt-ce",
-        this.t("Find counterexample"),
+        this.t("Counterexample"),
         () => {
           this.setCounterexampleMode(!this.ceMode);
         },
@@ -634,9 +634,6 @@ class CarnapTruthTable extends CarnapExerciseElement<TruthTableStringId> {
 
     if (this.ceButton !== null) {
       this.ceButton.setAttribute("aria-pressed", String(on));
-      this.ceButton.textContent = this.t(
-        on ? "Cancel counterexample" : "Find counterexample",
-      );
     }
 
     this.setCheckStatus(on ? this.counterexampleHint() : "");

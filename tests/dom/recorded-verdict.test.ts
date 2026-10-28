@@ -55,7 +55,7 @@ function pageWith(
          <input name="answerData" type="hidden">
          <input name="answerKind" type="hidden" value="multiple-choice-answer@1">
          <input name="schemaVersion" type="hidden" value="1">
-         <button type="submit">Submit answer</button>
+         <button type="submit">Submit</button>
          <span class="${CORRECTNESS_MARK_CLASS}">${CORRECTNESS_MARK_GLYPHS.idle}</span>
          <p data-exercise-status></p>
        </form>

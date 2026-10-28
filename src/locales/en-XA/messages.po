@@ -1429,10 +1429,6 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: src/worker/exercises/truth-table/strings.ts
-msgid "Cancel counterexample"
-msgstr ""
-
 #: src/worker/exercises/world/strings.ts
 msgid "Cannot be evaluated in this world"
 msgstr ""
@@ -1945,6 +1941,10 @@ msgstr ""
 
 #: src/worker/exercise-kit/proof/engine-strings.ts
 msgid "Could not work out what the last line states."
+msgstr ""
+
+#: src/worker/exercises/truth-table/strings.ts
+msgid "Counterexample"
 msgstr ""
 
 #: src/worker/exercises/truth-table/strings.ts
@@ -2761,10 +2761,6 @@ msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
 msgid "Filter submissions"
-msgstr ""
-
-#: src/worker/exercises/truth-table/strings.ts
-msgid "Find counterexample"
 msgstr ""
 
 #: src/worker/web/admin.tsx
@@ -5353,7 +5349,7 @@ msgid "Submissions are still open. Releasing grades now lets students keep worki
 msgstr ""
 
 #: src/worker/exercise-kit/actions.ts
-msgid "Submit answer"
+msgid "Submit"
 msgstr ""
 
 #: src/worker/web/labels.ts

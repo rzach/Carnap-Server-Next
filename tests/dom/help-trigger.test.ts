@@ -36,7 +36,7 @@ describe("mountHelpTrigger", () => {
     const host = fixture(
       '<div class="exercise-actions">' +
         '<button class="tt-check" type="button">Check</button>' +
-        '<button class="exercise-submit" type="submit">Submit answer</button>' +
+        '<button class="exercise-submit" type="submit">Submit</button>' +
         "</div>",
     );
     const opened: unknown[] = [];

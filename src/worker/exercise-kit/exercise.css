@@ -182,9 +182,6 @@
   height: 1.5rem;
   justify-content: center;
   line-height: 1;
-  /* Hard right of the button row, so it is in the same place whether the row
-     holds one button or three. */
-  margin-left: auto;
   position: relative;
   width: 1.5rem;
 }

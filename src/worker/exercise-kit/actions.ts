@@ -8,9 +8,9 @@ import {
 } from "./correctness-mark";
 
 /**
- * The action bar: the one row at the foot of every exercise, holding submit, the
- * live status line, the widget's own controls (Check, the `(?)` instructions)
- * and — last, so it lands hard right — the correctness mark.
+ * The action bar: the one row at the foot of every exercise, holding the widget's
+ * own controls (Check, the `(?)` instructions), submit, the correctness mark
+ * right beside it, and the live status line.
  *
  * It lives in light DOM whichever page renders it. An interactive element
  * projects it into its shadow card through `slot="exercise-actions"` so it reads
@@ -57,7 +57,9 @@ export function buildExerciseActionsStrings(i18n: Translator) {
     // records nothing by definition. So it says the fact rather than naming
     // either situation — "Preview" would be a lie on half the pages it appears.
     preview: i18n.t("Answers are not recorded here."),
-    submit: i18n.t("Submit answer"),
+    // One word: the button sits in the exercise's own bar, so what it submits
+    // goes without saying, and the bar has to fit a phone's width on one row.
+    submit: i18n.t("Submit"),
     working: i18n.t("Checking"),
   };
 }
@@ -117,11 +119,13 @@ export interface ExerciseActionsOptions {
 /**
  * The bar, as a fragment of HTML.
  *
- * Source order is submit · status · mark · check status, which is what puts the
- * mark hard right of the row (the stylesheet gives it `margin-left: auto`) and
- * the check status alone on the line below it (`flex-basis: 100%`). A widget that
- * adds its own controls inserts them before the submit, so the row reads
- * `(?) · Check · Submit`.
+ * Source order is submit · mark · status · check status, which puts the mark
+ * against the button whose availability it decides (Submit waits for a check)
+ * and the check status alone on the line below (`flex-basis: 100%`). Beside the
+ * buttons rather than at the far end of the row, because a reader working under
+ * a screen magnifier sees the controls they are using and not the row's other
+ * end (gh #5). A widget that adds its own controls inserts them before the
+ * submit, so the row reads `(?) · Check · Submit · mark · status`.
  *
  * The two status lines are two different voices and that is why there are two.
  * The first is the platform's: what the *server* did with an answer that was
@@ -151,9 +155,9 @@ export function exerciseActionsHtml(
 
   return `<div class="exercise-actions"${slot}><button class="exercise-submit" type="submit"${inert}>${escapeHtml(
     strings.submit,
-  )}</button><p aria-live="polite" class="exercise-status" data-exercise-status>${escapeHtml(
+  )}</button>${correctnessMarkHtml(i18n)}<p aria-live="polite" class="exercise-status" data-exercise-status>${escapeHtml(
     options.status ?? "",
-  )}</p>${correctnessMarkHtml(i18n)}<p aria-live="polite" class="exercise-status exercise-check-status" data-exercise-check-status></p></div>`;
+  )}</p><p aria-live="polite" class="exercise-status exercise-check-status" data-exercise-check-status></p></div>`;
 }
 
 /**

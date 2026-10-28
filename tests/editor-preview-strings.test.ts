@@ -92,9 +92,7 @@ describe("browser rebuild of the preview document", () => {
     // The label the author sees on the button, through the map the server sent
     // rather than through the id. `passthroughTranslator` gives "Check".
     expect(hydration.tt1?.strings.Check).toBe("Prüfen");
-    expect(hydration.tt1?.strings["Find counterexample"]).toBe(
-      "Gegenbeispiel finden",
-    );
+    expect(hydration.tt1?.strings.Counterexample).toBe("Gegenbeispiel");
   });
 
   test("resolves every widget string exactly as the server would", () => {

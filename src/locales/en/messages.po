@@ -1429,10 +1429,6 @@ msgstr "Campus Moodle"
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/worker/exercises/truth-table/strings.ts
-msgid "Cancel counterexample"
-msgstr "Cancel counterexample"
-
 #: src/worker/exercises/world/strings.ts
 msgid "Cannot be evaluated in this world"
 msgstr "Cannot be evaluated in this world"
@@ -1946,6 +1942,10 @@ msgstr "Could not read the value of {field}."
 #: src/worker/exercise-kit/proof/engine-strings.ts
 msgid "Could not work out what the last line states."
 msgstr "Could not work out what the last line states."
+
+#: src/worker/exercises/truth-table/strings.ts
+msgid "Counterexample"
+msgstr "Counterexample"
 
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Counterexample row"
@@ -2762,10 +2762,6 @@ msgstr "Filter members"
 #: src/worker/web/assignment-detail.tsx
 msgid "Filter submissions"
 msgstr "Filter submissions"
-
-#: src/worker/exercises/truth-table/strings.ts
-msgid "Find counterexample"
-msgstr "Find counterexample"
 
 #: src/worker/web/admin.tsx
 msgid "Find user"
@@ -5353,8 +5349,8 @@ msgid "Submissions are still open. Releasing grades now lets students keep worki
 msgstr "Submissions are still open. Releasing grades now lets students keep working with feedback the others did not have."
 
 #: src/worker/exercise-kit/actions.ts
-msgid "Submit answer"
-msgstr "Submit answer"
+msgid "Submit"
+msgstr "Submit"
 
 #: src/worker/web/labels.ts
 msgid "Submitted"

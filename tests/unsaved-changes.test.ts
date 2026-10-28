@@ -53,7 +53,7 @@ describe("the assignment page's unsaved-answer guard", () => {
            <input name="answerKind" type="hidden" value="free-response@1">
            <input name="schemaVersion" type="hidden" value="1">
            <textarea name="text">already saved</textarea>
-           <button type="submit">Submit answer</button>
+           <button type="submit">Submit</button>
            <p data-exercise-status></p>
          </form>
          <form action="/attempts/a1/submissions" class="exercise-submission"
@@ -64,7 +64,7 @@ describe("the assignment page's unsaved-answer guard", () => {
            <input name="answerKind" type="hidden" value="truth-table@1">
            <input name="schemaVersion" type="hidden" value="1">
            <carnap-truth-table data-exercise-id="widget_1"></carnap-truth-table>
-           <button type="submit">Submit answer</button>
+           <button type="submit">Submit</button>
            <p data-exercise-status></p>
          </form>
        </body></html>`,

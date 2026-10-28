@@ -29,11 +29,15 @@ export function buildTruthTableStrings(i18n: Translator) {
     "Arrow keys move between cells. Space or Enter changes one.": i18n.t(
       "Arrow keys move between cells. Space or Enter changes one.",
     ),
-    "Cancel counterexample": i18n.t("Cancel counterexample"),
     Check: i18n.t("Check"),
     "Choose the row you're claiming as a counterexample.": i18n.t(
       "Choose the row you're claiming as a counterexample.",
     ),
+    // The toggle into counterexample mode. One label for both states, because
+    // it is a pressed/unpressed toggle: `aria-pressed` and the pressed border
+    // say which state it is in, and a label that also flipped would say it
+    // twice. A noun, too, so the bar fits a phone's width on one row.
+    Counterexample: i18n.t("Counterexample"),
     // The heading over the column of row radios, for a reader who meets it with
     // no grid in front of them. Visually hidden: on screen the radios sit under
     // an empty heading, beside the row they select.
@@ -57,7 +61,6 @@ export function buildTruthTableStrings(i18n: Translator) {
         message: "Correct",
       },
     ),
-    "Find counterexample": i18n.t("Find counterexample"),
     // One cell's accessible name. Without it a cell is a button called "T" — or,
     // when `nodash` blanks the glyph, a button with no name at all — and nothing
     // says which row or column it sits in. The row number is 1-based, counting

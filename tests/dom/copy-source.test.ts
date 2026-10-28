@@ -20,7 +20,7 @@ const BAR =
   '<div class="exercise-actions">' +
   '<button class="help-trigger" type="button">?</button>' +
   '<button class="world-check" type="button">Check</button>' +
-  '<button class="exercise-submit" type="submit" disabled>Submit answer</button>' +
+  '<button class="exercise-submit" type="submit" disabled>Submit</button>' +
   '<p aria-live="polite" class="exercise-status" data-exercise-status></p>' +
   "</div>";
 

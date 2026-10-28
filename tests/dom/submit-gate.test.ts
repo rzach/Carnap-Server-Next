@@ -27,7 +27,7 @@ function pageWithRuntime(): {
          <input name="answerData" type="hidden" value='{"text":"P"}'>
          <input name="answerKind" type="hidden" value="translation@1">
          <input name="schemaVersion" type="hidden" value="1">
-         <button type="submit">Submit answer</button>
+         <button type="submit">Submit</button>
          <p data-exercise-status></p>
        </form>
      </body></html>`,

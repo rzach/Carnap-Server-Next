@@ -76,10 +76,10 @@ Editing a cell clears the previous local result.
 
 ### Counterexamples
 
-In simple and validity tables, Find counterexample reveals row-selection
-radios. Selecting a row designates it for the next Check or Submit; selection
-does not itself send a request. All cells remain editable. Leaving the mode
-removes the designation without erasing work.
+In simple and validity tables, pressing the Counterexample toggle reveals
+row-selection radios. Selecting a row designates it for the next Check or
+Submit; selection does not itself send a request. All cells remain editable.
+Releasing the toggle removes the designation without erasing work.
 
 The selected row must be filled correctly and satisfy `counterexample-to`:
 

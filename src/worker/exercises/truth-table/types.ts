@@ -101,7 +101,7 @@ export interface TruthTableOptions {
    */
   readonly counterexampleTo: TruthTableCounterexampleTarget;
   /**
-   * Whether the "Find counterexample" button is offered (cf. Carnap
+   * Whether the "Counterexample" toggle is offered (cf. Carnap
    * `nocounterexample`, which sets this `false`). Independent of the property.
    */
   readonly showCounterexample: boolean;
