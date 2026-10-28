@@ -239,6 +239,44 @@ describe("readCompileResult", () => {
     ]);
   });
 
+  test("names the name a rule's restriction is about, and its rule", () => {
+    // The engine's record for ∀I generalizing on a name an assumption
+    // mentions: of the two binders it names, the bound one is the name.
+    const verdict = readCompileResult({
+      diagnostics: [
+        {
+          detail: {
+            firstAssigned: "a",
+            firstBound: true,
+            kind: "dep_violation",
+            secondAssigned: "F a",
+            secondBound: false,
+          },
+          error: "DepViolation",
+          message:
+            "binder assignments violate the rule's dependency constraints",
+          rule: "all_intro",
+          severity: "error",
+        },
+        {
+          error: "RecoverHoleNotFound",
+          message:
+            "@recover could not find the hole binder in the pattern expr",
+          rule: "ex_intro",
+          severity: "error",
+        },
+      ],
+      ok: false,
+    } as CompileResult);
+
+    expect(
+      verdict.problems.map(({ name, rule }) => ({ name, rule })),
+    ).toEqual([
+      { name: "a", rule: "all_intro" },
+      { name: undefined, rule: "ex_intro" },
+    ]);
+  });
+
   test("names the rule a line did not fit, and only for a misfit", () => {
     // The engine's own records for gh #36's ∨E and for a citation count it
     // refused; the rule is a field on every rule-application record, but it

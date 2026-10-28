@@ -65,7 +65,6 @@ import {
   playgroundGoal,
   playgroundTheoryText,
 } from "../../worker/exercise-kit/proof/playground";
-import { ruleShapeReader } from "../../worker/exercise-kit/proof/rule-shape";
 import { ruleCitationShapes } from "../../worker/exercises/aufbau-proof-fitch/citations";
 import {
   type AufbauProofFitchStringId,
@@ -369,7 +368,7 @@ class AufbauProofFitch extends ProofExerciseElement<AufbauProofFitchStringId> {
     );
     this.citationShapes = ruleCitationShapes(theory.source);
     this.readRule = proofRuleReader(theory.source);
-    this.ruleShapes = ruleShapeReader(theory.source, "fitch");
+    this.readRules(theory.source, "fitch");
     this.goalName = data.goalName;
     this.assumptionRule = data.assumptionRule;
     if (typeof data.sequentSymbol === "string" && data.sequentSymbol !== "") {

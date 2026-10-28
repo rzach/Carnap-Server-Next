@@ -1,6 +1,7 @@
 /*
  * A rule's shape under a proof problem (`./proof-problem.ts`): the rule's
- * name, then each premise in its own box, `∴`, and the conclusion. Drawn in
+ * name, then each premise in its own box, `∴`, and the conclusion; and a name
+ * the problem's message is about. Drawn in
  * the problem line, the hover popup and CodeMirror's tooltip and error list,
  * which all live in the widget's shadow root; `mountProblemLine` serves this
  * into it, as every proof widget mounts one.
@@ -46,6 +47,12 @@
 /* A Fitch subproof's box gets the editor's scope line down its left. */
 .rule-shape-premise.is-subproof {
   border-left: 2.5px solid currentColor;
+}
+/* A name a message is about, `a` in "The name a does not meet ∀I's
+   restriction.", in the formulas' type, so it reads as a name. */
+.problem-name {
+  font-family: var(--_mono-font);
+  font-size: 0.95em;
 }
 .rule-shape-therefore {
   color: color-mix(in srgb, currentColor 72%, transparent);

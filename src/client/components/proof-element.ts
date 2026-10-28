@@ -6,13 +6,21 @@ import {
   playgroundGoalText,
 } from "../../worker/exercise-kit/proof/playground";
 import {
+  ENGINE_RULE_NAMES,
   NO_RULE_SHAPES,
+  type RuleNameReader,
+  type RuleNaming,
   type RuleShapeReader,
+  type RuleShapeStyle,
+  ruleNameReader,
+  ruleShapeReader,
 } from "../../worker/exercise-kit/proof/rule-shape";
+import { splitAtValue, VALUE } from "../../worker/i18n/translator";
 import {
   bytesToBase64,
   type CompileDiagnostic,
   type CompileVerdict,
+  isRuleMisfit,
   loadProofCompiler,
   readCompileResult,
 } from "../proof-compiler";
@@ -76,11 +84,12 @@ export abstract class ProofExerciseElement<
   /** Whether the last compile stood only by admitting lines. */
   protected admitted = false;
   /**
-   * The shape of a rule a line did not fit, in this widget's idiom — set
-   * from the theory once it is known (`ruleShapeReader`), and read by
-   * {@link problemOf}.
+   * The shape of a rule a line did not fit, in this widget's idiom, and the
+   * name the proof cites a rule by — set from the theory once it is known
+   * ({@link readRules}), and read by {@link problemOf}.
    */
-  protected ruleShapes: RuleShapeReader = NO_RULE_SHAPES;
+  private ruleShapes: RuleShapeReader = NO_RULE_SHAPES;
+  private ruleNames: RuleNameReader = ENGINE_RULE_NAMES;
 
   /** Bumped by whatever makes a run in flight stale; a run compares its own. */
   private compileToken = 0;
@@ -209,19 +218,87 @@ export abstract class ProofExerciseElement<
   }
 
   /**
-   * What a compiler problem says: the engine's headline, or `fallback` where
-   * it has none, and — where the line did not fit the rule it cited — that
-   * rule's shape, so the reader can see what the rule wanted (gh #36).
+   * Read the rules' shapes and names from the frozen theory text, drawing a
+   * shape in `style` and naming a rule as the proof cites it.
+   */
+  protected readRules(
+    source: string | null | undefined,
+    style: RuleShapeStyle,
+    naming: RuleNaming = "alias",
+  ): void {
+    this.ruleShapes = ruleShapeReader(source, style, naming);
+    this.ruleNames = ruleNameReader(source, naming);
+  }
+
+  /**
+   * What a compiler problem says, and — where the line did not fit the rule
+   * it cited — that rule's shape, so the reader can see what the rule wanted
+   * (gh #36).
+   *
+   * The errors students meet are worded here, by the engine's code, in the
+   * student's terms: what is wrong, on the line it is about, naming the rule
+   * as the proof cites it, quoting no formula (#394). The engine's own
+   * headline is for the rest — or `fallback`, where it has none — since a
+   * code it has not been seen to raise for a student has no wording to
+   * check.
    */
   protected problemOf(
     problem: CompileDiagnostic,
     fallback: string,
   ): ProblemText {
-    return {
-      message: problem.message ?? fallback,
-      shape:
-        problem.rule === undefined ? null : this.ruleShapes(problem.rule),
-    };
+    const shape =
+      problem.rule !== undefined && isRuleMisfit(problem)
+        ? this.ruleShapes(problem.rule)
+        : null;
+    const rule =
+      problem.rule === undefined ? undefined : this.ruleNames(problem.rule);
+    const said = (message: string): ProblemText => ({ message, shape });
+
+    switch (problem.error) {
+      case "RefCountMismatch":
+        if (rule !== undefined) {
+          return said(
+            this.t("{rule} takes a different number of premises.", { rule }),
+          );
+        }
+        break;
+      case "RecoverHoleNotFound":
+      case "UnifyMismatch":
+        if (rule !== undefined) {
+          return said(this.t("This does not follow by {rule}.", { rule }));
+        }
+        break;
+      case "FinalLineMismatch":
+        return said(
+          this.t(
+            "This does not prove the goal: its conclusion or its assumptions differ from the goal's.",
+          ),
+        );
+      case "DepViolation":
+        if (rule !== undefined && problem.name !== undefined) {
+          const [before, after] = splitAtValue(
+            this.t("The name {name} does not meet {rule}'s restriction.", {
+              name: VALUE,
+              rule,
+            }),
+          );
+          return {
+            message: `${before}${problem.name}${after}`,
+            name: { at: before.length, text: problem.name },
+            shape,
+          };
+        }
+        break;
+      case "SorryLine":
+        // Only where it is an error: under `allow-sorry` the admission is a
+        // warning, and the status line already says what it costs.
+        if (problem.severity === "error") {
+          return said(this.t("This exercise does not allow sorry!."));
+        }
+        break;
+    }
+
+    return said(problem.message ?? fallback);
   }
 
   /**

@@ -360,6 +360,10 @@ msgstr "{penalty} Arbeiten, die bis zu {minutes} Minuten nach dem Fälligkeitsze
 msgid "{platform} has a different address for you: {address}"
 msgstr "{platform} hat eine andere Adresse für Sie: {address}"
 
+#: src/worker/exercise-kit/proof/engine-strings.ts
+msgid "{rule} takes a different number of premises."
+msgstr "{rule} verlangt eine andere Anzahl von Prämissen."
+
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/ui-strings.ts
 msgid "{score}/{maxScore} · {evaluator}"
@@ -5926,6 +5930,10 @@ msgstr "Die Markierung neben der Schaltfläche „Antwort abgeben“ zeigt, ob d
 msgid "The most recent administrative audit events."
 msgstr "Die neuesten administrativen Prüfereignisse."
 
+#: src/worker/exercise-kit/proof/engine-strings.ts
+msgid "The name {name} does not meet {rule}'s restriction."
+msgstr "Der Name {name} erfüllt die Bedingung von {rule} nicht."
+
 #: src/worker/web/courses.tsx
 msgid "The new course copies this course's assignments and their settings, dates included. Members, enrollment links and student work are not copied."
 msgstr "Der neue Kurs übernimmt die Aufgaben dieses Kurses mit ihren Einstellungen, einschließlich der Termine. Mitglieder, Einschreibelinks und studentische Arbeiten werden nicht übernommen."
@@ -6375,6 +6383,14 @@ msgstr "Diese Entlastungsmarke passt zu keiner Annahme darüber."
 msgid "This does not exactly match the intended answer."
 msgstr "Das stimmt nicht genau mit der gesuchten Antwort überein."
 
+#: src/worker/exercise-kit/proof/engine-strings.ts
+msgid "This does not follow by {rule}."
+msgstr "Das folgt nicht mit {rule}."
+
+#: src/worker/exercise-kit/proof/engine-strings.ts
+msgid "This does not prove the goal: its conclusion or its assumptions differ from the goal's."
+msgstr "Das beweist das Ziel nicht: Die Konklusion oder die Annahmen weichen von denen des Ziels ab."
+
 #: src/worker/exercises/model/strings.ts
 msgid "This domain gives {field} too many arguments to fill in."
 msgstr "Bei diesem Individuenbereich hat {field} zu viele Argumente zum Ausfüllen."
@@ -6390,6 +6406,10 @@ msgstr "Diese Übung konnte nicht geladen werden. Bitte laden Sie die Seite neu.
 #: src/worker/exercises/world/strings.ts
 msgid "This exercise does not allow {symbols}."
 msgstr "Diese Aufgabe erlaubt {symbols} nicht."
+
+#: src/worker/exercise-kit/proof/engine-strings.ts
+msgid "This exercise does not allow sorry!."
+msgstr "Diese Aufgabe erlaubt sorry! nicht."
 
 #: src/worker/web/ui-strings.ts
 msgid "This exercise form has no known answer fields."

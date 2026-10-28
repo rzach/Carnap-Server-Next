@@ -66,7 +66,6 @@ import {
   playgroundGoal,
   playgroundTheoryText,
 } from "../../worker/exercise-kit/proof/playground";
-import { ruleShapeReader } from "../../worker/exercise-kit/proof/rule-shape";
 import type { AufbauProofPrawitzStringId } from "../../worker/exercises/aufbau-proof-prawitz/strings";
 import type { PrawitzDiagnostic } from "../../worker/exercises/aufbau-proof-prawitz/translate";
 import {
@@ -1130,7 +1129,7 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
       data.goalName,
     );
     this.readRule = proofRuleReader(theory.source);
-    this.ruleShapes = ruleShapeReader(theory.source, "prawitz");
+    this.readRules(theory.source, "prawitz");
     this.goalName = data.goalName;
     this.goalFormula = data.goalFormula;
     this.assumptionRule = data.assumptionRule;

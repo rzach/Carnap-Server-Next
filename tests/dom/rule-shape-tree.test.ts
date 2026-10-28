@@ -24,6 +24,8 @@ import { treeExercise, treeRootField, treeRootRule } from "./tree-widget";
 
 const MESSAGE =
   "the statement and cited premises could not be matched against this rule";
+/** What the widget says of it instead, naming the rule as the proof cites it (#394). */
+const SAID = "This does not follow by →E.";
 const WARNING = "admitted without proof";
 
 await mockProofCompiler((mm0: string, proof: string) => {
@@ -92,7 +94,7 @@ describe("a rule's shape in the tree editor", () => {
       root.getAttribute("aria-describedby") ?? "",
     );
     expect(SHAPE).toStartWith("→E: ");
-    expect(note?.textContent).toBe(`${MESSAGE}\n${SHAPE}\n${WARNING}`);
+    expect(note?.textContent).toBe(`${SAID}\n${SHAPE}\n${WARNING}`);
 
     // F8 pins it under the proof, drawn.
     root.focus();
@@ -113,7 +115,7 @@ describe("a rule's shape in the tree editor", () => {
     // A hover floats the drawing of that field's own problem: the formula's
     // error, not the rule's warning.
     const popup = mounted.root.querySelector<HTMLElement>(".problem-popup");
-    await hover(treeRootField(mounted), popup, `${MESSAGE}\n${SHAPE}`);
+    await hover(treeRootField(mounted), popup, `${SAID}\n${SHAPE}`);
     expect(popup?.querySelectorAll(".rule-shape-premise").length).toBe(
       boxes.length,
     );

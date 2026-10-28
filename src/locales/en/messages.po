@@ -360,6 +360,10 @@ msgstr "{penalty} Work within {minutes} minutes of the due date is not late."
 msgid "{platform} has a different address for you: {address}"
 msgstr "{platform} has a different address for you: {address}"
 
+#: src/worker/exercise-kit/proof/engine-strings.ts
+msgid "{rule} takes a different number of premises."
+msgstr "{rule} takes a different number of premises."
+
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/ui-strings.ts
 msgid "{score}/{maxScore} · {evaluator}"
@@ -5926,6 +5930,10 @@ msgstr "The mark beside the Submit button shows whether the proof checks. A line
 msgid "The most recent administrative audit events."
 msgstr "The most recent administrative audit events."
 
+#: src/worker/exercise-kit/proof/engine-strings.ts
+msgid "The name {name} does not meet {rule}'s restriction."
+msgstr "The name {name} does not meet {rule}'s restriction."
+
 #: src/worker/web/courses.tsx
 msgid "The new course copies this course's assignments and their settings, dates included. Members, enrollment links and student work are not copied."
 msgstr "The new course copies this course's assignments and their settings, dates included. Members, enrollment links and student work are not copied."
@@ -6375,6 +6383,14 @@ msgstr "This discharge mark doesn't match any assumption above it."
 msgid "This does not exactly match the intended answer."
 msgstr "This does not exactly match the intended answer."
 
+#: src/worker/exercise-kit/proof/engine-strings.ts
+msgid "This does not follow by {rule}."
+msgstr "This does not follow by {rule}."
+
+#: src/worker/exercise-kit/proof/engine-strings.ts
+msgid "This does not prove the goal: its conclusion or its assumptions differ from the goal's."
+msgstr "This does not prove the goal: its conclusion or its assumptions differ from the goal's."
+
 #: src/worker/exercises/model/strings.ts
 msgid "This domain gives {field} too many arguments to fill in."
 msgstr "This domain gives {field} too many arguments to fill in."
@@ -6390,6 +6406,10 @@ msgstr "This exercise couldn't load. Please reload the page."
 #: src/worker/exercises/world/strings.ts
 msgid "This exercise does not allow {symbols}."
 msgstr "This exercise does not allow {symbols}."
+
+#: src/worker/exercise-kit/proof/engine-strings.ts
+msgid "This exercise does not allow sorry!."
+msgstr "This exercise does not allow sorry!."
 
 #: src/worker/web/ui-strings.ts
 msgid "This exercise form has no known answer fields."

@@ -63,7 +63,6 @@ import {
   playgroundGoal,
   playgroundTheoryText,
 } from "../../worker/exercise-kit/proof/playground";
-import { ruleShapeReader } from "../../worker/exercise-kit/proof/rule-shape";
 import {
   flattenProofTree,
   proofTreeStarter,
@@ -995,7 +994,7 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
       data.goalName,
     );
     this.readRule = proofRuleReader(theory.source);
-    this.ruleShapes = ruleShapeReader(theory.source, "sequent");
+    this.readRules(theory.source, "sequent");
     this.goalName = data.goalName;
     // A playground appends its goal per compile and it has no hypotheses. An
     // artifact frozen before `source` existed has only the stripped text,

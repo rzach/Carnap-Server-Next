@@ -22,6 +22,9 @@ export const RULE_SHAPE_STYLES = styles;
 
 export interface ProblemText {
   readonly message: string;
+  /** A name the message is about, drawn in code type so a one-letter name
+   *  does not read as a typo: its text, and where it starts in `message`. */
+  readonly name?: { readonly at: number; readonly text: string };
   readonly shape: RuleShape | null;
 }
 
@@ -55,10 +58,26 @@ export function problemsNodes(problems: readonly ProblemText[]): Node[] {
 
 /** The problem drawn: its message, then its shape. */
 export function problemNodes(problem: ProblemText): Node[] {
-  const message = document.createTextNode(problem.message);
+  const message = messageNodes(problem);
   return problem.shape === null
-    ? [message]
-    : [message, ruleShapeElement(problem.shape)];
+    ? message
+    : [...message, ruleShapeElement(problem.shape)];
+}
+
+function messageNodes({ message, name }: ProblemText): Node[] {
+  if (name === undefined) {
+    return [document.createTextNode(message)];
+  }
+  const end = name.at + name.text.length;
+  const code = document.createElement("code");
+  code.className = "problem-name";
+  code.textContent = name.text;
+
+  return [
+    document.createTextNode(message.slice(0, name.at)),
+    code,
+    document.createTextNode(message.slice(end)),
+  ];
 }
 
 /**

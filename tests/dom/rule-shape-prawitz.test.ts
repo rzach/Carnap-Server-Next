@@ -33,6 +33,8 @@ import { mockProofCompiler } from "./proof-compiler-mock";
 
 const MESSAGE =
   "the statement and cited premises could not be matched against this rule";
+/** What the widget says of it instead, naming the rule as the proof cites it (#394). */
+const SAID = "This does not follow by ¬I.";
 
 await mockProofCompiler((_mm0: string, proof: string) => {
   const at = proof.lastIndexOf("\n") + 1;
@@ -79,12 +81,12 @@ describe("a rule's shape in the Prawitz editor", () => {
     // Read as text — what a screen reader hears on the line.
     expect(SHAPE).toBe("¬I: [ph] … ps, [ph] … ¬ps ∴ ¬ph");
     await until(
-      () => field.getAttribute("data-problem") === `${MESSAGE}\n${SHAPE}`,
+      () => field.getAttribute("data-problem") === `${SAID}\n${SHAPE}`,
     );
     const note = mounted.root.getElementById(
       (line as HTMLElement).getAttribute("aria-describedby") ?? "",
     );
-    expect(note?.textContent).toBe(`${MESSAGE}\n${SHAPE}`);
+    expect(note?.textContent).toBe(`${SAID}\n${SHAPE}`);
 
     // F8 pins it under the proof, drawn: a box per premise.
     prawitzPress(line as HTMLElement, "F8");
@@ -107,6 +109,6 @@ describe("a rule's shape in the Prawitz editor", () => {
     const popup = mounted.root.querySelector<HTMLElement>(".problem-popup");
     await until(() => popup?.hidden === false);
     expect(popup?.querySelectorAll(".rule-shape-premise").length).toBe(2);
-    expect(popup?.textContent).toBe(`${MESSAGE}\n${SHAPE}`);
+    expect(popup?.textContent).toBe(`${SAID}\n${SHAPE}`);
   });
 });

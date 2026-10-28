@@ -238,7 +238,7 @@ describe("the compiler's verdict", () => {
     // (This theory keeps outer brackets; forallx's display drops them.)
     expect(squiggles(mounted)).toEqual([
       [
-        "the statement and cited premises could not be matched against this rule\nimp_elim: (a → b), a ∴ b",
+        "This does not follow by imp_elim.\nimp_elim: (a → b), a ∴ b",
         "a       :ax",
       ],
     ]);
@@ -264,6 +264,109 @@ describe("the compiler's verdict", () => {
     expect(drawn[0]?.querySelector(".rule-shape")?.textContent).toBe(
       "\nimp_elim: (a → b), a ∴ b",
     );
+  });
+
+  test("the engine's errors are worded by their code, and the rest keep the engine's (#394)", async () => {
+    const said = async (diagnostic: object): Promise<string | undefined> => {
+      compile.mockImplementationOnce((mm0: string, proof: string) => {
+        const failed = failsOnLastLine(mm0, proof) as {
+          readonly diagnostics: readonly object[];
+        };
+        return {
+          diagnostics: failed.diagnostics.map((one) => ({
+            ...one,
+            ...diagnostic,
+          })),
+          ok: false,
+        };
+      });
+      const mounted = mountExercise(await compileExercise(fitch()));
+      await until(() => squiggles(mounted).length > 0);
+      return squiggles(mounted)[0]?.[0].split("\n")[0];
+    };
+
+    expect(
+      await said({
+        error: "RefCountMismatch",
+        message: "wrong number of references for rule application",
+        rule: "imp_elim",
+      }),
+    ).toBe("imp_elim takes a different number of premises.");
+    // ∃I's misfit, which the engine reports from inside `@recover`.
+    expect(
+      await said({
+        error: "RecoverHoleNotFound",
+        message:
+          "@recover could not find the hole binder in the pattern expr",
+        rule: "imp_elim",
+      }),
+    ).toBe("This does not follow by imp_elim.");
+    expect(
+      await said({
+        error: "FinalLineMismatch",
+        message: "last proof line does not prove the theorem conclusion",
+      }),
+    ).toBe(
+      "This does not prove the goal: its conclusion or its assumptions differ from the goal's.",
+    );
+    expect(
+      await said({
+        error: "SorryLine",
+        message: "proof line is admitted with sorry!",
+        severity: "warning",
+      }),
+    ).toBe("This exercise does not allow sorry!.");
+    expect(
+      await said({
+        error: "SomethingNew",
+        message: "the engine's own words",
+      }),
+    ).toBe("the engine's own words");
+  });
+
+  test("a rule's restriction names the name, in code type (#394)", async () => {
+    compile.mockImplementationOnce((mm0: string, proof: string) => {
+      const failed = failsOnLastLine(mm0, proof) as {
+        readonly diagnostics: readonly object[];
+      };
+      return {
+        diagnostics: failed.diagnostics.map((one) => ({
+          ...one,
+          detail: {
+            firstAssigned: "a",
+            firstBound: true,
+            kind: "dep_violation",
+            secondAssigned: "F a",
+            secondBound: false,
+          },
+          error: "DepViolation",
+          message:
+            "binder assignments violate the rule's dependency constraints",
+          rule: "imp_elim",
+        })),
+        ok: false,
+      };
+    });
+    const mounted = mountExercise(await compileExercise(fitch()));
+
+    await until(() => squiggles(mounted).length > 0);
+
+    expect(squiggles(mounted)).toEqual([
+      ["The name a does not meet imp_elim's restriction.", "a       :ax"],
+    ]);
+    // No rule shape: the line fits the rule, and breaks its condition.
+    const view = editorOf(mounted);
+    const drawn: HTMLElement[] = [];
+    forEachDiagnostic(view.state, (diagnostic) => {
+      const rendered = diagnostic.renderMessage?.(view);
+      if (rendered instanceof HTMLElement) {
+        drawn.push(rendered);
+      }
+    });
+    expect(drawn[0]?.querySelector("code.problem-name")?.textContent).toBe(
+      "a",
+    );
+    expect(drawn[0]?.querySelector(".rule-shape")).toBeNull();
   });
 
   test("terse feedback withholds the underline, not the verdict", async () => {

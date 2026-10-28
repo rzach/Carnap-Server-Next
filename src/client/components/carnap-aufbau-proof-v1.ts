@@ -44,7 +44,6 @@ import {
   PROOF_HEADER_SEPARATOR,
   proofTextOf,
 } from "../../worker/exercise-kit/proof/proof-text";
-import { ruleShapeReader } from "../../worker/exercise-kit/proof/rule-shape";
 import type { AufbauProofStringId } from "../../worker/exercises/aufbau-proof/strings";
 import type { AufbauProofPublicData } from "../../worker/exercises/aufbau-proof/types";
 import { byteToCharIndex, type CompileDiagnostic } from "../proof-compiler";
@@ -110,7 +109,7 @@ class AufbauProof extends ProofExerciseElement<AufbauProofStringId> {
     }
 
     this.theory = proofTheoryText(data);
-    this.ruleShapes = ruleShapeReader(this.theory.source, "sequent", "axiom");
+    this.readRules(this.theory.source, "sequent", "axiom");
     this.playground = data.playground === true;
     this.allowSorry = data.allowSorry === true;
     this.goalName = data.goalName;

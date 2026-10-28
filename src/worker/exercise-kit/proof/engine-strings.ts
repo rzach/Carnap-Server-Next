@@ -18,11 +18,13 @@ import { placeholders, type Translator } from "../../i18n/translator";
  * ids it looks up. Ids are the English text, so a sentence two of them share
  * is still one catalog entry.
  *
- * Note what is *not* here: the compiler's own diagnostics. Those are translated
- * upstream, not by us — `@aufbau/compiler` carries its own catalogs and picks
- * one from the locale `client/proof-compiler.ts` hands it, so a language Aufbau
- * has not translated reaches the student's editor gutter in English however
- * complete our own catalog is. These are our wrappers around it.
+ * The compiler's own diagnostics are mostly not here. The errors students
+ * meet are, worded by the engine's code (#394); every other code keeps the
+ * engine's headline, which is translated upstream, not by us —
+ * `@aufbau/compiler` carries its own catalogs and picks one from the locale
+ * `client/proof-compiler.ts` hands it, so a language Aufbau has not translated
+ * reaches the student's editor gutter in English however complete our own
+ * catalog is.
  */
 export function buildProofEngineStrings(i18n: Translator) {
   return {
@@ -74,6 +76,40 @@ export function buildProofEngineStrings(i18n: Translator) {
       i18n.t(
         "The proof engine couldn't read this proof — check for unexpected characters.",
       ),
+    /**
+     * The engine's errors, worded for the student by the engine's code (see
+     * `client/components/proof-element.ts`). Each is shown on the line or
+     * node it is about, which is what "this" is, and says what is wrong
+     * without saying how to fix it. `{rule}` is the rule as the proof cites
+     * it (∧I, not and_intro). A line the rule does not fit has the rule's
+     * shape drawn under its message, premises first, so the count is there.
+     */
+    "{rule} takes a different number of premises.": i18n.t(
+      "{rule} takes a different number of premises.",
+      placeholders("rule"),
+    ),
+    "This does not follow by {rule}.": i18n.t(
+      "This does not follow by {rule}.",
+      placeholders("rule"),
+    ),
+    /** On the proof's last line, or the root of a tree. */
+    "This does not prove the goal: its conclusion or its assumptions differ from the goal's.":
+      i18n.t(
+        "This does not prove the goal: its conclusion or its assumptions differ from the goal's.",
+      ),
+    /**
+     * A rule's condition on a name broken: ∀I's eigenvariable occurs in an
+     * assumption the line depends on, say. `{name}` is the name, drawn in
+     * code type.
+     */
+    "The name {name} does not meet {rule}'s restriction.": i18n.t(
+      "The name {name} does not meet {rule}'s restriction.",
+      placeholders("name", "rule"),
+    ),
+    /** A line admitted with sorry! where the exercise does not allow it. */
+    "This exercise does not allow sorry!.": i18n.t(
+      "This exercise does not allow sorry!.",
+    ),
   };
 }
 

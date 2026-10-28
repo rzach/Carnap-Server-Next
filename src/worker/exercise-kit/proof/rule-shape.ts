@@ -36,8 +36,13 @@
  * none; in a linear `.auf` proof, which cites axioms by name, by each one's.
  */
 
-import { printTerm, type Term, UnprintableTermError } from "@aufbau/syntax";
-import { displayStatement } from "./formulas";
+import {
+  printTerm,
+  type SurfaceLanguage,
+  type Term,
+  UnprintableTermError,
+} from "@aufbau/syntax";
+import { displayStatement, theoryLanguage } from "./formulas";
 import {
   type RulePremise,
   type RuleSignature,
@@ -101,6 +106,31 @@ export function ruleShapeReader(
   };
 }
 
+/** A rule name the engine reported, to the name the proof cites it by. */
+export type RuleNameReader = (rule: string) => string;
+
+/** Names a rule as the engine does — where the proof cites axioms by name. */
+export const ENGINE_RULE_NAMES: RuleNameReader = (rule) => rule;
+
+/**
+ * The name a message about `rule` calls it by, from the frozen theory text:
+ * the name its shape is labelled with, so a message and the shape under it
+ * agree. Where the proof cites by alias, the first `@syntax alias` of its
+ * `@fallback` pair, or its own name where it has none; in a linear `.auf`
+ * proof, which cites axioms, its own.
+ */
+export function ruleNameReader(
+  source: string | null | undefined,
+  naming: RuleNaming = "alias",
+): RuleNameReader {
+  const language = naming === "alias" ? theoryLanguage(source) : null;
+
+  return language === null
+    ? ENGINE_RULE_NAMES
+    : (rule) =>
+        pairAlias(language.spec, fallbackPair(language.spec, rule)) ?? rule;
+}
+
 /**
  * The shape as text, a line per rule: `∨E: ph ∨ ps, ph … ch, ps … ch ∴ ch`.
  * For what has to be text — what is read aloud, and the hidden separators the
@@ -124,10 +154,8 @@ function readShape(
   naming: RuleNaming,
 ): RuleShape | null {
   const { spec } = signatures.language;
-  const pair = fallbackPair(signatures, rule);
-  const alias = pair
-    .map((name) => spec.rules.get(name)?.aliases[0])
-    .find((first) => first !== undefined);
+  const pair = fallbackPair(spec, rule);
+  const alias = pairAlias(spec, pair);
   const lines = pair
     .map((name) => signatures.rules.get(name))
     .filter((signature) => signature !== undefined)
@@ -145,10 +173,9 @@ function readShape(
  * other), so the chain ends, and reversed it is in declaration order.
  */
 function fallbackPair(
-  signatures: RuleSignatures,
+  spec: SurfaceLanguage["spec"],
   rule: string,
 ): readonly string[] {
-  const { spec } = signatures.language;
   const chain: string[] = [];
 
   for (
@@ -160,6 +187,16 @@ function fallbackPair(
   }
 
   return chain.reverse();
+}
+
+/** The textbook's name for a `@fallback` pair: its first `@syntax alias`. */
+function pairAlias(
+  spec: SurfaceLanguage["spec"],
+  pair: readonly string[],
+): string | undefined {
+  return pair
+    .map((name) => spec.rules.get(name)?.aliases[0])
+    .find((first) => first !== undefined);
 }
 
 function shapeLine(

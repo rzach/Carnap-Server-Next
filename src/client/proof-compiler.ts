@@ -85,12 +85,16 @@ export interface CompileDiagnostic {
   readonly error?: string;
   /** The engine's headline for it, and only that: see {@link headline}. */
   readonly message?: string;
-  /** The rule a line cited and does not fit — its statement or its citations
-   *  will not match the rule's (`UnifyMismatch`), or it cites the wrong
-   *  number of lines (`RefCountMismatch`) — so the widget can show the rule's
-   *  shape (`exercise-kit/proof/rule-shape.ts`). The engine's own name for it,
-   *  the axiom, not the alias the student wrote. */
+  /** The rule a problem is about: one a line cited and does not fit (see
+   *  {@link isRuleMisfit}), so the widget can show the rule's shape
+   *  (`exercise-kit/proof/rule-shape.ts`), or one whose restriction a name
+   *  breaks (`DepViolation`). The engine's own name for it, the axiom, not
+   *  the alias the student wrote. */
   readonly rule?: string;
+  /** The name a rule's restriction is about (`DepViolation`): ∀I's
+   *  eigenvariable, say, which occurs where the rule forbids it. The engine's
+   *  text for the term the rule's bound variable was given. */
+  readonly name?: string;
   readonly severity: "error" | "info" | "warning";
   /** The label of the proof line it is about, where it is about one. */
   readonly lineLabel?: string;
@@ -205,11 +209,53 @@ function headline(message: string): string {
   return end === -1 ? message : message.slice(0, end);
 }
 
-/** The engine's codes for a line its cited rule does not fit. */
+/**
+ * The engine's codes for a line its cited rule does not fit. `@recover`
+ * failing to find its hole is one: ∃I's conclusion is matched that way, so a
+ * line ∃I does not give reports it rather than `UnifyMismatch`.
+ */
 const RULE_MISFITS: ReadonlySet<unknown> = new Set([
+  "RecoverHoleNotFound",
   "RefCountMismatch",
   "UnifyMismatch",
 ]);
+
+/** The engine's code for a name a rule's restriction forbids where it is. */
+const DEPENDENCY_VIOLATION = "DepViolation";
+
+/** Whether the line `problem` is about does not fit the rule it cited. */
+export function isRuleMisfit(problem: CompileDiagnostic): boolean {
+  return RULE_MISFITS.has(problem.error);
+}
+
+/**
+ * The name a `dep_violation` detail says the rule restricts, as a field to
+ * spread, or nothing. Of the two binders it names, the bound one is the
+ * restricted variable; the other is what may not mention it.
+ */
+function restrictedName(detail: unknown): { readonly name?: string } {
+  if (typeof detail !== "object" || detail === null) {
+    return {};
+  }
+  const record = detail as {
+    readonly firstAssigned?: unknown;
+    readonly firstBound?: unknown;
+    readonly kind?: unknown;
+    readonly secondAssigned?: unknown;
+    readonly secondBound?: unknown;
+  };
+  if (record.kind !== "dep_violation") {
+    return {};
+  }
+  const name =
+    record.firstBound === true
+      ? record.firstAssigned
+      : record.secondBound === true
+        ? record.secondAssigned
+        : undefined;
+
+  return typeof name === "string" ? { name } : {};
+}
 
 /** The undeclared token an `unknown_math_token` detail names, as a field to
  *  spread, or nothing. */
@@ -269,7 +315,9 @@ export function readCompileResult(
         ...(typeof record.message === "string"
           ? { message: headline(record.message) }
           : {}),
-        ...(RULE_MISFITS.has(record.error) && typeof record.rule === "string"
+        ...((RULE_MISFITS.has(record.error) ||
+          record.error === DEPENDENCY_VIOLATION) &&
+        typeof record.rule === "string"
           ? { rule: record.rule }
           : {}),
         severity,
@@ -283,6 +331,7 @@ export function readCompileResult(
           ? { spanStart: record.spanStart }
           : {}),
         ...unknownToken(record.detail),
+        ...restrictedName(record.detail),
       });
     }
   }
