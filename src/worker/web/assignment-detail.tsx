@@ -81,6 +81,7 @@ import {
   LinkStrip,
   ModalDialog,
   Notice,
+  PhoneLabel,
   PointsDriftNote,
   Sheet,
   StatusBadge,
@@ -3691,22 +3692,9 @@ const GradeReleaseButtons: FC<{
       <button type="submit">{label}</button>
     </form>
   );
-  const openWarning =
-    assignmentAvailability(assignment, now) === "closed" ? null : (
-      <Notice tone="warn">
-        {i18n.t(
-          "Submissions are still open. Releasing grades now lets students keep working with feedback the others did not have.",
-        )}
-      </Notice>
-    );
 
   if (assignment.gradesVisibleAt === null) {
-    return (
-      <>
-        {openWarning}
-        {form("release", i18n.t("Release grades"))}
-      </>
-    );
+    return form("release", i18n.t("Release grades"));
   }
 
   if (gradesReleased(assignment, now)) {
@@ -3715,10 +3703,34 @@ const GradeReleaseButtons: FC<{
 
   return (
     <>
-      {openWarning}
       {form("release", i18n.t("Release now"))}
       {form("hide", i18n.t("Hide grades"))}
     </>
+  );
+};
+
+/**
+ * The warning over the record's buttons while one of them would release
+ * grades before submissions close. It sits above the row rather than in it,
+ * where it split the buttons into two groups on every width.
+ */
+const EarlyReleaseWarning: FC<{
+  readonly assignment: Assignment;
+  readonly now: Timestamp;
+}> = ({ assignment, now }) => {
+  const i18n = useI18n();
+  if (
+    gradesReleased(assignment, now) ||
+    assignmentAvailability(assignment, now) === "closed"
+  ) {
+    return null;
+  }
+  return (
+    <Notice tone="warn">
+      {i18n.t(
+        "Submissions are still open. Releasing grades now lets students keep working with feedback the others did not have.",
+      )}
+    </Notice>
   );
 };
 
@@ -3801,19 +3813,36 @@ export function renderInstructorAssignmentPage(
   // footer: an "Edit" link plus, for a draft, the publish action, and for a
   // published assignment, the grade-release button (when graded) alongside an
   // Unpublish control that returns it to draft (server-blocked while an
-  // attempt that is not voided exists).
+  // attempt that is not voided exists). On a phone the edit and publish
+  // buttons drop the noun, which the sheet they sit in already says, so a
+  // draft's three fit on one line.
+  const editLabel = isDraft
+    ? i18n.t("Edit assignment")
+    : i18n.t("Edit settings");
+  const publishLabel = i18n.t("Publish assignment");
   const recordFooter = (
     <>
       {unpublishDialog}
+      {isPublishedGraded ? (
+        <EarlyReleaseWarning assignment={assignment} now={model.now} />
+      ) : null}
       <div class="sheet-actions">
-        <a class="button" href={`${gradingBase}/edit`}>
-          {isDraft ? i18n.t("Edit assignment") : i18n.t("Edit settings")}
+        <a aria-label={editLabel} class="button" href={`${gradingBase}/edit`}>
+          <PhoneLabel label={editLabel} short={i18n.t("Edit")} />
         </a>
         {isDraft ? (
           <>
             <form action={`${gradingBase}/publish`} method="post">
               <CsrfInput context={context} />
-              <button type="submit">{i18n.t("Publish assignment")}</button>
+              <button aria-label={publishLabel} type="submit">
+                <PhoneLabel
+                  label={publishLabel}
+                  short={i18n.t("Publish", undefined, {
+                    comment:
+                      "The Publish assignment button's short label on a phone, in the assignment record's footer.",
+                  })}
+                />
+              </button>
             </form>
             <form action={`${gradingBase}/delete`} method="post">
               <CsrfInput context={context} />

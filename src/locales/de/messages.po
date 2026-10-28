@@ -4410,6 +4410,11 @@ msgstr "URL des öffentlichen Schlüsselsatzes"
 msgid "Publication type"
 msgstr "Veröffentlichungsart"
 
+#. The Publish assignment button's short label on a phone, in the assignment record's footer.
+#: src/worker/web/assignment-detail.tsx
+msgid "Publish"
+msgstr "Veröffentlichen"
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Publish a correction below that points this assignment at a different revision, or open the content item and save its source again to compile a fresh one."
 msgstr "Veröffentlichen Sie unten eine Korrektur, die diese Aufgabe auf eine andere Revision verweist, oder öffnen Sie das Inhaltselement und speichern Sie dessen Quelltext erneut, um eine neue zu kompilieren."

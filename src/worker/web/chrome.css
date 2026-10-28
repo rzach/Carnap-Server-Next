@@ -1510,6 +1510,12 @@ td > .create-bar {
   margin: 0;
 }
 
+/* A notice set over the buttons it warns about (the record's early grade
+   release) stands a row gap clear of them. */
+.notice + .sheet-actions {
+  margin-top: 0.75rem;
+}
+
 /* Cancel and its save button, kept on one line. They are two halves of the
    same decision, and the footer wraps: in the revision editor's narrow rail
    the note field is wide enough to push them apart, which stranded the save
@@ -1636,17 +1642,17 @@ form > .bar-field {
   min-height: calc(1.5rem + 1.1rem + 2px);
 }
 
-/* A bar with a short label shows it on a phone only (see `CreateBar`). */
-.create-bar-short {
+/* A button with a short label shows it on a phone only (see `PhoneLabel`). */
+.short-label {
   display: none;
 }
 
 @media (max-width: 480px) {
-  .create-bar-long {
+  .long-label {
     display: none;
   }
 
-  .create-bar-short {
+  .short-label {
     display: inline;
   }
 }

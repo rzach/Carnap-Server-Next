@@ -774,11 +774,26 @@ export const CreateBar: FC<{
       </button>
     ) : (
       <button aria-label={submitLabel} class="secondary" type="submit">
-        <span class="create-bar-long">{submitLabel}</span>
-        <span class="create-bar-short">{shortLabel}</span>
+        <PhoneLabel label={submitLabel} short={shortLabel} />
       </button>
     )}
   </form>
+);
+
+/**
+ * A button's label with a shorter form a phone shows instead, for a row of
+ * buttons that would otherwise wrap. The button it sits in takes `label` as
+ * its `aria-label`, so its name is the same at every width; `short` should be
+ * a word of `label`, so that the name still contains what is shown.
+ */
+export const PhoneLabel: FC<{
+  readonly label: string;
+  readonly short: string;
+}> = ({ label, short }) => (
+  <>
+    <span class="long-label">{label}</span>
+    <span class="short-label">{short}</span>
+  </>
 );
 
 /** The short label a create bar's button shows on a phone. */
