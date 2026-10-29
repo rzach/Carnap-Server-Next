@@ -36,6 +36,8 @@ import type {
 } from "../../worker/exercises/truth-table/types";
 import { mountActionButton } from "./action-bar";
 import { CarnapExerciseElement, register } from "./base";
+import { type HelpShortcut, mountHelp, openHelpDialog } from "./help-dialog";
+import { pageShortcutKey, pageShortcutRows } from "./shortcut-keys";
 
 const CYCLE: Record<TruthTableCellValue, TruthTableCellValue> = {
   "": "T",
@@ -128,6 +130,7 @@ class CarnapTruthTable extends CarnapExerciseElement<TruthTableStringId> {
   private ceButton: HTMLButtonElement | null = null;
   /** The per-row radios the student designates a counterexample row with. */
   private ceRadios: HTMLInputElement[] = [];
+  private helpDialog: HTMLDialogElement | null = null;
 
   protected enhance(): void {
     const root = this.shadowRoot;
@@ -179,6 +182,7 @@ class CarnapTruthTable extends CarnapExerciseElement<TruthTableStringId> {
       this.buildControls();
     }
 
+    this.buildHelp(root);
     this.restorePriorAnswer();
 
     this.dataset.enhanced = "true";
@@ -336,6 +340,14 @@ class CarnapTruthTable extends CarnapExerciseElement<TruthTableStringId> {
   }
 
   private onGridKeyDown(event: KeyboardEvent): void {
+    // `?` opens the help, as a single-key shortcut: a cell is a button, so the
+    // key types nothing here.
+    if (pageShortcutKey(event) === "?" && this.helpDialog !== null) {
+      event.preventDefault();
+      openHelpDialog(this.helpDialog, event.target as HTMLElement);
+      return;
+    }
+
     // Alt/Meta/Shift combinations belong to the browser (and Shift+Arrow to text
     // selection); Ctrl is ours, for jumping to the first or last cell.
     if (!GRID_KEYS.has(event.key) || event.altKey || event.metaKey) {
@@ -615,6 +627,79 @@ class CarnapTruthTable extends CarnapExerciseElement<TruthTableStringId> {
       ce?.setAttribute("aria-pressed", "false");
       this.ceButton = ce;
     }
+  }
+
+  /**
+   * The (?) in the action bar, and the panel it opens: how a cell changes,
+   * what Check says, how to answer with a counterexample where the table
+   * offers one, and the grid's keys.
+   */
+  private buildHelp(root: ShadowRoot): void {
+    const check: TruthTableStringId | null =
+      this.checkMode === "cells"
+        ? "Check marks the cells that are wrong."
+        : this.checkMode === "terse"
+          ? "Check says whether the table is right, but not where it is wrong."
+          : null;
+    const shortcuts: readonly {
+      readonly action: TruthTableStringId;
+      readonly keys: readonly string[];
+    }[] = [
+      { action: "Move between cells", keys: ["←", "→", "↑", "↓"] },
+      { action: "Change the cell", keys: ["Space", "Enter"] },
+      {
+        action: "Go to the first or last cell in the row",
+        keys: ["Home", "End"],
+      },
+      {
+        action: "Go to the first or last cell in the table",
+        keys: ["Ctrl-Home", "Ctrl-End"],
+      },
+      { action: "Open this help", keys: ["?"] },
+    ];
+    this.helpDialog = mountHelp(
+      this,
+      root,
+      this.t("Usage and keyboard shortcuts"),
+      {
+        close: this.t("Close help"),
+        intro: [
+          this.t(
+            "Click a cell to change it: blank, then {true}, then {false}.",
+            {
+              false: this.falseMark,
+              true: this.trueMark,
+            },
+          ),
+          ...(this.partialTable
+            ? [
+                this.t(
+                  "Choose a value for each sentence letter, then fill in the rest of the row.",
+                ),
+              ]
+            : []),
+          ...(check === null ? [] : [this.t(check)]),
+          ...(this.ceTarget === null
+            ? []
+            : [
+                this.t(
+                  "You can answer with one row that is a counterexample instead of the whole table. Press Counterexample, then choose the row with the button at its start. Only that row is graded.",
+                ),
+                this.counterexampleHint(),
+              ]),
+        ],
+        keyboard: this.t("Keyboard"),
+        shortcuts: pageShortcutRows(
+          shortcuts.map(
+            (shortcut): HelpShortcut => ({
+              action: this.t(shortcut.action),
+              keys: shortcut.keys,
+            }),
+          ),
+        ),
+        title: this.t("Filling in a truth table"),
+      },
+    );
   }
 
   /**

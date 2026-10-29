@@ -441,3 +441,77 @@ describe("the checksyntax gate", () => {
     expect(submit.defaultPrevented).toBe(false);
   });
 });
+
+describe("the (?) help", () => {
+  /** The panel's paragraphs and keys, as the reader meets them. */
+  function helpOf(mounted: Mounted): { intro: string[]; keys: string[] } {
+    const help = mounted.root.querySelector("dialog.help-dialog");
+
+    return {
+      intro: [...(help?.querySelectorAll(".dialog-body > p") ?? [])].map(
+        (paragraph) => paragraph.textContent ?? "",
+      ),
+      keys: [...(help?.querySelectorAll("kbd") ?? [])].map(
+        (key) => key.textContent ?? "",
+      ),
+    };
+  }
+
+  test("says how the answer is read back and judged, and that Enter checks", async () => {
+    const mounted = mount(await translationExercise(PROP));
+
+    expect(
+      mounted.element
+        .querySelector(".exercise-actions .help-trigger")
+        ?.getAttribute("aria-label"),
+    ).toBe("Usage and keyboard shortcuts");
+    expect(helpOf(mounted)).toEqual({
+      intro: [
+        "Type your translation into the box. Below it, your answer is read back in logical symbols, so you can see how it was understood.",
+        "Use sentence letters and connectives only.",
+        "Any sentence logically equivalent to the intended answer counts.",
+        "The mark beside Submit shows whether your translation is right, and changes as you type. Press Enter to check at once and see why.",
+      ],
+      keys: ["Enter"],
+    });
+  });
+
+  test("an exact exercise with limits and checksyntax says so", async () => {
+    const mounted = mount(
+      await translationExercise(
+        PROP,
+        '#t1 variant="exact" tests="maxNot:0" options="checksyntax"',
+      ),
+    );
+
+    expect(helpOf(mounted).intro).toEqual([
+      "Type your translation into the box. Below it, your answer is read back in logical symbols, so you can see how it was understood.",
+      "Only the intended sentence counts, though spacing and extra brackets do not matter.",
+      "The mark beside Submit shows whether your translation is right, and changes as you type. Press Enter to check at once and see why.",
+      "This exercise also limits the form your answer may take. Press Enter to see whether yours keeps to it.",
+      "An answer that cannot be read cannot be submitted.",
+    ]);
+  });
+
+  test("under terse feedback Enter is not said to explain, and under none the mark is not mentioned", async () => {
+    const terse = mount(await translationExercise(PROP), {
+      options: { feedback: "terse" },
+    });
+
+    expect(helpOf(terse).intro).toContain(
+      "The mark beside Submit shows whether your translation is right, and changes as you type.",
+    );
+    expect(helpOf(terse).keys).toEqual(["Enter"]);
+
+    const none = mount(await translationExercise(PROP), {
+      options: { feedback: "none" },
+    });
+
+    expect(helpOf(none).intro).toEqual([
+      "Type your translation into the box. Below it, your answer is read back in logical symbols, so you can see how it was understood.",
+      "Use sentence letters and connectives only.",
+      "Any sentence logically equivalent to the intended answer counts.",
+    ]);
+    expect(helpOf(none).keys).toEqual([]);
+  });
+});

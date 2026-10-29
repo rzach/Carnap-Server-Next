@@ -72,8 +72,8 @@ Use Tab, Shift-Tab, arrows, Enter, Space, and Escape.
       fields. Modal focus stays inside only while the modal is open.
 - [ ] **2.1.4 Character key shortcuts:** with "Single-key shortcuts in
       exercises" cleared on the profile, a lone letter, digit, `?` or `+`
-      does nothing in the proof tree, Prawitz, truth tree, world and syntax
-      tree widgets, and the same letter or digit with Alt (Option on a Mac)
+      does nothing in the proof tree, Prawitz, truth tree, world, syntax
+      tree and truth table widgets, and the same letter or digit with Alt (Option on a Mac)
       still acts. Each widget's help lists the Alt forms and no lone keys.
       With speech input, saying a word near a focused widget changes nothing.
 - [ ] **2.4.3 Focus order:** Tab follows reading order, including in dialogs.
@@ -92,10 +92,14 @@ Use Tab, Shift-Tab, arrows, Enter, Space, and Escape.
 - [ ] **2.4.3 / 2.1.2:** opening moves focus inside. Escape and a backdrop
       click close the dialog, and focus returns to the trigger. Drag-selecting
       from a field past the panel edge does not close it.
-- [ ] Widget Help opens from `(?)`, or `?` on a focused tree or Prawitz
-      line. The linear and Fitch editors open it from `(?)` only, since `?`
+- [ ] Widget Help opens from `(?)` on every interactive exercise, or `?`
+      on a focused tree or Prawitz line or truth-table cell. The linear,
+      Fitch, translation and model widgets open it from `(?)` only, since `?`
       types there. It appears near its trigger without scrolling the page.
       The heading names the dialog, and key tables read as key/action pairs.
+      Its paragraphs describe this exercise: a model's help names only the
+      kinds of field it has, a truth table's mentions the counterexample
+      button only where there is one.
 - [ ] Test Help in a long embedded lesson, not just fullscreen. The iframe
       spans the whole lesson, so positioning at the frame's center could put
       the dialog outside the visible page area.

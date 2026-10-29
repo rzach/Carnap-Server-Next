@@ -100,7 +100,7 @@ describe("upgrading", () => {
       Array.from(
         mounted.form.querySelectorAll(".exercise-actions button"),
       ).map((button) => button.textContent),
-    ).toEqual(["Check", "Counterexample", "Submit"]);
+    ).toEqual(["?", "Check", "Counterexample", "Submit"]);
     // The mirror is the grid as drawn: the given atoms, in the reference
     // columns and again under the formula's own letters, and one blank per
     // row where the connective goes — the worker's grader reads positions.
@@ -131,6 +131,104 @@ describe("upgrading", () => {
     expect(barButton(mounted, "Check")).toBeNull();
     // The counterexample control is a way of answering, not of checking.
     expect(barButton(mounted, "Counterexample")).not.toBeNull();
+  });
+});
+
+/** The (?) panel's paragraphs and keys, as the reader meets them. */
+function helpOf(mounted: MountedExercise): {
+  intro: string[];
+  keys: string[];
+} {
+  const help = mounted.root.querySelector("dialog.help-dialog");
+
+  return {
+    intro: [...(help?.querySelectorAll(".dialog-body > p") ?? [])].map(
+      (paragraph) => paragraph.textContent ?? "",
+    ),
+    keys: [...(help?.querySelectorAll("kbd") ?? [])].map(
+      (key) => key.textContent ?? "",
+    ),
+  };
+}
+
+describe("the (?) help", () => {
+  test("says how a cell changes, what Check does, and how to answer with a counterexample", async () => {
+    const mounted = mountExercise(await connectiveTable());
+    const trigger = mounted.element.querySelector(
+      ".exercise-actions .help-trigger",
+    );
+
+    expect(trigger?.getAttribute("aria-label")).toBe(
+      "Usage and keyboard shortcuts",
+    );
+    expect(helpOf(mounted)).toEqual({
+      intro: [
+        "Click a cell to change it: blank, then T, then F.",
+        "Check marks the cells that are wrong.",
+        "You can answer with one row that is a counterexample instead of the whole table. Press Counterexample, then choose the row with the button at its start. Only that row is graded.",
+        // The Counterexample button's own hint, which says which row counts.
+        "Fill in a row where every formula is false, then mark it as your counterexample.",
+      ],
+      keys: [
+        "←",
+        "→",
+        "↑",
+        "↓",
+        "Space",
+        "Enter",
+        "Home",
+        "End",
+        "Ctrl-Home",
+        "Ctrl-End",
+        "?",
+      ],
+    });
+  });
+
+  test("names the author's marks, and says only what this table offers", async () => {
+    const mounted = mountExercise(
+      await compileExercise(
+        '::::truth-table{#tt fill="connectives" options="autoAtoms nocounterexample" trueMark="1" falseMark="0"}\n- P -> Q\n::::',
+      ),
+      { options: { feedback: "terse" } },
+    );
+
+    expect(helpOf(mounted).intro).toEqual([
+      "Click a cell to change it: blank, then 1, then 0.",
+      "Check says whether the table is right, but not where it is wrong.",
+    ]);
+  });
+
+  test("? on the grid opens it", async () => {
+    const mounted = mountExercise(await connectiveTable());
+    const [cell] = cells(mounted) as [HTMLButtonElement];
+    const help = mounted.root.querySelector<HTMLDialogElement>(
+      "dialog.help-dialog",
+    );
+    let opened = false;
+    if (help !== null) {
+      help.showModal = () => {
+        opened = true;
+      };
+    }
+
+    cell.dispatchEvent(
+      new dom.window.KeyboardEvent("keydown", {
+        bubbles: true,
+        key: "?",
+        shiftKey: true,
+      }),
+    );
+
+    expect(opened).toBe(true);
+  });
+
+  test("in review mode there is no (?)", async () => {
+    const mounted = mountExercise(await connectiveTable(), {
+      mode: "review",
+    });
+
+    expect(mounted.element.querySelector(".help-trigger")).toBeNull();
   });
 });
 

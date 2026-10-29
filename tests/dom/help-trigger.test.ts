@@ -19,9 +19,8 @@ import { dom, domDocument } from "../helpers/dom";
 
 // After `helpers/dom` has installed the globals: the module builds elements
 // through the document it finds on `globalThis`.
-const { createHelpDialog, holdPageStill, mountHelpTrigger } = await import(
-  "../../src/client/components/help-dialog"
-);
+const { createHelpDialog, holdPageStill, mountHelp, mountHelpTrigger } =
+  await import("../../src/client/components/help-dialog");
 
 function fixture(bar: string): HTMLElement {
   const host = domDocument.createElement("div");
@@ -129,6 +128,67 @@ describe("createHelpDialog", () => {
     expect(
       Array.from(withIcon.querySelectorAll("kbd")).map((k) => k.textContent),
     ).toEqual(["p"]);
+  });
+});
+
+describe("mountHelp", () => {
+  const content = {
+    close: "Close help",
+    intro: ["Fill in the table."],
+    keyboard: "Keyboard",
+    shortcuts: [],
+    title: "Filling in a truth table",
+  };
+
+  test("puts the panel and its stylesheet in the shadow root, and the (?) in the bar", () => {
+    const host = fixture('<div class="exercise-actions"></div>');
+    const root = host.attachShadow({ mode: "open" });
+
+    const dialog = mountHelp(
+      host,
+      root,
+      "Usage and keyboard shortcuts",
+      content,
+    );
+
+    expect(dialog.parentNode).toBe(root);
+    expect(root.querySelector("style")?.textContent).toContain(
+      ".help-dialog",
+    );
+    expect(
+      host.querySelector(".help-trigger")?.getAttribute("aria-label"),
+    ).toBe("Usage and keyboard shortcuts");
+  });
+
+  test("leaves the bar alone when the widget offers only its ? key", () => {
+    const host = fixture('<div class="exercise-actions"></div>');
+    const root = host.attachShadow({ mode: "open" });
+
+    mountHelp(host, root, null, content);
+
+    expect(host.querySelector(".help-trigger")).toBeNull();
+    expect(root.querySelector("dialog.help-dialog")).not.toBeNull();
+  });
+
+  test("reads an intro given as a function at every opening", () => {
+    const host = fixture('<div class="exercise-actions"></div>');
+    const root = host.attachShadow({ mode: "open" });
+    let fields = ["Domain"];
+    const dialog = mountHelp(host, root, "Usage and keyboard shortcuts", {
+      ...content,
+      intro: () => fields.map((field) => `Fill in ${field}.`),
+    });
+    const paragraphs = () =>
+      Array.from(dialog.querySelectorAll("p"), (p) => p.textContent);
+    // jsdom has no modal dialogs.
+    dialog.showModal = () => {};
+
+    expect(paragraphs()).toEqual(["Fill in Domain."]);
+
+    fields = ["Domain", "F(_,_)"];
+    (host.querySelector(".help-trigger") as HTMLElement).click();
+
+    expect(paragraphs()).toEqual(["Fill in Domain.", "Fill in F(_,_)."]);
   });
 });
 

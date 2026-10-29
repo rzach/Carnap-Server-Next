@@ -186,12 +186,14 @@ needs only read-only enhancement.
 - Include `EXERCISE_GROUP_SHADOW_STYLES` when using the shared group markup.
   Page styles do not cross a shadow root, including visually hidden styles.
 
-Use `createHelpDialog`, `openHelpDialog`, and `mountHelpTrigger` from the
-shared help-dialog module for widget instructions. Mount the trigger first in
-the light-DOM action bar and append the dialog to the shadow root, outside
-containers whose keyboard handlers could intercept its events. Let the
-helper position the dialog near its trigger: a full-height lesson iframe
-cannot use the lesson midpoint as the visible viewport center.
+Give a widget its instructions with `mountHelp` from the shared
+help-dialog module. It appends the dialog and its stylesheet to the shadow
+root, outside containers whose keyboard handlers could intercept its events,
+and puts the `(?)` first in the light-DOM action bar. A widget with a `?` key
+opens the returned dialog with `openHelpDialog`, which positions it near its
+trigger: a full-height lesson iframe cannot use the lesson midpoint as the
+visible viewport center. An `intro` given as a function is read at every
+opening, for a panel that must follow the exercise as it changes.
 
 Previews are interactive but unsubmittable. Methods that locate the action
 bar or mark must work without a form; `setMark` falls back to the element.

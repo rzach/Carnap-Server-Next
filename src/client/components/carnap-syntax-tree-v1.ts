@@ -59,13 +59,7 @@ import type { SyntaxTreeStringId } from "../../worker/exercises/syntax-tree/stri
 import type { SyntaxTreePublicData } from "../../worker/exercises/syntax-tree/types";
 import { SYNTAX_TREE_DEPTH_WORDS } from "../../worker/exercises/syntax-tree/words";
 import { CarnapExerciseElement, register } from "./base";
-import {
-  createHelpDialog,
-  HELP_DIALOG_STYLES,
-  type HelpShortcut,
-  mountHelpTrigger,
-  openHelpDialog,
-} from "./help-dialog";
+import { type HelpShortcut, mountHelp, openHelpDialog } from "./help-dialog";
 import { pageShortcutKey, pageShortcutRows } from "./shortcut-keys";
 import { drawLines } from "./syntax-tree-lines";
 
@@ -139,7 +133,7 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
       root.addEventListener("keydown", (event) =>
         this.onKey(event as KeyboardEvent),
       );
-      this.mountHelp(root, data);
+      this.buildHelp(root, data);
     }
 
     this.restorePriorAnswer();
@@ -198,7 +192,7 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
    * The (?) in the action bar, and the panel it opens: what to do, how a
    * wrong pick is scored, and the keys. Only where there is something to do.
    */
-  private mountHelp(root: ShadowRoot, data: SyntaxTreePublicData): void {
+  private buildHelp(root: ShadowRoot, data: SyntaxTreePublicData): void {
     const words = SYNTAX_TREE_DEPTH_WORDS[data.depth];
     const terms = data.depth === "terms";
     const shortcuts: readonly {
@@ -217,42 +211,34 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
         : []),
       { action: "Open this help", keys: ["?"] },
     ];
-    const style = document.createElement("style");
-
-    style.textContent = HELP_DIALOG_STYLES;
-    this.helpDialog = createHelpDialog({
-      close: this.t("Close help"),
-      intro: [
-        words.instructions,
-        words.boxes,
-        ...(terms
-          ? [
-              "To link a variable, press it, then press the quantifier that binds it, or Free if none does." as const,
-            ]
-          : []),
-        data.scoring === "partial"
-          ? ("Each sentence takes one pick. After a wrong one, the tree shows how it really splits." as const)
-          : ("A wrong pick starts the tree over." as const),
-      ].map((id) => this.t(id)),
-      keyboard: this.t("Keyboard"),
-      shortcuts: pageShortcutRows(
-        shortcuts.map(
-          (shortcut): HelpShortcut => ({
-            action: this.t(shortcut.action),
-            keys: shortcut.keys,
-          }),
-        ),
-      ),
-      title: this.t("Splitting a syntax tree"),
-    });
-    root.append(style, this.helpDialog);
-    mountHelpTrigger(
+    this.helpDialog = mountHelp(
       this,
+      root,
       this.t("Usage and keyboard shortcuts"),
-      (trigger) => {
-        if (this.helpDialog !== null) {
-          openHelpDialog(this.helpDialog, trigger);
-        }
+      {
+        close: this.t("Close help"),
+        intro: [
+          words.instructions,
+          words.boxes,
+          ...(terms
+            ? [
+                "To link a variable, press it, then press the quantifier that binds it, or Free if none does." as const,
+              ]
+            : []),
+          data.scoring === "partial"
+            ? ("Each sentence takes one pick. After a wrong one, the tree shows how it really splits." as const)
+            : ("A wrong pick starts the tree over." as const),
+        ].map((id) => this.t(id)),
+        keyboard: this.t("Keyboard"),
+        shortcuts: pageShortcutRows(
+          shortcuts.map(
+            (shortcut): HelpShortcut => ({
+              action: this.t(shortcut.action),
+              keys: shortcut.keys,
+            }),
+          ),
+        ),
+        title: this.t("Splitting a syntax tree"),
       },
     );
   }

@@ -53,6 +53,7 @@ import {
 } from "../../worker/exercises/model/verdict-text";
 import { mountActionButton } from "./action-bar";
 import { CarnapExerciseElement, register } from "./base";
+import { mountHelp } from "./help-dialog";
 
 /** A field's row in the shadow root, with the field it stands for. */
 interface FieldRow {
@@ -106,6 +107,7 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
     this.restorePriorAnswer();
     this.updatePreview();
     this.buildControls();
+    this.buildHelp(root);
     this.markWarnings();
 
     const fieldset = root.querySelector("fieldset");
@@ -163,13 +165,143 @@ class CarnapModel extends CarnapExerciseElement<ModelStringId> {
     // There is no `terse` here to honour — this Check is a verdict and a
     // sentence naming what came out wrong, with no separate quieter form — so
     // it either offers the button or it does not.
-    if (this.feedback === "none" || this.data?.options.check === "off") {
+    if (!this.checks) {
       return;
     }
 
     mountActionButton(this, "model-check", this.t("Check"), () => {
       this.runCheck();
     });
+  }
+
+  /** Whether there is a Check button: see {@link buildControls}. */
+  private get checks(): boolean {
+    return this.feedback !== "none" && this.data?.options.check !== "off";
+  }
+
+  /**
+   * The (?) in the action bar. The panel says how to fill in each kind of
+   * field the model has, so it is drawn afresh on every opening: a
+   * playground's fields come and go with the sentences typed.
+   */
+  private buildHelp(root: ShadowRoot): void {
+    mountHelp(this, root, this.t("Usage and keyboard shortcuts"), {
+      close: this.t("Close help"),
+      intro: () => this.helpIntro(root),
+      keyboard: this.t("Keyboard"),
+      shortcuts: [],
+      title: this.t("Building a model"),
+    });
+  }
+
+  /**
+   * The help's paragraphs, one for each kind of field the model now has. The
+   * notation for a predicate of several places and for a function is shown
+   * on the model's own first such field, with a worked tuple: `[0,1]` for two
+   * places, `[0,1,2]` for three.
+   */
+  private helpIntro(root: ShadowRoot): string[] {
+    const fields = this.rows.map(({ field }) => field);
+    const find = (kind: ModelField["kind"], places: (n: number) => boolean) =>
+      fields.find((field) => field.kind === kind && places(field.arity));
+    const has = (kind: ModelField["kind"]) =>
+      fields.some((field) => field.kind === kind);
+    const example = (arity: number) =>
+      Array.from({ length: arity }, (_, index) => String(index));
+    const intro: string[] = [];
+
+    if (this.data?.playground !== undefined) {
+      intro.push(
+        this.t(
+          "Type your sentences first, separated by commas. A field appears below for each symbol they use.",
+        ),
+      );
+    }
+    intro.push(
+      this.t(
+        "Type the domain as numbers separated by commas, such as 0,1,2.",
+      ),
+    );
+    if (find("relation", (n) => n === 1) !== undefined) {
+      intro.push(
+        this.t(
+          "For a one-place predicate, type the elements it is true of in the same way, such as 0,2.",
+        ),
+      );
+    }
+    const relation = find("relation", (n) => n > 1);
+    if (relation !== undefined) {
+      const tuple = example(relation.arity);
+      intro.push(
+        this.t(
+          "For a predicate of two or more places, type the tuples it is true of, each in brackets, with the elements in the order of its places. For example, {tuple} in {field} makes it true of {first} in its first place and {second} in its second.",
+          {
+            field: relation.label,
+            first: tuple[0] ?? "",
+            second: tuple[1] ?? "",
+            tuple: `[${tuple.join(",")}]`,
+          },
+        ),
+      );
+    }
+    if (has("relation")) {
+      intro.push(
+        this.t("Leave a predicate empty to make it true of nothing."),
+      );
+    }
+    if (has("proposition")) {
+      intro.push(this.t("Choose True or False for each sentence letter."));
+    }
+    if (has("constant")) {
+      intro.push(this.t("Choose the element each name stands for."));
+    }
+    if (has("variable")) {
+      intro.push(this.t("Choose the element each variable is assigned."));
+    }
+    const unary = find("function", (n) => n === 1);
+    if (unary !== undefined) {
+      intro.push(
+        this.t(
+          "For a one-place function such as {field}, choose under each element the value it gives for that element.",
+          { field: unary.label },
+        ),
+      );
+    }
+    const function_ = find("function", (n) => n > 1);
+    if (function_ !== undefined) {
+      const tuple = example(function_.arity);
+      intro.push(
+        this.t(
+          "For a function of two or more places such as {field}, each row fixes the arguments before the last, and each column the last one. The cell in row {row} and column {column} is its value for {argument}.",
+          {
+            argument: tuple.join(","),
+            column: tuple[tuple.length - 1] ?? "",
+            field: function_.label,
+            row: [...tuple.slice(0, -1), "_"].join(","),
+          },
+        ),
+      );
+    }
+    if (has("constant") || has("variable") || has("function")) {
+      intro.push(
+        this.t("The lists and tables follow the domain as you change it."),
+      );
+    }
+    if (root.querySelector("[data-locked]") !== null) {
+      intro.push(
+        this.t(
+          "The exercise has filled in some fields for you, and those cannot be changed.",
+        ),
+      );
+    }
+    if (this.checks) {
+      intro.push(
+        this.t(
+          "Check says whether the model does what the exercise asks, and if not, what is wrong.",
+        ),
+      );
+    }
+    return intro;
   }
 
   /** The sentences changed: reread them, reshape the fields, re-mirror. */

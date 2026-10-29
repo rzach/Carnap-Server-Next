@@ -1,3 +1,4 @@
+import { buildExerciseHelpStrings } from "../../exercise-kit/help-strings";
 import { placeholders, type Translator } from "../../i18n/translator";
 
 /**
@@ -211,6 +212,45 @@ export function buildTruthTableStrings(i18n: Translator) {
       "This row isn't filled in correctly yet.",
     ),
     "Valid counterexample.": i18n.t("Valid counterexample."),
+
+    // ——— Help: the (?) panel, which holds the instructions.
+    ...buildExerciseHelpStrings(i18n),
+    "Filling in a truth table": i18n.t("Filling in a truth table"),
+    // The marks are the table's own glyphs, `T` and `F` unless the author
+    // chose others, filled in the browser.
+    "Click a cell to change it: blank, then {true}, then {false}.": i18n.t(
+      "Click a cell to change it: blank, then {true}, then {false}.",
+      placeholders("false", "true"),
+    ),
+    // A partial table's instruction, which is also its group description.
+    "Choose a value for each sentence letter, then fill in the rest of the row.":
+      i18n.t(
+        "Choose a value for each sentence letter, then fill in the rest of the row.",
+      ),
+    // What Check does, under check="cells" and check="terse".
+    "Check marks the cells that are wrong.": i18n.t(
+      "Check marks the cells that are wrong.",
+    ),
+    "Check says whether the table is right, but not where it is wrong.":
+      i18n.t(
+        "Check says whether the table is right, but not where it is wrong.",
+      ),
+    // Followed by the hint the Counterexample button shows, which says which
+    // row counts.
+    "You can answer with one row that is a counterexample instead of the whole table. Press Counterexample, then choose the row with the button at its start. Only that row is graded.":
+      i18n.t(
+        "You can answer with one row that is a counterexample instead of the whole table. Press Counterexample, then choose the row with the button at its start. Only that row is graded.",
+      ),
+    // The key table.
+    "Move between cells": i18n.t("Move between cells"),
+    "Go to the first or last cell in the row": i18n.t(
+      "Go to the first or last cell in the row",
+    ),
+    "Go to the first or last cell in the table": i18n.t(
+      "Go to the first or last cell in the table",
+    ),
+    "Change the cell": i18n.t("Change the cell"),
+    "Open this help": i18n.t("Open this help"),
   };
 }
 

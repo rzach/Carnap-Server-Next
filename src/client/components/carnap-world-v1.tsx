@@ -71,12 +71,7 @@ import { mountActionButton } from "./action-bar";
 import { CarnapExerciseElement, register } from "./base";
 import islandStyles from "./carnap-world-v1.css" with { type: "text" };
 import { isAuthorPreview, mountCopySource } from "./copy-source";
-import {
-  createHelpDialog,
-  HELP_DIALOG_STYLES,
-  mountHelpTrigger,
-  openHelpDialog,
-} from "./help-dialog";
+import { mountHelp, openHelpDialog } from "./help-dialog";
 import { pageShortcutKey, pageShortcutRows } from "./shortcut-keys";
 import { mountShowSource, SHOW_SOURCE_KEYS } from "./show-source";
 import { ToolbarIcon } from "./toolbar-icon";
@@ -1209,7 +1204,7 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     }
 
     const style = document.createElement("style");
-    style.textContent = `${TOOLBAR_STYLES}\n${islandStyles}\n${HELP_DIALOG_STYLES}`;
+    style.textContent = `${TOOLBAR_STYLES}\n${islandStyles}`;
     root.appendChild(style);
 
     body.replaceChildren();
@@ -1221,49 +1216,43 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
     // author's, not the student's work.
     const showsSource = this.world !== null && !game;
 
-    this.helpDialog = createHelpDialog({
-      close: this.t("Close help"),
-      intro: (game
-        ? GAME_INTRO
-        : this.parked === null
-          ? INTRO
-          : PAIR_INTRO
-      ).map((id) => this.t(id)),
-      keyboard: this.t("Keyboard"),
-      shortcuts: pageShortcutRows(
-        [
-          ...(game ? GAME_SHORTCUTS : SHORTCUTS),
-          ...(showsSource
-            ? [
-                {
-                  action: "Show your work as source" as const,
-                  keys: SHOW_SOURCE_KEYS,
-                },
-              ]
-            : []),
-        ].map((shortcut) => ({
-          action: this.t(shortcut.action),
-          keys: shortcut.keys,
-          ...(shortcut.icon === undefined ? {} : { icon: shortcut.icon }),
-        })),
-      ),
-      title: this.t(
-        game ? "Playing the evaluation game" : "Using the world editor",
-      ),
-    });
-    root.appendChild(this.helpDialog);
-
-    if (this.editable || game) {
-      mountHelpTrigger(
-        this,
-        this.t("Usage and keyboard shortcuts"),
-        (trigger) => {
-          if (this.helpDialog !== null) {
-            openHelpDialog(this.helpDialog, trigger);
-          }
-        },
-      );
-    }
+    // The `(?)` only where there is something to work; the `?` key opens the
+    // panel either way.
+    this.helpDialog = mountHelp(
+      this,
+      root,
+      this.editable || game ? this.t("Usage and keyboard shortcuts") : null,
+      {
+        close: this.t("Close help"),
+        intro: (game
+          ? GAME_INTRO
+          : this.parked === null
+            ? INTRO
+            : PAIR_INTRO
+        ).map((id) => this.t(id)),
+        keyboard: this.t("Keyboard"),
+        shortcuts: pageShortcutRows(
+          [
+            ...(game ? GAME_SHORTCUTS : SHORTCUTS),
+            ...(showsSource
+              ? [
+                  {
+                    action: "Show your work as source" as const,
+                    keys: SHOW_SOURCE_KEYS,
+                  },
+                ]
+              : []),
+          ].map((shortcut) => ({
+            action: this.t(shortcut.action),
+            keys: shortcut.keys,
+            ...(shortcut.icon === undefined ? {} : { icon: shortcut.icon }),
+          })),
+        ),
+        title: this.t(
+          game ? "Playing the evaluation game" : "Using the world editor",
+        ),
+      },
+    );
 
     this.buildCheck();
 

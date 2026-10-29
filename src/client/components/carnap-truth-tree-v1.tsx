@@ -113,12 +113,7 @@ import { mountActionButton } from "./action-bar";
 import { register } from "./base";
 import islandStyles from "./carnap-truth-tree-v1.css" with { type: "text" };
 import { mountCopySource } from "./copy-source";
-import {
-  createHelpDialog,
-  HELP_DIALOG_STYLES,
-  mountHelpTrigger,
-  openHelpDialog,
-} from "./help-dialog";
+import { mountHelp } from "./help-dialog";
 import { mountProblemPopup } from "./problem-popup";
 import { ProofExerciseElement } from "./proof-element";
 import { pageShortcutRows, singleKeyShortcutsOn } from "./shortcut-keys";
@@ -195,7 +190,6 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
   private data: TruthTreePublicData | null = null;
   private resolved: ResolvedTree | null = null;
   private mount: HTMLElement | null = null;
-  private helpDialog: HTMLDialogElement | null = null;
 
   private tree: TableauDocument = { nodes: [] };
   private derived: Derived | null = null;
@@ -294,7 +288,7 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
     }
 
     const style = document.createElement("style");
-    style.textContent = `${TOOLBAR_STYLES}\n${islandStyles}\n${HELP_DIALOG_STYLES}`;
+    style.textContent = `${TOOLBAR_STYLES}\n${islandStyles}`;
     root.appendChild(style);
 
     body.replaceChildren();
@@ -302,7 +296,7 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
     mountProblemPopup(root, body, this.listeners.signal);
     this.rerender();
 
-    this.helpDialog = createHelpDialog({
+    mountHelp(this, root, this.t("Usage and keyboard shortcuts"), {
       close: this.t("Close help"),
       intro: treeHelpIntro(resolved, (id) => this.t(id)),
       keyboard: this.t("Keyboard"),
@@ -311,17 +305,6 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
       ),
       title: this.t("Using the tree editor"),
     });
-    root.appendChild(this.helpDialog);
-
-    mountHelpTrigger(
-      this,
-      this.t("Usage and keyboard shortcuts"),
-      (trigger) => {
-        if (this.helpDialog !== null) {
-          openHelpDialog(this.helpDialog, trigger);
-        }
-      },
-    );
     // The tree as it stands, as the directive's body: in the author preview
     // to paste back as the exercise's root and starter, and on any form by
     // Ctrl-?.

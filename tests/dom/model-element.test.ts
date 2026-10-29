@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { compileCarnapMarkdown } from "../../src/worker/application/content/compiler";
 import { exerciseHydrationForArtifact } from "../../src/worker/application/content/renderer";
 import type { ExerciseManifestItem } from "../../src/worker/domain/content";
@@ -838,5 +838,126 @@ describe("a playground", () => {
 
     expect(previewText(mounted)?.dataset.mood).toBe("error");
     expect(previewText(mounted)?.textContent).toContain("G");
+  });
+});
+
+describe("the (?) help", () => {
+  // jsdom has the dialog element but not its modal methods.
+  const proto = (
+    dom.window as unknown as { HTMLDialogElement: typeof HTMLDialogElement }
+  ).HTMLDialogElement.prototype;
+  const saved = { showModal: proto.showModal };
+
+  beforeAll(() => {
+    proto.showModal = function showModal(this: HTMLDialogElement) {
+      this.setAttribute("open", "");
+    };
+  });
+
+  afterAll(() => {
+    Object.assign(proto, saved);
+  });
+
+  /** Open the panel the way a reader does, and read its paragraphs. */
+  function openHelp(mounted: Mounted): string[] {
+    const trigger = mounted.element.querySelector<HTMLButtonElement>(
+      ".exercise-actions .help-trigger",
+    );
+
+    if (trigger === null) {
+      throw new Error("No (?) button.");
+    }
+
+    trigger.click();
+
+    const help = mounted.root.querySelector("dialog.help-dialog");
+
+    expect(help?.hasAttribute("open")).toBe(true);
+    // The model has no keys of its own to list.
+    expect(help?.querySelector("kbd")).toBeNull();
+
+    return [...(help?.querySelectorAll(".dialog-body > p") ?? [])].map(
+      (paragraph) => paragraph.textContent ?? "",
+    );
+  }
+
+  test("says how to fill in each kind of field the model has, and no other", async () => {
+    const mounted = mountExercise(await modelExercise("- AxF(x), G(a)"));
+
+    expect(openHelp(mounted)).toEqual([
+      "Type the domain as numbers separated by commas, such as 0,1,2.",
+      "For a one-place predicate, type the elements it is true of in the same way, such as 0,2.",
+      "Leave a predicate empty to make it true of nothing.",
+      "Choose the element each name stands for.",
+      "The lists and tables follow the domain as you change it.",
+      "Check says whether the model does what the exercise asks, and if not, what is wrong.",
+    ]);
+  });
+
+  test("a playground's help follows the fields its sentences bring in", async () => {
+    const mounted = mountExercise(
+      await modelExercise("Make it so.", "#pg playground"),
+    );
+
+    expect(openHelp(mounted)).toEqual([
+      "Type your sentences first, separated by commas. A field appears below for each symbol they use.",
+      "Type the domain as numbers separated by commas, such as 0,1,2.",
+      "Check says whether the model does what the exercise asks, and if not, what is wrong.",
+    ]);
+
+    const box = mounted.root.querySelector<HTMLInputElement>(
+      '[data-role="sentences"]',
+    );
+    if (box === null) {
+      throw new Error("No sentences box.");
+    }
+    type(box, "ExG(x, a)");
+
+    // The notation is shown on the model's own field, with a worked tuple.
+    expect(openHelp(mounted)).toContain(
+      "For a predicate of two or more places, type the tuples it is true of, each in brackets, with the elements in the order of its places. For example, [0,1] in G(_,_) makes it true of 0 in its first place and 1 in its second.",
+    );
+    // One panel, redrawn: not a second dialog beside the first.
+    expect(mounted.root.querySelectorAll("dialog.help-dialog")).toHaveLength(
+      1,
+    );
+  });
+
+  test("reads a function's table on the model's own function", async () => {
+    expect(
+      openHelp(mountExercise(await modelExercise("- Axf(x) = x"))),
+    ).toContain(
+      "For a one-place function such as f(_), choose under each element the value it gives for that element.",
+    );
+    expect(
+      openHelp(
+        mountExercise(await modelExercise("- AxAyAzg(x,y,z) = g(z,y,x)")),
+      ),
+    ).toContain(
+      "For a function of two or more places such as g(_,_,_), each row fixes the arguments before the last, and each column the last one. The cell in row 0,1,_ and column 2 is its value for 0,1,2.",
+    );
+  });
+
+  test('says nothing of Check where feedback="none" offers none', async () => {
+    const mounted = mountExercise(await modelExercise("- AxF(x)"), {
+      options: { feedback: "none" },
+    });
+
+    expect(openHelp(mounted)).not.toContain(
+      "Check says whether the model does what the exercise asks, and if not, what is wrong.",
+    );
+  });
+
+  test("names the fields the exercise has filled in", async () => {
+    const mounted = mountExercise(
+      await modelExercise(
+        "- AxF(x)\n| Domain : 0,1",
+        '#m1 options="strictGivens"',
+      ),
+    );
+
+    expect(openHelp(mounted)).toContain(
+      "The exercise has filled in some fields for you, and those cannot be changed.",
+    );
   });
 });

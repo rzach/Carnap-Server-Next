@@ -51,6 +51,7 @@ import { describeTestFailure } from "../../worker/exercises/translation/verdict-
 import { bytesToBase64, loadProofCompiler } from "../proof-compiler";
 import { findEquivalenceProof } from "../proof-search";
 import { CarnapExerciseElement, register } from "./base";
+import { mountHelp } from "./help-dialog";
 
 const DEBOUNCE_MS = 600;
 
@@ -148,6 +149,7 @@ class CarnapTranslation extends CarnapExerciseElement<TranslationStringId> {
       }
     });
 
+    this.buildHelp(root, data);
     this.updatePreview();
     this.syncAnswer();
     if (input.value.trim() !== "") {
@@ -156,6 +158,50 @@ class CarnapTranslation extends CarnapExerciseElement<TranslationStringId> {
 
     root.querySelector("fieldset")?.removeAttribute("aria-busy");
     this.dataset.enhanced = "true";
+  }
+
+  /**
+   * The (?) in the action bar, and the panel it opens: how the answer is
+   * read back and judged, and what the mark and Enter tell the student under
+   * this exercise's feedback. There is no `?` key: `?` may be typed here.
+   */
+  private buildHelp(root: ShadowRoot, data: TranslationPublicData): void {
+    const told = this.feedback !== "none";
+    const intro: TranslationStringId[] = [
+      "Type your translation into the box. Below it, your answer is read back in logical symbols, so you can see how it was understood.",
+      ...(data.variant === "prop"
+        ? ["Use sentence letters and connectives only." as const]
+        : []),
+      data.variant === "exact"
+        ? "Only the intended sentence counts, though spacing and extra brackets do not matter."
+        : "Any sentence logically equivalent to the intended answer counts.",
+      ...(!told
+        ? []
+        : this.showsDetail
+          ? [
+              "The mark beside Submit shows whether your translation is right, and changes as you type. Press Enter to check at once and see why." as const,
+            ]
+          : [
+              "The mark beside Submit shows whether your translation is right, and changes as you type." as const,
+            ]),
+      ...(data.tests.length > 0 && this.showsDetail
+        ? [
+            "This exercise also limits the form your answer may take. Press Enter to see whether yours keeps to it." as const,
+          ]
+        : []),
+      ...(data.checksyntax
+        ? ["An answer that cannot be read cannot be submitted." as const]
+        : []),
+    ];
+    mountHelp(this, root, this.t("Usage and keyboard shortcuts"), {
+      close: this.t("Close help"),
+      intro: intro.map((id) => this.t(id)),
+      keyboard: this.t("Keyboard"),
+      shortcuts: told
+        ? [{ action: this.t("Check your translation now"), keys: ["Enter"] }]
+        : [],
+      title: this.t("Writing a translation"),
+    });
   }
 
   /** The equivalence check runs as the answer is typed. */

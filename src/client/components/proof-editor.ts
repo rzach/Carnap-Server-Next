@@ -19,12 +19,7 @@ import {
 import type { ProofEditorStringId } from "../../worker/exercise-kit/proof/editor-strings";
 import type { ProofEngineStringId } from "../../worker/exercise-kit/proof/engine-strings";
 import type { ProofGoalRow } from "../../worker/exercise-kit/proof/goal-row";
-import {
-  createHelpDialog,
-  HELP_DIALOG_STYLES,
-  mountHelpTrigger,
-  openHelpDialog,
-} from "./help-dialog";
+import { mountHelp } from "./help-dialog";
 import { mountProblemLine, type ProblemLine } from "./problem-line";
 import {
   type ProblemText,
@@ -450,12 +445,8 @@ export function mountProofEditorHelp(
   content: { readonly intro: readonly string[]; readonly title: string },
   problems: boolean,
 ): void {
-  const style = document.createElement("style");
-  style.textContent = HELP_DIALOG_STYLES;
-  root.appendChild(style);
-
   const mod = MAC ? "Cmd" : "Ctrl";
-  const dialog = createHelpDialog({
+  mountHelp(element, root, t("Usage and keyboard shortcuts"), {
     close: t("Close help"),
     intro: [
       ...content.intro,
@@ -478,11 +469,6 @@ export function mountProofEditorHelp(
     ],
     title: content.title,
   });
-  root.appendChild(dialog);
-
-  mountHelpTrigger(element, t("Usage and keyboard shortcuts"), (trigger) =>
-    openHelpDialog(dialog, trigger),
-  );
 }
 
 /**

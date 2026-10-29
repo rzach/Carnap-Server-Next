@@ -79,12 +79,7 @@ import shadowStyles from "./carnap-aufbau-proof-tree-v1.css" with {
   type: "text",
 };
 import { mountCopySource } from "./copy-source";
-import {
-  createHelpDialog,
-  HELP_DIALOG_STYLES,
-  mountHelpTrigger,
-  openHelpDialog,
-} from "./help-dialog";
+import { mountHelp, openHelpDialog } from "./help-dialog";
 import {
   mountAnnouncer,
   PinnedProblem,
@@ -428,12 +423,7 @@ function docReducer(
 // Presentation (Preact).
 // ---------------------------------------------------------------------------
 
-const SHADOW_STYLES = [
-  shadowStyles,
-  goalStyles,
-  TOOLBAR_STYLES,
-  HELP_DIALOG_STYLES,
-].join("\n");
+const SHADOW_STYLES = [shadowStyles, goalStyles, TOOLBAR_STYLES].join("\n");
 
 /**
  * What the `(?)` in the toolbar opens: how the editor works, and every key it
@@ -1067,30 +1057,29 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
     // would otherwise see a Ctrl-Z typed while the help is open and undo the
     // proof behind it. Outside the container it also keeps the dialog's own
     // Escape away from the "step out of the field" branch.
-    this.helpDialog = createHelpDialog({
-      close: this.t("Close help"),
-      intro: INTRO_IDS.map((id) => this.t(id)),
-      keyboard: this.t("Keyboard"),
-      shortcuts: pageShortcutRows(
-        SHORTCUTS.filter(
-          (shortcut) => shortcut.problems !== true || this.showsDetail,
-        ).map((shortcut) => ({
-          action: this.t(shortcut.action),
-          keys: shortcut.keys,
-          ...(shortcut.icon === undefined ? {} : { icon: shortcut.icon }),
-        })),
-      ),
-      title: this.t("Using the proof tree editor"),
-    });
-    root.appendChild(this.helpDialog);
-
+    //
     // The `(?)` that opens it goes in the exercise's action bar, in light DOM —
     // one place for every type, and out of reach of the island's rerenders, so
     // focus can be handed back to the very button that was pressed.
-    mountHelpTrigger(
+    this.helpDialog = mountHelp(
       this,
+      root,
       this.t("Usage and keyboard shortcuts"),
-      this.showHelp,
+      {
+        close: this.t("Close help"),
+        intro: INTRO_IDS.map((id) => this.t(id)),
+        keyboard: this.t("Keyboard"),
+        shortcuts: pageShortcutRows(
+          SHORTCUTS.filter(
+            (shortcut) => shortcut.problems !== true || this.showsDetail,
+          ).map((shortcut) => ({
+            action: this.t(shortcut.action),
+            keys: shortcut.keys,
+            ...(shortcut.icon === undefined ? {} : { icon: shortcut.icon }),
+          })),
+        ),
+        title: this.t("Using the proof tree editor"),
+      },
     );
     // In the author preview, the tree as it stands can be taken back to the
     // lesson as its starter.
@@ -1121,9 +1110,9 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
   }
 
   /**
-   * Open the instructions beside whichever control asked for them — the `(?)` in
-   * the action bar, or the `?` key on a focused line, which is the route a reader
-   * working entirely from the keyboard is likelier to find.
+   * Open the instructions beside a focused line, for its `?` key: the route a
+   * reader working entirely from the keyboard is likelier to find than the
+   * `(?)` in the action bar.
    */
   private readonly showHelp = (trigger: HTMLElement): void => {
     if (this.helpDialog !== null) {

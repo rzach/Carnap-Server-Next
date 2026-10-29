@@ -1,3 +1,4 @@
+import { buildExerciseHelpStrings } from "../../exercise-kit/help-strings";
 import { placeholders, type Translator } from "../../i18n/translator";
 import { buildFormulaParserStrings } from "../../logic/specs/strings";
 
@@ -24,6 +25,66 @@ export function buildModelStrings(i18n: Translator) {
     // What a playground's sentence box can complain about, in the parser's own
     // words: the same sentences the translation widget and the proofs say.
     ...buildFormulaParserStrings(i18n),
+    ...buildExerciseHelpStrings(i18n),
+    // ——— Help: the (?) panel, which says how to fill in each kind of field.
+    // Each paragraph is shown only when the model has a field of its kind.
+    "Building a model": i18n.t("Building a model"),
+    "Type your sentences first, separated by commas. A field appears below for each symbol they use.":
+      i18n.t(
+        "Type your sentences first, separated by commas. A field appears below for each symbol they use.",
+      ),
+    "Type the domain as numbers separated by commas, such as 0,1,2.": i18n.t(
+      "Type the domain as numbers separated by commas, such as 0,1,2.",
+    ),
+    "For a one-place predicate, type the elements it is true of in the same way, such as 0,2.":
+      i18n.t(
+        "For a one-place predicate, type the elements it is true of in the same way, such as 0,2.",
+      ),
+    // The notation, shown on the model's own first field of the kind, with a
+    // worked tuple, all filled in the browser: {field} is the field's label,
+    // `R(_,_)`; {tuple} is `[0,1]`, with {first} and {second} its elements.
+    "For a predicate of two or more places, type the tuples it is true of, each in brackets, with the elements in the order of its places. For example, {tuple} in {field} makes it true of {first} in its first place and {second} in its second.":
+      i18n.t(
+        "For a predicate of two or more places, type the tuples it is true of, each in brackets, with the elements in the order of its places. For example, {tuple} in {field} makes it true of {first} in its first place and {second} in its second.",
+        placeholders("field", "first", "second", "tuple"),
+      ),
+    "Leave a predicate empty to make it true of nothing.": i18n.t(
+      "Leave a predicate empty to make it true of nothing.",
+    ),
+    "Choose True or False for each sentence letter.": i18n.t(
+      "Choose True or False for each sentence letter.",
+    ),
+    "Choose the element each name stands for.": i18n.t(
+      "Choose the element each name stands for.",
+    ),
+    "Choose the element each variable is assigned.": i18n.t(
+      "Choose the element each variable is assigned.",
+    ),
+    // A function's table, explained on the model's own first function of the
+    // arity: {field} is its label, `f(_,_)`. For several places, {row} is a
+    // row's heading as the table prints it (`0,_`), {column} a column's (`1`),
+    // and {argument} the cell they meet at (`0,1`), as a cell's name says it.
+    "For a one-place function such as {field}, choose under each element the value it gives for that element.":
+      i18n.t(
+        "For a one-place function such as {field}, choose under each element the value it gives for that element.",
+        placeholders("field"),
+      ),
+    "For a function of two or more places such as {field}, each row fixes the arguments before the last, and each column the last one. The cell in row {row} and column {column} is its value for {argument}.":
+      i18n.t(
+        "For a function of two or more places such as {field}, each row fixes the arguments before the last, and each column the last one. The cell in row {row} and column {column} is its value for {argument}.",
+        placeholders("argument", "column", "field", "row"),
+      ),
+    "The lists and tables follow the domain as you change it.": i18n.t(
+      "The lists and tables follow the domain as you change it.",
+    ),
+    "The exercise has filled in some fields for you, and those cannot be changed.":
+      i18n.t(
+        "The exercise has filled in some fields for you, and those cannot be changed.",
+      ),
+    "Check says whether the model does what the exercise asks, and if not, what is wrong.":
+      i18n.t(
+        "Check says whether the model does what the exercise asks, and if not, what is wrong.",
+      ),
     "A domain may have at most {max} elements.": i18n.t(
       "A domain may have at most {max} elements.",
       placeholders("max"),

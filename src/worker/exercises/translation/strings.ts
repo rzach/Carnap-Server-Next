@@ -1,3 +1,4 @@
+import { buildExerciseHelpStrings } from "../../exercise-kit/help-strings";
 import { placeholders, type Translator } from "../../i18n/translator";
 import { buildFormulaParserStrings } from "../../logic/specs/strings";
 
@@ -37,6 +38,46 @@ export function buildTranslationStrings(i18n: Translator) {
       placeholders("formula"),
     ),
     "Your translation": i18n.t("Your translation"),
+
+    // ——— Help: the (?) panel. Each paragraph after the first is shown only
+    // where the exercise's variant, feedback and options make it true.
+    ...buildExerciseHelpStrings(i18n),
+    "Writing a translation": i18n.t("Writing a translation"),
+    "Type your translation into the box. Below it, your answer is read back in logical symbols, so you can see how it was understood.":
+      i18n.t(
+        "Type your translation into the box. Below it, your answer is read back in logical symbols, so you can see how it was understood.",
+      ),
+    "Use sentence letters and connectives only.": i18n.t(
+      "Use sentence letters and connectives only.",
+    ),
+    "Any sentence logically equivalent to the intended answer counts.":
+      i18n.t(
+        "Any sentence logically equivalent to the intended answer counts.",
+      ),
+    "Only the intended sentence counts, though spacing and extra brackets do not matter.":
+      i18n.t(
+        "Only the intended sentence counts, though spacing and extra brackets do not matter.",
+      ),
+    // Under feedback="full" and feedback="terse"; under "none" the mark says
+    // nothing, and neither does the help.
+    "The mark beside Submit shows whether your translation is right, and changes as you type. Press Enter to check at once and see why.":
+      i18n.t(
+        "The mark beside Submit shows whether your translation is right, and changes as you type. Press Enter to check at once and see why.",
+      ),
+    "The mark beside Submit shows whether your translation is right, and changes as you type.":
+      i18n.t(
+        "The mark beside Submit shows whether your translation is right, and changes as you type.",
+      ),
+    // Where `tests=` limits the answer's form (CNF, at most two negations…),
+    // under full feedback, which is when Enter names a broken limit.
+    "This exercise also limits the form your answer may take. Press Enter to see whether yours keeps to it.":
+      i18n.t(
+        "This exercise also limits the form your answer may take. Press Enter to see whether yours keeps to it.",
+      ),
+    "An answer that cannot be read cannot be submitted.": i18n.t(
+      "An answer that cannot be read cannot be submitted.",
+    ),
+    "Check your translation now": i18n.t("Check your translation now"),
 
     // ——— Verdicts. The equivalence pair and the exact pair are worded apart
     // because they answer different questions: one "does it say the same

@@ -44,8 +44,13 @@ export interface HelpShortcut {
 export interface HelpDialogContent {
   /** Accessible name of the dismiss button. */
   readonly close: string;
-  /** Orientation prose, one paragraph per entry, before the key table. */
-  readonly intro: readonly string[];
+  /**
+   * Orientation prose, one paragraph per entry, before the key table. Or a
+   * function giving it, read at every opening, for a panel that describes an
+   * exercise whose shape changes as it is worked: a model playground's fields
+   * come and go with the sentences typed.
+   */
+  readonly intro: readonly string[] | (() => readonly string[]);
   /** Heading over the key table. */
   readonly keyboard: string;
   readonly shortcuts: readonly HelpShortcut[];
@@ -59,6 +64,9 @@ export interface HelpDialogContent {
  * as well as the button), and whichever one was used is the one to return to.
  */
 const triggers = new WeakMap<HTMLDialogElement, HTMLElement>();
+
+/** How to redraw a panel whose `intro` is read at every opening. */
+const refreshers = new WeakMap<HTMLDialogElement, () => void>();
 
 /** Gap between the trigger and the panel, and from the viewport edge, in px. */
 const GAP = 6;
@@ -124,8 +132,35 @@ export function createDialogFrame(
 }
 
 /**
+ * Give a widget its help: the panel and its stylesheet in the shadow root, and
+ * the `(?)` that opens it in the action bar. `trigger` is the `(?)`'s name, or
+ * null where the widget offers the panel only by its `?` key. Returns the
+ * dialog, for that key to open with {@link openHelpDialog}.
+ */
+export function mountHelp(
+  host: HTMLElement,
+  root: ShadowRoot,
+  trigger: string | null,
+  content: HelpDialogContent,
+): HTMLDialogElement {
+  const style = document.createElement("style");
+  style.textContent = HELP_DIALOG_STYLES;
+  const dialog = createHelpDialog(content);
+  root.append(style, dialog);
+
+  if (trigger !== null) {
+    mountHelpTrigger(host, trigger, (button) =>
+      openHelpDialog(dialog, button),
+    );
+  }
+
+  return dialog;
+}
+
+/**
  * Build the dialog. Call once per widget and keep the element — reopening is
- * {@link openHelpDialog}, which does not rebuild anything.
+ * {@link openHelpDialog}, which rebuilds nothing but an `intro` given as a
+ * function.
  *
  * Nothing here goes through `innerHTML`: the strings are translations, and
  * a catalog is not a place to have to reason about markup injection.
@@ -139,8 +174,25 @@ export function createHelpDialog(
     content.title,
     content.close,
   );
+  const { intro } = content;
 
-  for (const paragraph of content.intro) {
+  if (typeof intro === "function") {
+    refreshers.set(dialog, () => fillHelpBody(body, intro(), content));
+  }
+  fillHelpBody(body, typeof intro === "function" ? intro() : intro, content);
+
+  return dialog;
+}
+
+/** The panel's paragraphs, then its key table if it has keys. */
+function fillHelpBody(
+  body: HTMLElement,
+  intro: readonly string[],
+  content: HelpDialogContent,
+): void {
+  body.replaceChildren();
+
+  for (const paragraph of intro) {
     const element = document.createElement("p");
     element.textContent = paragraph;
     body.appendChild(element);
@@ -183,8 +235,6 @@ export function createHelpDialog(
 
     body.appendChild(list);
   }
-
-  return dialog;
 }
 
 /**
@@ -357,6 +407,7 @@ export function openHelpDialog(
   trigger: HTMLElement,
 ): void {
   triggers.set(dialog, trigger);
+  refreshers.get(dialog)?.();
 
   const band = readerViewport();
   const anchor = trigger.getBoundingClientRect();

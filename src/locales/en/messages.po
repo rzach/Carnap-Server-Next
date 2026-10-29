@@ -1002,6 +1002,10 @@ msgstr "Allowed symbols: {symbols}"
 msgid "Also a language: formulas are read at the sort {sort}, so exercises can be set in it too."
 msgstr "Also a language: formulas are read at the sort {sort}, so exercises can be set in it too."
 
+#: src/worker/exercises/translation/strings.ts
+msgid "An answer that cannot be read cannot be submitted."
+msgstr "An answer that cannot be read cannot be submitted."
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 msgid "An assumption can't have premises."
 msgstr "An assumption can't have premises."
@@ -1051,6 +1055,10 @@ msgstr "Answer submitted."
 #: src/worker/exercise-kit/actions.ts
 msgid "Answers are not recorded here."
 msgstr "Answers are not recorded here."
+
+#: src/worker/exercises/translation/strings.ts
+msgid "Any sentence logically equivalent to the intended answer counts."
+msgstr "Any sentence logically equivalent to the intended answer counts."
 
 #: src/worker/web/labels.ts
 msgid "Anyone"
@@ -1419,6 +1427,10 @@ msgstr "Build a model: give a domain, and what each symbol stands for."
 msgid "Build a world in which the premises are true and the conclusions are false."
 msgstr "Build a world in which the premises are true and the conclusions are false."
 
+#: src/worker/exercises/model/strings.ts
+msgid "Building a model"
+msgstr "Building a model"
+
 #: src/worker/web/profile.tsx
 msgid "Calendar"
 msgstr "Calendar"
@@ -1525,6 +1537,10 @@ msgstr "Change email address"
 msgid "Change saved."
 msgstr "Change saved."
 
+#: src/worker/exercises/truth-table/strings.ts
+msgid "Change the cell"
+msgstr "Change the cell"
+
 #: src/worker/web/email-change.tsx
 msgid "Change the email address of the Carnap account that uses {old} to {new}?"
 msgstr "Change the email address of the Carnap account that uses {old} to {new}?"
@@ -1544,9 +1560,25 @@ msgstr "Changes: {used} of {limit}"
 msgid "Check"
 msgstr "Check"
 
+#: src/worker/exercises/truth-table/strings.ts
+msgid "Check marks the cells that are wrong."
+msgstr "Check marks the cells that are wrong."
+
+#: src/worker/exercises/model/strings.ts
+msgid "Check says whether the model does what the exercise asks, and if not, what is wrong."
+msgstr "Check says whether the model does what the exercise asks, and if not, what is wrong."
+
+#: src/worker/exercises/truth-table/strings.ts
+msgid "Check says whether the table is right, but not where it is wrong."
+msgstr "Check says whether the table is right, but not where it is wrong."
+
 #: src/worker/web/auth.tsx
 msgid "Check your email"
 msgstr "Check your email"
+
+#: src/worker/exercises/translation/strings.ts
+msgid "Check your translation now"
+msgstr "Check your translation now"
 
 #: src/worker/exercise-kit/actions.ts
 msgid "Checking"
@@ -1556,6 +1588,7 @@ msgstr "Checking"
 msgid "Choose a block for {variable} on the board."
 msgstr "Choose a block for {variable} on the board."
 
+#: src/worker/exercises/truth-table/strings.ts
 #: src/worker/exercises/truth-table/types.ts
 msgid "Choose a value for each sentence letter, then fill in the rest of the row."
 msgstr "Choose a value for each sentence letter, then fill in the rest of the row."
@@ -1580,9 +1613,21 @@ msgstr "Choose one answer."
 msgid "Choose the block here"
 msgstr "Choose the block here"
 
+#: src/worker/exercises/model/strings.ts
+msgid "Choose the element each name stands for."
+msgstr "Choose the element each name stands for."
+
+#: src/worker/exercises/model/strings.ts
+msgid "Choose the element each variable is assigned."
+msgstr "Choose the element each variable is assigned."
+
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Choose the row you're claiming as a counterexample."
 msgstr "Choose the row you're claiming as a counterexample."
+
+#: src/worker/exercises/model/strings.ts
+msgid "Choose True or False for each sentence letter."
+msgstr "Choose True or False for each sentence letter."
 
 #: src/worker/exercises/world/strings.ts
 msgid "Choose what you will defend."
@@ -1630,6 +1675,10 @@ msgstr "Clear"
 #: src/worker/exercises/world/strings.ts
 msgid "Click a board, or move into it with Tab, to make it the one the palette edits."
 msgstr "Click a board, or move into it with Tab, to make it the one the palette edits."
+
+#: src/worker/exercises/truth-table/strings.ts
+msgid "Click a cell to change it: blank, then {true}, then {false}."
+msgstr "Click a cell to change it: blank, then {true}, then {false}."
 
 #: src/worker/application/lti-admin.ts
 #: src/worker/web/admin-lti.tsx
@@ -2805,6 +2854,10 @@ msgstr "Fill in the truth table, or fill in and mark a row that is a counterexam
 msgid "Fill in the truth table."
 msgstr "Fill in the truth table."
 
+#: src/worker/exercises/truth-table/strings.ts
+msgid "Filling in a truth table"
+msgstr "Filling in a truth table"
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Filter by exercise or student"
 msgstr "Filter by exercise or student"
@@ -2852,6 +2905,22 @@ msgstr "Fold this block"
 #: src/worker/web/profile.tsx
 msgid "Follow your due dates in Google Calendar, Apple Calendar or Outlook, through a private link to every course you belong to."
 msgstr "Follow your due dates in Google Calendar, Apple Calendar or Outlook, through a private link to every course you belong to."
+
+#: src/worker/exercises/model/strings.ts
+msgid "For a function of two or more places such as {field}, each row fixes the arguments before the last, and each column the last one. The cell in row {row} and column {column} is its value for {argument}."
+msgstr "For a function of two or more places such as {field}, each row fixes the arguments before the last, and each column the last one. The cell in row {row} and column {column} is its value for {argument}."
+
+#: src/worker/exercises/model/strings.ts
+msgid "For a one-place function such as {field}, choose under each element the value it gives for that element."
+msgstr "For a one-place function such as {field}, choose under each element the value it gives for that element."
+
+#: src/worker/exercises/model/strings.ts
+msgid "For a one-place predicate, type the elements it is true of in the same way, such as 0,2."
+msgstr "For a one-place predicate, type the elements it is true of in the same way, such as 0,2."
+
+#: src/worker/exercises/model/strings.ts
+msgid "For a predicate of two or more places, type the tuples it is true of, each in brackets, with the elements in the order of its places. For example, {tuple} in {field} makes it true of {first} in its first place and {second} in its second."
+msgstr "For a predicate of two or more places, type the tuples it is true of, each in brackets, with the elements in the order of its places. For example, {tuple} in {field} makes it true of {first} in its first place and {second} in its second."
 
 #. Disambiguating id; only the word Formula is shown. Names a proof line's formula text field.
 #. Disambiguating id; only the word Formula is shown. Names the formula text field of a line in the proof tree.
@@ -2921,6 +2990,14 @@ msgstr "Give your Carnap account the address {new}?"
 #: src/worker/web/email-change.tsx
 msgid "Go to sign-in"
 msgstr "Go to sign-in"
+
+#: src/worker/exercises/truth-table/strings.ts
+msgid "Go to the first or last cell in the row"
+msgstr "Go to the first or last cell in the row"
+
+#: src/worker/exercises/truth-table/strings.ts
+msgid "Go to the first or last cell in the table"
+msgstr "Go to the first or last cell in the table"
 
 #: src/worker/web/errors.tsx
 msgid "Go to the login page"
@@ -3286,6 +3363,10 @@ msgstr "Leave a field blank to keep the assignment default for this student."
 msgid "Leave a field blank to keep the assignment default for this student. Clearing the override returns the student to the assignment's own schedule."
 msgstr "Leave a field blank to keep the assignment default for this student. Clearing the override returns the student to the assignment's own schedule."
 
+#: src/worker/exercises/model/strings.ts
+msgid "Leave a predicate empty to make it true of nothing."
+msgstr "Leave a predicate empty to make it true of nothing."
+
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Leave the field and go back to the line"
@@ -3582,6 +3663,10 @@ msgstr "Model"
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "More than one line is uncited ({labels}); a proof tree must end at a single root."
 msgstr "More than one line is uncited ({labels}); a proof tree must end at a single root."
+
+#: src/worker/exercises/truth-table/strings.ts
+msgid "Move between cells"
+msgstr "Move between cells"
 
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Move between lines"
@@ -4128,6 +4213,10 @@ msgstr "Only solution list items may appear after the first solution."
 msgid "Only the end of a branch can be closed or marked open."
 msgstr "Only the end of a branch can be closed or marked open."
 
+#: src/worker/exercises/translation/strings.ts
+msgid "Only the intended sentence counts, though spacing and extra brackets do not matter."
+msgstr "Only the intended sentence counts, though spacing and extra brackets do not matter."
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Only the root's rows may follow the first of them."
 msgstr "Only the root's rows may follow the first of them."
@@ -4155,6 +4244,7 @@ msgstr "Open the link from your email and use its button."
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 #: src/worker/exercises/syntax-tree/strings.ts
+#: src/worker/exercises/truth-table/strings.ts
 msgid "Open this help"
 msgstr "Open this help"
 
@@ -5791,6 +5881,10 @@ msgstr "The enrollment link was not found."
 msgid "The equivalence checker could not load. Your work is safe; check again in a moment."
 msgstr "The equivalence checker could not load. Your work is safe; check again in a moment."
 
+#: src/worker/exercises/model/strings.ts
+msgid "The exercise has filled in some fields for you, and those cannot be changed."
+msgstr "The exercise has filled in some fields for you, and those cannot be changed."
+
 #: src/worker/application/submissions.ts
 msgid "The exercise was not found in this assignment."
 msgstr "The exercise was not found in this assignment."
@@ -5932,6 +6026,10 @@ msgstr "The linked assignment no longer exists."
 msgid "The linked identity was not found on your account."
 msgstr "The linked identity was not found on your account."
 
+#: src/worker/exercises/model/strings.ts
+msgid "The lists and tables follow the domain as you change it."
+msgstr "The lists and tables follow the domain as you change it."
+
 #: src/worker/web/courses.tsx
 msgid "The LMS activity has no gradebook column (no AGS line item)."
 msgstr "The LMS activity has no gradebook column (no AGS line item)."
@@ -5995,6 +6093,14 @@ msgstr "The LTI deployment was not found."
 #: src/worker/application/lti-admin.ts
 msgid "The LTI platform was not found."
 msgstr "The LTI platform was not found."
+
+#: src/worker/exercises/translation/strings.ts
+msgid "The mark beside Submit shows whether your translation is right, and changes as you type."
+msgstr "The mark beside Submit shows whether your translation is right, and changes as you type."
+
+#: src/worker/exercises/translation/strings.ts
+msgid "The mark beside Submit shows whether your translation is right, and changes as you type. Press Enter to check at once and see why."
+msgstr "The mark beside Submit shows whether your translation is right, and changes as you type. Press Enter to check at once and see why."
 
 #: src/worker/exercise-kit/proof/editor-strings.ts
 #: src/worker/exercises/aufbau-proof-prawitz/strings.ts
@@ -6471,6 +6577,10 @@ msgstr "This does not prove the goal: its conclusion or its assumptions differ f
 msgid "This domain gives {field} too many arguments to fill in."
 msgstr "This domain gives {field} too many arguments to fill in."
 
+#: src/worker/exercises/translation/strings.ts
+msgid "This exercise also limits the form your answer may take. Press Enter to see whether yours keeps to it."
+msgstr "This exercise also limits the form your answer may take. Press Enter to see whether yours keeps to it."
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "This exercise asks for every branch to close."
 msgstr "This exercise asks for every branch to close."
@@ -6878,6 +6988,10 @@ msgstr "Type"
 msgid "Type row numbers, such as 3."
 msgstr "Type row numbers, such as 3."
 
+#: src/worker/exercises/model/strings.ts
+msgid "Type the domain as numbers separated by commas, such as 0,1,2."
+msgstr "Type the domain as numbers separated by commas, such as 0,1,2."
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Type the row it develops; Alt-C also works while writing the row"
 msgstr "Type the row it develops; Alt-C also works while writing the row"
@@ -6893,6 +7007,14 @@ msgstr "Type the rule that justifies each inference in the field beneath its lin
 #: src/worker/exercises/short-answer/types.ts
 msgid "Type your answer."
 msgstr "Type your answer."
+
+#: src/worker/exercises/model/strings.ts
+msgid "Type your sentences first, separated by commas. A field appears below for each symbol they use."
+msgstr "Type your sentences first, separated by commas. A field appears below for each symbol they use."
+
+#: src/worker/exercises/translation/strings.ts
+msgid "Type your translation into the box. Below it, your answer is read back in logical symbols, so you can see how it was understood."
+msgstr "Type your translation into the box. Below it, your answer is read back in logical symbols, so you can see how it was understood."
 
 #: src/worker/web/components.tsx
 msgid "Unarchive {name}"
@@ -7037,6 +7159,10 @@ msgstr "Usage and keyboard shortcuts"
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Use row {row} as the counterexample"
 msgstr "Use row {row} as the counterexample"
+
+#: src/worker/exercises/translation/strings.ts
+msgid "Use sentence letters and connectives only."
+msgstr "Use sentence letters and connectives only."
 
 #: src/worker/web/profile.tsx
 msgid "Use that instead"
@@ -7303,6 +7429,10 @@ msgstr "Write the row's sentence"
 msgid "Write your answer."
 msgstr "Write your answer."
 
+#: src/worker/exercises/translation/strings.ts
+msgid "Writing a translation"
+msgstr "Writing a translation"
+
 #: src/worker/web/courses.tsx
 msgid "You are about to join a course with an enrollment link."
 msgstr "You are about to join a course with an enrollment link."
@@ -7314,6 +7444,10 @@ msgstr "You are not allowed to do that."
 #: src/worker/web/courses.tsx
 msgid "You are not enrolled in any courses yet."
 msgstr "You are not enrolled in any courses yet."
+
+#: src/worker/exercises/truth-table/strings.ts
+msgid "You can answer with one row that is a counterexample instead of the whole table. Press Counterexample, then choose the row with the button at its start. Only that row is graded."
+msgstr "You can answer with one row that is a counterexample instead of the whole table. Press Counterexample, then choose the row with the button at its start. Only that row is graded."
 
 #: src/worker/exercises/world/strings.ts
 msgid "You choose {block} for {variable}."
