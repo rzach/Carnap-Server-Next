@@ -220,6 +220,67 @@ describe("profile page", () => {
     });
   });
 
+  // gh #8. A checkbox posts nothing when clear, so the form sends a hidden 0
+  // ahead of it, and a post with no value at all leaves the setting alone.
+  // The setting reaches every page as a stamp on the root element, which the
+  // exercise widgets read.
+  test("the single-key shortcuts box saves both ways, and the page says which", async () => {
+    await withStorage(async ({ stores }, env) => {
+      const session = await login(env, "Ada@Example.test", null);
+      const fresh = await profilePage(env, session);
+
+      expect(fresh).toMatch(/checked="?[^ >]*"? name="singleKeyShortcuts"/u);
+      expect(fresh).not.toContain("data-single-key-shortcuts");
+
+      expect(fresh).toContain(
+        'name="singleKeyShortcuts" type="hidden" value="0"',
+      );
+
+      expect(
+        (
+          await saveProfile(env, session, {
+            locale: "",
+            name: "Ada",
+            singleKeyShortcuts: "0",
+          })
+        ).status,
+      ).toBe(303);
+      await expect(
+        stores.users.getById(session.actorId),
+      ).resolves.toMatchObject({ singleKeyShortcuts: false });
+
+      expect(
+        (await saveProfile(env, session, { locale: "", name: "Ada" })).status,
+      ).toBe(303);
+      await expect(
+        stores.users.getById(session.actorId),
+      ).resolves.toMatchObject({ singleKeyShortcuts: false });
+
+      const off = await profilePage(env, session);
+
+      expect(off).toContain('data-single-key-shortcuts="off"');
+      expect(off).not.toMatch(
+        /checked="?[^ >]*"? name="singleKeyShortcuts"/u,
+      );
+
+      expect(
+        (
+          await saveProfile(env, session, {
+            locale: "",
+            name: "Ada",
+            singleKeyShortcuts: "1",
+          })
+        ).status,
+      ).toBe(303);
+      await expect(
+        stores.users.getById(session.actorId),
+      ).resolves.toMatchObject({ singleKeyShortcuts: true });
+      expect(await profilePage(env, session)).not.toContain(
+        "data-single-key-shortcuts",
+      );
+    });
+  });
+
   test("saves an updated display name", async () => {
     await withStorage(async ({ stores }, env) => {
       const session = await login(env);

@@ -507,6 +507,8 @@ async function renderEditor(
             exerciseHydration: exerciseHydrationForArtifact(artifact, i18n),
             i18n,
             locale: context.get("language"),
+            singleKeyShortcuts:
+              requireAuthenticated(context).user.singleKeyShortcuts,
             ...artifactDocumentProps(artifact),
             title: i18n.t("Preview"),
           }),

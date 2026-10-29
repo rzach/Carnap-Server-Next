@@ -14,10 +14,7 @@ import {
   layoutTableau,
   rowAtLine,
 } from "../src/worker/exercises/truth-tree/tableau/layout";
-import {
-  keyAction,
-  moveCursor,
-} from "../src/worker/exercises/truth-tree/tableau/navigate";
+import { moveCursor } from "../src/worker/exercises/truth-tree/tableau/navigate";
 import { TreeBuilder } from "./helpers/truth-tree";
 
 /**
@@ -281,33 +278,6 @@ describe("edits", () => {
       [...ids].some((id) => id.startsWith("r") || id.startsWith("t")),
     ).toBe(false);
     expect(cites.every((cite) => ids.has(cite))).toBe(true);
-  });
-});
-
-describe("the key map", () => {
-  const press = (key: string, extra: Partial<Record<string, unknown>> = {}) =>
-    keyAction({
-      altKey: false,
-      ctrlKey: false,
-      key,
-      metaKey: false,
-      shiftKey: false,
-      ...extra,
-    });
-
-  test("Alt-C cites, by its letter or, where Alt types none, its physical key, and Tab is left to the page", () => {
-    expect(press("c")).toBe("cite");
-    expect(press("c", { altKey: true, code: "KeyC" })).toBe("cite");
-    // A Mac's Option-C writes ç.
-    expect(press("ç", { altKey: true, code: "KeyC" })).toBe("cite");
-    expect(press("x", { altKey: true, code: "KeyX" })).toBeNull();
-    expect(press("Tab")).toBeNull();
-  });
-
-  test("Alt-J names the rule on a layout whose J is QWERTY's C", () => {
-    // Dvorak types j on the key QWERTY calls C, and c on QWERTY's I.
-    expect(press("j", { altKey: true, code: "KeyC" })).toBe("rule");
-    expect(press("c", { altKey: true, code: "KeyI" })).toBe("cite");
   });
 });
 

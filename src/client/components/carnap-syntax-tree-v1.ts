@@ -66,6 +66,7 @@ import {
   mountHelpTrigger,
   openHelpDialog,
 } from "./help-dialog";
+import { pageShortcutKey, pageShortcutRows } from "./shortcut-keys";
 import { drawLines } from "./syntax-tree-lines";
 
 /**
@@ -175,8 +176,9 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
   }
 
   /**
-   * Escape lets go of the variable being linked; a bare `?` opens the help.
-   * Neither while the help is open, whose own Escape closes it.
+   * Escape lets go of the variable being linked; `?` opens the help, as a
+   * single-key shortcut (`pageShortcutKey`). Neither while the help is open,
+   * whose own Escape closes it.
    */
   private onKey(event: KeyboardEvent): void {
     if (this.helpDialog?.open === true) {
@@ -186,13 +188,7 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
     if (event.key === "Escape" && this.linking !== null) {
       event.preventDefault();
       this.stopLinking(true);
-    } else if (
-      event.key === "?" &&
-      !event.ctrlKey &&
-      !event.metaKey &&
-      !event.altKey &&
-      this.helpDialog !== null
-    ) {
+    } else if (pageShortcutKey(event) === "?" && this.helpDialog !== null) {
       event.preventDefault();
       openHelpDialog(this.helpDialog, event.target as HTMLElement);
     }
@@ -239,11 +235,13 @@ class CarnapSyntaxTree extends CarnapExerciseElement<SyntaxTreeStringId> {
           : ("A wrong pick starts the tree over." as const),
       ].map((id) => this.t(id)),
       keyboard: this.t("Keyboard"),
-      shortcuts: shortcuts.map(
-        (shortcut): HelpShortcut => ({
-          action: this.t(shortcut.action),
-          keys: shortcut.keys,
-        }),
+      shortcuts: pageShortcutRows(
+        shortcuts.map(
+          (shortcut): HelpShortcut => ({
+            action: this.t(shortcut.action),
+            keys: shortcut.keys,
+          }),
+        ),
       ),
       title: this.t("Splitting a syntax tree"),
     });

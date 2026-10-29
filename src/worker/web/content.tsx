@@ -1447,6 +1447,8 @@ export function renderRevisionDocument(
   return renderContentDocument(context, {
     ...rest,
     body: raw(compiledHtml),
+    // A shared revision can be read signed out, with no setting: single keys.
+    singleKeyShortcuts: context.get("actor")?.user.singleKeyShortcuts ?? true,
   });
 }
 

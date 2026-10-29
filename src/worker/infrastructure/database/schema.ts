@@ -31,6 +31,10 @@ export const users = sqliteTable(
     name: text("name"),
     locale: text("locale"),
     studentId: text("student_id"),
+    /** See `0040_single_key_shortcuts.sql`. */
+    singleKeyShortcuts: integer("single_key_shortcuts", { mode: "boolean" })
+      .notNull()
+      .default(true),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
     disabledAt: text("disabled_at"),

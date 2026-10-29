@@ -137,6 +137,12 @@ export interface User {
    * share the claim.
    */
   readonly studentId: string | null;
+  /**
+   * Whether the exercise widgets take a key pressed on its own — `p`, `?`,
+   * `3` — as a shortcut (WCAG 2.1.4). True unless the user turned it off on
+   * their profile; off, each shortcut is still there on Alt with the key.
+   */
+  readonly singleKeyShortcuts: boolean;
   readonly createdAt: Timestamp;
   readonly updatedAt: Timestamp;
   readonly disabledAt: Timestamp | null;

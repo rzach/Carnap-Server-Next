@@ -70,6 +70,12 @@ Use Tab, Shift-Tab, arrows, Enter, Space, and Escape.
         `aria-valuenow` updates.
 - [ ] **2.1.2 No keyboard trap:** Tab can leave editors and contenteditable
       fields. Modal focus stays inside only while the modal is open.
+- [ ] **2.1.4 Character key shortcuts:** with "Single-key shortcuts in
+      exercises" cleared on the profile, a lone letter, digit, `?` or `+`
+      does nothing in the proof tree, Prawitz, truth tree, world and syntax
+      tree widgets, and the same letter or digit with Alt (Option on a Mac)
+      still acts. Each widget's help lists the Alt forms and no lone keys.
+      With speech input, saying a word near a focused widget changes nothing.
 - [ ] **2.4.3 Focus order:** Tab follows reading order, including in dialogs.
 - [ ] **2.4.7 Focus visible:** every focused control has a visible indicator.
       In tree-editor fields, also check that the caret remains visible after

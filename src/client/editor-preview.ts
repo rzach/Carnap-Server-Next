@@ -61,6 +61,7 @@ import {
   type EditorUiStrings,
   payloadTranslator,
 } from "../worker/web/ui-strings";
+import { singleKeyShortcutsOn } from "./components/shortcut-keys";
 import { createMarkdownEditor, showDiagnostics } from "./markdown-editor";
 import { loadProofCompiler, readCompileResult } from "./proof-compiler";
 import { setUpSplitView } from "./split-view";
@@ -519,6 +520,8 @@ function drawPreview(
       exerciseHydration: exerciseHydrationForArtifact(artifact, i18n),
       i18n,
       locale: i18n.locale,
+      // The author's own setting, which the server stamped on this page.
+      singleKeyShortcuts: singleKeyShortcutsOn(),
       ...artifactDocumentProps(artifact),
       // The frame's own title, which the server already resolved for this
       // page's language.

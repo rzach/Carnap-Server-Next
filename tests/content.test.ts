@@ -2269,6 +2269,44 @@ ${sampleSource("styled_doc")}`,
     });
   });
 
+  // gh #8: the served document carries its reader's setting, since the
+  // widgets inside it read it from their own document's root.
+  test("a served document carries its reader's single-key setting", async () => {
+    await withStorage(async ({ stores }, env) => {
+      const author = await login(env, "keys-author@example.test");
+      const item = await createContent(env, author);
+      const revision = (await (
+        await appRequest(
+          createTestApp(),
+          `/content/${item.item.id}/revisions`,
+          jsonRequest({ sourceText: sampleSource("keys_doc") }, author),
+          env,
+        )
+      ).json()) as ContentRevisionResponse;
+      const documentHtml = async () =>
+        (
+          await appRequest(
+            createTestApp(),
+            `/content/revisions/${revision.revision.id}/document`,
+            { headers: { Cookie: author.cookieHeader } },
+            env,
+          )
+        ).text();
+
+      expect(await documentHtml()).not.toContain("data-single-key-shortcuts");
+
+      await stores.users.updateProfile(
+        author.actorId,
+        { locale: null, name: null, singleKeyShortcuts: false },
+        "2026-01-04T00:00:00.000Z",
+      );
+
+      expect(await documentHtml()).toContain(
+        'data-single-key-shortcuts="off"',
+      );
+    });
+  });
+
   test("a revision page is its document and its source, named by its note", async () => {
     await withStorage(async (_storage, env) => {
       const author = await login(env, "noting-author@example.test");

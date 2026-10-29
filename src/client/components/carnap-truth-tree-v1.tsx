@@ -94,10 +94,7 @@ import type { MarginField } from "../../worker/exercises/truth-tree/tableau/html
 import type { TableauLayout } from "../../worker/exercises/truth-tree/tableau/layout";
 import { layoutTableau } from "../../worker/exercises/truth-tree/tableau/layout";
 import type { TableauKeyAction } from "../../worker/exercises/truth-tree/tableau/navigate";
-import {
-  keyAction,
-  moveCursor,
-} from "../../worker/exercises/truth-tree/tableau/navigate";
+import { moveCursor } from "../../worker/exercises/truth-tree/tableau/navigate";
 import type {
   TruthTreeAnswerData,
   TruthTreePublicData,
@@ -124,6 +121,7 @@ import {
 } from "./help-dialog";
 import { mountProblemPopup } from "./problem-popup";
 import { ProofExerciseElement } from "./proof-element";
+import { pageShortcutRows, singleKeyShortcutsOn } from "./shortcut-keys";
 import { mountShowSource } from "./show-source";
 import { ToolbarIcon } from "./toolbar-icon";
 import { TOOLBAR_STYLES, type ToolbarIconName } from "./toolbar-icons";
@@ -134,6 +132,7 @@ import {
   pick,
 } from "./truth-tree-closing";
 import { treeHelpIntro, treeShortcuts } from "./truth-tree-help";
+import { keyAction } from "./truth-tree-keys";
 import {
   editableLines,
   fieldText,
@@ -307,7 +306,9 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
       close: this.t("Close help"),
       intro: treeHelpIntro(resolved, (id) => this.t(id)),
       keyboard: this.t("Keyboard"),
-      shortcuts: treeShortcuts(this.offersOpen, (id) => this.t(id)),
+      shortcuts: pageShortcutRows(
+        treeShortcuts(this.offersOpen, (id) => this.t(id)),
+      ),
       title: this.t("Using the tree editor"),
     });
     root.appendChild(this.helpDialog);
@@ -1526,7 +1527,9 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
       return;
     }
 
-    const action = event.altKey ? keyAction(event) : null;
+    const action = event.altKey
+      ? keyAction(event, singleKeyShortcutsOn())
+      : null;
 
     if (action === "cite" || action === "rule") {
       event.preventDefault();
@@ -1612,7 +1615,7 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
 
   /** A key with the selection on a line's margin. */
   private readonly onMarginKey = (event: KeyboardEvent): void => {
-    const action = keyAction(event);
+    const action = keyAction(event, singleKeyShortcutsOn());
 
     if (action !== null) {
       event.preventDefault();
@@ -1802,7 +1805,7 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
   }
 
   private readonly onRowKey = (event: KeyboardEvent, rowId: string): void => {
-    const action = keyAction(event);
+    const action = keyAction(event, singleKeyShortcutsOn());
 
     if (action === null) {
       return;
@@ -1847,7 +1850,10 @@ class CarnapTruthTree extends ProofExerciseElement<TruthTreeStringId> {
       return;
     }
 
-    if (event.key === "Escape" || keyAction(event) === "close") {
+    if (
+      event.key === "Escape" ||
+      keyAction(event, singleKeyShortcutsOn()) === "close"
+    ) {
       event.preventDefault();
       this.cancelClosing();
     }

@@ -239,37 +239,44 @@ export function describeStorageContract(
           stores.users.markEmailVerified(user.id, "2026-01-03T03:04:05.000Z"),
         ).resolves.toBeNull();
 
-        // Name and language are written together — one form, one row update — and
-        // clearing the language back to null is meaningful: null means "follow the
-        // request", not "chose English".
+        // Name, language and shortcuts are written together — one form, one row
+        // update — and clearing the language back to null is meaningful: null
+        // means "follow the request", not "chose English". Single keys start on.
         expect(user.locale).toBeNull();
+        expect(user.singleKeyShortcuts).toBe(true);
 
         const localized = await stores.users.updateProfile(
           user.id,
-          { locale: "de", name: "Ada Lovelace" },
+          { locale: "de", name: "Ada Lovelace", singleKeyShortcuts: false },
           "2026-01-04T00:00:00.000Z",
         );
 
         expect(localized).toMatchObject({
           locale: "de",
           name: "Ada Lovelace",
+          singleKeyShortcuts: false,
           updatedAt: "2026-01-04T00:00:00.000Z",
         });
         await expect(stores.users.getById(user.id)).resolves.toMatchObject({
           locale: "de",
           name: "Ada Lovelace",
+          singleKeyShortcuts: false,
         });
         await expect(
           stores.users.updateProfile(
             user.id,
-            { locale: null, name: null },
+            { locale: null, name: null, singleKeyShortcuts: true },
             "2026-01-05T00:00:00.000Z",
           ),
-        ).resolves.toMatchObject({ locale: null, name: null });
+        ).resolves.toMatchObject({
+          locale: null,
+          name: null,
+          singleKeyShortcuts: true,
+        });
         await expect(
           stores.users.updateProfile(
             "missing-user",
-            { locale: "de", name: null },
+            { locale: "de", name: null, singleKeyShortcuts: true },
             NOW,
           ),
         ).resolves.toBeNull();
@@ -293,7 +300,7 @@ export function describeStorageContract(
         ).resolves.toBeNull();
         await stores.users.updateProfile(
           user.id,
-          { locale: null, name: "   " },
+          { locale: null, name: "   ", singleKeyShortcuts: true },
           NOW,
         );
         await expect(

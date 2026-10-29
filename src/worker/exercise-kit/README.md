@@ -31,7 +31,8 @@ lookups over it, and nothing else enumerates them.
   contract itself (`type.ts`), the action bar (`actions.ts`), the hydration
   payload (`hydration.ts`), the named group every exercise renders as
   (`group.ts`, `group.css`) and the heading its legend holds, the
-  correctness mark, the answer events, the help strings, the authoring
+  correctness mark, the answer events, the help strings, the single-key
+  shortcut switch and the key reading under it (`shortcut-keys.ts`), the authoring
   helpers (`authoring.ts`: the directive block, the common attribute
   parsers, the manifest assembly) the ten per-type `authoring.ts` files are
   built from, the assessment helpers

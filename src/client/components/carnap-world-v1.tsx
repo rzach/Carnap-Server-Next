@@ -21,6 +21,7 @@
 import { render } from "preact";
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import { languageNames } from "../../worker/exercise-kit/formula";
+import { undoKey } from "../../worker/exercise-kit/shortcut-keys";
 import type { ResolvedWorld } from "../../worker/exercises/world/grading";
 import {
   isWorldPublicData,
@@ -76,6 +77,7 @@ import {
   mountHelpTrigger,
   openHelpDialog,
 } from "./help-dialog";
+import { pageShortcutKey, pageShortcutRows } from "./shortcut-keys";
 import { mountShowSource, SHOW_SOURCE_KEYS } from "./show-source";
 import { ToolbarIcon } from "./toolbar-icon";
 import { TOOLBAR_STYLES, type ToolbarIconName } from "./toolbar-icons";
@@ -1228,21 +1230,23 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
           : PAIR_INTRO
       ).map((id) => this.t(id)),
       keyboard: this.t("Keyboard"),
-      shortcuts: [
-        ...(game ? GAME_SHORTCUTS : SHORTCUTS),
-        ...(showsSource
-          ? [
-              {
-                action: "Show your work as source" as const,
-                keys: SHOW_SOURCE_KEYS,
-              },
-            ]
-          : []),
-      ].map((shortcut) => ({
-        action: this.t(shortcut.action),
-        keys: shortcut.keys,
-        ...(shortcut.icon === undefined ? {} : { icon: shortcut.icon }),
-      })),
+      shortcuts: pageShortcutRows(
+        [
+          ...(game ? GAME_SHORTCUTS : SHORTCUTS),
+          ...(showsSource
+            ? [
+                {
+                  action: "Show your work as source" as const,
+                  keys: SHOW_SOURCE_KEYS,
+                },
+              ]
+            : []),
+        ].map((shortcut) => ({
+          action: this.t(shortcut.action),
+          keys: shortcut.keys,
+          ...(shortcut.icon === undefined ? {} : { icon: shortcut.icon }),
+        })),
+      ),
       title: this.t(
         game ? "Playing the evaluation game" : "Using the world editor",
       ),
@@ -1734,10 +1738,32 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
       this.namesOpen = false;
     };
     const block = this.blockAtCursor();
-    const ctrl = event.ctrlKey || event.metaKey;
+    const undo = undoKey(event);
+
+    // Undo and redo first: the switch below reads the shortcut a key is, and
+    // a key with Ctrl or Cmd held is never one.
+    if (undo === "undo" && this.data?.variant === "game") {
+      this.back();
+      event.preventDefault();
+      return;
+    }
+
+    if (undo !== null && this.editable) {
+      if (undo === "redo") {
+        this.redo();
+      } else {
+        this.undo();
+      }
+
+      event.preventDefault();
+      this.rerender();
+      return;
+    }
+
+    const key = pageShortcutKey(event);
     let handled = true;
 
-    switch (event.key) {
+    switch (key) {
       case "ArrowLeft":
         move(-1, 0);
         break;
@@ -1817,13 +1843,9 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
       case "3":
       case "4":
       case "5":
-        if (this.editable && !ctrl) {
+        if (this.editable) {
           this.setShape(
-            event.key === "3"
-              ? "triangle"
-              : event.key === "4"
-                ? "square"
-                : "pentagon",
+            key === "3" ? "triangle" : key === "4" ? "square" : "pentagon",
           );
         } else {
           handled = false;
@@ -1832,54 +1854,25 @@ class CarnapWorld extends CarnapExerciseElement<WorldStringId> {
       case "s":
       case "m":
       case "l":
-        if (this.editable && !ctrl) {
+        if (this.editable) {
           this.setSize(
-            event.key === "s"
-              ? "small"
-              : event.key === "m"
-                ? "medium"
-                : "large",
+            key === "s" ? "small" : key === "m" ? "medium" : "large",
           );
         } else {
           handled = false;
         }
         break;
       case "n":
-        if (this.editable && !ctrl && block !== undefined) {
+        if (this.editable && block !== undefined) {
           this.namesOpen = true;
         } else {
           handled = false;
         }
         break;
       case "?":
-        // A bare `?` only: Ctrl-? is the source dialog's.
-        if (this.helpDialog !== null && !ctrl) {
+        // Ctrl-? is the source dialog's, and is no shortcut here.
+        if (this.helpDialog !== null) {
           openHelpDialog(this.helpDialog, event.target as HTMLElement);
-        } else {
-          handled = false;
-        }
-        break;
-      case "z":
-      case "Z":
-        if (ctrl && this.data?.variant === "game") {
-          this.back();
-          event.preventDefault();
-          return;
-        }
-
-        if (ctrl && this.editable) {
-          if (event.shiftKey) {
-            this.redo();
-          } else {
-            this.undo();
-          }
-        } else {
-          handled = false;
-        }
-        break;
-      case "y":
-        if (ctrl && this.editable) {
-          this.redo();
         } else {
           handled = false;
         }

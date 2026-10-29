@@ -234,7 +234,7 @@ describe("changing your own address", () => {
         });
         await stores.users.updateProfile(
           "user-holder",
-          { locale: "de", name: null },
+          { locale: "de", name: null, singleKeyShortcuts: true },
           NOW,
         );
 

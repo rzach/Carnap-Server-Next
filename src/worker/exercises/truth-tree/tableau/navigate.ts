@@ -7,7 +7,8 @@
  * Left and right go to the nearest row or end mark in the neighbouring
  * columns, on the same line where there is one. The keys are
  * named as actions, so an editor maps a key to what it means here and decides
- * for itself what `stack` or `close` does.
+ * for itself what `stack` or `close` does; the editor's map is
+ * `client/components/truth-tree-keys.ts`.
  */
 
 import type { TableauIndex, TableauNode } from "./document";
@@ -107,78 +108,3 @@ export type TableauKeyAction =
   | "delete"
   | "undo"
   | "redo";
-
-/** The subset of a keyboard event a key map reads. */
-export interface KeyPress {
-  readonly key: string;
-  readonly ctrlKey: boolean;
-  readonly metaKey: boolean;
-  readonly shiftKey: boolean;
-  readonly altKey: boolean;
-  /**
-   * The physical key, which Alt-C and Alt-J match: on a Mac, Option-C's key
-   * is ç.
-   */
-  readonly code?: string;
-}
-
-const PLAIN: Readonly<Record<string, TableauKeyAction>> = {
-  ArrowDown: "down",
-  ArrowLeft: "left",
-  ArrowRight: "right",
-  ArrowUp: "up",
-  Backspace: "delete",
-  Delete: "delete",
-  End: "last",
-  Enter: "edit",
-  F2: "edit",
-  Home: "first",
-  c: "cite",
-  j: "rule",
-  o: "open",
-  r: "add-row",
-  s: "split",
-  t: "stack",
-  x: "close",
-};
-
-/** The action a key press on a row asks for, or `null` for none. */
-export function keyAction(press: KeyPress): TableauKeyAction | null {
-  const command = press.ctrlKey || press.metaKey;
-
-  if (command && !press.altKey) {
-    const key = press.key.toLowerCase();
-
-    if (key === "z") {
-      return press.shiftKey ? "redo" : "undo";
-    }
-
-    return key === "y" ? "redo" : null;
-  }
-
-  // Alt-C cites, and Alt-J names the rule, from inside a row's input too,
-  // where a plain c or j is typing. Tab is left alone, to leave the tree as
-  // it leaves anything.
-  //
-  // The letter the layout types decides, so Alt-J is J on Dvorak too, where
-  // J is the key QWERTY calls C. The physical key stands in only where Alt
-  // types no plain letter, as on a Mac, where Alt-C types ç.
-  if (press.altKey && !command && !press.shiftKey) {
-    const typed = press.key.toLowerCase();
-    const key = /^[a-z]$/u.test(typed)
-      ? typed
-      : press.code === "KeyC"
-        ? "c"
-        : press.code === "KeyJ"
-          ? "j"
-          : null;
-
-    return key === "c" ? "cite" : key === "j" ? "rule" : null;
-  }
-
-  if (press.altKey || command) {
-    return null;
-  }
-
-  return PLAIN[press.key] ?? null;
-}

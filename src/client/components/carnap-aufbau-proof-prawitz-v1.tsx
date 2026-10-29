@@ -66,6 +66,7 @@ import {
   playgroundGoal,
   playgroundTheoryText,
 } from "../../worker/exercise-kit/proof/playground";
+import { undoKey } from "../../worker/exercise-kit/shortcut-keys";
 import type { AufbauProofPrawitzStringId } from "../../worker/exercises/aufbau-proof-prawitz/strings";
 import type { PrawitzDiagnostic } from "../../worker/exercises/aufbau-proof-prawitz/translate";
 import {
@@ -108,6 +109,7 @@ import {
   plainProblem,
   problemsText,
 } from "./proof-problem";
+import { pageShortcutKey, pageShortcutRows } from "./shortcut-keys";
 import { mountShowSource, SHOW_SOURCE_KEYS } from "./show-source";
 import { ToolbarIcon } from "./toolbar-icon";
 import { TOOLBAR_STYLES, type ToolbarIconName } from "./toolbar-icons";
@@ -1192,13 +1194,15 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
       close: this.t("Close help"),
       intro: INTRO_IDS.map((id) => this.t(id)),
       keyboard: this.t("Keyboard"),
-      shortcuts: SHORTCUTS.filter(
-        (shortcut) => shortcut.problems !== true || this.showsDetail,
-      ).map((shortcut) => ({
-        action: this.t(shortcut.action),
-        keys: shortcut.keys,
-        ...(shortcut.icon === undefined ? {} : { icon: shortcut.icon }),
-      })),
+      shortcuts: pageShortcutRows(
+        SHORTCUTS.filter(
+          (shortcut) => shortcut.problems !== true || this.showsDetail,
+        ).map((shortcut) => ({
+          action: this.t(shortcut.action),
+          keys: shortcut.keys,
+          ...(shortcut.icon === undefined ? {} : { icon: shortcut.icon }),
+        })),
+      ),
       title: this.t("Using the Prawitz proof editor"),
     });
     root.appendChild(this.helpDialog);
@@ -1296,14 +1300,11 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
       }
       return;
     }
-    if (!(event.ctrlKey || event.metaKey)) {
-      return;
-    }
-    const key = event.key.toLowerCase();
-    if (key === "z" && !event.shiftKey) {
+    const undo = undoKey(event);
+    if (undo === "undo") {
       event.preventDefault();
       this.undo();
-    } else if ((key === "z" && event.shiftKey) || key === "y") {
+    } else if (undo === "redo") {
       event.preventDefault();
       this.redo();
     }
@@ -1498,7 +1499,9 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
    * Delete) first select the focused line — they act *here*, and for l the
    * selection is also what reveals an empty label or discharge box so it can
    * take focus. While editing a field only Escape is intercepted; everything
-   * else types normally.
+   * else types normally. The letters and `?` are read through
+   * `pageShortcutKey`, so they act with Alt held too, and only with Alt when
+   * the reader has single keys off.
    */
   private onTreeKeyDown(event: KeyboardEvent, nodeId: string): void {
     const located = locate(this.doc.trees, nodeId);
@@ -1509,7 +1512,7 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
     const parent =
       parentId === null ? null : locate(this.doc.trees, parentId);
 
-    switch (event.key) {
+    switch (pageShortcutKey(event)) {
       case "ArrowUp": {
         const first = node.premises[0];
         if (first !== undefined) {
@@ -1555,14 +1558,12 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
           ?.focus();
         break;
       case "r":
-      case "R":
         if (!node.isAssumption) {
           event.preventDefault();
           this.focusField(nodeId, ".pz-rule");
         }
         break;
       case "l":
-      case "L":
         // One key for both ends of a discharge. An assumption carries the
         // label, a rule the marks that answer it, and no line has both — so
         // which box `l` opens is never ambiguous, and the student pressing it
@@ -1578,19 +1579,16 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
         );
         break;
       case "a":
-      case "A":
         event.preventDefault();
         this.dispatch({ type: "addAssumption" });
         this.focusNode(this.doc.selected[0] ?? nodeId);
         break;
       case "b":
-      case "B":
         event.preventDefault();
         this.dispatch({ type: "applyBelow" });
         this.focusNode(this.doc.selected[0] ?? nodeId);
         break;
       case "p":
-      case "P":
         if (canGrowAbove(node)) {
           event.preventDefault();
           // These grow/delete act on the selection; aim them at the focused
@@ -1601,7 +1599,6 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
         }
         break;
       case "h":
-      case "H":
         if (canGrowAbove(node)) {
           event.preventDefault();
           this.selectNode(nodeId, false);
@@ -1621,13 +1618,10 @@ class AufbauProofPrawitz extends ProofExerciseElement<AufbauProofPrawitzStringId
       }
       case "?": {
         // Anchor to the focused line, which is where the reader is looking.
-        // Focus returns here when the dialog closes. A bare `?` only: Ctrl-?
-        // is the source dialog's.
+        // Focus returns here when the dialog closes. Ctrl-? is the source
+        // dialog's, and is no shortcut here.
         const anchor = this.nodeRefs.get(nodeId);
-        if (
-          anchor !== undefined &&
-          !(event.ctrlKey || event.metaKey || event.altKey)
-        ) {
+        if (anchor !== undefined) {
           event.preventDefault();
           this.showHelp(anchor);
         }

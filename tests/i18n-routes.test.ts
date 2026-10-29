@@ -54,7 +54,7 @@ async function storeLocale(
   await stores.users.updateProfile(
     userId,
     // One write covers both fields, so the name has to be carried through it.
-    { locale, name: user?.name ?? null },
+    { locale, name: user?.name ?? null, singleKeyShortcuts: true },
     timestampNow(new Date()),
   );
 }

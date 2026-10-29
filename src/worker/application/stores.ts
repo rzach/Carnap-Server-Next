@@ -90,6 +90,7 @@ export interface UpdateUserProfileInput {
    */
   readonly locale: string | null;
   readonly name: string | null;
+  readonly singleKeyShortcuts: boolean;
 }
 
 export interface CreateExternalIdentityInput {

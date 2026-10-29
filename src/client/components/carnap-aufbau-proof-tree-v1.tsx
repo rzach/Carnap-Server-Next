@@ -63,6 +63,7 @@ import {
   playgroundGoal,
   playgroundTheoryText,
 } from "../../worker/exercise-kit/proof/playground";
+import { undoKey } from "../../worker/exercise-kit/shortcut-keys";
 import {
   flattenProofTree,
   proofTreeStarter,
@@ -101,6 +102,7 @@ import {
   plainProblem,
   problemsText,
 } from "./proof-problem";
+import { pageShortcutKey, pageShortcutRows } from "./shortcut-keys";
 import { mountShowSource, SHOW_SOURCE_KEYS } from "./show-source";
 import { ToolbarIcon } from "./toolbar-icon";
 import { TOOLBAR_STYLES, type ToolbarIconName } from "./toolbar-icons";
@@ -1069,13 +1071,15 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
       close: this.t("Close help"),
       intro: INTRO_IDS.map((id) => this.t(id)),
       keyboard: this.t("Keyboard"),
-      shortcuts: SHORTCUTS.filter(
-        (shortcut) => shortcut.problems !== true || this.showsDetail,
-      ).map((shortcut) => ({
-        action: this.t(shortcut.action),
-        keys: shortcut.keys,
-        ...(shortcut.icon === undefined ? {} : { icon: shortcut.icon }),
-      })),
+      shortcuts: pageShortcutRows(
+        SHORTCUTS.filter(
+          (shortcut) => shortcut.problems !== true || this.showsDetail,
+        ).map((shortcut) => ({
+          action: this.t(shortcut.action),
+          keys: shortcut.keys,
+          ...(shortcut.icon === undefined ? {} : { icon: shortcut.icon }),
+        })),
+      ),
       title: this.t("Using the proof tree editor"),
     });
     root.appendChild(this.helpDialog);
@@ -1158,14 +1162,11 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
       }
       return;
     }
-    if (!(event.ctrlKey || event.metaKey)) {
-      return;
-    }
-    const key = event.key.toLowerCase();
-    if (key === "z" && !event.shiftKey) {
+    const undo = undoKey(event);
+    if (undo === "undo") {
       event.preventDefault();
       this.undo();
-    } else if ((key === "z" && event.shiftKey) || key === "y") {
+    } else if (undo === "redo") {
       event.preventDefault();
       this.redo();
     }
@@ -1312,7 +1313,9 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
    * into the conclusion field to edit; r drops into the rule/inference field;
    * p / h add a premise or hypothesis; Delete removes the subtree. While editing
    * a field, only Escape is intercepted (to step back out to the node);
-   * everything else types normally.
+   * everything else types normally. The letters and `?` are read through
+   * `pageShortcutKey`, so they act with Alt held too, and only with Alt when
+   * the reader has single keys off.
    */
   private onTreeKeyDown(event: KeyboardEvent, nodeId: string): void {
     const located = locate(this.doc.model, nodeId);
@@ -1323,7 +1326,7 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
     const parent =
       parentId === null ? null : locate(this.doc.model, parentId);
 
-    switch (event.key) {
+    switch (pageShortcutKey(event)) {
       case "ArrowUp": {
         const first = node.premises[0];
         if (first !== undefined) {
@@ -1363,8 +1366,7 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
           ?.focus();
         break;
       }
-      case "r":
-      case "R": {
+      case "r": {
         // Edit the rule/inference label. It lives in a sibling <proof-inference>
         // (outside the treeitem), so reach it via the owning <proof-tree>. Esc
         // steps back out, same as the conclusion field.
@@ -1377,7 +1379,6 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
         break;
       }
       case "p":
-      case "P":
         if (node.hyp === null) {
           event.preventDefault();
           this.dispatch({ hyp: null, type: "addPremise" });
@@ -1385,7 +1386,6 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
         }
         break;
       case "h":
-      case "H":
         if (node.hyp === null && this.hypotheses.length > 0) {
           event.preventDefault();
           this.dispatch({ hyp: 1, type: "addPremise" });
@@ -1402,13 +1402,10 @@ class AufbauProofTree extends ProofExerciseElement<AufbauProofTreeStringId> {
         break;
       case "?": {
         // Anchor to the focused line, which is where the reader is looking.
-        // Focus returns here when the dialog closes. A bare `?` only: Ctrl-?
-        // is the source dialog's.
+        // Focus returns here when the dialog closes. Ctrl-? is the source
+        // dialog's, and is no shortcut here.
         const anchor = this.nodeRefs.get(nodeId);
-        if (
-          anchor !== undefined &&
-          !(event.ctrlKey || event.metaKey || event.altKey)
-        ) {
+        if (anchor !== undefined) {
           event.preventDefault();
           this.showHelp(anchor);
         }

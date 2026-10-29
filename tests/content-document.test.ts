@@ -31,6 +31,22 @@ describe("content document", () => {
     expect(escaped).toContain("\\3c ");
   });
 
+  test("the root says when the reader has single-key shortcuts off, and only then", () => {
+    const document = (singleKeyShortcuts?: boolean) =>
+      contentDocumentHtml({
+        ...DOCUMENT_LOCALE,
+        body: raw("<p>Lesson</p>"),
+        ...(singleKeyShortcuts === undefined ? {} : { singleKeyShortcuts }),
+        title: "Lesson",
+      });
+
+    expect(document(false)).toContain(
+      '<html lang="en" data-single-key-shortcuts="off">',
+    );
+    expect(document(true)).not.toContain("data-single-key-shortcuts");
+    expect(document()).not.toContain("data-single-key-shortcuts");
+  });
+
   test("author css is a separate style element after the defaults", () => {
     const html = contentDocumentHtml({
       ...DOCUMENT_LOCALE,

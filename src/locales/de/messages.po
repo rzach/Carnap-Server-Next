@@ -5153,6 +5153,10 @@ msgstr "Wird Studierenden oben auf der Kursseite angezeigt: ein Link zum Syllabu
 msgid "Sign in"
 msgstr "Anmelden"
 
+#: src/worker/web/profile.tsx
+msgid "Single-key shortcuts in exercises"
+msgstr "Einzeltasten-Kürzel in Übungen"
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Single-select exercises must have exactly one correct option."
 msgstr "Übungen mit Einfachauswahl müssen genau eine richtige Option haben."
@@ -5192,6 +5196,10 @@ msgstr "Sie behaupten also, {formula} sei falsch."
 #: src/worker/exercises/world/strings.ts
 msgid "So you say {formula} is true."
 msgstr "Sie behaupten also, {formula} sei wahr."
+
+#: src/worker/web/profile.tsx
+msgid "Some exercises act on a key pressed on its own, such as p or ?. Turn this off if you use speech input or press keys by accident. Each shortcut still works with Alt held down, and the buttons work either way."
+msgstr "Manche Übungen reagieren auf eine einzeln gedrückte Taste, etwa p oder ?. Schalten Sie dies aus, wenn Sie Spracheingabe nutzen oder versehentlich Tasten drücken. Jedes Tastenkürzel funktioniert weiterhin mit gedrückter Alt-Taste, und die Schaltflächen funktionieren in jedem Fall."
 
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/gradebook.tsx

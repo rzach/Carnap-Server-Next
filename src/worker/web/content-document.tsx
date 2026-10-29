@@ -15,6 +15,7 @@ import type {
   CompiledSystems,
 } from "../domain/content";
 import type { ExerciseHydration } from "../exercise-kit/hydration";
+import { singleKeyShortcutsStamp } from "../exercise-kit/shortcut-keys";
 import type { Translator } from "../i18n/translator";
 import contentDocumentStyles from "./content-document.css" with {
   type: "text",
@@ -91,6 +92,12 @@ export interface ContentDocumentModel {
   /** BCP 47 tag for the document root, matching `i18n`. */
   readonly locale: string;
   /**
+   * Whether the reader takes a key pressed on its own as an exercise
+   * shortcut, stamped on the root for the widgets to read (see
+   * `exercise-kit/shortcut-keys.ts`). Omitted, they do.
+   */
+  readonly singleKeyShortcuts?: boolean;
+  /**
    * The MM0 this document's exercises are set in, one copy each, keyed by the
    * name they name it with. The document-scoped half of a widget's payload:
    * each hydration payload carries the *name*, and the client element base
@@ -148,7 +155,10 @@ const CONTENT_DOCUMENT_STYLES = contentDocumentStyles;
 export function contentDocumentHtml(model: ContentDocumentModel): string {
   const node = (
     <I18nProvider i18n={model.i18n}>
-      <html lang={model.locale}>
+      <html
+        lang={model.locale}
+        {...singleKeyShortcutsStamp(model.singleKeyShortcuts ?? true)}
+      >
         <head>
           <meta charset="utf-8" />
           <meta

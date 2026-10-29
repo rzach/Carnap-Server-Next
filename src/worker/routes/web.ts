@@ -364,7 +364,10 @@ webRoutes.post("/profile/calendar/off", async (context) => {
 });
 
 /**
- * Save the profile — name and language together, since they are one form.
+ * Save the profile — name, language and shortcuts together, since they are
+ * one form. The shortcuts box is a checkbox, which a browser sends only when
+ * it is ticked, so the form puts a hidden `0` ahead of it: a `1` among the
+ * values is the box ticked, and a post with neither leaves the setting alone.
  *
  * An empty `locale` means "go on following the request", so it is stored as
  * null rather than refused. The stored preference outranks the cookie for a
@@ -379,11 +382,17 @@ webRoutes.post("/profile", async (context) => {
   const form = await context.req.raw.formData();
   const name = fieldValue(form.get("name"));
   const locale = fieldValue(form.get("locale"));
+  const shortcutsField = form.getAll("singleKeyShortcuts");
+  const singleKeyShortcuts =
+    shortcutsField.length === 0
+      ? actor.user.singleKeyShortcuts
+      : shortcutsField.includes("1");
 
   try {
     await authServiceForContext(context).updateOwnProfile(actor, {
       locale: locale === "" ? null : locale,
       name,
+      singleKeyShortcuts,
     });
 
     if (isSelectableLocale(locale)) {
@@ -404,6 +413,7 @@ webRoutes.post("/profile", async (context) => {
         error: error.localize(context.get("i18n")),
         localeValue: locale,
         nameValue: name,
+        singleKeyShortcutsValue: singleKeyShortcuts,
         status: error.status,
       });
     }

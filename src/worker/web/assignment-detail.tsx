@@ -1164,6 +1164,7 @@ export function renderAssignmentContentDocument(
       </>
     ),
     componentAssets: componentAssetsForArtifact(model.detail.artifact),
+    singleKeyShortcuts: context.get("actor")?.user.singleKeyShortcuts ?? true,
     ...(model.submission === null
       ? {
           exerciseHydration: exerciseHydrationForArtifact(

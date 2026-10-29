@@ -5153,6 +5153,10 @@ msgstr "Shown to students at the top of the course page: a syllabus link, office
 msgid "Sign in"
 msgstr "Sign in"
 
+#: src/worker/web/profile.tsx
+msgid "Single-key shortcuts in exercises"
+msgstr "Single-key shortcuts in exercises"
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Single-select exercises must have exactly one correct option."
 msgstr "Single-select exercises must have exactly one correct option."
@@ -5192,6 +5196,10 @@ msgstr "So you say {formula} is false."
 #: src/worker/exercises/world/strings.ts
 msgid "So you say {formula} is true."
 msgstr "So you say {formula} is true."
+
+#: src/worker/web/profile.tsx
+msgid "Some exercises act on a key pressed on its own, such as p or ?. Turn this off if you use speech input or press keys by accident. Each shortcut still works with Alt held down, and the buttons work either way."
+msgstr "Some exercises act on a key pressed on its own, such as p or ?. Turn this off if you use speech input or press keys by accident. Each shortcut still works with Alt held down, and the buttons work either way."
 
 #: src/worker/web/assignment-detail.tsx
 #: src/worker/web/gradebook.tsx

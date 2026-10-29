@@ -5153,6 +5153,10 @@ msgstr ""
 msgid "Sign in"
 msgstr ""
 
+#: src/worker/web/profile.tsx
+msgid "Single-key shortcuts in exercises"
+msgstr ""
+
 #: src/worker/application/content/diagnostic-strings.ts
 msgid "Single-select exercises must have exactly one correct option."
 msgstr ""
@@ -5191,6 +5195,10 @@ msgstr ""
 
 #: src/worker/exercises/world/strings.ts
 msgid "So you say {formula} is true."
+msgstr ""
+
+#: src/worker/web/profile.tsx
+msgid "Some exercises act on a key pressed on its own, such as p or ?. Turn this off if you use speech input or press keys by accident. Each shortcut still works with Alt held down, and the buttons work either way."
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx

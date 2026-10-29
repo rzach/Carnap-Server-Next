@@ -804,7 +804,11 @@ Choose yes.
       // spreadsheet would run the moment the instructor opened the export.
       await storage.stores.users.updateProfile(
         student.actorId,
-        { locale: null, name: '=HYPERLINK("https://evil.example","2,4")' },
+        {
+          locale: null,
+          name: '=HYPERLINK("https://evil.example","2,4")',
+          singleKeyShortcuts: true,
+        },
         timestampNow(),
       );
 
@@ -2156,7 +2160,7 @@ Choose yes.
       await enrollStudent(env, instructor, third, courseId);
       await storage.stores.users.updateProfile(
         first.actorId,
-        { locale: null, name: "Ada Scored" },
+        { locale: null, name: "Ada Scored", singleKeyShortcuts: true },
         timestampNow(),
       );
 

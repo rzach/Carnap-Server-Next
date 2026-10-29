@@ -69,6 +69,8 @@ interface ProfileViewOptions {
    * no later page can show it again.
    */
   readonly newCalendarUrl?: string;
+  /** Whether to tick the shortcuts box: as {@link nameValue}. */
+  readonly singleKeyShortcutsValue?: boolean;
   /** A confirmation banner, e.g. after a successful save. */
   readonly notice?: string;
   /** The response status: a refused action's, alongside its {@link error}. */
@@ -94,6 +96,8 @@ export function renderProfile(
   const { identities } = account;
   const nameValue = options.nameValue ?? user.name ?? "";
   const localeValue = options.localeValue ?? user.locale ?? "";
+  const singleKeyShortcuts =
+    options.singleKeyShortcutsValue ?? user.singleKeyShortcuts;
   const lmsLinked = identities.some(
     (identity) => identity.provider === "lti",
   );
@@ -171,6 +175,7 @@ export function renderProfile(
             context={context}
             localeValue={localeValue}
             nameValue={nameValue}
+            singleKeyShortcuts={singleKeyShortcuts}
           />,
           <EmailSection
             context={context}
@@ -210,10 +215,12 @@ function ProfileForm({
   context,
   localeValue,
   nameValue,
+  singleKeyShortcuts,
 }: {
   readonly context: Context<AppBindings>;
   readonly localeValue: string;
   readonly nameValue: string;
+  readonly singleKeyShortcuts: boolean;
 }) {
   const i18n = useI18n();
 
@@ -253,6 +260,26 @@ function ProfileForm({
           </select>
         </label>
       </div>
+      {/* One switch for every exercise type: someone who needs it off needs
+          it off everywhere. The hint says what is kept, since "off" alone
+          reads as losing the shortcuts. */}
+      {/* The box posts nothing when clear, so this says "off" for it. */}
+      <input name="singleKeyShortcuts" type="hidden" value="0" />
+      <label>
+        <input
+          aria-describedby="profile-shortcuts-hint"
+          checked={singleKeyShortcuts}
+          name="singleKeyShortcuts"
+          type="checkbox"
+          value="1"
+        />
+        {i18n.t("Single-key shortcuts in exercises")}
+      </label>
+      <p class="small" id="profile-shortcuts-hint">
+        {i18n.t(
+          "Some exercises act on a key pressed on its own, such as p or ?. Turn this off if you use speech input or press keys by accident. Each shortcut still works with Alt held down, and the buttons work either way.",
+        )}
+      </p>
       <button type="submit">{i18n.t("Save changes")}</button>
     </form>
   );

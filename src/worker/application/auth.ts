@@ -208,6 +208,8 @@ export interface UpdateOwnProfileInput {
    */
   readonly locale: string | null;
   readonly name: string | null;
+  /** Whether the exercise widgets take a key pressed on its own as a shortcut. */
+  readonly singleKeyShortcuts: boolean;
 }
 
 export interface ActorResolution {
@@ -611,7 +613,7 @@ export class AuthService {
    * carries, saved together. No capability check: an actor may always edit
    * their own profile.
    *
-   * Both fields are validated before either is written, so a rejected save
+   * The fields are validated before any is written, so a rejected save
    * leaves the row exactly as the form found it rather than applying the half
    * the server happened to like.
    */
@@ -633,7 +635,11 @@ export class AuthService {
     const nowDate = this.options.now?.() ?? new Date();
     const updated = await this.options.stores.users.updateProfile(
       actor.user.id,
-      { locale: input.locale, name },
+      {
+        locale: input.locale,
+        name,
+        singleKeyShortcuts: input.singleKeyShortcuts,
+      },
       timestampNow(nowDate),
     );
 

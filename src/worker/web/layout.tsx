@@ -3,6 +3,7 @@ import { raw } from "hono/html";
 import type { Child, FC } from "hono/jsx";
 import { canAuthorContent } from "../application/authorization";
 import type { AppErrorStatus } from "../application/errors";
+import { singleKeyShortcutsStamp } from "../exercise-kit/shortcut-keys";
 import type { AppBindings } from "../http";
 import { I18nProvider, useI18n } from "./i18n-context";
 import { ProfilePrompt } from "./profile-prompt";
@@ -158,7 +159,10 @@ const Layout: FC<LayoutProps> = ({
   const showHeaderRow = showTrail || (!chromeless && headerAside !== null);
 
   return (
-    <html lang={i18n.locale}>
+    <html
+      lang={i18n.locale}
+      {...singleKeyShortcutsStamp(actor?.user.singleKeyShortcuts ?? true)}
+    >
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

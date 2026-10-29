@@ -728,7 +728,11 @@ describe("LTI 1.3 core launches", () => {
 
       await stores.users.updateProfile(
         userId,
-        { locale: null, name: "Ada, Countess of Lovelace" },
+        {
+          locale: null,
+          name: "Ada, Countess of Lovelace",
+          singleKeyShortcuts: true,
+        },
         NOW,
       );
       await instructorLaunch(app, env, { email: null, name: "A. Lovelace" });

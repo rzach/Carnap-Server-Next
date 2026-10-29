@@ -887,7 +887,12 @@ class SqliteUserStore implements UserStore {
     return nullableSingle(
       await this.db
         .update(users)
-        .set({ locale: input.locale, name: input.name, updatedAt })
+        .set({
+          locale: input.locale,
+          name: input.name,
+          singleKeyShortcuts: input.singleKeyShortcuts,
+          updatedAt,
+        })
         .where(eq(users.id, id))
         .returning(),
     );
