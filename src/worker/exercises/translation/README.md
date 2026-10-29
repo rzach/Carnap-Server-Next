@@ -69,7 +69,9 @@ adversarial non-equivalences. Run it after calculus or emission changes.
 ## Authoring
 
 Write prompt prose followed by solution list items. A bullet can contain
-comma-separated alternatives:
+comma-separated alternatives. One `|` line after the solutions is the
+starter, Carnap's partial solution: it prefills the input as written, and
+may be incomplete text or prose.
 
 ```md
 ::::translation{#fine variant="first-order" points="2"}
@@ -77,6 +79,7 @@ Everything is fine.
 
 - AxF(x)
 - ~Ex~F(x)
+| For all x, x is fine
 ::::
 ```
 
@@ -94,7 +97,6 @@ Attributes:
   `maxCon:N`, `maxNeg:N`/`maxNot:N`, `maxAnd:N`, `maxOr:N`, `maxIf:N`,
   `maxIff:N`, `maxFalse:N`, and `maxAtom:N`. Both spellings of the negation
   limit are accepted for original-Carnap compatibility.
-- `starter`: initial input, which can be incomplete text or prose.
 - `options`: `nocheck` (hides feedback) and `checksyntax` (blocks submission
   of unparseable input).
 - `title`, `points`, `exam`, `feedback`: common exercise settings.

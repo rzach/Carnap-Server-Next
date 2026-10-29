@@ -642,9 +642,13 @@ export function buildDiagnosticStrings(i18n: Translator) {
     "A translation exercise requires at least one solution formula.": i18n.t(
       "A translation exercise requires at least one solution formula.",
     ),
-    "Only solution list items may appear after the first solution.": i18n.t(
-      "Only solution list items may appear after the first solution.",
+    "A translation exercise takes only one | starter line.": i18n.t(
+      "A translation exercise takes only one | starter line.",
     ),
+    "Only solution list items and a | starter line may appear after the first solution.":
+      i18n.t(
+        "Only solution list items and a | starter line may appear after the first solution.",
+      ),
     "The PNF test applies only to first-order translations.": i18n.t(
       "The PNF test applies only to first-order translations.",
     ),

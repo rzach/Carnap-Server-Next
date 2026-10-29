@@ -36,6 +36,7 @@ import {
 } from "./types";
 
 const SOLUTION_LINE = /^\s*-\s+(.+?)\s*$/;
+const STARTER_LINE = /^\s*\|(.*)$/;
 
 /**
  * The bare-flag vocabulary Carnap accepts in a translation option string:
@@ -150,6 +151,7 @@ function parseTests(
 interface TranslationBody {
   readonly promptLines: readonly string[];
   readonly solutions: readonly string[];
+  readonly starter?: string;
 }
 
 /**
@@ -157,6 +159,10 @@ interface TranslationBody {
  * admissible solution per item. A single item may hold Carnap's
  * comma-separated alternates; the split respects brackets so `R(a,b)` stays
  * whole.
+ *
+ * Among the solutions, one `| text` line prefills the student's input: Carnap's
+ * partial solution. It is kept as written, since it may be prose. Before the
+ * first solution a `|` line is prompt, so a Markdown table there still works.
  */
 function parseBody(
   block: DirectiveBlock,
@@ -166,20 +172,35 @@ function parseBody(
 ): TranslationBody {
   const promptLines: string[] = [];
   const solutions: string[] = [];
+  let starter: string | undefined;
 
   for (const [index, line] of block.bodyLines.entries()) {
     const lineNumber = block.bodyStartLine + index;
     const match = SOLUTION_LINE.exec(line);
 
     if (match === null) {
+      const starterMatch = STARTER_LINE.exec(line);
+
       if (solutions.length === 0) {
         promptLines.push(line);
+      } else if (starterMatch !== null) {
+        if (starter === undefined) {
+          starter = (starterMatch[1] ?? "").trim();
+        } else {
+          diagnostics.push(
+            diagnostic(
+              lineNumber,
+              "duplicate_translation_starter",
+              "A translation exercise takes only one | starter line.",
+            ),
+          );
+        }
       } else if (line.trim().length > 0) {
         diagnostics.push(
           diagnostic(
             lineNumber,
             "invalid_translation_body",
-            "Only solution list items may appear after the first solution.",
+            "Only solution list items and a | starter line may appear after the first solution.",
           ),
         );
       }
@@ -229,14 +250,17 @@ function parseBody(
     }
   }
 
-  return { promptLines, solutions };
+  return {
+    promptLines,
+    solutions,
+    ...(starter === undefined ? {} : { starter }),
+  };
 }
 
 /** What `::::translation{…}` accepts beyond the shared exercise set. */
 const TRANSLATION_ATTRIBUTES = [
   ...COMMON_EXERCISE_ATTRIBUTES,
   "options",
-  "starter",
   "system",
   "tests",
   "variant",
@@ -271,7 +295,6 @@ export async function compileTranslation(
   );
   const title = block.attrs.title?.trim();
   const exam = parseExamAttribute(block.attrs.exam, block.line, diagnostics);
-  const starter = block.attrs.starter;
   const body = parseBody(block, language, variant, diagnostics);
 
   if (id === null) {
@@ -303,7 +326,7 @@ export async function compileTranslation(
       lineOffset: block.bodyStartLine - 1,
     }),
     solutions: body.solutions,
-    ...(starter === undefined ? {} : { starter }),
+    ...(body.starter === undefined ? {} : { starter: body.starter }),
     system,
     tests,
     variant,

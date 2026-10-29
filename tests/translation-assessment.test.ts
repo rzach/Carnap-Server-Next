@@ -111,10 +111,11 @@ Jack jumped and was caught, or got away.
 
   test("starter, tests, and options land in publicData", async () => {
     const item =
-      await manifestItem(`::::translation{#t1 variant="first-order" tests="PNF maxNot:0" options="checksyntax" starter="For all x, x is fine"}
+      await manifestItem(`::::translation{#t1 variant="first-order" tests="PNF maxNot:0" options="checksyntax"}
 Everything is fine.
 
 - AxF(x)
+| For all x, x is fine
 ::::`);
 
     if (!isTranslationPublicData(item.publicData)) {
@@ -126,6 +127,38 @@ Everything is fine.
       { kind: "pnf" },
       { feature: "negations", kind: "count", max: 0 },
     ]);
+  });
+
+  test("the | starter line is kept as written, half formula and half prose", async () => {
+    const item =
+      await manifestItem(`::::translation{#t1 variant="first-order"}
+Everyone wears a cape.
+
+- Ax(P(x) -> Ey(E(y) /\\ R(x,y)))
+|Ax(P(x) -> x wears a cape)
+::::`);
+
+    if (!isTranslationPublicData(item.publicData)) {
+      throw new Error("bad publicData");
+    }
+    expect(item.publicData.starter).toBe("Ax(P(x) -> x wears a cape)");
+    expect(item.publicData.solutions).toHaveLength(1);
+  });
+
+  test("a | line before the first solution is prompt, not a starter", async () => {
+    const item = await manifestItem(`::::translation{#t1}
+| P | Q |
+| - | - |
+| rain | wind |
+
+- P /\\ Q
+::::`);
+
+    if (!isTranslationPublicData(item.publicData)) {
+      throw new Error("bad publicData");
+    }
+    expect(item.publicData.starter).toBeUndefined();
+    expect(item.publicData.promptHtml).toContain("<table");
   });
 
   test("nocheck is this type's spelling of feedback none", async () => {
@@ -179,6 +212,31 @@ Prose.
 - P
 ::::`),
     ).toContain("unknown_translation_option");
+    expect(
+      await diagnosticCodes(`::::translation{#t1}
+Prose.
+
+- P
+| P /\\
+| P \\/
+::::`),
+    ).toContain("duplicate_translation_starter");
+    expect(
+      await diagnosticCodes(`::::translation{#t1}
+Prose.
+
+- P
+More prose.
+::::`),
+    ).toContain("invalid_translation_body");
+    // The starter is a body line now; the attribute is gone.
+    expect(
+      await diagnosticCodes(`::::translation{#t1 starter="P"}
+Prose.
+
+- P
+::::`),
+    ).toContain("unknown_attribute");
   });
 });
 

@@ -90,9 +90,7 @@ const PROP = "People danced and sang.\n\n- P/\\Q";
 
 describe("upgrading", () => {
   test("the input comes alive, prefilled from the starter", async () => {
-    const mounted = mount(
-      await translationExercise(PROP, '#t1 starter="P /\\ ..."'),
-    );
+    const mounted = mount(await translationExercise(`${PROP}\n| P /\\ ...`));
 
     expect(mounted.element.dataset.enhanced).toBe("true");
     expect(mounted.input.disabled).toBe(false);
@@ -103,10 +101,9 @@ describe("upgrading", () => {
   });
 
   test("a prior answer wins over the starter and is mirrored", async () => {
-    const mounted = mount(
-      await translationExercise(PROP, '#t1 starter="P /\\ ..."'),
-      { priorAnswer: { text: "Q/\\P" } },
-    );
+    const mounted = mount(await translationExercise(`${PROP}\n| P /\\ ...`), {
+      priorAnswer: { text: "Q/\\P" },
+    });
 
     expect(mounted.input.value).toBe("Q/\\P");
     expect(answerOf(mounted).text).toBe("Q/\\P");
@@ -136,7 +133,7 @@ describe("the live preview", () => {
 
   test("leaves an untouched prose starter unremarked, until the first edit", async () => {
     const mounted = mount(
-      await translationExercise(PROP, '#t1 starter="People danced, and P"'),
+      await translationExercise(`${PROP}\n| People danced, and P`),
     );
 
     expect(previewText(mounted)).toBe("");
@@ -155,16 +152,15 @@ describe("the live preview", () => {
   });
 
   test("reads back a starter that parses", async () => {
-    const mounted = mount(await translationExercise(PROP, '#t1 starter="P"'));
+    const mounted = mount(await translationExercise(`${PROP}\n| P`));
 
     expect(previewText(mounted)).toBe("Reads as P");
   });
 
   test("words the complaint for a prior answer, even one equal to the starter", async () => {
-    const mounted = mount(
-      await translationExercise(PROP, '#t1 starter="P /\\"'),
-      { priorAnswer: { text: "P /\\" } },
-    );
+    const mounted = mount(await translationExercise(`${PROP}\n| P /\\`), {
+      priorAnswer: { text: "P /\\" },
+    });
 
     expect(previewText(mounted)).toBe("Expected a formula.");
   });

@@ -375,11 +375,12 @@ re-verifies it — try \`~Ex~F(x)\` here and watch it count as \`AxF(x)\`.
 And when only one formula will do — a missing premise, say — \`variant="exact"\`
 turns the equivalence off:
 
-:::translation{id="tr_exact" title="The missing premise" variant="exact" points="1" starter="To finish a modus ponens with P -> Q you also need..."}
+:::translation{id="tr_exact" title="The missing premise" variant="exact" points="1"}
 To infer \`Q\` from \`P → Q\` by modus ponens, what else must you have? (Here
 \`~~P\` will not do: name the premise itself.)
 
 - P
+| To finish a modus ponens with P -> Q you also need...
 :::
 
 ## 12. A proof, as proof lines

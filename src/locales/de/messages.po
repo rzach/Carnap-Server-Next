@@ -637,6 +637,10 @@ msgstr "Eine Theorie, die diese Lektion verwendet, hat sich geändert"
 msgid "A translation exercise requires at least one solution formula."
 msgstr "Eine Übersetzungsaufgabe braucht mindestens eine Lösungsformel."
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A translation exercise takes only one | starter line."
+msgstr "Eine Übersetzungsaufgabe nimmt nur eine |-Vorgabezeile."
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "A tree may have at most {limit} rows."
 msgstr "Ein Baum darf höchstens {limit} Zeilen haben."
@@ -4206,8 +4210,8 @@ msgid "Only sentence list items and | lines may follow the first sentence."
 msgstr "Auf den ersten Satz dürfen nur Satz-Listenpunkte und |-Zeilen folgen."
 
 #: src/worker/application/content/diagnostic-strings.ts
-msgid "Only solution list items may appear after the first solution."
-msgstr "Nach der ersten Lösung dürfen nur weitere Lösungs-Listenpunkte folgen."
+msgid "Only solution list items and a | starter line may appear after the first solution."
+msgstr "Auf die erste Lösung dürfen nur Lösungs-Listenpunkte und eine |-Vorgabezeile folgen."
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Only the end of a branch can be closed or marked open."

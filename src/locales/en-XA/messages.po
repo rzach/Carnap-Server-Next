@@ -637,6 +637,10 @@ msgstr ""
 msgid "A translation exercise requires at least one solution formula."
 msgstr ""
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A translation exercise takes only one | starter line."
+msgstr ""
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "A tree may have at most {limit} rows."
 msgstr ""
@@ -4206,7 +4210,7 @@ msgid "Only sentence list items and | lines may follow the first sentence."
 msgstr ""
 
 #: src/worker/application/content/diagnostic-strings.ts
-msgid "Only solution list items may appear after the first solution."
+msgid "Only solution list items and a | starter line may appear after the first solution."
 msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts

@@ -768,9 +768,27 @@ Nothing is not bananas.
 ::::
 ```
 
-`starter` prefills the input and may contain incomplete text or prose. The
-preview under the input stays quiet about a starter that does not parse,
-until the student edits it.
+### A starter
+
+A `|` line after the solutions prefills the input: Carnap's partial
+solution. It is taken as written, so it may be incomplete or part prose:
+
+```md
+::::translation{id="cape" variant="first-order"}
+Everyone wears a cape.
+
+- Ax(P(x) -> C(x))
+| Ax(P(x) -> x wears a cape)
+::::
+```
+
+The preview under the input stays quiet about a starter that does not
+parse, until the student edits it. An exercise takes one starter line
+(`duplicate_translation_starter`). Before the first solution, a `|` line is
+prompt, so a table there is unaffected.
+
+### Attributes
+
 `options` accepts `nocheck` (equivalent to hiding feedback) and `checksyntax`
 (block submission of text that does not parse). Common attributes apply.
 `system` selects a theory block or built-in language; the default

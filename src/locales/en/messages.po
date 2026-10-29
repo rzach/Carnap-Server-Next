@@ -637,6 +637,10 @@ msgstr "A theory this lesson uses has changed"
 msgid "A translation exercise requires at least one solution formula."
 msgstr "A translation exercise requires at least one solution formula."
 
+#: src/worker/application/content/diagnostic-strings.ts
+msgid "A translation exercise takes only one | starter line."
+msgstr "A translation exercise takes only one | starter line."
+
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "A tree may have at most {limit} rows."
 msgstr "A tree may have at most {limit} rows."
@@ -4206,8 +4210,8 @@ msgid "Only sentence list items and | lines may follow the first sentence."
 msgstr "Only sentence list items and | lines may follow the first sentence."
 
 #: src/worker/application/content/diagnostic-strings.ts
-msgid "Only solution list items may appear after the first solution."
-msgstr "Only solution list items may appear after the first solution."
+msgid "Only solution list items and a | starter line may appear after the first solution."
+msgstr "Only solution list items and a | starter line may appear after the first solution."
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Only the end of a branch can be closed or marked open."
