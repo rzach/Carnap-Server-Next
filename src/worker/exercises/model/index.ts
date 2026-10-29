@@ -9,6 +9,7 @@ import {
   MODEL_COMPONENT_METADATA,
   MODEL_KIND,
   MODEL_SCHEMA_VERSION,
+  modelInstructions,
   modelName,
 } from "./types";
 
@@ -23,6 +24,7 @@ export const MODEL_EXERCISE = {
   },
   dataBodyLines: modelDataBodyLines,
   directiveName: "model",
+  instructions: modelInstructions,
   kind: MODEL_KIND,
   name: modelName,
   render: renderModel,

@@ -9,6 +9,7 @@ import {
   SYNTAX_TREE_COMPONENT_METADATA,
   SYNTAX_TREE_KIND,
   SYNTAX_TREE_SCHEMA_VERSION,
+  syntaxTreeInstructions,
   syntaxTreeName,
 } from "./types";
 
@@ -22,6 +23,7 @@ export const SYNTAX_TREE_EXERCISE = {
     capabilities: SYNTAX_TREE_CAPABILITIES,
   },
   directiveName: "syntax-tree",
+  instructions: syntaxTreeInstructions,
   kind: SYNTAX_TREE_KIND,
   name: syntaxTreeName,
   render: renderSyntaxTree,

@@ -9,6 +9,7 @@ import {
   TRUTH_TREE_COMPONENT_METADATA,
   TRUTH_TREE_KIND,
   TRUTH_TREE_SCHEMA_VERSION,
+  truthTreeInstructions,
   truthTreeName,
 } from "./types";
 
@@ -23,6 +24,7 @@ export const TRUTH_TREE_EXERCISE = {
   },
   dataBodyLines: truthTreeDataBodyLines,
   directiveName: "truth-tree",
+  instructions: truthTreeInstructions,
   kind: TRUTH_TREE_KIND,
   name: truthTreeName,
   render: renderTruthTree,

@@ -8,6 +8,7 @@ import {
   MULTIPLE_CHOICE_COMPONENT_METADATA,
   MULTIPLE_CHOICE_KIND,
   MULTIPLE_CHOICE_SCHEMA_VERSION,
+  multipleChoiceInstructions,
   multipleChoiceName,
 } from "./types";
 
@@ -21,6 +22,7 @@ export const MULTIPLE_CHOICE_EXERCISE = {
     capabilities: MULTIPLE_CHOICE_CAPABILITIES,
   },
   directiveName: "multiple-choice",
+  instructions: multipleChoiceInstructions,
   kind: MULTIPLE_CHOICE_KIND,
   name: multipleChoiceName,
   render: renderMultipleChoice,

@@ -1,3 +1,4 @@
+import { proofInstructions } from "../../exercise-kit/proof/instructions";
 import type { ExerciseType } from "../../exercise-kit/type";
 import { AUFBAU_PROOF_PRAWITZ_ASSESSMENT } from "./assessment";
 import { compileAufbauProofPrawitz } from "./authoring";
@@ -22,6 +23,7 @@ export const AUFBAU_PROOF_PRAWITZ_EXERCISE = {
     capabilities: AUFBAU_PROOF_PRAWITZ_CAPABILITIES,
   },
   directiveName: "aufbau-proof-prawitz",
+  instructions: proofInstructions,
   kind: AUFBAU_PROOF_PRAWITZ_KIND,
   name: aufbauProofPrawitzName,
   // The starter body is proof text, not markdown; see `ExerciseType.rawBody`.

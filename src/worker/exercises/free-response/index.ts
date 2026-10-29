@@ -8,6 +8,7 @@ import {
   FREE_RESPONSE_COMPONENT_METADATA,
   FREE_RESPONSE_KIND,
   FREE_RESPONSE_SCHEMA_VERSION,
+  freeResponseInstructions,
   freeResponseName,
 } from "./types";
 
@@ -21,6 +22,7 @@ export const FREE_RESPONSE_EXERCISE = {
     capabilities: FREE_RESPONSE_CAPABILITIES,
   },
   directiveName: "free-response",
+  instructions: freeResponseInstructions,
   kind: FREE_RESPONSE_KIND,
   name: freeResponseName,
   render: renderFreeResponse,

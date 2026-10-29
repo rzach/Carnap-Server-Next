@@ -41,6 +41,13 @@ export function freeResponseName(i18n: Translator): string {
   return i18n.t("Free-response question");
 }
 
+/** What a student does (`ExerciseType.instructions`). */
+export function freeResponseInstructions(
+  i18n: Translator,
+): Readonly<Record<"answer", string>> {
+  return { answer: i18n.t("Write your answer.") };
+}
+
 export function isFreeResponsePublicData(
   value: JsonValue,
 ): value is JsonValue & FreeResponsePublicData {

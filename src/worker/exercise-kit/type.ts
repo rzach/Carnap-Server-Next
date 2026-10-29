@@ -79,6 +79,14 @@ export interface ExerciseType extends ExerciseAssessment {
    */
   name(i18n: Translator): string;
   /**
+   * What a student is to do, in a sentence for each of the type's modes, for
+   * a screen reader to hear when the author wrote no prompt
+   * (`exerciseGroupDescription`): "Fill in the truth table." Keyed by mode;
+   * the renderer picks one. All of them at once, so that the editor preview's
+   * payload can carry every one an edit might need.
+   */
+  instructions(i18n: Translator): Readonly<Record<string, string>>;
+  /**
    * The exercise as markup: the read-only view of a preview, a saved revision,
    * or a reading, and — with `context.actions` supplied — the element a
    * student's submission form wraps. The one function serves both so that what

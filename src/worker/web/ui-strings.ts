@@ -309,9 +309,16 @@ function buildPreviewStrings(i18n: Translator): void {
   // Every widget's text, not only the types the author has written so far: the
   // payload is fixed when the page is served, and the next keystroke can add an
   // exercise of any type.
+  // The group's own words are the type's too, though no widget asks for them:
+  // the hidden name an untitled exercise is given, and the instruction that
+  // describes a group with no prompt (`exercise-kit/group.ts`).
   for (const type of EXERCISE_TYPES) {
     type.strings?.(i18n);
+    type.name(i18n);
+    type.instructions(i18n);
   }
+
+  i18n.t("Exercise {number}: {kind}", placeholders("kind", "number"));
 
   // The content document's own sentence, listed again here because a payload has
   // to exist before anything is rendered. The id is the one `contentDocumentHtml`

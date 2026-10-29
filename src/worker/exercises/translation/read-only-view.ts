@@ -8,8 +8,10 @@ import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
   type ExerciseHeading,
+  exerciseGroupDescription,
   exerciseGroupLabel,
   exerciseLegendHtml,
+  promptSlot,
 } from "../../exercise-kit/group";
 import { EXERCISE_TOKEN_STYLES } from "../../exercise-kit/tokens";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
@@ -22,6 +24,7 @@ import type { TranslationPublicData } from "./types";
 import {
   isTranslationPublicData,
   TRANSLATION_KIND,
+  translationInstructions,
   translationName,
 } from "./types";
 
@@ -55,12 +58,17 @@ export function renderTranslationElement(
   );
   const inputId = "translation-input";
 
+  const description = exerciseGroupDescription(
+    promptSlot(publicData.promptHtml),
+    translationInstructions(meta.i18n).translate,
+  );
+
   return `<carnap-translation${exerciseRootAttributes(meta)}>
         <template shadowrootmode="open">
           <style>${TRANSLATION_SHADOW_STYLES}</style>
-          <fieldset aria-busy="true" class="exercise-group translation">
+          <fieldset aria-busy="true" class="exercise-group translation"${description.describedBy}>
             ${legend}
-            <slot name="prompt"></slot>
+            ${description.html}
             <div class="translation-row"><label class="visually-hidden" for="${inputId}">${escapeHtml(strings("Your translation"))}</label><input autocapitalize="off" autocomplete="off" class="translation-input" data-role="text" disabled id="${inputId}" spellcheck="false" type="text" value="${escapeHtml(publicData.starter ?? "")}"></div>
             <p aria-live="polite" class="translation-preview" data-role="preview"></p>
             <slot name="exercise-actions"></slot>

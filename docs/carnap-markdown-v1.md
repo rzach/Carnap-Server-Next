@@ -282,6 +282,11 @@ is an exercise.
   document, titled or not. The `id` is never shown to students, so an
   exercise numbered after a textbook, `id="vii.1"`, needs `title="VII.1"`
   as well to carry that number on the page.
+- The prompt is also what a screen reader says the exercise asks, as it
+  enters the exercise's controls. An exercise with no prompt is given a
+  short instruction for its kind instead, such as "Fill in the truth
+  table.", heard but not shown. Write a prompt to say something more
+  particular; it replaces the instruction rather than following it.
 - `points` defaults to `1`, and may be anything from `0` to `1000`. A
   zero-point exercise is recorded and checked as usual but adds nothing to a
   total, so it suits a playground; its score line shows no `0/0` to the

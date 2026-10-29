@@ -9,8 +9,10 @@ import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
   type ExerciseHeading,
+  exerciseGroupDescription,
   exerciseGroupLabel,
   exerciseLegendHtml,
+  promptSlot,
 } from "../../exercise-kit/group";
 import { EXERCISE_TOKEN_STYLES } from "../../exercise-kit/tokens";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
@@ -21,6 +23,7 @@ import {
   isMultipleChoicePublicData,
   MULTIPLE_CHOICE_KIND,
   type MultipleChoicePublicData,
+  multipleChoiceInstructions,
   multipleChoiceName,
 } from "./types";
 
@@ -84,13 +87,17 @@ export function renderMultipleChoiceElement(
     })
     .join("");
   const labels = slottedOptionLabels(publicData.options);
+  const description = exerciseGroupDescription(
+    promptSlot(publicData.promptHtml),
+    multipleChoiceInstructions(meta.i18n)[publicData.variant],
+  );
 
   return `<carnap-multiple-choice${exerciseRootAttributes(meta)}>
         <template shadowrootmode="open">
           <style>${MULTIPLE_CHOICE_SHADOW_STYLES}</style>
-          <fieldset aria-busy="true" class="exercise-group mc">
+          <fieldset aria-busy="true" class="exercise-group mc"${description.describedBy}>
             ${legend}
-            <slot name="prompt"></slot>
+            ${description.html}
             <div class="mc-options">${controls}</div>
             <slot name="exercise-actions"></slot>
           </fieldset>

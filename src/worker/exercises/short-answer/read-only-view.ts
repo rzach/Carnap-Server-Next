@@ -6,6 +6,7 @@ import type { ContentNode } from "../../domain/content";
 import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import { recordedText } from "../../exercise-kit/assessment";
 import {
+  exerciseGroupDescription,
   exerciseGroupLabel,
   exerciseLegendHtml,
 } from "../../exercise-kit/group";
@@ -13,6 +14,7 @@ import type { ExerciseRenderContext } from "../../exercise-kit/type";
 import {
   isShortAnswerPublicData,
   SHORT_ANSWER_KIND,
+  shortAnswerInstructions,
   shortAnswerName,
 } from "./types";
 
@@ -49,6 +51,16 @@ export function renderShortAnswer(
   // — and so the field's accessible name never depends on what else the label
   // wraps.
   const fieldId = `${node.exerciseId}-answer`;
+  // The group's description: the prompt, or the instruction when there is
+  // none. In the light DOM the id is the page's, so it is the exercise's own.
+  const promptHtml = node.publicData.promptHtml;
+  const description = exerciseGroupDescription(
+    promptHtml.trim() === ""
+      ? null
+      : `<div class="exercise-prompt">${promptHtml}</div>`,
+    shortAnswerInstructions(i18n).answer,
+    `${node.exerciseId}-description`,
+  );
   // With an action bar this is a student's form, and the field is the answer
   // the runtime reads (`name="text"`, the one native field it knows). Without
   // one it is a preview or a saved revision, and the field is inert: there is
@@ -60,9 +72,9 @@ export function renderShortAnswer(
   const recorded = recordedText(context.priorAnswer);
   const value = recorded === "" ? "" : ` value="${escapeHtml(recorded)}"`;
   return `<section${rootAttributes}>
-        <fieldset class="exercise-group">
+        <fieldset class="exercise-group"${description.describedBy}>
           ${legend}
-          <div class="exercise-prompt">${node.publicData.promptHtml}</div>
+          ${description.html}
           <label for="${escapeHtml(fieldId)}">${escapeHtml(i18n.t("Answer"))}</label>
           <input${field} id="${escapeHtml(fieldId)}"${value}>
         </fieldset>

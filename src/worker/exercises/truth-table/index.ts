@@ -9,6 +9,7 @@ import {
   TRUTH_TABLE_COMPONENT_METADATA,
   TRUTH_TABLE_KIND,
   TRUTH_TABLE_SCHEMA_VERSION,
+  truthTableInstructions,
   truthTableName,
 } from "./types";
 
@@ -22,6 +23,7 @@ export const TRUTH_TABLE_EXERCISE = {
     capabilities: TRUTH_TABLE_CAPABILITIES,
   },
   directiveName: "truth-table",
+  instructions: truthTableInstructions,
   kind: TRUTH_TABLE_KIND,
   name: truthTableName,
   render: renderTruthTable,

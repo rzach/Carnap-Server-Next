@@ -76,10 +76,9 @@
 
 /* Whatever follows the prompt begins on a fresh line. A float only pushes
    *inline* content aside, so a block sibling — the grid, an editor, the action
-   bar — would slide under a title taller than the prompt beside it. Two
-   selectors for the two shapes the prompt takes: a named slot in the widgets'
-   shadow roots, a light-DOM div in the text kinds. */
-.exercise-group > slot[name="prompt"] ~ *,
-.exercise-group > .exercise-prompt ~ * {
+   bar — would slide under a title taller than the prompt beside it. The
+   prompt sits in the group's description (`exerciseGroupDescription`), or,
+   with no prompt, the description is the hidden instruction in its place. */
+.exercise-group > .exercise-description ~ * {
   clear: left;
 }

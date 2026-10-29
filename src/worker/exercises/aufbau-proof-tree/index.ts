@@ -1,3 +1,4 @@
+import { proofInstructions } from "../../exercise-kit/proof/instructions";
 import type { ExerciseType } from "../../exercise-kit/type";
 import { AUFBAU_PROOF_TREE_ASSESSMENT } from "./assessment";
 import { compileAufbauProofTree } from "./authoring";
@@ -22,6 +23,7 @@ export const AUFBAU_PROOF_TREE_EXERCISE = {
     capabilities: AUFBAU_PROOF_TREE_CAPABILITIES,
   },
   directiveName: "aufbau-proof-tree",
+  instructions: proofInstructions,
   kind: AUFBAU_PROOF_TREE_KIND,
   name: aufbauProofTreeName,
   render: renderAufbauProofTree,

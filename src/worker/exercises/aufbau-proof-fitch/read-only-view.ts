@@ -8,8 +8,10 @@ import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
   type ExerciseHeading,
+  exerciseGroupDescription,
   exerciseGroupLabel,
   exerciseLegendHtml,
+  promptSlot,
 } from "../../exercise-kit/group";
 import { reviewHydrationScript } from "../../exercise-kit/hydration";
 import goalStyles from "../../exercise-kit/proof/goal.css" with {
@@ -19,6 +21,7 @@ import {
   type ProofGoalRow,
   proofGoalRowHtml,
 } from "../../exercise-kit/proof/goal-row";
+import { proofInstructions } from "../../exercise-kit/proof/instructions";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
 import type { Translator } from "../../i18n/translator";
 import shadowStyles from "./shadow.css" with { type: "text" };
@@ -73,12 +76,19 @@ export function renderAufbauProofFitchElement(
   meta: AufbauProofFitchElementMeta,
   actions = "",
 ): string {
+  const description = exerciseGroupDescription(
+    promptSlot(publicData.promptHtml),
+    proofInstructions(meta.i18n)[
+      publicData.playground === true ? "playground" : "proof"
+    ],
+  );
+
   return `<carnap-aufbau-proof-fitch${exerciseRootAttributes(meta)}>
         <template shadowrootmode="open">
           <style>${AUFBAU_PROOF_FITCH_SHADOW_STYLES}</style>
-          <fieldset aria-busy="true" class="exercise-group proof">
+          <fieldset aria-busy="true" class="exercise-group proof"${description.describedBy}>
             ${exerciseLegendHtml(exerciseGroupLabel(aufbauProofFitchName(meta.i18n), meta))}
-            <slot name="prompt"></slot>
+            ${description.html}
             <pre class="proof-source">${escapeHtml(publicData.starterBody)}</pre>
             <slot name="exercise-actions"></slot>
           </fieldset>

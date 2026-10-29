@@ -26,6 +26,27 @@ export function worldName(i18n: Translator): string {
   return i18n.t("World");
 }
 
+/** What a student does, by variant (`ExerciseType.instructions`). */
+export function worldInstructions(
+  i18n: Translator,
+): Readonly<Record<WorldVariant, string>> {
+  return {
+    build: i18n.t(
+      "Change the world so that each sentence comes out as marked.",
+    ),
+    counterexample: i18n.t(
+      "Build a world in which the premises are true and the conclusions are false.",
+    ),
+    distinguish: i18n.t(
+      "Write a sentence that is true in world A and false in world B.",
+    ),
+    evaluate: i18n.t("Mark each sentence true or false in this world."),
+    game: i18n.t(
+      "Claim each sentence true or false, then defend your claim against the computer, one part at a time.",
+    ),
+  };
+}
+
 /**
  * The task:
  *   - `evaluate`       say whether each sentence is true in a fixed world;

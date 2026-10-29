@@ -112,6 +112,25 @@ describe("browser rebuild of the preview document", () => {
     }
   });
 
+  // The group's hidden name and its instruction (gh #16) are worded by the
+  // type, not by its element, so no widget's `strings` carries them; a German
+  // rebuild used to name an untitled multiple-choice question in English.
+  test("words every exercise group's name and instruction", () => {
+    const preview = previewFor("de");
+    const catalog = i18nFor("de");
+
+    expect(
+      preview.i18n.t("Exercise {number}: {kind}", { kind: "K", number: 3 }),
+    ).toBe(catalog.t("Exercise {number}: {kind}", { kind: "K", number: 3 }));
+
+    for (const type of createDefaultExerciseRegistry().types()) {
+      expect(type.name(preview.i18n), type.kind).toBe(type.name(catalog));
+      expect(type.instructions(preview.i18n), type.kind).toEqual(
+        type.instructions(catalog),
+      );
+    }
+  });
+
   test("declares the language it is actually written in", async () => {
     const artifact = await compile(TRUTH_TABLE_SOURCE);
     const german = rebuild("de", artifact);

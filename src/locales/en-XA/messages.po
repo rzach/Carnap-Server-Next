@@ -1411,6 +1411,14 @@ msgstr ""
 msgid "Breadcrumb"
 msgstr ""
 
+#: src/worker/exercises/model/types.ts
+msgid "Build a model: give a domain, and what each symbol stands for."
+msgstr ""
+
+#: src/worker/exercises/world/types.ts
+msgid "Build a world in which the premises are true and the conclusions are false."
+msgstr ""
+
 #: src/worker/web/profile.tsx
 msgid "Calendar"
 msgstr ""
@@ -1521,6 +1529,10 @@ msgstr ""
 msgid "Change the email address of the Carnap account that uses {old} to {new}?"
 msgstr ""
 
+#: src/worker/exercises/world/types.ts
+msgid "Change the world so that each sentence comes out as marked."
+msgstr ""
+
 #: src/worker/exercises/world/strings.ts
 msgid "Changes: {used} of {limit}"
 msgstr ""
@@ -1544,12 +1556,24 @@ msgstr ""
 msgid "Choose a block for {variable} on the board."
 msgstr ""
 
+#: src/worker/exercises/truth-table/types.ts
+msgid "Choose a value for each sentence letter, then fill in the rest of the row."
+msgstr ""
+
 #: src/worker/web/lti.tsx
 msgid "Choose an assignment"
 msgstr ""
 
 #: src/worker/web/courses.tsx
 msgid "Choose an assignment…"
+msgstr ""
+
+#: src/worker/exercises/multiple-choice/types.ts
+msgid "Choose every correct answer."
+msgstr ""
+
+#: src/worker/exercises/multiple-choice/types.ts
+msgid "Choose one answer."
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
@@ -1589,6 +1613,7 @@ msgid "Claim a sentence true or false to start its game."
 msgstr ""
 
 #: src/worker/exercises/world/strings.ts
+#: src/worker/exercises/world/types.ts
 msgid "Claim each sentence true or false, then defend your claim against the computer, one part at a time."
 msgstr ""
 
@@ -2241,6 +2266,18 @@ msgstr ""
 msgid "Details"
 msgstr ""
 
+#: src/worker/exercises/truth-tree/types.ts
+msgid "Develop the tree until every branch is closed, or one branch is open and complete."
+msgstr ""
+
+#: src/worker/exercises/truth-tree/types.ts
+msgid "Develop the tree until every branch is closed, or open and complete."
+msgstr ""
+
+#: src/worker/exercises/truth-tree/types.ts
+msgid "Develop the tree until every branch is closed."
+msgstr ""
+
 #: src/worker/web/assignment-detail.tsx
 msgid "Different dates or attempts for one student. Everyone else follows the assignment."
 msgstr ""
@@ -2617,6 +2654,7 @@ msgid "Exercise {id}"
 msgstr ""
 
 #: src/worker/exercise-kit/group.ts
+#: src/worker/web/ui-strings.ts
 msgid "Exercise {number}: {kind}"
 msgstr ""
 
@@ -2749,6 +2787,22 @@ msgstr ""
 
 #: src/worker/exercises/truth-table/strings.ts
 msgid "Fill in a row where the formulas disagree, then mark it as your counterexample."
+msgstr ""
+
+#: src/worker/exercises/truth-table/types.ts
+msgid "Fill in the truth table for the argument, or fill in and mark a row that is a counterexample."
+msgstr ""
+
+#: src/worker/exercises/truth-table/types.ts
+msgid "Fill in the truth table for the argument."
+msgstr ""
+
+#: src/worker/exercises/truth-table/types.ts
+msgid "Fill in the truth table, or fill in and mark a row that is a counterexample."
+msgstr ""
+
+#: src/worker/exercises/truth-table/types.ts
+msgid "Fill in the truth table."
 msgstr ""
 
 #: src/worker/web/assignment-detail.tsx
@@ -3429,6 +3483,10 @@ msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Mark a row the branch closes on, once closing"
+msgstr ""
+
+#: src/worker/exercises/world/types.ts
+msgid "Mark each sentence true or false in this world."
 msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts
@@ -4212,6 +4270,7 @@ msgid "person@example.edu"
 msgstr ""
 
 #: src/worker/exercises/syntax-tree/strings.ts
+#: src/worker/exercises/syntax-tree/types.ts
 msgid "Pick the main connective of each sentence until only atomic sentences remain."
 msgstr ""
 
@@ -5241,6 +5300,10 @@ msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Split below row {row}: two new branches."
+msgstr ""
+
+#: src/worker/exercises/syntax-tree/types.ts
+msgid "Split each part at its main symbol, down to the variables and names, and say which quantifier binds each variable."
 msgstr ""
 
 #: src/worker/exercises/syntax-tree/strings.ts
@@ -6748,6 +6811,10 @@ msgstr ""
 msgid "Total"
 msgstr ""
 
+#: src/worker/exercises/translation/types.ts
+msgid "Translate the text into the formal language."
+msgstr ""
+
 #: src/worker/exercises/translation/assessment.ts
 #: src/worker/exercises/translation/types.ts
 msgid "Translation"
@@ -6821,6 +6888,10 @@ msgstr ""
 
 #: src/worker/exercises/aufbau-proof-tree/strings.ts
 msgid "Type the rule that justifies each inference in the field beneath its line. Add hypothesis makes a leaf that cites one of the goal's hypotheses."
+msgstr ""
+
+#: src/worker/exercises/short-answer/types.ts
+msgid "Type your answer."
 msgstr ""
 
 #: src/worker/web/components.tsx
@@ -7176,8 +7247,20 @@ msgstr ""
 msgid "Write"
 msgstr ""
 
+#: src/worker/exercise-kit/proof/instructions.ts
+msgid "Write a proof of anything you like; every line must follow by a rule."
+msgstr ""
+
+#: src/worker/exercise-kit/proof/instructions.ts
+msgid "Write a proof of the goal."
+msgstr ""
+
 #: src/worker/exercises/world/strings.ts
 msgid "Write a sentence first."
+msgstr ""
+
+#: src/worker/exercises/world/types.ts
+msgid "Write a sentence that is true in world A and false in world B."
 msgstr ""
 
 #: src/worker/exercises/model/strings.ts
@@ -7188,12 +7271,20 @@ msgstr ""
 msgid "Write each step's rows, choosing whether they stack on the branch or split it, and type the row they develop and the rule they use in the margin."
 msgstr ""
 
+#: src/worker/exercises/model/types.ts
+msgid "Write one or more sentences, separated by commas, then build a model for them."
+msgstr ""
+
 #: src/worker/exercises/aufbau-proof/strings.ts
 msgid "Write one step per line: a label, the formula between dollar signs, then by, the rule's name, and the lines it cites in brackets, as in l3: $ q $ by mp [l1, l2]. Cite the goal's hypotheses as #1, #2, and so on."
 msgstr ""
 
 #: src/worker/exercises/aufbau-proof-fitch/strings.ts
 msgid "Write one step per line: the formula, a colon, then the rule and the lines it cites, as in Q :→E 1 2. Cite a subproof by its range of lines, as in 2-4."
+msgstr ""
+
+#: src/worker/exercises/truth-tree/types.ts
+msgid "Write the first rows of the tree, then develop it."
 msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts
@@ -7206,6 +7297,10 @@ msgstr ""
 
 #: src/worker/exercises/truth-tree/strings.ts
 msgid "Write the row's sentence"
+msgstr ""
+
+#: src/worker/exercises/free-response/types.ts
+msgid "Write your answer."
 msgstr ""
 
 #: src/worker/web/courses.tsx

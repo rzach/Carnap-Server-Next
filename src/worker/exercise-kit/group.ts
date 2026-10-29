@@ -107,6 +107,53 @@ export function exerciseLegendHtml(label: ExerciseGroupLabel): string {
   return `<legend class="${className}"><h${label.level} class="exercise-heading">${escapeHtml(label.text)}</h${label.level}></legend>`;
 }
 
+/** The markup that describes an exercise group, and the attribute that says so. */
+export interface ExerciseGroupDescription {
+  /** For the `<fieldset>`: ` aria-describedby="…"`. */
+  readonly describedBy: string;
+  /** What it points at, in the prompt's place in the group. */
+  readonly html: string;
+}
+
+/**
+ * What an exercise group is described by, so that a screen reader announcing
+ * the group on entering its controls says what to do there as well as which
+ * exercise it is (gh #16, WCAG technique H71): the author's prompt when there
+ * is one, and otherwise the type's own instruction (`ExerciseType.instructions`)
+ * — "Fill in the truth table." — which only a screen reader hears. A prompt
+ * replaces the instruction rather than following it: the author's words are the
+ * task. And an exercise with no prompt looks as it always did, so there is no
+ * attribute for turning the sentence off.
+ *
+ * `prompt` is the prompt as this markup places it — a widget's named slot in its
+ * shadow root, the prompt itself in the light DOM — or `null` for none. It is
+ * wrapped rather than pointed at, because an id cannot reach out of a shadow
+ * root to the light-DOM prompt a slot shows; the wrapper is in the same root as
+ * the fieldset, and the description is read through the slot. `id` must be
+ * unique where the group is: a shadow root scopes the default to itself, and
+ * the light DOM passes one of its own.
+ */
+export function exerciseGroupDescription(
+  prompt: string | null,
+  instruction: string,
+  id = "exercise-description",
+): ExerciseGroupDescription {
+  const idAttribute = escapeHtml(id);
+
+  return {
+    describedBy: ` aria-describedby="${idAttribute}"`,
+    html:
+      prompt === null
+        ? `<p class="exercise-description visually-hidden" id="${idAttribute}">${escapeHtml(instruction)}</p>`
+        : `<div class="exercise-description" id="${idAttribute}">${prompt}</div>`,
+  };
+}
+
+/** A widget's prompt slot, or `null` when the author wrote no prompt. */
+export function promptSlot(promptHtml: string): string | null {
+  return promptHtml.trim() === "" ? null : '<slot name="prompt"></slot>';
+}
+
 export const EXERCISE_GROUP_STYLES = groupStyles;
 
 /**

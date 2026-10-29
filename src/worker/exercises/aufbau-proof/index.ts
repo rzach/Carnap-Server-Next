@@ -1,3 +1,4 @@
+import { proofInstructions } from "../../exercise-kit/proof/instructions";
 import type { ExerciseType } from "../../exercise-kit/type";
 import { AUFBAU_PROOF_ASSESSMENT } from "./assessment";
 import { compileAufbauProof } from "./authoring";
@@ -22,6 +23,7 @@ export const AUFBAU_PROOF_EXERCISE = {
     capabilities: AUFBAU_PROOF_CAPABILITIES,
   },
   directiveName: "aufbau-proof",
+  instructions: proofInstructions,
   kind: AUFBAU_PROOF_KIND,
   name: aufbauProofName,
   render: renderAufbauProof,

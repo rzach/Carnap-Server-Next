@@ -42,6 +42,13 @@ export function shortAnswerName(i18n: Translator): string {
   return i18n.t("Short-answer question");
 }
 
+/** What a student does (`ExerciseType.instructions`). */
+export function shortAnswerInstructions(
+  i18n: Translator,
+): Readonly<Record<"answer", string>> {
+  return { answer: i18n.t("Type your answer.") };
+}
+
 export function isShortAnswerPublicData(
   value: JsonValue,
 ): value is JsonValue & ShortAnswerPublicData {

@@ -10,9 +10,11 @@ import {
   EXERCISE_GROUP_SHADOW_STYLES,
   type ExerciseHeading,
   type ExerciseHeadingLevel,
+  exerciseGroupDescription,
   exerciseGroupLabel,
   exerciseLegendHtml,
   exerciseSubheadingLevel,
+  promptSlot,
 } from "../../exercise-kit/group";
 import { EXERCISE_TOKEN_STYLES } from "../../exercise-kit/tokens";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
@@ -28,7 +30,12 @@ import reviewStyles from "./review.css" with { type: "text" };
 import shadowStyles from "./shadow.css" with { type: "text" };
 import { buildWorldStrings } from "./strings";
 import type { WorldAnswerData, WorldPublicData } from "./types";
-import { readsFixedWorld, WORLD_KIND, worldName } from "./types";
+import {
+  readsFixedWorld,
+  WORLD_KIND,
+  worldInstructions,
+  worldName,
+} from "./types";
 import { describeWorldVerdict } from "./verdict-text";
 
 const WORLD_SHADOW_STYLES = [EXERCISE_GROUP_SHADOW_STYLES, shadowStyles].join(
@@ -298,12 +305,17 @@ export function renderWorldElement(
     exerciseGroupLabel(worldName(meta.i18n), meta),
   );
 
+  const description = exerciseGroupDescription(
+    promptSlot(publicData.promptHtml),
+    worldInstructions(meta.i18n)[publicData.variant],
+  );
+
   return `<carnap-world${exerciseRootAttributes(meta)}>
         <template shadowrootmode="open">
           <style>${WORLD_SHADOW_STYLES}</style>
-          <fieldset aria-busy="true" class="exercise-group world" data-variant="${publicData.variant}">
+          <fieldset aria-busy="true" class="exercise-group world" data-variant="${publicData.variant}"${description.describedBy}>
             ${legend}
-            <slot name="prompt"></slot>
+            ${description.html}
             <div class="world-body" data-role="body">${exerciseBodyHtml(publicData, resolved, words, { disabled: true, headingLevel: exerciseSubheadingLevel(meta.heading.level), reveal: false })}</div>
             <slot name="exercise-actions"></slot>
           </fieldset>

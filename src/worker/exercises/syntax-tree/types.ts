@@ -27,6 +27,20 @@ export function syntaxTreeName(i18n: Translator): string {
   return i18n.t("Syntax tree");
 }
 
+/** What a student does, by `depth` (`ExerciseType.instructions`). */
+export function syntaxTreeInstructions(
+  i18n: Translator,
+): Readonly<Record<SyntaxTreeDepth, string>> {
+  return {
+    connectives: i18n.t(
+      "Pick the main connective of each sentence until only atomic sentences remain.",
+    ),
+    terms: i18n.t(
+      "Split each part at its main symbol, down to the variables and names, and say which quantifier binds each variable.",
+    ),
+  };
+}
+
 /**
  * How the tree is scored:
  *   - `whole`   (the default) all or nothing. A wrong pick starts the whole

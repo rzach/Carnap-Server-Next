@@ -29,6 +29,24 @@ export function modelName(i18n: Translator): string {
 }
 
 /**
+ * What a student does (`ExerciseType.instructions`). One sentence for every
+ * variant, since which values the sentences must take follows
+ * `counterexample-to` and the prompt says it; a playground adds the sentences.
+ */
+export function modelInstructions(
+  i18n: Translator,
+): Readonly<Record<"model" | "playground", string>> {
+  return {
+    model: i18n.t(
+      "Build a model: give a domain, and what each symbol stands for.",
+    ),
+    playground: i18n.t(
+      "Write one or more sentences, separated by commas, then build a model for them.",
+    ),
+  };
+}
+
+/**
  * The task shape, following Carnap's three `CounterModeler` classes:
  *   - `simple`     build a model in which the given formulas all come out the
  *                  way the target says; the default.

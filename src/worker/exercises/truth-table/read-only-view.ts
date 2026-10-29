@@ -7,9 +7,12 @@ import type { ContentNode } from "../../domain/content";
 import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
+  type ExerciseGroupDescription,
   type ExerciseHeading,
+  exerciseGroupDescription,
   exerciseGroupLabel,
   exerciseLegendHtml,
+  promptSlot,
 } from "../../exercise-kit/group";
 import { reviewHydrationScript } from "../../exercise-kit/hydration";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
@@ -35,7 +38,11 @@ import type {
   TruthTableOptions,
   TruthTablePublicData,
 } from "./types";
-import { TRUTH_TABLE_KIND, truthTableName } from "./types";
+import {
+  TRUTH_TABLE_KIND,
+  truthTableInstructions,
+  truthTableName,
+} from "./types";
 
 const TRUTH_TABLE_SHADOW_STYLES = [
   EXERCISE_GROUP_SHADOW_STYLES,
@@ -546,6 +553,11 @@ function gridMarkup(
    * geometry and would otherwise have no way to learn the arrows work.
    */
   keyboardHint = "",
+  /**
+   * What describes the group (`exerciseGroupDescription`), on the answering
+   * path; the review's card already says what the exercise asked.
+   */
+  description: ExerciseGroupDescription | null = null,
 ): string {
   const described = keyboardHint === "" ? "" : ' aria-describedby="tt-keys"';
   const hint =
@@ -553,9 +565,9 @@ function gridMarkup(
       ? ""
       : `<p class="visually-hidden" id="tt-keys">${escapeHtml(keyboardHint)}</p>`;
 
-  return `<fieldset class="exercise-group tt-wrap">
+  return `<fieldset class="exercise-group tt-wrap"${description?.describedBy ?? ""}>
             ${legend}
-            <slot name="prompt"></slot>
+            ${description?.html ?? ""}
             ${hint}
             <div class="tt-scroll">
               <table class="tt"${described}>${inner}</table>
@@ -628,6 +640,14 @@ export function renderTruthTableElement(
     exerciseLegendHtml(exerciseGroupLabel(truthTableName(meta.i18n), meta)),
     "",
     strings["Arrow keys move between cells. Space or Enter changes one."],
+    exerciseGroupDescription(
+      promptSlot(publicData.promptHtml),
+      truthTableInstructions(meta.i18n)[
+        publicData.variant === "partial" || !ceSelect
+          ? publicData.variant
+          : (`${publicData.variant}-counterexample` as const)
+      ],
+    ),
   );
 
   return `<carnap-truth-table${exerciseRootAttributes(meta)}>

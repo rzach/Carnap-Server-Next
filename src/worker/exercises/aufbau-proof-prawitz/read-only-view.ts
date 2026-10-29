@@ -8,8 +8,10 @@ import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
   type ExerciseHeading,
+  exerciseGroupDescription,
   exerciseGroupLabel,
   exerciseLegendHtml,
+  promptSlot,
 } from "../../exercise-kit/group";
 import { reviewHydrationScript } from "../../exercise-kit/hydration";
 import goalStyles from "../../exercise-kit/proof/goal.css" with {
@@ -19,6 +21,7 @@ import {
   type ProofGoalRow,
   proofGoalRowHtml,
 } from "../../exercise-kit/proof/goal-row";
+import { proofInstructions } from "../../exercise-kit/proof/instructions";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
 import type { Translator } from "../../i18n/translator";
 import shadowStyles from "./shadow.css" with { type: "text" };
@@ -114,12 +117,19 @@ export function renderAufbauProofPrawitzElement(
 ): string {
   const seed = `<proof-tree><proof-proposition>${escapeHtml(publicData.goalFormula)}</proof-proposition></proof-tree>`;
 
+  const description = exerciseGroupDescription(
+    promptSlot(publicData.promptHtml),
+    proofInstructions(meta.i18n)[
+      publicData.playground === true ? "playground" : "proof"
+    ],
+  );
+
   return `<carnap-aufbau-proof-prawitz${exerciseRootAttributes(meta)}>
         <template shadowrootmode="open">
           <style>${AUFBAU_PROOF_PRAWITZ_SHADOW_STYLES}</style>
-          <fieldset aria-busy="true" class="exercise-group proof-prawitz">
+          <fieldset aria-busy="true" class="exercise-group proof-prawitz"${description.describedBy}>
             ${exerciseLegendHtml(exerciseGroupLabel(aufbauProofPrawitzName(meta.i18n), meta))}
-            <slot name="prompt"></slot>
+            ${description.html}
             <div class="prawitz-canvas">${seed}</div>
             <slot name="exercise-actions"></slot>
           </fieldset>

@@ -28,6 +28,15 @@ export function translationName(i18n: Translator): string {
   return i18n.t("Translation");
 }
 
+/** What a student does (`ExerciseType.instructions`). */
+export function translationInstructions(
+  i18n: Translator,
+): Readonly<Record<"translate", string>> {
+  return {
+    translate: i18n.t("Translate the text into the formal language."),
+  };
+}
+
 /**
  * The task shape, following Carnap's three `Translate` classes:
  *   - `prop`        Carnap `.Prop`: a propositional symbolization, judged up

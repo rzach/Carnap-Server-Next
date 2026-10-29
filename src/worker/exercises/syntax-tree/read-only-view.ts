@@ -9,8 +9,10 @@ import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
   type ExerciseHeading,
+  exerciseGroupDescription,
   exerciseGroupLabel,
   exerciseLegendHtml,
+  promptSlot,
 } from "../../exercise-kit/group";
 import { reviewHydrationScript } from "../../exercise-kit/hydration";
 import { EXERCISE_TOKEN_STYLES } from "../../exercise-kit/tokens";
@@ -33,6 +35,7 @@ import type { SyntaxTreeAnswerData, SyntaxTreePublicData } from "./types";
 import {
   SYNTAX_TREE_COMPONENT_METADATA,
   SYNTAX_TREE_KIND,
+  syntaxTreeInstructions,
   syntaxTreeName,
 } from "./types";
 import { SYNTAX_TREE_DEPTH_WORDS } from "./words";
@@ -171,12 +174,17 @@ export function renderSyntaxTreeElement(
       ? `<button class="st-free" data-role="free" hidden type="button">${escapeHtml(words("Free"))}</button>`
       : "";
 
+  const description = exerciseGroupDescription(
+    promptSlot(publicData.promptHtml),
+    syntaxTreeInstructions(meta.i18n)[publicData.depth],
+  );
+
   return `<carnap-syntax-tree${exerciseRootAttributes(meta)}>
         <template shadowrootmode="open">
           <style>${SYNTAX_TREE_SHADOW_STYLES}</style>
-          <fieldset aria-busy="true" class="exercise-group syntax-tree" data-scoring="${publicData.scoring}">
+          <fieldset aria-busy="true" class="exercise-group syntax-tree" data-scoring="${publicData.scoring}"${description.describedBy}>
             ${legend}
-            <slot name="prompt"></slot>
+            ${description.html}
             <div class="syntax-tree-body" data-role="body">
               <div data-role="tree">${treeHtml(resolved, NOTHING_SHOWN, words)}</div>
               <div class="st-status"><p aria-live="polite" class="st-message" data-role="message" tabindex="-1"></p>${free}</div>

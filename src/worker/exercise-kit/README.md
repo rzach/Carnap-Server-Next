@@ -30,7 +30,8 @@ lookups over it, and nothing else enumerates them.
 - the root files — the framework every type plugs into: the `ExerciseType`
   contract itself (`type.ts`), the action bar (`actions.ts`), the hydration
   payload (`hydration.ts`), the named group every exercise renders as
-  (`group.ts`, `group.css`) and the heading its legend holds, the
+  (`group.ts`, `group.css`), the heading its legend holds and the
+  description it points at (the prompt, or the type's `instructions`), the
   correctness mark, the answer events, the help strings, the single-key
   shortcut switch and the key reading under it (`shortcut-keys.ts`), the authoring
   helpers (`authoring.ts`: the directive block, the common attribute

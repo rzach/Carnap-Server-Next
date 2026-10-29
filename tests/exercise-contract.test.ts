@@ -64,6 +64,9 @@ const fakeExerciseType: ExerciseType = {
   compile() {
     return Promise.resolve(null);
   },
+  instructions() {
+    return { answer: "Answer yes or no." };
+  },
   name() {
     return "Fake exercise";
   },

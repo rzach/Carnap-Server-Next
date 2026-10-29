@@ -9,8 +9,10 @@ import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
   type ExerciseHeading,
+  exerciseGroupDescription,
   exerciseGroupLabel,
   exerciseLegendHtml,
+  promptSlot,
 } from "../../exercise-kit/group";
 import { EXERCISE_TOKEN_STYLES } from "../../exercise-kit/tokens";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
@@ -36,7 +38,11 @@ import { tableauGridHtml, tableauOutlineHtml } from "./tableau/html";
 import { layoutTableau } from "./tableau/layout";
 import tableauStyles from "./tableau/tableau.css" with { type: "text" };
 import type { TruthTreeAnswerData, TruthTreePublicData } from "./types";
-import { TRUTH_TREE_KIND, truthTreeName } from "./types";
+import {
+  TRUTH_TREE_KIND,
+  truthTreeInstructions,
+  truthTreeName,
+} from "./types";
 import type { TreeWords } from "./verdict-text";
 
 const TRUTH_TREE_SHADOW_STYLES = [
@@ -126,12 +132,21 @@ export function renderTruthTreeElement(
           rules: startingRules(resolved),
         });
 
+  const description = exerciseGroupDescription(
+    promptSlot(publicData.promptHtml),
+    truthTreeInstructions(meta.i18n)[
+      publicData.playground === true
+        ? "playground"
+        : (publicData.finish ?? "closed")
+    ],
+  );
+
   return `<carnap-truth-tree${exerciseRootAttributes(meta)}>
         <template shadowrootmode="open">
           <style>${TRUTH_TREE_SHADOW_STYLES}</style>
-          <fieldset aria-busy="true" class="exercise-group truth-tree">
+          <fieldset aria-busy="true" class="exercise-group truth-tree"${description.describedBy}>
             ${legend}
-            <slot name="prompt"></slot>
+            ${description.html}
             <div class="truth-tree-body" data-role="body">${body}</div>
             <slot name="exercise-actions"></slot>
           </fieldset>

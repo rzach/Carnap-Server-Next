@@ -9,6 +9,7 @@ import {
   TRANSLATION_COMPONENT_METADATA,
   TRANSLATION_KIND,
   TRANSLATION_SCHEMA_VERSION,
+  translationInstructions,
   translationName,
 } from "./types";
 
@@ -22,6 +23,7 @@ export const TRANSLATION_EXERCISE = {
     capabilities: TRANSLATION_CAPABILITIES,
   },
   directiveName: "translation",
+  instructions: translationInstructions,
   kind: TRANSLATION_KIND,
   name: translationName,
   render: renderTranslation,

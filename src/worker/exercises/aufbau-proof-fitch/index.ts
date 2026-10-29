@@ -1,3 +1,4 @@
+import { proofInstructions } from "../../exercise-kit/proof/instructions";
 import type { ExerciseType } from "../../exercise-kit/type";
 import { AUFBAU_PROOF_FITCH_ASSESSMENT } from "./assessment";
 import { compileAufbauProofFitch } from "./authoring";
@@ -22,6 +23,7 @@ export const AUFBAU_PROOF_FITCH_EXERCISE = {
     capabilities: AUFBAU_PROOF_FITCH_CAPABILITIES,
   },
   directiveName: "aufbau-proof-fitch",
+  instructions: proofInstructions,
   kind: AUFBAU_PROOF_FITCH_KIND,
   name: aufbauProofFitchName,
   // The starter body is proof text, not markdown; see `ExerciseType.rawBody`.

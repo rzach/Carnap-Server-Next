@@ -45,6 +45,19 @@ export function multipleChoiceName(i18n: Translator): string {
   return i18n.t("Multiple-choice question");
 }
 
+/**
+ * What a student does, by variant (`ExerciseType.instructions`): one option,
+ * or every option that is correct.
+ */
+export function multipleChoiceInstructions(
+  i18n: Translator,
+): Readonly<Record<MultipleChoiceVariant, string>> {
+  return {
+    multiple: i18n.t("Choose every correct answer."),
+    single: i18n.t("Choose one answer."),
+  };
+}
+
 export function isMultipleChoicePublicData(
   value: JsonValue,
 ): value is JsonValue & MultipleChoicePublicData {

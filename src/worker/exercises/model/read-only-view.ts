@@ -8,8 +8,10 @@ import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
   type ExerciseHeading,
+  exerciseGroupDescription,
   exerciseGroupLabel,
   exerciseLegendHtml,
+  promptSlot,
 } from "../../exercise-kit/group";
 import { EXERCISE_TOKEN_STYLES } from "../../exercise-kit/tokens";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
@@ -39,7 +41,7 @@ import type {
   ModelPublicData,
   ModelTurnstileGlyph,
 } from "./types";
-import { MODEL_KIND, modelName } from "./types";
+import { MODEL_KIND, modelInstructions, modelName } from "./types";
 import { describeVerdict } from "./verdict-text";
 
 const MODEL_SHADOW_STYLES = [EXERCISE_GROUP_SHADOW_STYLES, shadowStyles].join(
@@ -287,12 +289,19 @@ export function renderModelElement(
     .map((field) => renderField(field, context))
     .join("");
 
+  const description = exerciseGroupDescription(
+    promptSlot(publicData.promptHtml),
+    modelInstructions(meta.i18n)[
+      publicData.playground === undefined ? "model" : "playground"
+    ],
+  );
+
   return `<carnap-model${exerciseRootAttributes(meta)}>
         <template shadowrootmode="open">
           <style>${MODEL_SHADOW_STYLES}</style>
-          <fieldset aria-busy="true" class="exercise-group model">
+          <fieldset aria-busy="true" class="exercise-group model"${description.describedBy}>
             ${legend}
-            <slot name="prompt"></slot>
+            ${description.html}
             ${
               publicData.playground === undefined
                 ? `<p class="model-goal">${escapeHtml(modelGoalText(publicData, resolved))}</p>`

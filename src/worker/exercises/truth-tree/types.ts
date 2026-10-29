@@ -44,6 +44,26 @@ export function truthTreeName(i18n: Translator): string {
 }
 
 /**
+ * What a student does (`ExerciseType.instructions`): develop the tree until it
+ * is done, as `finish` says done is, or in a playground write its first rows
+ * too.
+ */
+export function truthTreeInstructions(
+  i18n: Translator,
+): Readonly<Record<TruthTreeFinish | "playground", string>> {
+  return {
+    closed: i18n.t("Develop the tree until every branch is closed."),
+    complete: i18n.t(
+      "Develop the tree until every branch is closed, or open and complete.",
+    ),
+    "one-open": i18n.t(
+      "Develop the tree until every branch is closed, or one branch is open and complete.",
+    ),
+    playground: i18n.t("Write the first rows of the tree, then develop it."),
+  };
+}
+
+/**
  * When a tree is done, by the directive's `finish=` (gh #46): every branch
  * closed; or every branch closed or marked open and complete; or every branch
  * closed, or one marked open and complete (UBC §5.8).

@@ -8,6 +8,7 @@ import {
   SHORT_ANSWER_COMPONENT_METADATA,
   SHORT_ANSWER_KIND,
   SHORT_ANSWER_SCHEMA_VERSION,
+  shortAnswerInstructions,
   shortAnswerName,
 } from "./types";
 
@@ -21,6 +22,7 @@ export const SHORT_ANSWER_EXERCISE = {
     capabilities: SHORT_ANSWER_CAPABILITIES,
   },
   directiveName: "short-answer",
+  instructions: shortAnswerInstructions,
   kind: SHORT_ANSWER_KIND,
   name: shortAnswerName,
   render: renderShortAnswer,

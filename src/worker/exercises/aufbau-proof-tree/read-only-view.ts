@@ -8,8 +8,10 @@ import { previewExerciseActionsHtml } from "../../exercise-kit/actions";
 import {
   EXERCISE_GROUP_SHADOW_STYLES,
   type ExerciseHeading,
+  exerciseGroupDescription,
   exerciseGroupLabel,
   exerciseLegendHtml,
+  promptSlot,
 } from "../../exercise-kit/group";
 import { reviewHydrationScript } from "../../exercise-kit/hydration";
 import goalStyles from "../../exercise-kit/proof/goal.css" with {
@@ -19,6 +21,7 @@ import {
   type ProofGoalRow,
   proofGoalRowHtml,
 } from "../../exercise-kit/proof/goal-row";
+import { proofInstructions } from "../../exercise-kit/proof/instructions";
 import type { ExerciseRenderContext } from "../../exercise-kit/type";
 import type { Translator } from "../../i18n/translator";
 import shadowStyles from "./shadow.css" with { type: "text" };
@@ -101,12 +104,19 @@ export function renderAufbauProofTreeElement(
       ? `<proof-tree><proof-proposition>${escapeHtml(publicData.goalFormula)}</proof-proposition></proof-tree>`
       : proofTreeMarkup(publicData.starterTree);
 
+  const description = exerciseGroupDescription(
+    promptSlot(publicData.promptHtml),
+    proofInstructions(meta.i18n)[
+      publicData.playground === true ? "playground" : "proof"
+    ],
+  );
+
   return `<carnap-aufbau-proof-tree${exerciseRootAttributes(meta)}>
         <template shadowrootmode="open">
           <style>${AUFBAU_PROOF_TREE_SHADOW_STYLES}</style>
-          <fieldset aria-busy="true" class="exercise-group proof-tree">
+          <fieldset aria-busy="true" class="exercise-group proof-tree"${description.describedBy}>
             ${exerciseLegendHtml(exerciseGroupLabel(aufbauProofTreeName(meta.i18n), meta))}
-            <slot name="prompt"></slot>
+            ${description.html}
             <div class="proof-tree-canvas">${seed}</div>
             <slot name="exercise-actions"></slot>
           </fieldset>

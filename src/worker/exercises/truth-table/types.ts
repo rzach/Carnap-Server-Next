@@ -27,6 +27,34 @@ export function truthTableName(i18n: Translator): string {
 }
 
 /**
+ * What a student does (`ExerciseType.instructions`), by variant; a whole table
+ * that offers the counterexample selector (unless `nocounterexample`) can be
+ * answered by one row instead, which its sentence says.
+ */
+export function truthTableInstructions(
+  i18n: Translator,
+): Readonly<
+  Record<
+    TruthTableVariant | "simple-counterexample" | "validity-counterexample",
+    string
+  >
+> {
+  return {
+    partial: i18n.t(
+      "Choose a value for each sentence letter, then fill in the rest of the row.",
+    ),
+    simple: i18n.t("Fill in the truth table."),
+    "simple-counterexample": i18n.t(
+      "Fill in the truth table, or fill in and mark a row that is a counterexample.",
+    ),
+    validity: i18n.t("Fill in the truth table for the argument."),
+    "validity-counterexample": i18n.t(
+      "Fill in the truth table for the argument, or fill in and mark a row that is a counterexample.",
+    ),
+  };
+}
+
+/**
  * The truth-table task shape:
  *   - `simple`   construct a table for one or more formulas (tautology /
  *                counterexample); the default.

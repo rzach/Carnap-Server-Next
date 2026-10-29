@@ -9,6 +9,7 @@ import {
   WORLD_COMPONENT_METADATA,
   WORLD_KIND,
   WORLD_SCHEMA_VERSION,
+  worldInstructions,
   worldName,
 } from "./types";
 
@@ -23,6 +24,7 @@ export const WORLD_EXERCISE = {
   },
   dataBodyLines: worldDataBodyLines,
   directiveName: "world",
+  instructions: worldInstructions,
   kind: WORLD_KIND,
   name: worldName,
   render: renderWorld,
