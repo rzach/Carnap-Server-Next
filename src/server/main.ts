@@ -104,14 +104,23 @@ if (applied.length > 0) {
   logEvent("info", "migrations_applied", { migrations: applied });
 }
 
-if (env.CARNAP_ENV !== "local" && env.RESEND_API_KEY === undefined) {
-  // Login delivery fails closed outside `local`, and it fails at the moment
-  // someone tries to sign in rather than at boot — so say it now, while there
-  // is still an operator looking.
+// Mail goes out only with both set (`resendSenderFromEnv`), so a key without a
+// sender address is as unconfigured as no key at all.
+const missingEmailSettings = (
+  ["RESEND_API_KEY", "AUTH_LOGIN_EMAIL_FROM"] as const
+).filter((key) => env[key] === undefined);
+
+if (env.CARNAP_ENV !== "local" && missingEmailSettings.length > 0) {
+  // Everything that sends mail fails closed outside `local`, and fails when
+  // someone first tries it rather than at boot — so say it now, while there
+  // is still an operator looking. An LMS launch needs no mail, so an LMS-only
+  // instance can run like this; the warning says what it gives up.
   logEvent("warn", "login_email_not_configured", {
     message:
-      "RESEND_API_KEY is not set: nobody will be able to sign in. " +
-      "Set it and AUTH_LOGIN_EMAIL_FROM, or run with CARNAP_ENV=local.",
+      `${missingEmailSettings.join(" and ")} not set: email sign-in, ` +
+      "linking an LMS launch to an existing account, and email changes " +
+      "will fail. LMS launches still sign in. Set RESEND_API_KEY and " +
+      "AUTH_LOGIN_EMAIL_FROM, or run with CARNAP_ENV=local.",
   });
 }
 

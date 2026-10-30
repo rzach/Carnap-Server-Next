@@ -154,17 +154,29 @@ To test the student path, use a second browser profile or clear cookies, sign
 in as a different email address, and open the enrollment URL. The student can
 join the course and then view the course page without JavaScript.
 
-For Resend-backed login delivery, configure these variables:
+For Resend-backed login delivery, configure both of these variables:
 
 ```sh
-AUTH_LOGIN_CONFIRM_URL="http://localhost:8787/login/confirm"
 AUTH_LOGIN_EMAIL_FROM="Carnap <login@example.test>"
 RESEND_API_KEY="re_..."
 ```
 
-`AUTH_LOGIN_CONFIRM_URL` may point at localhost, a tunnel, a temporary
-preview, or production. Preview and production login starts fail with a clear
-configuration error if Resend settings are missing.
+Outside local mode, a login start fails with a configuration error when
+either is missing. The standalone server also warns at startup, naming the
+missing variable.
+
+LMS launches need no mail. Without these variables, an LMS launch still
+signs in, but linking a launch to an existing account with the same email
+fails, as do email changes.
+
+`AUTH_LOGIN_CONFIRM_URL` is optional. The emailed sign-in link defaults to
+the request's public origin followed by `/login/confirm`. Set it only when
+that origin is wrong and the proxy settings in
+[Self-hosting](docs/self-hosting.md) cannot fix it:
+
+```sh
+AUTH_LOGIN_CONFIRM_URL="https://carnap.example.edu/login/confirm"
+```
 
 ## Developer scripts
 

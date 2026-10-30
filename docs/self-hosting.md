@@ -230,9 +230,10 @@ variable to disable it; an empty value is not always equivalent to absence.
 
 - `RESEND_API_KEY`: required for native email sign-in outside local mode.
 - `AUTH_LOGIN_EMAIL_FROM`: sender address, for example
-  `Carnap <login@example.edu>`.
-- `AUTH_LOGIN_CONFIRM_URL`: public confirmation URL. Defaults to the
-  request's resolved origin followed by `/login/confirm`.
+  `Carnap <login@example.edu>`. Required with `RESEND_API_KEY`: without it,
+  no mail is sent.
+- `AUTH_LOGIN_CONFIRM_URL`: optional public confirmation URL. Defaults to
+  the request's resolved origin followed by `/login/confirm`.
 - `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`: optional human
   verification. Configure both or neither.
 
@@ -244,13 +245,20 @@ variable to disable it; an empty value is not always equivalent to absence.
 ## Signing in
 
 Native login is passwordless. Users request a single-use link by email.
-Delivery uses [Resend](https://resend.com). Outside local mode, missing
-`RESEND_API_KEY` prevents native email sign-in. The standalone server warns
-at startup but continues serving; it does not refuse to start.
+Delivery uses [Resend](https://resend.com). Outside local mode, a missing
+`RESEND_API_KEY` or `AUTH_LOGIN_EMAIL_FROM` prevents native email sign-in.
+It also stops an LMS launch from linking to an existing account with the
+same email, since that link is confirmed by email. Other LMS launches need
+no mail and sign in as usual, so an LMS-only instance can run without it.
+The standalone server warns at startup, naming the missing variable, but
+continues serving; it does not refuse to start.
 
-Set `AUTH_LOGIN_CONFIRM_URL` to the public confirmation address if the
-request URL cannot be reconstructed correctly behind your proxy. Otherwise
-emails can contain an internal hostname or an HTTP URL.
+Email links are built from the request's public origin, which behind a
+proxy needs `CARNAP_TRUST_PROXY` (see
+[Behind a reverse proxy](#behind-a-reverse-proxy)). Otherwise they can
+contain an internal hostname or an HTTP URL. `AUTH_LOGIN_CONFIRM_URL`
+overrides the sign-in link alone; account-link and address-change links
+always follow the request origin.
 
 The same configuration sends the mail behind an address change: the
 confirmation link to a new address, and the notice to the old one, which
